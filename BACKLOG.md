@@ -36,6 +36,12 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-06-23` — **Product move UI.** `ProductsViewModel` now injects Location + Shelf
+  repositories to build the household's shelves; `startMove`/`confirmMove`/`cancelMove` drive a
+  move flow on `ProductRepository.move`. `ProductsScreen` adds a per-product Move button + an
+  `AlertDialog` shelf-picker (current shelf excluded, label `Location › Shelf`); the product
+  drops off the current list after moving. `ProductsViewModelTest` updated (3-repo ctor + move
+  test). CI green. **The Android app is now functionally complete.**
 - ✅ `2026-06-23` — **Navigation-Compose refactor.** Added `androidx.navigation:navigation-compose`;
   `MainActivity` now uses a `NavHost` with typed routes (auth/households/settings/storage/search/
   invite/shelves/products) and `Long` path args, replacing the six state-based nav flags. Auth
