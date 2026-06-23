@@ -30,8 +30,12 @@ plus Search, Invite (code/link/QR), Settings. See `CLAUDE.md` for detail.
 ## Design — B · Frost
 - Compose theme: icy-blue **#7dd3fc** accent, frosted-glass surfaces, rounded shapes,
   **Plus Jakarta Sans**; full light/dark with in-app System/Light/Dark toggle.
-- **TODO:** obtain and commit the Frost mocks (`frost-app.html`, `frost-dark.png`,
-  `frost-light.png`) into this `docs/` folder as the visual reference.
+- Visual reference committed in [`docs/design/`](./design): `frost-app.html` (interactive
+  5-screen prototype), `frost-dark.png`, `frost-light.png`. Mirror these exactly in the
+  Compose theme (palette below comes straight from the prototype CSS):
+  - page bg dark `#0c1822` / light `#cfe4f6`; screen bg dark `#10212e` / light `#dfeefb`
+  - accent `#7dd3fc`; on-accent `#06283b`; muted `#6f9bbb`
+  - fonts: Plus Jakarta Sans (UI), Space Mono (join codes)
 
 ## Build order
 1. Project skeleton: single-activity Compose + Hilt + Retrofit + theme (Frost).
@@ -48,4 +52,3 @@ error/empty/offline states. No trivial UI tests.
 
 ## Open items
 - Q-3 realtime (currently pull-to-refresh — no WebSockets).
-- Frost mock assets to be added.

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Frost — Inventory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{--page-bg:#0c1822;--page-fg:#eaf6ff;--page-muted:#6f9bbb;--frame-border:#1e3346}
+  body.light{--page-bg:#cfe4f6;--page-fg:#0d2436;--page-muted:#5b8bac;--frame-border:#b9d2e8}
+  body{background:var(--page-bg);color:var(--page-fg);font-family:'Plus Jakarta Sans',system-ui,sans-serif;min-height:100vh;padding:32px 20px 56px;transition:background .35s,color .35s}
+  .head{max-width:1240px;margin:0 auto 26px}
+  .head h1{font-size:22px;font-weight:800;letter-spacing:-.02em}
+  .head p{color:var(--page-muted);font-size:13px;margin-top:5px;line-height:1.5;max-width:760px}
+  .stage{max-width:1240px;margin:0 auto;display:flex;gap:30px;flex-wrap:wrap;justify-content:center;align-items:flex-start}
+  .col{flex:0 1 360px;max-width:360px;min-width:300px}
+  .cap{font-size:13px;font-weight:600;color:var(--page-muted);margin:0 0 12px 4px}
+  .phone{border:1px solid var(--frame-border);border-radius:36px;overflow:hidden;aspect-ratio:9/19;box-shadow:0 20px 55px rgba(0,0,0,.35);position:relative;display:flex;flex-direction:column}
+  .notch{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:80px;height:5px;border-radius:99px;background:rgba(125,211,252,.4);z-index:30}
+  .screen{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;background:#10212e;color:#eaf6ff}
+  body.light .screen{background:#dfeefb;color:#0d2436}
+  .appbar{display:flex;align-items:flex-start;justify-content:space-between;padding:30px 18px 8px;gap:10px}
+  .crumbs{color:#6fa8cf;font-weight:600;font-size:11.5px}
+  body.light .crumbs{color:#3f7da6}
+  .title{font-size:21px;font-weight:800;letter-spacing:-.02em;margin-top:2px}
+  .icons{display:flex;gap:8px;flex:0 0 auto}
+  .ic{width:40px;height:40px;border-radius:999px;background:rgba(125,211,252,.12);display:flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer}
+  body.light .ic{background:rgba(63,125,166,.12)}
+  .back{font-size:20px;color:#7fb4d6;cursor:pointer}
+  body.light .back{color:#5b8bac}
+  .body{flex:1;overflow-y:auto;scrollbar-width:none;padding:4px 16px 16px}
+  .body::-webkit-scrollbar{display:none}
+
+  .tabs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:6px 16px 10px;flex:0 0 auto}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{flex:0 0 auto;white-space:nowrap;cursor:pointer;font-size:12.5px;font-weight:600;padding:9px 15px;border-radius:999px;background:rgba(125,211,252,.10);color:#7fb4d6}
+  body.light .tab{background:rgba(63,125,166,.10);color:#5b8bac}
+  .tab.on{background:#7dd3fc;color:#06283b}
+  .pager{flex:1;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none}
+  .pager::-webkit-scrollbar{display:none}
+  .panel{flex:0 0 100%;scroll-snap-align:start;overflow-y:auto;scrollbar-width:none;padding:2px 16px 16px}
+  .panel::-webkit-scrollbar{display:none}
+  .card{background:rgba(125,211,252,.10);border:1px solid rgba(125,211,252,.20);border-radius:22px;padding:15px 16px;margin-top:11px}
+  body.light .card{background:rgba(255,255,255,.72);border-color:rgba(63,125,166,.18)}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .pname{font-size:15px;font-weight:700}
+  .ptag{font-size:11.5px;color:#7fb4d6;font-weight:500;margin-top:2px}
+  body.light .ptag{color:#5b8bac}
+  .stepper{display:flex;align-items:center;background:rgba(125,211,252,.14);border-radius:999px;padding:4px}
+  body.light .stepper{background:rgba(63,125,166,.10)}
+  .btn{cursor:pointer;display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:999px;background:#7dd3fc;color:#06283b;font-size:18px;font-weight:700}
+  .qty{text-align:center;font-size:16px;font-weight:800;min-width:30px;font-variant-numeric:tabular-nums}
+  .chip-oos{font-size:10px;font-weight:700;background:rgba(255,255,255,.14);color:#bcd9ea;border-radius:999px;padding:5px 10px}
+  body.light .chip-oos{background:rgba(13,36,54,.08);color:#5b8bac}
+  .fab{position:absolute;bottom:18px;right:18px;width:56px;height:56px;border-radius:50%;background:#7dd3fc;color:#06283b;font-size:26px;font-weight:300;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 22px rgba(125,211,252,.4);cursor:pointer;z-index:20}
+
+  /* storage list */
+  .fcard{display:flex;align-items:center;justify-content:space-between;gap:12px;background:rgba(125,211,252,.10);border:1px solid rgba(125,211,252,.20);border-radius:22px;padding:15px 16px;margin-top:11px;cursor:pointer}
+  body.light .fcard{background:rgba(255,255,255,.72);border-color:rgba(63,125,166,.18)}
+  .fic{width:42px;height:42px;border-radius:14px;background:rgba(125,211,252,.18);display:flex;align-items:center;justify-content:center;font-size:20px;flex:0 0 auto}
+  body.light .fic{background:rgba(63,125,166,.14)}
+  .fmeta{flex:1}
+  .fname{font-size:15.5px;font-weight:700}
+  .fsub{font-size:12px;color:#7fb4d6;margin-top:2px}
+  body.light .fsub{color:#5b8bac}
+  .chev{color:#6f9bbb;font-size:20px}
+  .addbar{width:100%;margin-top:14px;border:none;font-family:inherit;cursor:pointer;font-weight:700;font-size:13.5px;border-radius:999px;padding:13px;background:rgba(125,211,252,.14);color:#bcd9ea}
+  body.light .addbar{background:rgba(63,125,166,.12);color:#3f7da6}
+
+  /* search */
+  .searchbar{display:flex;align-items:center;gap:10px;background:rgba(125,211,252,.12);border-radius:999px;padding:12px 16px;margin:2px 16px 6px}
+  body.light .searchbar{background:rgba(63,125,166,.10)}
+  .searchbar .q{font-size:15px;font-weight:600;flex:1}
+  .rescount{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#6f9bbb;margin:12px 0 2px 6px}
+  body.light .rescount{color:#5b8bac}
+  .rcard{background:rgba(125,211,252,.10);border:1px solid rgba(125,211,252,.20);border-radius:20px;padding:14px 16px;margin-top:10px;cursor:pointer}
+  body.light .rcard{background:rgba(255,255,255,.72);border-color:rgba(63,125,166,.18)}
+  .loc{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#7dd3fc;margin-top:5px}
+  body.light .loc{color:#3f7da6}
+  .qbadge{font-size:12px;font-weight:800;background:rgba(125,211,252,.16);color:#bcd9ea;border-radius:999px;padding:5px 11px}
+  body.light .qbadge{background:rgba(63,125,166,.12);color:#3f7da6}
+
+  /* invite */
+  .helper{font-size:13px;color:#7fb4d6;line-height:1.5;margin:2px 4px 4px}
+  body.light .helper{color:#5b8bac}
+  .codecard{text-align:center;background:rgba(125,211,252,.10);border:1px solid rgba(125,211,252,.20);border-radius:22px;padding:20px;margin-top:14px}
+  body.light .codecard{background:rgba(255,255,255,.72);border-color:rgba(63,125,166,.18)}
+  .codelbl{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#6f9bbb}
+  body.light .codelbl{color:#5b8bac}
+  .codebig{font-family:'Space Mono',monospace;font-size:28px;font-weight:700;letter-spacing:.08em;margin-top:6px}
+  .btnrow{display:flex;gap:10px;margin-top:14px}
+  .pill{cursor:pointer;border:none;font-family:inherit;font-weight:700;border-radius:999px;padding:12px 16px;font-size:13.5px;flex:1;text-align:center}
+  .pill.primary{background:#7dd3fc;color:#06283b}
+  .pill.ghost{background:rgba(125,211,252,.14);color:#bcd9ea}
+  body.light .pill.ghost{background:rgba(63,125,166,.12);color:#3f7da6}
+  .qrtile{background:#fff;border-radius:22px;padding:18px;margin-top:16px;display:flex;flex-direction:column;align-items:center;gap:10px}
+  .qrtile img{width:150px;height:150px;display:block}
+  .qrcap{font-size:12px;font-weight:600;color:#5b8bac}
+
+  /* settings */
+  .set-head{display:flex;align-items:center;gap:12px;padding:30px 18px 14px}
+  .set-head .title{font-size:21px;font-weight:800}
+  .setbody{flex:1;overflow-y:auto;scrollbar-width:none;padding:0 16px 20px}
+  .setbody::-webkit-scrollbar{display:none}
+  .sect{margin-top:18px}
+  .sect-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#6f9bbb;margin:0 0 9px 6px}
+  body.light .sect-label{color:#5b8bac}
+  .group{background:rgba(125,211,252,.08);border:1px solid rgba(125,211,252,.16);border-radius:22px;overflow:hidden}
+  body.light .group{background:rgba(255,255,255,.7);border-color:rgba(63,125,166,.16)}
+  .line{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 16px}
+  .line + .line{border-top:1px solid rgba(125,211,252,.12)}
+  body.light .line + .line{border-top:1px solid rgba(63,125,166,.12)}
+  .lab{font-size:14.5px;font-weight:600}
+  .sub{font-size:12px;color:#7fb4d6;margin-top:2px}
+  body.light .sub{color:#5b8bac}
+  .seg{display:flex;background:rgba(125,211,252,.12);border-radius:999px;padding:4px;gap:2px;width:100%}
+  body.light .seg{background:rgba(63,125,166,.10)}
+  .opt{cursor:pointer;font-size:12px;font-weight:700;padding:7px 13px;border-radius:999px;color:#7fb4d6;flex:1;text-align:center}
+  body.light .opt{color:#5b8bac}
+  .opt.on{background:#7dd3fc;color:#06283b}
+  .spill{cursor:pointer;border:none;font-family:inherit;font-weight:700;border-radius:999px;padding:9px 16px;font-size:13px;background:rgba(125,211,252,.14);color:#bcd9ea}
+  body.light .spill{background:rgba(63,125,166,.12);color:#3f7da6}
+  .av{width:30px;height:30px;border-radius:999px;background:#7dd3fc;color:#06283b;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800}
+  .signout{width:100%;margin-top:16px;text-align:center}
+  .codet{font-family:'Space Mono',monospace;font-size:14px;font-weight:700}
+</style>
+</head>
+<body>
+  <div class="head">
+    <h1>B · Frost — committed design</h1>
+    <p>Storage generalised: a household holds freezers, fridges and pantries. Includes the storage overview, cross-location search, the shelves screen, an invite screen (code + share link + QR), and settings. Tap System / Light / Dark in Settings to flip the app.</p>
+  </div>
+
+  <div class="stage">
+
+    <!-- Storage overview -->
+    <div class="col">
+      <p class="cap">Household · all storage</p>
+      <div class="phone"><div class="notch"></div><div class="screen">
+        <div class="appbar"><div><div class="crumbs">Garage household</div><div class="title">Storage</div></div><div class="icons"><div class="ic">🔍</div><div class="ic">⚙</div></div></div>
+        <div class="body">
+          <div class="fcard"><div class="fic">🧊</div><div class="fmeta"><div class="fname">Garage Chest</div><div class="fsub">Freezer · 4 shelves · 23 items</div></div><div class="chev">›</div></div>
+          <div class="fcard"><div class="fic">❄️</div><div class="fmeta"><div class="fname">Kitchen Fridge</div><div class="fsub">Fridge · 3 shelves · 16 items</div></div><div class="chev">›</div></div>
+          <div class="fcard"><div class="fic">🗄️</div><div class="fmeta"><div class="fname">Pantry</div><div class="fsub">Pantry · 5 shelves · 41 items</div></div><div class="chev">›</div></div>
+          <button class="addbar">+ Add storage</button>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- Search -->
+    <div class="col">
+      <p class="cap">Search · find where it's stored</p>
+      <div class="phone"><div class="notch"></div><div class="screen">
+        <div class="appbar" style="padding-bottom:4px"><div class="back" style="margin-top:4px">‹</div><div style="flex:1"><div class="title" style="margin-top:0">Search</div></div></div>
+        <div class="searchbar"><span>🔍</span><span class="q">ice</span><span style="opacity:.7">✕</span></div>
+        <div class="body" style="padding-top:0">
+          <div class="rescount">3 results across storage</div>
+          <div class="rcard"><div class="row"><div><div class="pname">Vanilla ice cream</div><div class="loc">📍 Garage Chest › Middle shelf</div></div><div class="qbadge">1</div></div></div>
+          <div class="rcard"><div class="row"><div><div class="pname">Iced tea</div><div class="loc">📍 Kitchen Fridge › Door rack</div></div><div class="qbadge">3</div></div></div>
+          <div class="rcard"><div class="row"><div><div class="pname">Ice cube trays</div><div class="loc">📍 Pantry › Bottom shelf</div></div><div class="qbadge">2</div></div></div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- Shelves -->
+    <div class="col">
+      <p class="cap">Inside a location · shelves as tabs</p>
+      <div class="phone"><div class="notch"></div><div class="screen">
+        <div class="appbar"><div><div class="crumbs">Garage household · Freezer</div><div class="title">Garage Chest</div></div><div class="icons"><div class="ic">🔍</div></div></div>
+        <div class="tabs"><div class="tab on">Top shelf</div><div class="tab">Middle shelf</div><div class="tab">Bottom shelf</div><div class="tab">Door rack</div></div>
+        <div class="pager">
+          <div class="panel">
+            <div class="card"><div class="row"><div><div class="pname">Chicken thighs</div><div class="ptag">Protein</div></div><div class="stepper"><div class="btn">−</div><div class="qty">4</div><div class="btn">+</div></div></div></div>
+            <div class="card"><div class="row"><div><div class="pname">Garden peas</div><div class="ptag">Veg</div></div><div class="stepper"><div class="btn">−</div><div class="qty">2</div><div class="btn">+</div></div></div></div>
+            <div class="card"><div class="row"><div><div class="pname">Pizza dough</div><div class="ptag">Bakery</div></div><div class="stepper"><div class="btn">−</div><div class="qty">6</div><div class="btn">+</div></div></div></div>
+          </div>
+          <div class="panel">
+            <div class="card"><div class="row"><div><div class="pname">Vanilla ice cream</div><div class="ptag">Dessert</div></div><div class="stepper"><div class="btn">−</div><div class="qty">1</div><div class="btn">+</div></div></div></div>
+            <div class="card"><div class="row"><div><div class="pname">Stock cubes</div><div class="ptag">Out of stock</div></div><div class="chip-oos">Out</div></div></div>
+          </div>
+          <div class="panel"><div class="card"><div class="row"><div><div class="pname">Bread loaves</div><div class="ptag">Bakery</div></div><div class="stepper"><div class="btn">−</div><div class="qty">5</div><div class="btn">+</div></div></div></div></div>
+          <div class="panel"><div class="card"><div class="row"><div><div class="pname">Ice packs</div><div class="ptag">Misc</div></div><div class="stepper"><div class="btn">−</div><div class="qty">8</div><div class="btn">+</div></div></div></div></div>
+        </div>
+        <div class="fab">+</div>
+      </div></div>
+    </div>
+
+    <!-- Invite -->
+    <div class="col">
+      <p class="cap">Invite · code, link &amp; QR</p>
+      <div class="phone"><div class="notch"></div><div class="screen">
+        <div class="set-head"><div class="back">‹</div><div class="title">Invite to household</div></div>
+        <div class="setbody">
+          <p class="helper">Anyone with the code, link or QR can join <b>Garage household</b>.</p>
+          <div class="codecard">
+            <div class="codelbl">Join code</div>
+            <div class="codebig">FROST-7K2Q</div>
+          </div>
+          <div class="btnrow"><button class="pill ghost">Copy link</button><button class="pill primary">Share</button></div>
+          <div class="qrtile">
+            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAATYAAAE2CAIAAABk3in+AAAF40lEQVR4nO3dsXEkNxBAUZ1KtrJQDMrfVAzKQgms7HMwBg7sj+F7Louc5e7+gtPV+PH5fH4Dqn6ffgHAikQhTaKQJlFIkyikSRTSJAppEoU0iULaH+sf//nX31/zOr7Mf//+s/jp+v8997tr5z6Fc69q6n2+0fr/dYpCmkQhTaKQJlFIkyikSRTSJAppEoU0iULaw3TR2s5syjnnpk+as0fn3DgDdOM7ueYUhTSJQppEIU2ikCZRSJMopEkU0iQKaRKFtK3porXmxp1zz23OD+0899zvTs0e3fiddIpCmkQhTaKQJlFIkyikSRTSJAppEoU0iULawemiGzXvTdv5y1MzT++7v2yKUxTSJAppEoU0iUKaRCFNopAmUUiTKKRJFNJMF/1kZyZm6h6xc3/5xk0/7+MUhTSJQppEIU2ikCZRSJMopEkU0iQKaRKFtIPTRTdOkEzt8mluJ2q+Gztu/E46RSFNopAmUUiTKKRJFNIkCmkShTSJQppEIW1ruuh9t19N3X02tfdo6jWf877vpFMU0iQKaRKFNIlCmkQhTaKQJlFIkyikSRTSfnw+n+nX8C2cm8WZmvJxb9rXcIpCmkQhTaKQJlFIkyikSRTSJAppEoU0iULaw3TR1EzMjc5tGJrS3D80NYk1NU3lFIU0iUKaRCFNopAmUUiTKKRJFNIkCmkShbSHm9FunJg595pvvBntfRNCO8+dsvP/OkUhTaKQJlFIkyikSRTSJAppEoU0iUKaRCHtYbpoR3OuhV/l3PzQ1O/uOPdcpyikSRTSJAppEoU0iUKaRCFNopAmUUiTKKQ93Ix2zo2bfs7tPdoxtY3pnBtf1drOt84pCmkShTSJQppEIU2ikCZRSJMopEkU0iQKaVu7i85tr2nOD52bejk3MdOcl1o/tznFNcUpCmkShTSJQppEIU2ikCZRSJMopEkU0iQKaQ+7i5rzQztunD268Y655q6mJruL4GIShTSJQppEIU2ikCZRSJMopEkU0iQKaQd3F537y+dmgHY09wCde+7UpzD13KnZMqcopEkU0iQKaRKFNIlCmkQhTaKQJlFIkyikbU0XTW36mZrzmHJufqg5ifW+2812OEUhTaKQJlFIkyikSRTSJAppEoU0iUKaRCHt4Wa0tfdt63nf1Mu5aarmTXA3br1ac4pCmkQhTaKQJlFIkyikSRTSJAppEoU0iULaw3TR1Kaf5hzP1KTOlKkdUc2dSVP/kVMU0iQKaRKFNIlCmkQhTaKQJlFIkyikSRTStm5GO2dqA01z801zxmtqg9SO5ie4/stOUUiTKKRJFNIkCmkShTSJQppEIU2ikCZRSDu4u+jGCZKdv7z2vpmnc26c0zr3TjpFIU2ikCZRSJMopEkU0iQKaRKFNIlCmkQh7eDuoub80LnZo6kNQzd63/t8biLKKQppEoU0iUKaRCFNopAmUUiTKKRJFNIkCmkP00XN3TZrU695alfTjuZmo3PPndpctcMpCmkShTSJQppEIU2ikCZRSJMopEkU0iQKaQ/TRc2ZmB1Tkys3zmlNbYFae9/7vOYUhTSJQppEIU2ikCZRSJMopEkU0iQKaRKFtK2b0ZqTHDfOtdw4xTU1e3TuWzf1Ca6f6xSFNIlCmkQhTaKQJlFIkyikSRTSJAppEoW0remitXMTM99tqmnHzpTPzu/uvBtT72RzK5JTFNIkCmkShTSJQppEIU2ikCZRSJMopEkU0g5OF73P1F1ga99to9K5eakd574bTlFIkyikSRTSJAppEoU0iUKaRCFNopAmUUgzXfSTqcmVG29zaz53beo2tx1OUUiTKKRJFNIkCmkShTSJQppEIU2ikCZRSDs4XdS8v+yc5qaf92nOeNldBN+URCFNopAmUUiTKKRJFNIkCmkShTSJQtqPz+ez+PH7Jmaa24mae4+au3yan8I5TlFIkyikSRTSJAppEoU0iUKaRCFNopAmUUh7mC4CZjlFIU2ikCZRSJMopEkU0iQKaRKFNIlCmkQh7X/4+yEJOeuWqgAAAABJRU5ErkJggg==" alt="QR">
+            <div class="qrcap">Scan to join</div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- Settings -->
+    <div class="col">
+      <p class="cap">Settings · theme + household</p>
+      <div class="phone"><div class="notch"></div><div class="screen">
+        <div class="set-head"><div class="back">‹</div><div class="title">Settings</div></div>
+        <div class="setbody">
+          <div class="sect"><p class="sect-label">Appearance</p><div class="group">
+            <div class="line"><div><div class="lab">Theme</div><div class="sub">Match the device or set it yourself</div></div></div>
+            <div class="line" style="padding-top:0"><div class="seg" id="themeseg"><div class="opt" data-mode="system">System</div><div class="opt" data-mode="light">Light</div><div class="opt on" data-mode="dark">Dark</div></div></div>
+          </div></div>
+          <div class="sect"><p class="sect-label">Household</p><div class="group">
+            <div class="line"><div><div class="lab">Garage household</div><div class="sub">2 members</div></div><div style="display:flex"><div class="av">SP</div><div class="av" style="margin-left:-8px">MK</div></div></div>
+            <div class="line"><div><div class="lab">Invite members</div><div class="sub codet">FROST-7K2Q · link · QR</div></div><button class="spill">Invite</button></div>
+            <div class="line"><div><div class="lab">Switch household</div><div class="sub">You're in 2</div></div><div class="back" style="font-size:18px">›</div></div>
+          </div></div>
+          <div class="sect"><p class="sect-label">Account</p>
+            <div class="group"><div class="line"><div><div class="lab">Stanislav</div><div class="sub">stan@scuttle.dev</div></div><div class="av">SP</div></div></div>
+            <button class="spill signout">Sign out</button>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+  </div>
+<script>
+  document.querySelectorAll('.phone').forEach(function(phone){
+    var tabs=Array.from(phone.querySelectorAll('.tab')),pager=phone.querySelector('.pager');
+    if(!pager)return;var panels=phone.querySelectorAll('.panel');
+    tabs.forEach(function(t,i){t.addEventListener('click',function(){pager.scrollTo({left:i*pager.clientWidth,behavior:'smooth'});tabs.forEach(function(x,n){x.classList.toggle('on',n===i)});});});
+    var raf;pager.addEventListener('scroll',function(){if(raf)cancelAnimationFrame(raf);raf=requestAnimationFrame(function(){var i=Math.max(0,Math.min(panels.length-1,Math.round(pager.scrollLeft/pager.clientWidth)));tabs.forEach(function(x,n){x.classList.toggle('on',n===i)});});});
+  });
+  var seg=document.getElementById('themeseg');
+  function apply(m){var l;if(m==='light')l=true;else if(m==='dark')l=false;else l=window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches;document.body.classList.toggle('light',!!l);}
+  if(seg){seg.querySelectorAll('.opt').forEach(function(o){o.addEventListener('click',function(){seg.querySelectorAll('.opt').forEach(function(x){x.classList.remove('on')});o.classList.add('on');apply(o.dataset.mode);});});}
+</script>
+</body>
+</html>

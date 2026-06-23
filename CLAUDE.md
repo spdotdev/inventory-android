@@ -50,8 +50,9 @@ Navigation: Household → Storage overview → Shelves (tabs) → Products.
 ## Design — B · Frost (D-021)
 - Frosted-glass cards, icy-blue accent **#7dd3fc**, rounded controls, **Plus Jakarta Sans**.
 - Full light/dark, switched in-app (System/Light/Dark) per Settings.
-- Reference mocks: `frost-app.html`, `frost-dark.png`, `frost-light.png` — **TODO: add to `docs/`**
-  (not yet provided).
+- Reference mocks in [`docs/design/`](./docs/design): `frost-app.html` (interactive 5-screen
+  prototype with working light/dark toggle), `frost-dark.png`, `frost-light.png`. Build the
+  Compose theme to match these.
 
 ## Scope guardrails — refuse to add
 No expiry/reminders, recipes, shopping list, offline mode, roles/permissions. Barcode
