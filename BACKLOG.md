@@ -36,6 +36,11 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-06-23` — **Households screen (list / create / join).** `HouseholdApi` + data-envelope
+  DTOs, `HouseholdRepository`(+impl) bound via Hilt, `HouseholdsViewModel` (load-on-init +
+  create + join state machine), `HouseholdsScreen` (Compose: list + create + join). `MainActivity`
+  routes authenticated users here. `HouseholdsViewModelTest` (load/create/error) with a fake repo.
+  CI green first try.
 - ✅ `2026-06-23` — **DI + networking + email/password auth.** Hilt (KSP) wired
   (`InventoryApp`, `MainActivity` `@AndroidEntryPoint`, Network/Storage/Repository modules);
   Retrofit + OkHttp + Kotlinx Serialization (Square `converter-kotlinx-serialization:2.11.0`),

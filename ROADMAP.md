@@ -33,9 +33,13 @@ Detailed build order: [`CLAUDE.md`](CLAUDE.md) and [`docs/android-plan.md`](docs
 > 2026-06-23 — see [`BACKLOG.md`](BACKLOG.md) → Done. Next: the inventory screens.
 
 ### SCREENS (next)
-- [ ] Household list/switcher → storage overview → shelves (tabs/swipe) → products; search;
-  invite (code/link/QR); settings (theme/account). Frost styling per `docs/design/`.
-  Each screen: repository + Retrofit API + ViewModel + Compose UI, JVM unit-tested via fakes.
+- [x] **Households screen** — list / create / join (shipped 2026-06-23, CI-green).
+- [ ] **Storage overview** — a household's locations (type + shelf/item counts); tap → shelves.
+- [ ] **Shelves** (tab strip + swipe pager) → **products** (add/remove/move).
+- [ ] **Search** (location › shelf path), **invite** (code/link/QR), **settings** (theme/account).
+  Pattern per screen: repository + Retrofit API + ViewModel + Compose UI, JVM unit-tested via fakes.
+- [ ] **Navigation + active-household** — proper nav (e.g. Navigation-Compose) and an active
+  household selection feeding the household-scoped screens (currently a flat list post-auth).
 - [ ] **Plus Jakarta Sans / Space Mono** fonts + full in-app light/dark toggle (currently
   follows system dark/light + default type).
 
