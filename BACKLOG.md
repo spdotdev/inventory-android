@@ -36,6 +36,11 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-06-24` — **Frost fonts.** Bundled Plus Jakarta Sans (variable; weights pinned via
+  `FontVariation`) + Space Mono TTFs from google/fonts into `res/font/`. `InventoryTypography`
+  applies Jakarta across all M3 text styles; join codes render in Space Mono. No runtime font
+  fetch / no certificate config (bundled, deterministic). CI green (1 fix: opt-in to
+  ExperimentalTextApi for the variable-font API).
 - ✅ `2026-06-24` — **Shelves-as-tabs + swipe-pager (Frost D-020).** Merged the separate
   shelves/products screens into `LocationDetailScreen`: shelves render as a `ScrollableTabRow`
   and products in a `HorizontalPager` (one page per shelf; tap a tab or swipe to switch).
