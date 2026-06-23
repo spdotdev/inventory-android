@@ -6,6 +6,8 @@ import dev.scuttle.inventory.data.household.HouseholdRepository
 import dev.scuttle.inventory.data.household.HouseholdRepositoryImpl
 import dev.scuttle.inventory.data.location.LocationRepository
 import dev.scuttle.inventory.data.location.LocationRepositoryImpl
+import dev.scuttle.inventory.data.shelf.ShelfRepository
+import dev.scuttle.inventory.data.shelf.ShelfRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -27,4 +29,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindLocationRepository(impl: LocationRepositoryImpl): LocationRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindShelfRepository(impl: ShelfRepositoryImpl): ShelfRepository
 }

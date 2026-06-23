@@ -1,10 +1,7 @@
-package dev.scuttle.inventory.ui.storage
+package dev.scuttle.inventory.ui.shelves
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,7 +10,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -26,19 +22,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun StorageOverviewScreen(
+fun ShelvesScreen(
     householdId: Long,
+    locationId: Long,
     modifier: Modifier = Modifier,
     onBack: () -> Unit = {},
-    onOpenLocation: (Long) -> Unit = {},
-    viewModel: StorageOverviewViewModel = hiltViewModel(),
+    viewModel: ShelvesViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
 
-    LaunchedEffect(householdId) {
-        viewModel.load(householdId)
+    LaunchedEffect(householdId, locationId) {
+        viewModel.load(householdId, locationId)
     }
 
     Column(
@@ -49,10 +44,10 @@ fun StorageOverviewScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         TextButton(onClick = onBack) {
-            Text("← Households")
+            Text("← Storage")
         }
 
-        Text(text = "Storage")
+        Text(text = "Shelves")
 
         if (state.loading) {
             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
@@ -60,32 +55,13 @@ fun StorageOverviewScreen(
 
         state.error?.let { Text(text = it) }
 
-        if (state.locations.isEmpty() && !state.loading) {
-            Text(text = "No storage locations yet. Add a freezer, fridge or pantry below.")
+        if (state.shelves.isEmpty() && !state.loading) {
+            Text(text = "No shelves yet. Add one below.")
         }
 
-        state.locations.forEach { location ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onOpenLocation(location.id) },
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(text = location.name)
-                    Text(text = location.type)
-                }
-            }
-        }
-
-        Text(text = "Add storage")
-
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            STORAGE_TYPES.forEach { type ->
-                FilterChip(
-                    selected = state.newType == type,
-                    onClick = { viewModel.onTypeSelect(type) },
-                    label = { Text(type) },
-                )
+        state.shelves.forEach { shelf ->
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Text(text = shelf.name, modifier = Modifier.padding(16.dp))
             }
         }
 
@@ -96,7 +72,7 @@ fun StorageOverviewScreen(
             OutlinedTextField(
                 value = state.newName,
                 onValueChange = viewModel::onNewNameChange,
-                label = { Text("Name") },
+                label = { Text("New shelf") },
                 singleLine = true,
                 modifier = Modifier.weight(1f),
             )

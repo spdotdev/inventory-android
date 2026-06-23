@@ -17,6 +17,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import dev.scuttle.inventory.ui.auth.AuthScreen
 import dev.scuttle.inventory.ui.auth.AuthViewModel
 import dev.scuttle.inventory.ui.households.HouseholdsScreen
+import dev.scuttle.inventory.ui.shelves.ShelvesScreen
 import dev.scuttle.inventory.ui.storage.StorageOverviewScreen
 import dev.scuttle.inventory.ui.theme.InventoryTheme
 
@@ -39,13 +40,20 @@ class MainActivity : ComponentActivity() {
 private fun Root(authViewModel: AuthViewModel = hiltViewModel()) {
     val authState by authViewModel.state.collectAsState()
     var openHouseholdId: Long? by rememberSaveable { mutableStateOf(null) }
+    var openLocationId: Long? by rememberSaveable { mutableStateOf(null) }
 
     when {
         !authState.authenticated -> AuthScreen(viewModel = authViewModel)
         openHouseholdId == null -> HouseholdsScreen(onOpenHousehold = { openHouseholdId = it })
-        else -> StorageOverviewScreen(
+        openLocationId == null -> StorageOverviewScreen(
             householdId = openHouseholdId!!,
             onBack = { openHouseholdId = null },
+            onOpenLocation = { openLocationId = it },
+        )
+        else -> ShelvesScreen(
+            householdId = openHouseholdId!!,
+            locationId = openLocationId!!,
+            onBack = { openLocationId = null },
         )
     }
 }
