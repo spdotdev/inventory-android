@@ -36,6 +36,10 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-06-23` — **Shelves screen.** Location-scoped `ShelfApi` + DTOs, `ShelfRepository`
+  (+impl) Hilt-bound, `ShelvesViewModel` (`load(householdId, locationId)` + create),
+  `ShelvesScreen` (Compose: list + add). Storage-overview location cards tap through; nav
+  extended household → location → shelves (with back). `ShelvesViewModelTest` (load/create/error). CI green.
 - ✅ `2026-06-23` — **Storage overview screen.** Household-scoped `LocationApi` + DTOs,
   `LocationRepository`(+impl) Hilt-bound, `StorageOverviewViewModel` (`load(householdId)` +
   create-with-type), `StorageOverviewScreen` (Compose: list + type FilterChips + add).
