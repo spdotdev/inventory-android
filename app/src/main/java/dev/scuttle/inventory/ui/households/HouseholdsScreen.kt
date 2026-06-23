@@ -14,6 +14,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -25,6 +26,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 fun HouseholdsScreen(
     modifier: Modifier = Modifier,
     onOpenHousehold: (Long) -> Unit = {},
+    onOpenSettings: () -> Unit = {},
     viewModel: HouseholdsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -36,6 +38,10 @@ fun HouseholdsScreen(
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        TextButton(onClick = onOpenSettings) {
+            Text("Settings")
+        }
+
         Text(text = "Your households")
 
         if (state.loading) {

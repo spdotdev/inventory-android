@@ -3,14 +3,15 @@ package dev.scuttle.inventory
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -20,16 +21,27 @@ import dev.scuttle.inventory.ui.households.HouseholdsScreen
 import dev.scuttle.inventory.ui.invite.InviteScreen
 import dev.scuttle.inventory.ui.products.ProductsScreen
 import dev.scuttle.inventory.ui.search.SearchScreen
+import dev.scuttle.inventory.ui.settings.SettingsScreen
+import dev.scuttle.inventory.ui.settings.ThemeViewModel
 import dev.scuttle.inventory.ui.shelves.ShelvesScreen
 import dev.scuttle.inventory.ui.storage.StorageOverviewScreen
 import dev.scuttle.inventory.ui.theme.InventoryTheme
+import dev.scuttle.inventory.ui.theme.ThemeMode
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            InventoryTheme {
+            val themeViewModel: ThemeViewModel = hiltViewModel()
+            val mode by themeViewModel.mode.collectAsState()
+            val dark = when (mode) {
+                ThemeMode.SYSTEM -> isSystemInDarkTheme()
+                ThemeMode.LIGHT -> false
+                ThemeMode.DARK -> true
+            }
+
+            InventoryTheme(darkTheme = dark) {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     Root()
                 }
@@ -47,10 +59,26 @@ private fun Root(authViewModel: AuthViewModel = hiltViewModel()) {
     var openShelfId: Long? by rememberSaveable { mutableStateOf(null) }
     var showSearch: Boolean by rememberSaveable { mutableStateOf(false) }
     var showInvite: Boolean by rememberSaveable { mutableStateOf(false) }
+    var showSettings: Boolean by rememberSaveable { mutableStateOf(false) }
 
     when {
         !authState.authenticated -> AuthScreen(viewModel = authViewModel)
-        openHouseholdId == null -> HouseholdsScreen(onOpenHousehold = { openHouseholdId = it })
+        showSettings -> SettingsScreen(
+            onBack = { showSettings = false },
+            onSignOut = {
+                authViewModel.signOut()
+                openHouseholdId = null
+                openLocationId = null
+                openShelfId = null
+                showSearch = false
+                showInvite = false
+                showSettings = false
+            },
+        )
+        openHouseholdId == null -> HouseholdsScreen(
+            onOpenHousehold = { openHouseholdId = it },
+            onOpenSettings = { showSettings = true },
+        )
         showSearch -> SearchScreen(
             householdId = openHouseholdId!!,
             onBack = { showSearch = false },

@@ -1,6 +1,8 @@
 package dev.scuttle.inventory.di
 
 import android.content.Context
+import dev.scuttle.inventory.data.settings.SharedPrefsThemeModeStore
+import dev.scuttle.inventory.data.settings.ThemeModeStore
 import dev.scuttle.inventory.data.storage.EncryptedTokenStore
 import dev.scuttle.inventory.data.storage.TokenStore
 import dagger.Module
@@ -18,4 +20,9 @@ object StorageModule {
     @Singleton
     fun provideTokenStore(@ApplicationContext context: Context): TokenStore =
         EncryptedTokenStore(context)
+
+    @Provides
+    @Singleton
+    fun provideThemeModeStore(@ApplicationContext context: Context): ThemeModeStore =
+        SharedPrefsThemeModeStore(context)
 }

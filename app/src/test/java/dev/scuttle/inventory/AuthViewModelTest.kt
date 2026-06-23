@@ -62,4 +62,17 @@ class AuthViewModelTest {
         assertFalse(state.authenticated)
         assertEquals("Invalid credentials.", state.error)
     }
+
+    @Test
+    fun sign_out_clears_authentication() = runTest {
+        val viewModel = AuthViewModel(FakeAuthRepository(succeed = true))
+        viewModel.onEmailChange("stan@example.test")
+        viewModel.onPasswordChange("secret-password")
+        viewModel.submit()
+        assertTrue(viewModel.state.value.authenticated)
+
+        viewModel.signOut()
+
+        assertFalse(viewModel.state.value.authenticated)
+    }
 }

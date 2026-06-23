@@ -41,6 +41,13 @@ class AuthViewModel @Inject constructor(
         it.copy(mode = if (it.mode == AuthMode.LOGIN) AuthMode.REGISTER else AuthMode.LOGIN, error = null)
     }
 
+    fun signOut() {
+        viewModelScope.launch {
+            runCatching { repository.logout() }
+            _state.value = AuthUiState()
+        }
+    }
+
     fun submit() {
         val current = _state.value
         viewModelScope.launch {
