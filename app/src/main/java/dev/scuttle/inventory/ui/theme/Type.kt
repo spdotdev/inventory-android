@@ -1,6 +1,7 @@
 package dev.scuttle.inventory.ui.theme
 
 import androidx.compose.material3.Typography
+import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontVariation
@@ -8,6 +9,7 @@ import androidx.compose.ui.text.font.FontWeight
 import dev.scuttle.inventory.R
 
 // Plus Jakarta Sans ships as a variable font; pin each weight via FontVariation.
+@OptIn(ExperimentalTextApi::class)
 private fun jakarta(weight: Int) = Font(
     resId = R.font.plus_jakarta_sans,
     weight = FontWeight(weight),
