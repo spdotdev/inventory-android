@@ -33,6 +33,7 @@ fun StorageOverviewScreen(
     modifier: Modifier = Modifier,
     onBack: () -> Unit = {},
     onOpenLocation: (Long) -> Unit = {},
+    onOpenSearch: () -> Unit = {},
     viewModel: StorageOverviewViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -53,6 +54,10 @@ fun StorageOverviewScreen(
         }
 
         Text(text = "Storage")
+
+        TextButton(onClick = onOpenSearch) {
+            Text("Search products")
+        }
 
         if (state.loading) {
             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())

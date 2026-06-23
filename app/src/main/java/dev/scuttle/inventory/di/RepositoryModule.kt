@@ -8,6 +8,8 @@ import dev.scuttle.inventory.data.location.LocationRepository
 import dev.scuttle.inventory.data.location.LocationRepositoryImpl
 import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.data.product.ProductRepositoryImpl
+import dev.scuttle.inventory.data.search.SearchRepository
+import dev.scuttle.inventory.data.search.SearchRepositoryImpl
 import dev.scuttle.inventory.data.shelf.ShelfRepository
 import dev.scuttle.inventory.data.shelf.ShelfRepositoryImpl
 import dagger.Binds
@@ -39,4 +41,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindProductRepository(impl: ProductRepositoryImpl): ProductRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSearchRepository(impl: SearchRepositoryImpl): SearchRepository
 }
