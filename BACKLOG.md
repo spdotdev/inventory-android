@@ -36,6 +36,12 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-06-23` — **Products screen + stock steppers.** `ProductApi` (list/create/add/remove/
+  move) + DTOs, `ProductRepository`(+impl) Hilt-bound, `ProductsViewModel` (load + create +
+  increment/decrement updating quantity in place), `ProductsScreen` (Compose: per-product +/-
+  steppers + create). Shelves tap through; nav now household → location → shelves → products
+  (with back at each level). `move()` is implemented in the data layer; its shelf-picker UI is
+  a follow-up. `ProductsViewModelTest` (load/increment/decrement/create/error). CI green.
 - ✅ `2026-06-23` — **Shelves screen.** Location-scoped `ShelfApi` + DTOs, `ShelfRepository`
   (+impl) Hilt-bound, `ShelvesViewModel` (`load(householdId, locationId)` + create),
   `ShelvesScreen` (Compose: list + add). Storage-overview location cards tap through; nav
