@@ -1,0 +1,59 @@
+name: CI
+
+# Style + lint + unit tests for the Android client.
+#
+# DORMANT UNTIL CODE LANDS: triggers are scoped to Gradle/Kotlin project paths
+# (not this workflow file), so the planning-only repo never runs a red build.
+# The first skeleton commit (build.gradle + sources) activates it.
+#
+# NOTE: align the Gradle task names below with whatever the scaffold defines
+# (ktlint/spotless, lint variant, unit-test variant) when the project lands.
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '**/*.kt'
+      - '**/*.kts'
+      - '**/build.gradle*'
+      - 'settings.gradle*'
+      - 'gradle/**'
+      - 'gradlew'
+      - 'gradle.properties'
+  pull_request:
+    paths:
+      - '**/*.kt'
+      - '**/*.kts'
+      - '**/build.gradle*'
+      - 'settings.gradle*'
+      - 'gradle/**'
+      - 'gradlew'
+      - 'gradle.properties'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Style check
+        run: ./gradlew ktlintCheck --continue
+
+      - name: Android lint
+        run: ./gradlew lint
+
+      - name: Unit tests
+        run: ./gradlew testDebugUnitTest

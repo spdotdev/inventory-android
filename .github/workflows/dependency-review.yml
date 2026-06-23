@@ -1,0 +1,20 @@
+name: Dependency review
+
+# Flags dependency changes that introduce known-vulnerable Gradle/Maven
+# artifacts on a PR. GitHub-native; needs a base ref to diff, so PR-only.
+# No-op until the Gradle project declares dependencies.
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
