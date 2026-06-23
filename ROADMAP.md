@@ -29,16 +29,24 @@ Detailed build order: [`CLAUDE.md`](CLAUDE.md) and [`docs/android-plan.md`](docs
 
 ## Active TODOs
 
-### FOUNDATION
-- [ ] **Scaffold the Android project** — single-activity Compose, Hilt, Retrofit/OkHttp,
-  Kotlinx Serialization/Moshi; no Room (always-online). Base URL build-config driven.
-- [ ] **Frost theme** — implement the committed design tokens from
-  [`docs/design/`](docs/design) (accent `#7dd3fc`; dark `#0c1822`/`#10212e`,
-  light `#cfe4f6`/`#dfeefb`; Plus Jakarta Sans + Space Mono); full light/dark with in-app toggle.
+> Compose project skeleton + Frost theme shipped and CI-green 2026-06-23 — see
+> [`BACKLOG.md`](BACKLOG.md) → Done. Next: DI + networking, then the auth screen.
+
+### FOUNDATION (next)
+- [ ] **DI + networking** — add Hilt, Retrofit/OkHttp, Kotlinx Serialization; build-config
+  driven base URL (`https://inventory.{domain}/api/v1`); OkHttp auth interceptor +
+  secure token storage. No Room (always-online). (Adds `ktlint` + Hilt's KSP at the same time.)
+- [ ] **Auth screen** — email/password + Google sign-in → store Sanctum token (per
+  `inventory-docs/specs/api-contract.md`).
+
+### SCREENS
+- [ ] Household list/switcher → storage overview → shelves (tabs/swipe) → products; search;
+  invite (code/link/QR); settings (theme/account). Frost styling per `docs/design/`.
+- [ ] **Plus Jakarta Sans / Space Mono** fonts + full in-app light/dark toggle (skeleton uses
+  system dark/light + default type).
 
 ### QUALITY
-- [ ] **Stand up CI against real code** — the dormant workflows (ci, release-on-tag,
-  secret-scan, dependency-review) activate when the Gradle project lands; align task names
-  (`testDebugUnitTest`, lint, style) with the scaffold and confirm green. Wire the pre-push hook.
+- [x] **CI live and green** — wrapper validation + `testDebugUnitTest` + lint pass on the
+  skeleton. ktlint/detekt style gating to be added with the DI/networking pass.
 - [ ] **Tag-driven release build** — confirm `release.yml` builds APK + AAB on `v*` tags;
   add the signing keystore as a repo secret before any Play Store upload.

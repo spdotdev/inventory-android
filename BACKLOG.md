@@ -36,4 +36,9 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
-_Nothing shipped yet — repo is at planning stage. Design mocks committed under `docs/design/`._
+- ✅ `2026-06-23` — **Compose project skeleton + Frost theme.** Single-activity Jetpack
+  Compose app: Gradle 8.9 (wrapper from the official release tag, validated in CI), AGP 8.5.2,
+  Kotlin 2.0.20, compose-bom 2024.09.03, compileSdk 34 / minSdk 26. `MainActivity` +
+  `InventoryTheme` (Frost Color/Theme/Type from the design tokens), `ExampleUnitTest`, lint
+  non-fatal at skeleton stage. CI (wrapper validation + `testDebugUnitTest` + lint) green.
+  Hilt/Retrofit/ktlint + screens deferred to the next pass. Design mocks under `docs/design/`.
