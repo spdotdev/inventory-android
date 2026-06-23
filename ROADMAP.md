@@ -40,7 +40,9 @@ Detailed build order: [`CLAUDE.md`](CLAUDE.md) and [`docs/android-plan.md`](docs
   (shipped 2026-06-23, CI-green). Tab-strip + swipe-pager presentation is a later refinement.
 - [x] **Products** — per-shelf list + create + add/remove steppers (shipped 2026-06-23,
   CI-green). `move()` is in the data layer; its shelf-picker UI is a follow-up.
-- [ ] **Search** (location › shelf path), **invite** (code/link/QR), **settings** (theme/account).
+- [x] **Search** — global product search with the location › shelf path (shipped 2026-06-23,
+  CI-green); reachable from the storage overview.
+- [ ] **Invite** (code/link/QR) and **settings** (theme/account).
   Pattern per screen: repository + Retrofit API + ViewModel + Compose UI, JVM unit-tested via fakes.
 - [ ] **Navigation + active-household** — proper nav (e.g. Navigation-Compose) and an active
   household selection feeding the household-scoped screens (currently a flat list post-auth).

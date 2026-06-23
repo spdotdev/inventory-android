@@ -36,6 +36,11 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-06-23` — **Search screen.** `SearchApi` (`households/{household}/search?q=`) + DTO
+  with the `location › shelf` path, `SearchRepository`(+impl) Hilt-bound, `SearchViewModel`
+  (`setHousehold` + query-driven search, blank clears results), `SearchScreen` (Compose: query
+  field + result cards: name / path / qty). Reachable from the storage overview via a Search
+  button. `SearchViewModelTest` (match / blank / error). CI green.
 - ✅ `2026-06-23` — **Products screen + stock steppers.** `ProductApi` (list/create/add/remove/
   move) + DTOs, `ProductRepository`(+impl) Hilt-bound, `ProductsViewModel` (load + create +
   increment/decrement updating quantity in place), `ProductsScreen` (Compose: per-product +/-
