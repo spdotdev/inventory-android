@@ -5,7 +5,7 @@ ROOT := $(shell git rev-parse --show-toplevel)
 help:
 	@echo "make install-hooks  Install the pre-push hook (run once after clone)"
 	@echo "make test           Run unit tests"
-	@echo "make style          Run ktlint style check"
+	@echo "make lint           Run Android lint"
 
 # Symlinks the committed pre-push hook into .git/hooks/. Idempotent.
 install-hooks:
@@ -16,5 +16,5 @@ install-hooks:
 test:
 	@./gradlew testDebugUnitTest
 
-style:
-	@./gradlew ktlintCheck
+lint:
+	@./gradlew lint

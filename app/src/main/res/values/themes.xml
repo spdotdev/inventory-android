@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Pre-Compose launch theme; the real theming is done in Compose (InventoryTheme).
+         Uses a framework parent to avoid pulling in the Material Components XML library. -->
+    <style name="Theme.Inventory" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>

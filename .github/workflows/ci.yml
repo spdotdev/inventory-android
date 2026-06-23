@@ -1,18 +1,16 @@
 name: CI
 
-# Style + lint + unit tests for the Android client.
+# Compile + lint + unit tests for the Android client.
 #
-# DORMANT UNTIL CODE LANDS: triggers are scoped to Gradle/Kotlin project paths
-# (not this workflow file), so the planning-only repo never runs a red build.
-# The first skeleton commit (build.gradle + sources) activates it.
-#
-# NOTE: align the Gradle task names below with whatever the scaffold defines
-# (ktlint/spotless, lint variant, unit-test variant) when the project lands.
+# Activated now that the Gradle project exists. ktlint/detekt style gating will
+# be added in a later pass; for now CI gates on a clean compile + unit tests,
+# with Android lint reported but non-fatal (see app/build.gradle.kts).
 
 on:
   push:
     branches: [ main ]
     paths:
+      - 'app/**'
       - '**/*.kt'
       - '**/*.kts'
       - '**/build.gradle*'
@@ -22,6 +20,7 @@ on:
       - 'gradle.properties'
   pull_request:
     paths:
+      - 'app/**'
       - '**/*.kt'
       - '**/*.kts'
       - '**/build.gradle*'
@@ -40,6 +39,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Verify the committed gradle-wrapper.jar matches a known-good Gradle
+      # release checksum (it was fetched from Gradle's official release tag).
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
       - name: Setup JDK
         uses: actions/setup-java@v4
         with:
@@ -49,11 +53,8 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Style check
-        run: ./gradlew ktlintCheck --continue
+      - name: Unit tests
+        run: ./gradlew testDebugUnitTest
 
       - name: Android lint
         run: ./gradlew lint
-
-      - name: Unit tests
-        run: ./gradlew testDebugUnitTest
