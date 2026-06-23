@@ -36,6 +36,10 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-06-23` — **Invite screen.** `InviteApi` (`households/{household}/invite` → `{code, link}`)
+  + DTO, `InviteRepository`(+impl) Hilt-bound, `InviteViewModel` (load), `InviteScreen` (Compose:
+  join code, QR rendered from the link via `zxing-core`, copy-link to clipboard). Reachable from
+  the storage overview via an Invite button. `InviteViewModelTest` (load/error). CI green.
 - ✅ `2026-06-23` — **Search screen.** `SearchApi` (`households/{household}/search?q=`) + DTO
   with the `location › shelf` path, `SearchRepository`(+impl) Hilt-bound, `SearchViewModel`
   (`setHousehold` + query-driven search, blank clears results), `SearchScreen` (Compose: query

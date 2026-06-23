@@ -42,7 +42,8 @@ Detailed build order: [`CLAUDE.md`](CLAUDE.md) and [`docs/android-plan.md`](docs
   CI-green). `move()` is in the data layer; its shelf-picker UI is a follow-up.
 - [x] **Search** — global product search with the location › shelf path (shipped 2026-06-23,
   CI-green); reachable from the storage overview.
-- [ ] **Invite** (code/link/QR) and **settings** (theme/account).
+- [x] **Invite** — join code + shareable link + QR (shipped 2026-06-23, CI-green).
+- [ ] **Settings** — theme (System/Light/Dark), household management, account / sign out.
   Pattern per screen: repository + Retrofit API + ViewModel + Compose UI, JVM unit-tested via fakes.
 - [ ] **Navigation + active-household** — proper nav (e.g. Navigation-Compose) and an active
   household selection feeding the household-scoped screens (currently a flat list post-auth).
