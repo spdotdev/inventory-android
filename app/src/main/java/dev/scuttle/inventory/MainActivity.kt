@@ -7,13 +7,16 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import dagger.hilt.android.AndroidEntryPoint
 import dev.scuttle.inventory.ui.auth.AuthScreen
 import dev.scuttle.inventory.ui.auth.AuthViewModel
@@ -33,6 +36,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            // Activity-scoped: applied here AND mutated by SettingsScreen (passed down).
             val themeViewModel: ThemeViewModel = hiltViewModel()
             val mode by themeViewModel.mode.collectAsState()
             val dark = when (mode) {
@@ -43,67 +47,128 @@ class MainActivity : ComponentActivity() {
 
             InventoryTheme(darkTheme = dark) {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    Root()
+                    InventoryNavHost(themeViewModel = themeViewModel)
                 }
             }
         }
     }
 }
 
-// Minimal state-based navigation until Navigation-Compose lands (see ROADMAP).
-@Composable
-private fun Root(authViewModel: AuthViewModel = hiltViewModel()) {
-    val authState by authViewModel.state.collectAsState()
-    var openHouseholdId: Long? by rememberSaveable { mutableStateOf(null) }
-    var openLocationId: Long? by rememberSaveable { mutableStateOf(null) }
-    var openShelfId: Long? by rememberSaveable { mutableStateOf(null) }
-    var showSearch: Boolean by rememberSaveable { mutableStateOf(false) }
-    var showInvite: Boolean by rememberSaveable { mutableStateOf(false) }
-    var showSettings: Boolean by rememberSaveable { mutableStateOf(false) }
+private object Routes {
+    const val AUTH = "auth"
+    const val HOUSEHOLDS = "households"
+    const val SETTINGS = "settings"
+    const val STORAGE = "storage/{householdId}"
+    const val SEARCH = "search/{householdId}"
+    const val INVITE = "invite/{householdId}"
+    const val SHELVES = "shelves/{householdId}/{locationId}"
+    const val PRODUCTS = "products/{householdId}/{shelfId}"
 
-    when {
-        !authState.authenticated -> AuthScreen(viewModel = authViewModel)
-        showSettings -> SettingsScreen(
-            onBack = { showSettings = false },
-            onSignOut = {
-                authViewModel.signOut()
-                openHouseholdId = null
-                openLocationId = null
-                openShelfId = null
-                showSearch = false
-                showInvite = false
-                showSettings = false
-            },
-        )
-        openHouseholdId == null -> HouseholdsScreen(
-            onOpenHousehold = { openHouseholdId = it },
-            onOpenSettings = { showSettings = true },
-        )
-        showSearch -> SearchScreen(
-            householdId = openHouseholdId!!,
-            onBack = { showSearch = false },
-        )
-        showInvite -> InviteScreen(
-            householdId = openHouseholdId!!,
-            onBack = { showInvite = false },
-        )
-        openLocationId == null -> StorageOverviewScreen(
-            householdId = openHouseholdId!!,
-            onBack = { openHouseholdId = null },
-            onOpenLocation = { openLocationId = it },
-            onOpenSearch = { showSearch = true },
-            onOpenInvite = { showInvite = true },
-        )
-        openShelfId == null -> ShelvesScreen(
-            householdId = openHouseholdId!!,
-            locationId = openLocationId!!,
-            onBack = { openLocationId = null },
-            onOpenShelf = { openShelfId = it },
-        )
-        else -> ProductsScreen(
-            householdId = openHouseholdId!!,
-            shelfId = openShelfId!!,
-            onBack = { openShelfId = null },
-        )
+    fun storage(householdId: Long) = "storage/$householdId"
+    fun search(householdId: Long) = "search/$householdId"
+    fun invite(householdId: Long) = "invite/$householdId"
+    fun shelves(householdId: Long, locationId: Long) = "shelves/$householdId/$locationId"
+    fun products(householdId: Long, shelfId: Long) = "products/$householdId/$shelfId"
+}
+
+@Composable
+private fun InventoryNavHost(
+    themeViewModel: ThemeViewModel,
+    authViewModel: AuthViewModel = hiltViewModel(),
+) {
+    val navController = rememberNavController()
+    val authState by authViewModel.state.collectAsState()
+
+    // Redirect on auth transitions, clearing the back stack each way.
+    LaunchedEffect(authState.authenticated) {
+        val target = if (authState.authenticated) Routes.HOUSEHOLDS else Routes.AUTH
+        navController.navigate(target) {
+            popUpTo(navController.graph.id) { inclusive = true }
+            launchSingleTop = true
+        }
+    }
+
+    NavHost(navController = navController, startDestination = Routes.AUTH) {
+        composable(Routes.AUTH) {
+            AuthScreen(viewModel = authViewModel)
+        }
+
+        composable(Routes.HOUSEHOLDS) {
+            HouseholdsScreen(
+                onOpenHousehold = { navController.navigate(Routes.storage(it)) },
+                onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+            )
+        }
+
+        composable(Routes.SETTINGS) {
+            SettingsScreen(
+                onBack = { navController.popBackStack() },
+                onSignOut = { authViewModel.signOut() },
+                themeViewModel = themeViewModel,
+            )
+        }
+
+        composable(
+            route = Routes.STORAGE,
+            arguments = listOf(navArgument("householdId") { type = NavType.LongType }),
+        ) { entry ->
+            val householdId = entry.arguments?.getLong("householdId") ?: return@composable
+            StorageOverviewScreen(
+                householdId = householdId,
+                onBack = { navController.popBackStack() },
+                onOpenLocation = { navController.navigate(Routes.shelves(householdId, it)) },
+                onOpenSearch = { navController.navigate(Routes.search(householdId)) },
+                onOpenInvite = { navController.navigate(Routes.invite(householdId)) },
+            )
+        }
+
+        composable(
+            route = Routes.SEARCH,
+            arguments = listOf(navArgument("householdId") { type = NavType.LongType }),
+        ) { entry ->
+            val householdId = entry.arguments?.getLong("householdId") ?: return@composable
+            SearchScreen(householdId = householdId, onBack = { navController.popBackStack() })
+        }
+
+        composable(
+            route = Routes.INVITE,
+            arguments = listOf(navArgument("householdId") { type = NavType.LongType }),
+        ) { entry ->
+            val householdId = entry.arguments?.getLong("householdId") ?: return@composable
+            InviteScreen(householdId = householdId, onBack = { navController.popBackStack() })
+        }
+
+        composable(
+            route = Routes.SHELVES,
+            arguments = listOf(
+                navArgument("householdId") { type = NavType.LongType },
+                navArgument("locationId") { type = NavType.LongType },
+            ),
+        ) { entry ->
+            val householdId = entry.arguments?.getLong("householdId") ?: return@composable
+            val locationId = entry.arguments?.getLong("locationId") ?: return@composable
+            ShelvesScreen(
+                householdId = householdId,
+                locationId = locationId,
+                onBack = { navController.popBackStack() },
+                onOpenShelf = { navController.navigate(Routes.products(householdId, it)) },
+            )
+        }
+
+        composable(
+            route = Routes.PRODUCTS,
+            arguments = listOf(
+                navArgument("householdId") { type = NavType.LongType },
+                navArgument("shelfId") { type = NavType.LongType },
+            ),
+        ) { entry ->
+            val householdId = entry.arguments?.getLong("householdId") ?: return@composable
+            val shelfId = entry.arguments?.getLong("shelfId") ?: return@composable
+            ProductsScreen(
+                householdId = householdId,
+                shelfId = shelfId,
+                onBack = { navController.popBackStack() },
+            )
+        }
     }
 }
