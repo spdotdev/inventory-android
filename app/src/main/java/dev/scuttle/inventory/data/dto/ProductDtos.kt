@@ -1,0 +1,37 @@
+package dev.scuttle.inventory.data.dto
+
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class ProductDto(
+    val id: Long,
+    val name: String,
+    val quantity: Int,
+    val shelf_id: Long,
+)
+
+@Serializable
+data class ProductListResponse(
+    val data: List<ProductDto>,
+)
+
+@Serializable
+data class ProductResponse(
+    val data: ProductDto,
+)
+
+@Serializable
+data class CreateProductRequest(
+    val name: String,
+    val quantity: Int,
+)
+
+@Serializable
+data class AmountRequest(
+    val amount: Int,
+)
+
+@Serializable
+data class MoveProductRequest(
+    val shelf_id: Long,
+)

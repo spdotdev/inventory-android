@@ -5,6 +5,7 @@ import dev.scuttle.inventory.data.api.AuthApi
 import dev.scuttle.inventory.data.api.AuthInterceptor
 import dev.scuttle.inventory.data.api.HouseholdApi
 import dev.scuttle.inventory.data.api.LocationApi
+import dev.scuttle.inventory.data.api.ProductApi
 import dev.scuttle.inventory.data.api.ShelfApi
 import dev.scuttle.inventory.data.storage.TokenStore
 import dagger.Module
@@ -63,4 +64,8 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideShelfApi(retrofit: Retrofit): ShelfApi = retrofit.create(ShelfApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideProductApi(retrofit: Retrofit): ProductApi = retrofit.create(ProductApi::class.java)
 }

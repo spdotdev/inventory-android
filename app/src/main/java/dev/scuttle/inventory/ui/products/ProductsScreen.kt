@@ -1,6 +1,5 @@
-package dev.scuttle.inventory.ui.shelves
+package dev.scuttle.inventory.ui.products
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,6 +11,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -19,23 +19,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
-fun ShelvesScreen(
+fun ProductsScreen(
     householdId: Long,
-    locationId: Long,
+    shelfId: Long,
     modifier: Modifier = Modifier,
     onBack: () -> Unit = {},
-    onOpenShelf: (Long) -> Unit = {},
-    viewModel: ShelvesViewModel = hiltViewModel(),
+    viewModel: ProductsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
 
-    LaunchedEffect(householdId, locationId) {
-        viewModel.load(householdId, locationId)
+    LaunchedEffect(householdId, shelfId) {
+        viewModel.load(householdId, shelfId)
     }
 
     Column(
@@ -46,10 +46,10 @@ fun ShelvesScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         TextButton(onClick = onBack) {
-            Text("← Storage")
+            Text("← Shelves")
         }
 
-        Text(text = "Shelves")
+        Text(text = "Products")
 
         if (state.loading) {
             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
@@ -57,17 +57,28 @@ fun ShelvesScreen(
 
         state.error?.let { Text(text = it) }
 
-        if (state.shelves.isEmpty() && !state.loading) {
-            Text(text = "No shelves yet. Add one below.")
+        if (state.products.isEmpty() && !state.loading) {
+            Text(text = "No products on this shelf yet. Add one below.")
         }
 
-        state.shelves.forEach { shelf ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onOpenShelf(shelf.id) },
-            ) {
-                Text(text = shelf.name, modifier = Modifier.padding(16.dp))
+        state.products.forEach { product ->
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text(text = product.name, modifier = Modifier.weight(1f))
+                    OutlinedButton(onClick = { viewModel.decrement(product.id) }, enabled = !state.loading) {
+                        Text("−")
+                    }
+                    Text(text = product.quantity.toString())
+                    OutlinedButton(onClick = { viewModel.increment(product.id) }, enabled = !state.loading) {
+                        Text("+")
+                    }
+                }
             }
         }
 
@@ -78,7 +89,7 @@ fun ShelvesScreen(
             OutlinedTextField(
                 value = state.newName,
                 onValueChange = viewModel::onNewNameChange,
-                label = { Text("New shelf") },
+                label = { Text("New product") },
                 singleLine = true,
                 modifier = Modifier.weight(1f),
             )
