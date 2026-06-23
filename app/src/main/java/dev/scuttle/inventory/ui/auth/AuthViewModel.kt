@@ -51,10 +51,10 @@ class AuthViewModel @Inject constructor(
                     AuthMode.REGISTER -> repository.register(current.name.trim(), current.email.trim(), current.password)
                 }
             }
-            _state.update {
+            _state.update { state ->
                 result.fold(
-                    onSuccess = { it.copy(loading = false, authenticated = true) },
-                    onFailure = { error -> it.copy(loading = false, error = error.message ?: "Authentication failed.") },
+                    onSuccess = { state.copy(loading = false, authenticated = true) },
+                    onFailure = { error -> state.copy(loading = false, error = error.message ?: "Authentication failed.") },
                 )
             }
         }
