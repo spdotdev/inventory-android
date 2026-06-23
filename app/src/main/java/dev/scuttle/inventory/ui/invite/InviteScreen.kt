@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
+import dev.scuttle.inventory.ui.theme.SpaceMono
 
 @Composable
 fun InviteScreen(
@@ -61,7 +62,7 @@ fun InviteScreen(
 
         if (state.code.isNotEmpty()) {
             Text(text = "Join code")
-            Text(text = state.code)
+            Text(text = state.code, fontFamily = SpaceMono)
 
             val qr = remember(state.link) { qrBitmap(state.link) }
             if (qr != null) {
