@@ -36,6 +36,15 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-06-23` — **DI + networking + email/password auth.** Hilt (KSP) wired
+  (`InventoryApp`, `MainActivity` `@AndroidEntryPoint`, Network/Storage/Repository modules);
+  Retrofit + OkHttp + Kotlinx Serialization (Square `converter-kotlinx-serialization:2.11.0`),
+  build-config `BASE_URL`; `AuthApi` + DTOs; `AuthInterceptor` injects the bearer token;
+  `EncryptedTokenStore` (Keystore-wrapped). `AuthRepository` + `AuthViewModel` (login/register
+  state machine) + `AuthScreen` (Compose). Google button stubbed — `loginWithGoogle` path
+  ready, native sign-in deferred (needs a client ID). `AuthViewModelTest` (success/failure)
+  with a fake repo + `MainDispatcherRule`. CI green (took 1 fix: converter artifact + a
+  `result.fold` `it`-shadowing bug). ktlint still deferred.
 - ✅ `2026-06-23` — **Compose project skeleton + Frost theme.** Single-activity Jetpack
   Compose app: Gradle 8.9 (wrapper from the official release tag, validated in CI), AGP 8.5.2,
   Kotlin 2.0.20, compose-bom 2024.09.03, compileSdk 34 / minSdk 26. `MainActivity` +

@@ -29,24 +29,24 @@ Detailed build order: [`CLAUDE.md`](CLAUDE.md) and [`docs/android-plan.md`](docs
 
 ## Active TODOs
 
-> Compose project skeleton + Frost theme shipped and CI-green 2026-06-23 — see
-> [`BACKLOG.md`](BACKLOG.md) → Done. Next: DI + networking, then the auth screen.
+> Skeleton + Frost theme + DI/networking + email/password auth all shipped and CI-green
+> 2026-06-23 — see [`BACKLOG.md`](BACKLOG.md) → Done. Next: the inventory screens.
 
-### FOUNDATION (next)
-- [ ] **DI + networking** — add Hilt, Retrofit/OkHttp, Kotlinx Serialization; build-config
-  driven base URL (`https://inventory.{domain}/api/v1`); OkHttp auth interceptor +
-  secure token storage. No Room (always-online). (Adds `ktlint` + Hilt's KSP at the same time.)
-- [ ] **Auth screen** — email/password + Google sign-in → store Sanctum token (per
-  `inventory-docs/specs/api-contract.md`).
-
-### SCREENS
+### SCREENS (next)
 - [ ] Household list/switcher → storage overview → shelves (tabs/swipe) → products; search;
   invite (code/link/QR); settings (theme/account). Frost styling per `docs/design/`.
-- [ ] **Plus Jakarta Sans / Space Mono** fonts + full in-app light/dark toggle (skeleton uses
-  system dark/light + default type).
+  Each screen: repository + Retrofit API + ViewModel + Compose UI, JVM unit-tested via fakes.
+- [ ] **Plus Jakarta Sans / Space Mono** fonts + full in-app light/dark toggle (currently
+  follows system dark/light + default type).
+
+### DEFERRED (need a decision or external dependency)
+- [ ] **Native Google Sign-In** — wire Credential Manager → Google ID token →
+  `AuthRepository.loginWithGoogle` (the API path + button are in place). Needs a real Google
+  OAuth client ID configured.
+- [ ] **ktlint/detekt** style gating in CI — its own pass (kept out of the auth pass to
+  avoid blind style churn while the codebase is moving fast).
 
 ### QUALITY
-- [x] **CI live and green** — wrapper validation + `testDebugUnitTest` + lint pass on the
-  skeleton. ktlint/detekt style gating to be added with the DI/networking pass.
+- [x] **CI live and green** — wrapper validation + `testDebugUnitTest` + lint pass.
 - [ ] **Tag-driven release build** — confirm `release.yml` builds APK + AAB on `v*` tags;
   add the signing keystore as a repo secret before any Play Store upload.
