@@ -1,8 +1,8 @@
-package dev.scuttle.inventory.ui.households
+package dev.scuttle.inventory.ui.storage
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,10 +11,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -22,12 +25,17 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
-fun HouseholdsScreen(
+fun StorageOverviewScreen(
+    householdId: Long,
     modifier: Modifier = Modifier,
-    onOpenHousehold: (Long) -> Unit = {},
-    viewModel: HouseholdsViewModel = hiltViewModel(),
+    onBack: () -> Unit = {},
+    viewModel: StorageOverviewViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+
+    LaunchedEffect(householdId) {
+        viewModel.load(householdId)
+    }
 
     Column(
         modifier = modifier
@@ -36,7 +44,11 @@ fun HouseholdsScreen(
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text(text = "Your households")
+        TextButton(onClick = onBack) {
+            Text("← Households")
+        }
+
+        Text(text = "Storage")
 
         if (state.loading) {
             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
@@ -44,20 +56,28 @@ fun HouseholdsScreen(
 
         state.error?.let { Text(text = it) }
 
-        if (state.households.isEmpty() && !state.loading) {
-            Text(text = "No households yet. Create one or join with a code.")
+        if (state.locations.isEmpty() && !state.loading) {
+            Text(text = "No storage locations yet. Add a freezer, fridge or pantry below.")
         }
 
-        state.households.forEach { household ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onOpenHousehold(household.id) },
-            ) {
+        state.locations.forEach { location ->
+            Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text(text = household.name)
-                    Text(text = "Code: ${household.join_code}")
+                    Text(text = location.name)
+                    Text(text = location.type)
                 }
+            }
+        }
+
+        Text(text = "Add storage")
+
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            STORAGE_TYPES.forEach { type ->
+                FilterChip(
+                    selected = state.newType == type,
+                    onClick = { viewModel.onTypeSelect(type) },
+                    label = { Text(type) },
+                )
             }
         }
 
@@ -68,28 +88,12 @@ fun HouseholdsScreen(
             OutlinedTextField(
                 value = state.newName,
                 onValueChange = viewModel::onNewNameChange,
-                label = { Text("New household") },
+                label = { Text("Name") },
                 singleLine = true,
                 modifier = Modifier.weight(1f),
             )
             Button(onClick = viewModel::create, enabled = !state.loading) {
-                Text("Create")
-            }
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            OutlinedTextField(
-                value = state.joinCode,
-                onValueChange = viewModel::onJoinCodeChange,
-                label = { Text("Join code") },
-                singleLine = true,
-                modifier = Modifier.weight(1f),
-            )
-            Button(onClick = viewModel::join, enabled = !state.loading) {
-                Text("Join")
+                Text("Add")
             }
         }
     }

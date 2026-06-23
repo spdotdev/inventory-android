@@ -8,12 +8,16 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import dev.scuttle.inventory.ui.auth.AuthScreen
 import dev.scuttle.inventory.ui.auth.AuthViewModel
 import dev.scuttle.inventory.ui.households.HouseholdsScreen
+import dev.scuttle.inventory.ui.storage.StorageOverviewScreen
 import dev.scuttle.inventory.ui.theme.InventoryTheme
 
 @AndroidEntryPoint
@@ -30,13 +34,18 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+// Minimal state-based navigation until Navigation-Compose lands (see ROADMAP).
 @Composable
-private fun Root(viewModel: AuthViewModel = hiltViewModel()) {
-    val state by viewModel.state.collectAsState()
+private fun Root(authViewModel: AuthViewModel = hiltViewModel()) {
+    val authState by authViewModel.state.collectAsState()
+    var openHouseholdId: Long? by rememberSaveable { mutableStateOf(null) }
 
-    if (state.authenticated) {
-        HouseholdsScreen()
-    } else {
-        AuthScreen(viewModel = viewModel)
+    when {
+        !authState.authenticated -> AuthScreen(viewModel = authViewModel)
+        openHouseholdId == null -> HouseholdsScreen(onOpenHousehold = { openHouseholdId = it })
+        else -> StorageOverviewScreen(
+            householdId = openHouseholdId!!,
+            onBack = { openHouseholdId = null },
+        )
     }
 }
