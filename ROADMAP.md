@@ -34,7 +34,8 @@ Detailed build order: [`CLAUDE.md`](CLAUDE.md) and [`docs/android-plan.md`](docs
 
 ### SCREENS (next)
 - [x] **Households screen** — list / create / join (shipped 2026-06-23, CI-green).
-- [ ] **Storage overview** — a household's locations (type + shelf/item counts); tap → shelves.
+- [x] **Storage overview** — locations list + create (with type), tap-through from households
+  (shipped 2026-06-23, CI-green). Shelf/item counts + tap → shelves come with the shelves screen.
 - [ ] **Shelves** (tab strip + swipe pager) → **products** (add/remove/move).
 - [ ] **Search** (location › shelf path), **invite** (code/link/QR), **settings** (theme/account).
   Pattern per screen: repository + Retrofit API + ViewModel + Compose UI, JVM unit-tested via fakes.

@@ -36,6 +36,12 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-06-23` — **Storage overview screen.** Household-scoped `LocationApi` + DTOs,
+  `LocationRepository`(+impl) Hilt-bound, `StorageOverviewViewModel` (`load(householdId)` +
+  create-with-type), `StorageOverviewScreen` (Compose: list + type FilterChips + add).
+  Households cards tap through via minimal state-based nav in `MainActivity` (with back);
+  full Navigation-Compose deferred. `StorageOverviewViewModelTest` (load/create/error).
+  CI green (took 1 fix: opt-in to ExperimentalLayoutApi for FlowRow).
 - ✅ `2026-06-23` — **Households screen (list / create / join).** `HouseholdApi` + data-envelope
   DTOs, `HouseholdRepository`(+impl) bound via Hilt, `HouseholdsViewModel` (load-on-init +
   create + join state machine), `HouseholdsScreen` (Compose: list + create + join). `MainActivity`
