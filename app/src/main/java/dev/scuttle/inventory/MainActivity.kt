@@ -8,18 +8,24 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import dev.scuttle.inventory.ui.auth.AuthScreen
+import dev.scuttle.inventory.ui.auth.AuthViewModel
 import dev.scuttle.inventory.ui.theme.InventoryTheme
+import androidx.compose.runtime.collectAsState
+import androidx.hilt.navigation.compose.hiltViewModel
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             InventoryTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    Landing()
+                    Root()
                 }
             }
         }
@@ -27,16 +33,15 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun Landing() {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(text = "Inventory")
-    }
-}
+private fun Root(viewModel: AuthViewModel = hiltViewModel()) {
+    val state by viewModel.state.collectAsState()
 
-@Preview
-@Composable
-private fun LandingPreview() {
-    InventoryTheme {
-        Landing()
+    if (state.authenticated) {
+        // Placeholder home until the inventory screens land.
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text(text = "Signed in")
+        }
+    } else {
+        AuthScreen(viewModel = viewModel)
     }
 }
