@@ -34,6 +34,7 @@ fun StorageOverviewScreen(
     onBack: () -> Unit = {},
     onOpenLocation: (Long) -> Unit = {},
     onOpenSearch: () -> Unit = {},
+    onOpenInvite: () -> Unit = {},
     viewModel: StorageOverviewViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -57,6 +58,10 @@ fun StorageOverviewScreen(
 
         TextButton(onClick = onOpenSearch) {
             Text("Search products")
+        }
+
+        TextButton(onClick = onOpenInvite) {
+            Text("Invite members")
         }
 
         if (state.loading) {

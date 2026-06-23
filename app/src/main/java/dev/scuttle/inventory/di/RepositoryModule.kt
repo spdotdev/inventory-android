@@ -4,6 +4,8 @@ import dev.scuttle.inventory.data.auth.AuthRepository
 import dev.scuttle.inventory.data.auth.AuthRepositoryImpl
 import dev.scuttle.inventory.data.household.HouseholdRepository
 import dev.scuttle.inventory.data.household.HouseholdRepositoryImpl
+import dev.scuttle.inventory.data.invite.InviteRepository
+import dev.scuttle.inventory.data.invite.InviteRepositoryImpl
 import dev.scuttle.inventory.data.location.LocationRepository
 import dev.scuttle.inventory.data.location.LocationRepositoryImpl
 import dev.scuttle.inventory.data.product.ProductRepository
@@ -45,4 +47,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindSearchRepository(impl: SearchRepositoryImpl): SearchRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindInviteRepository(impl: InviteRepositoryImpl): InviteRepository
 }

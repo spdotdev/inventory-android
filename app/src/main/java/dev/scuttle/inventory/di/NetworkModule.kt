@@ -4,6 +4,7 @@ import dev.scuttle.inventory.BuildConfig
 import dev.scuttle.inventory.data.api.AuthApi
 import dev.scuttle.inventory.data.api.AuthInterceptor
 import dev.scuttle.inventory.data.api.HouseholdApi
+import dev.scuttle.inventory.data.api.InviteApi
 import dev.scuttle.inventory.data.api.LocationApi
 import dev.scuttle.inventory.data.api.ProductApi
 import dev.scuttle.inventory.data.api.SearchApi
@@ -73,4 +74,8 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideSearchApi(retrofit: Retrofit): SearchApi = retrofit.create(SearchApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideInviteApi(retrofit: Retrofit): InviteApi = retrofit.create(InviteApi::class.java)
 }

@@ -17,6 +17,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import dev.scuttle.inventory.ui.auth.AuthScreen
 import dev.scuttle.inventory.ui.auth.AuthViewModel
 import dev.scuttle.inventory.ui.households.HouseholdsScreen
+import dev.scuttle.inventory.ui.invite.InviteScreen
 import dev.scuttle.inventory.ui.products.ProductsScreen
 import dev.scuttle.inventory.ui.search.SearchScreen
 import dev.scuttle.inventory.ui.shelves.ShelvesScreen
@@ -45,6 +46,7 @@ private fun Root(authViewModel: AuthViewModel = hiltViewModel()) {
     var openLocationId: Long? by rememberSaveable { mutableStateOf(null) }
     var openShelfId: Long? by rememberSaveable { mutableStateOf(null) }
     var showSearch: Boolean by rememberSaveable { mutableStateOf(false) }
+    var showInvite: Boolean by rememberSaveable { mutableStateOf(false) }
 
     when {
         !authState.authenticated -> AuthScreen(viewModel = authViewModel)
@@ -53,11 +55,16 @@ private fun Root(authViewModel: AuthViewModel = hiltViewModel()) {
             householdId = openHouseholdId!!,
             onBack = { showSearch = false },
         )
+        showInvite -> InviteScreen(
+            householdId = openHouseholdId!!,
+            onBack = { showInvite = false },
+        )
         openLocationId == null -> StorageOverviewScreen(
             householdId = openHouseholdId!!,
             onBack = { openHouseholdId = null },
             onOpenLocation = { openLocationId = it },
             onOpenSearch = { showSearch = true },
+            onOpenInvite = { showInvite = true },
         )
         openShelfId == null -> ShelvesScreen(
             householdId = openHouseholdId!!,
