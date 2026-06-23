@@ -54,8 +54,8 @@ Detailed build order: [`CLAUDE.md`](CLAUDE.md) and [`docs/android-plan.md`](docs
   (shipped 2026-06-23, CI-green).
 
 > **App is functionally complete.** What's left is polish + one dependency-gated item.
-- [ ] **Plus Jakarta Sans / Space Mono** fonts + full in-app light/dark toggle (currently
-  follows system dark/light + default type).
+- [x] **Shelves-as-tabs + swipe-pager** location detail (Frost D-020) — shipped 2026-06-24, CI-green.
+- [ ] **Plus Jakarta Sans / Space Mono** fonts (in-app theme toggle already shipped; default type for now).
 
 ### DEFERRED (need a decision or external dependency)
 - [ ] **Native Google Sign-In** — wire Credential Manager → Google ID token →

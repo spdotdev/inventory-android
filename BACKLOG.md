@@ -36,6 +36,12 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-06-24` — **Shelves-as-tabs + swipe-pager (Frost D-020).** Merged the separate
+  shelves/products screens into `LocationDetailScreen`: shelves render as a `ScrollableTabRow`
+  and products in a `HorizontalPager` (one page per shelf; tap a tab or swipe to switch).
+  Product content extracted to a reusable `ProductsPane` (ViewModel keyed per shelf); add-shelf
+  form sits above the tabs. Nav simplified: storage → single `location` route replaces the
+  shelves + products routes. CI green.
 - ✅ `2026-06-23` — **Product move UI.** `ProductsViewModel` now injects Location + Shelf
   repositories to build the household's shelves; `startMove`/`confirmMove`/`cancelMove` drive a
   move flow on `ProductRepository.move`. `ProductsScreen` adds a per-product Move button + an
