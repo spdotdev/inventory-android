@@ -43,7 +43,10 @@ Detailed build order: [`CLAUDE.md`](CLAUDE.md) and [`docs/android-plan.md`](docs
 - [x] **Search** — global product search with the location › shelf path (shipped 2026-06-23,
   CI-green); reachable from the storage overview.
 - [x] **Invite** — join code + shareable link + QR (shipped 2026-06-23, CI-green).
-- [ ] **Settings** — theme (System/Light/Dark), household management, account / sign out.
+- [x] **Settings** — in-app theme toggle (System/Light/Dark, persisted + applied app-wide) +
+  sign out (shipped 2026-06-23, CI-green). Household management in settings is a later add.
+
+> **All core screens shipped.** Remaining is refactor/polish + dependency-gated work.
   Pattern per screen: repository + Retrofit API + ViewModel + Compose UI, JVM unit-tested via fakes.
 - [ ] **Navigation + active-household** — proper nav (e.g. Navigation-Compose) and an active
   household selection feeding the household-scoped screens (currently a flat list post-auth).

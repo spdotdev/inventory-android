@@ -36,6 +36,12 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-06-23` — **Settings screen (theme + sign out).** `ThemeMode` enum + `ThemeModeStore`
+  (SharedPreferences) Hilt-bound; `ThemeViewModel` (activity-scoped) drives an in-app
+  System/Light/Dark toggle applied app-wide in `MainActivity`. `SettingsScreen` (theme chips +
+  sign out). `AuthViewModel.signOut()` clears the token + resets state, and sign-out resets nav
+  to the auth screen. Reachable from the households screen. `ThemeViewModelTest` + AuthViewModel
+  sign-out test. CI green. **All core screens are now shipped.**
 - ✅ `2026-06-23` — **Invite screen.** `InviteApi` (`households/{household}/invite` → `{code, link}`)
   + DTO, `InviteRepository`(+impl) Hilt-bound, `InviteViewModel` (load), `InviteScreen` (Compose:
   join code, QR rendered from the link via `zxing-core`, copy-link to clipboard). Reachable from
