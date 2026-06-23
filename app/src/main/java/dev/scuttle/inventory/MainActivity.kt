@@ -22,11 +22,10 @@ import dev.scuttle.inventory.ui.auth.AuthScreen
 import dev.scuttle.inventory.ui.auth.AuthViewModel
 import dev.scuttle.inventory.ui.households.HouseholdsScreen
 import dev.scuttle.inventory.ui.invite.InviteScreen
-import dev.scuttle.inventory.ui.products.ProductsScreen
+import dev.scuttle.inventory.ui.location.LocationDetailScreen
 import dev.scuttle.inventory.ui.search.SearchScreen
 import dev.scuttle.inventory.ui.settings.SettingsScreen
 import dev.scuttle.inventory.ui.settings.ThemeViewModel
-import dev.scuttle.inventory.ui.shelves.ShelvesScreen
 import dev.scuttle.inventory.ui.storage.StorageOverviewScreen
 import dev.scuttle.inventory.ui.theme.InventoryTheme
 import dev.scuttle.inventory.ui.theme.ThemeMode
@@ -61,14 +60,12 @@ private object Routes {
     const val STORAGE = "storage/{householdId}"
     const val SEARCH = "search/{householdId}"
     const val INVITE = "invite/{householdId}"
-    const val SHELVES = "shelves/{householdId}/{locationId}"
-    const val PRODUCTS = "products/{householdId}/{shelfId}"
+    const val LOCATION = "location/{householdId}/{locationId}"
 
     fun storage(householdId: Long) = "storage/$householdId"
     fun search(householdId: Long) = "search/$householdId"
     fun invite(householdId: Long) = "invite/$householdId"
-    fun shelves(householdId: Long, locationId: Long) = "shelves/$householdId/$locationId"
-    fun products(householdId: Long, shelfId: Long) = "products/$householdId/$shelfId"
+    fun location(householdId: Long, locationId: Long) = "location/$householdId/$locationId"
 }
 
 @Composable
@@ -116,7 +113,7 @@ private fun InventoryNavHost(
             StorageOverviewScreen(
                 householdId = householdId,
                 onBack = { navController.popBackStack() },
-                onOpenLocation = { navController.navigate(Routes.shelves(householdId, it)) },
+                onOpenLocation = { navController.navigate(Routes.location(householdId, it)) },
                 onOpenSearch = { navController.navigate(Routes.search(householdId)) },
                 onOpenInvite = { navController.navigate(Routes.invite(householdId)) },
             )
@@ -139,7 +136,7 @@ private fun InventoryNavHost(
         }
 
         composable(
-            route = Routes.SHELVES,
+            route = Routes.LOCATION,
             arguments = listOf(
                 navArgument("householdId") { type = NavType.LongType },
                 navArgument("locationId") { type = NavType.LongType },
@@ -147,26 +144,9 @@ private fun InventoryNavHost(
         ) { entry ->
             val householdId = entry.arguments?.getLong("householdId") ?: return@composable
             val locationId = entry.arguments?.getLong("locationId") ?: return@composable
-            ShelvesScreen(
+            LocationDetailScreen(
                 householdId = householdId,
                 locationId = locationId,
-                onBack = { navController.popBackStack() },
-                onOpenShelf = { navController.navigate(Routes.products(householdId, it)) },
-            )
-        }
-
-        composable(
-            route = Routes.PRODUCTS,
-            arguments = listOf(
-                navArgument("householdId") { type = NavType.LongType },
-                navArgument("shelfId") { type = NavType.LongType },
-            ),
-        ) { entry ->
-            val householdId = entry.arguments?.getLong("householdId") ?: return@composable
-            val shelfId = entry.arguments?.getLong("shelfId") ?: return@composable
-            ProductsScreen(
-                householdId = householdId,
-                shelfId = shelfId,
                 onBack = { navController.popBackStack() },
             )
         }

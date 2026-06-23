@@ -25,13 +25,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 
+/**
+ * The products for a single shelf, rendered as one page of the location's pager.
+ * Keyed ViewModel so each shelf page keeps its own independent state.
+ */
 @Composable
-fun ProductsScreen(
+fun ProductsPane(
     householdId: Long,
     shelfId: Long,
     modifier: Modifier = Modifier,
-    onBack: () -> Unit = {},
-    viewModel: ProductsViewModel = hiltViewModel(),
+    viewModel: ProductsViewModel = hiltViewModel(key = "products-$shelfId"),
 ) {
     val state by viewModel.state.collectAsState()
 
@@ -43,15 +46,9 @@ fun ProductsScreen(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(24.dp),
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        TextButton(onClick = onBack) {
-            Text("← Shelves")
-        }
-
-        Text(text = "Products")
-
         if (state.loading) {
             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
         }
