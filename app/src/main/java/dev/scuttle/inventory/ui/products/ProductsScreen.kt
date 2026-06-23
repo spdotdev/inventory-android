@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.LinearProgressIndicator
@@ -78,6 +79,9 @@ fun ProductsScreen(
                     OutlinedButton(onClick = { viewModel.increment(product.id) }, enabled = !state.loading) {
                         Text("+")
                     }
+                    TextButton(onClick = { viewModel.startMove(product.id) }, enabled = !state.loading) {
+                        Text("Move")
+                    }
                 }
             }
         }
@@ -97,5 +101,28 @@ fun ProductsScreen(
                 Text("Add")
             }
         }
+    }
+
+    if (state.movingProductId != null) {
+        AlertDialog(
+            onDismissRequest = viewModel::cancelMove,
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = viewModel::cancelMove) { Text("Cancel") }
+            },
+            title = { Text("Move to…") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    if (state.moveTargets.isEmpty()) {
+                        Text("No other shelves available.")
+                    }
+                    state.moveTargets.forEach { target ->
+                        TextButton(onClick = { viewModel.confirmMove(target.shelfId) }) {
+                            Text(target.label)
+                        }
+                    }
+                }
+            },
+        )
     }
 }
