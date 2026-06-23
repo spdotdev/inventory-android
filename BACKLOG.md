@@ -36,6 +36,12 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-06-23` — **Navigation-Compose refactor.** Added `androidx.navigation:navigation-compose`;
+  `MainActivity` now uses a `NavHost` with typed routes (auth/households/settings/storage/search/
+  invite/shelves/products) and `Long` path args, replacing the six state-based nav flags. Auth
+  transitions drive a back-stack-clearing redirect; sign-out returns to auth. The activity-scoped
+  `ThemeViewModel` is passed into `SettingsScreen` so the theme stays shared now that per-screen
+  `hiltViewModel()` scopes to nav back-stack entries. CI green.
 - ✅ `2026-06-23` — **Settings screen (theme + sign out).** `ThemeMode` enum + `ThemeModeStore`
   (SharedPreferences) Hilt-bound; `ThemeViewModel` (activity-scoped) drives an in-app
   System/Light/Dark toggle applied app-wide in `MainActivity`. `SettingsScreen` (theme chips +

@@ -48,8 +48,9 @@ Detailed build order: [`CLAUDE.md`](CLAUDE.md) and [`docs/android-plan.md`](docs
 
 > **All core screens shipped.** Remaining is refactor/polish + dependency-gated work.
   Pattern per screen: repository + Retrofit API + ViewModel + Compose UI, JVM unit-tested via fakes.
-- [ ] **Navigation + active-household** — proper nav (e.g. Navigation-Compose) and an active
-  household selection feeding the household-scoped screens (currently a flat list post-auth).
+- [x] **Navigation-Compose** — typed routes + NavHost replacing the state-based nav; auth
+  transitions clear the back stack (shipped 2026-06-23, CI-green).
+- [ ] **Product move UI** — shelf-picker wired to the existing `ProductRepository.move`.
 - [ ] **Plus Jakarta Sans / Space Mono** fonts + full in-app light/dark toggle (currently
   follows system dark/light + default type).
 
