@@ -27,15 +27,15 @@ class DrawerViewModel @Inject constructor(
     private val _state = MutableStateFlow(DrawerUiState())
     val state: StateFlow<DrawerUiState> = _state.asStateFlow()
 
-    init { refresh() }
-
     fun refresh() {
         viewModelScope.launch {
-            _state.update {
-                it.copy(
-                    households = householdRepository.list(),
-                    defaultHouseholdId = defaultHouseholdStore.get(),
-                )
+            runCatching {
+                _state.update {
+                    it.copy(
+                        households = householdRepository.list(),
+                        defaultHouseholdId = defaultHouseholdStore.get(),
+                    )
+                }
             }
         }
     }
