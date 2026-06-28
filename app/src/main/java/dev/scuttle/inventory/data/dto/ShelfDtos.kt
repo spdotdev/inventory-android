@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 data class ShelfDto(
     val id: Long,
     val name: String,
-    val position: Int,
+    val position: Int? = null,
 )
 
 @Serializable
