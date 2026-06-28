@@ -31,6 +31,8 @@ class HouseholdsViewModelTest {
         }
 
         override suspend fun join(code: String): HouseholdDto = items.first()
+
+        override suspend fun leave(householdId: Long) { items.removeIf { it.id == householdId } }
     }
 
     @Test

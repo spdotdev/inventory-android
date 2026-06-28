@@ -63,7 +63,7 @@ class ProductsViewModelTest {
     private class FakeShelfRepository(private val byLocation: Map<Long, List<ShelfDto>>) : ShelfRepository {
         override suspend fun list(householdId: Long, locationId: Long): List<ShelfDto> = byLocation[locationId].orEmpty()
         override suspend fun create(householdId: Long, locationId: Long, name: String): ShelfDto =
-            ShelfDto(99, name, 0)
+            ShelfDto(99, name, 0, locationId)
     }
 
     private fun viewModel(
@@ -112,7 +112,7 @@ class ProductsViewModelTest {
         val products = FakeProductRepository().apply { items.add(ProductDto(1, "Peas", 2, 1)) }
         val locations = FakeLocationRepository(listOf(LocationDto(10, "Chest", "freezer")))
         // Shelves under location 10: current shelf 1 + a target shelf 2.
-        val shelves = FakeShelfRepository(mapOf(10L to listOf(ShelfDto(1, "Top", 0), ShelfDto(2, "Bottom", 1))))
+        val shelves = FakeShelfRepository(mapOf(10L to listOf(ShelfDto(1, "Top", 0, 10L), ShelfDto(2, "Bottom", 1, 10L))))
         val vm = viewModel(products, locations, shelves)
         vm.load(householdId = 1, shelfId = 1)
 

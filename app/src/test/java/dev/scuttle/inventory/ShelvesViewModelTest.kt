@@ -24,7 +24,7 @@ class ShelvesViewModelTest {
         }
 
         override suspend fun create(householdId: Long, locationId: Long, name: String): ShelfDto {
-            val dto = ShelfDto(id = (items.size + 1).toLong(), name = name, position = items.size)
+            val dto = ShelfDto(id = (items.size + 1).toLong(), name = name, position = items.size, location_id = locationId)
             items.add(dto)
             return dto
         }
@@ -32,7 +32,7 @@ class ShelvesViewModelTest {
 
     @Test
     fun load_populates_shelves() = runTest {
-        val repo = FakeShelfRepository().apply { items.add(ShelfDto(1, "Top", 0)) }
+        val repo = FakeShelfRepository().apply { items.add(ShelfDto(1, "Top", 0, 1L)) }
         val viewModel = ShelvesViewModel(repo)
 
         viewModel.load(householdId = 1, locationId = 1)
