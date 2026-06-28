@@ -5,8 +5,10 @@ import dev.scuttle.inventory.data.dto.HouseholdListResponse
 import dev.scuttle.inventory.data.dto.HouseholdResponse
 import dev.scuttle.inventory.data.dto.JoinHouseholdRequest
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Path
 
 interface HouseholdApi {
     @GET("households")
@@ -17,4 +19,7 @@ interface HouseholdApi {
 
     @POST("households/join")
     suspend fun join(@Body body: JoinHouseholdRequest): HouseholdResponse
+
+    @DELETE("households/{household}/leave")
+    suspend fun leave(@Path("household") householdId: Long)
 }

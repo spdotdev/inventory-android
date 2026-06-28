@@ -7,6 +7,7 @@ data class ShelfDto(
     val id: Long,
     val name: String,
     val position: Int? = null,
+    val location_id: Long,
 )
 
 @Serializable

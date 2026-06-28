@@ -4,7 +4,7 @@ import dev.scuttle.inventory.data.storage.TokenStore
 import okhttp3.Interceptor
 import okhttp3.Response
 
-/** Adds the stored Sanctum token as a Bearer header when present. */
+/** Adds the stored Sanctum token as a Bearer header; clears it on 401 so next launch re-prompts login. */
 class AuthInterceptor(private val tokenStore: TokenStore) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
@@ -18,6 +18,8 @@ class AuthInterceptor(private val tokenStore: TokenStore) : Interceptor {
             request
         }
 
-        return chain.proceed(authorized)
+        val response = chain.proceed(authorized)
+        if (response.code == 401) tokenStore.clear()
+        return response
     }
 }

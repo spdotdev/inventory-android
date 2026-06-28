@@ -8,4 +8,6 @@ interface HouseholdRepository {
     suspend fun create(name: String): HouseholdDto
 
     suspend fun join(code: String): HouseholdDto
+
+    suspend fun leave(householdId: Long)
 }

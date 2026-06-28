@@ -15,4 +15,6 @@ class HouseholdRepositoryImpl @Inject constructor(
     override suspend fun create(name: String): HouseholdDto = api.create(CreateHouseholdRequest(name)).data
 
     override suspend fun join(code: String): HouseholdDto = api.join(JoinHouseholdRequest(code)).data
+
+    override suspend fun leave(householdId: Long) = api.leave(householdId)
 }

@@ -60,9 +60,17 @@ fun HouseholdsScreen(
                     .fillMaxWidth()
                     .clickable { onOpenHousehold(household.id) },
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(text = household.name)
-                    Text(text = "Code: ${household.join_code}")
+                Row(
+                    modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Column {
+                        Text(text = household.name)
+                        Text(text = "Code: ${household.join_code}")
+                    }
+                    TextButton(onClick = { viewModel.leave(household.id) }) {
+                        Text("Leave")
+                    }
                 }
             }
         }

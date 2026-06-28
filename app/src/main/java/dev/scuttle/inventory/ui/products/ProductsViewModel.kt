@@ -78,16 +78,23 @@ class ProductsViewModel @Inject constructor(
         val h = householdId ?: return
         val s = shelfId ?: return
         _state.update { it.copy(movingProductId = productId, moveTargets = emptyList()) }
-        launch {
-            val targets = mutableListOf<MoveTarget>()
-            for (location in locationRepository.list(h)) {
-                for (shelf in shelfRepository.list(h, location.id)) {
-                    if (shelf.id != s) {
-                        targets.add(MoveTarget(shelf.id, "${location.name} › ${shelf.name}"))
+        viewModelScope.launch {
+            _state.update { it.copy(loading = true, error = null) }
+            val result = runCatching {
+                val targets = mutableListOf<MoveTarget>()
+                for (location in locationRepository.list(h)) {
+                    for (shelf in shelfRepository.list(h, location.id)) {
+                        if (shelf.id != s) targets.add(MoveTarget(shelf.id, "${location.name} › ${shelf.name}"))
                     }
                 }
+                targets
             }
-            _state.update { it.copy(moveTargets = targets) }
+            _state.update { state ->
+                result.fold(
+                    onSuccess = { targets -> state.copy(loading = false, moveTargets = targets) },
+                    onFailure = { e -> state.copy(loading = false, error = e.message ?: "Couldn't load shelves.", movingProductId = null, moveTargets = emptyList()) },
+                )
+            }
         }
     }
 

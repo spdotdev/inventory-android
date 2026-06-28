@@ -61,6 +61,11 @@ class HouseholdsViewModel @Inject constructor(
         }
     }
 
+    fun leave(householdId: Long) = launchLoading {
+        repository.leave(householdId)
+        _state.update { it.copy(households = repository.list()) }
+    }
+
     private fun launchLoading(block: suspend () -> Unit) {
         viewModelScope.launch {
             _state.update { it.copy(loading = true, error = null) }
