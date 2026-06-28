@@ -10,11 +10,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -23,6 +26,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 
@@ -38,6 +45,7 @@ fun StorageOverviewScreen(
     viewModel: StorageOverviewViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     LaunchedEffect(householdId) {
         viewModel.load(householdId)
@@ -68,7 +76,9 @@ fun StorageOverviewScreen(
             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
         }
 
-        state.error?.let { Text(text = it) }
+        state.error?.let {
+            Text(text = it, color = MaterialTheme.colorScheme.error)
+        }
 
         if (state.locations.isEmpty() && !state.loading) {
             Text(text = "No storage locations yet. Add a freezer, fridge or pantry below.")
@@ -78,6 +88,7 @@ fun StorageOverviewScreen(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .semantics { contentDescription = "Open ${location.name}" }
                     .clickable { onOpenLocation(location.id) },
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -108,9 +119,19 @@ fun StorageOverviewScreen(
                 onValueChange = viewModel::onNewNameChange,
                 label = { Text("Name") },
                 singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    autoCorrect = false,
+                    imeAction = ImeAction.Done,
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = { keyboardController?.hide(); viewModel.create() }
+                ),
                 modifier = Modifier.weight(1f),
             )
-            Button(onClick = viewModel::create, enabled = !state.loading) {
+            Button(
+                onClick = { keyboardController?.hide(); viewModel.create() },
+                enabled = !state.loading && state.newName.isNotBlank(),
+            ) {
                 Text("Add")
             }
         }

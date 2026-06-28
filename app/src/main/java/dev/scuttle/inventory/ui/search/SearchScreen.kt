@@ -6,9 +6,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -17,6 +20,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 
@@ -28,6 +33,7 @@ fun SearchScreen(
     viewModel: SearchViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     LaunchedEffect(householdId) {
         viewModel.setHousehold(householdId)
@@ -49,6 +55,13 @@ fun SearchScreen(
             onValueChange = viewModel::onQueryChange,
             label = { Text("Search products") },
             singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                autoCorrect = false,
+                imeAction = ImeAction.Search,
+            ),
+            keyboardActions = KeyboardActions(
+                onSearch = { keyboardController?.hide() }
+            ),
             modifier = Modifier.fillMaxWidth(),
         )
 
@@ -56,7 +69,9 @@ fun SearchScreen(
             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
         }
 
-        state.error?.let { Text(text = it) }
+        state.error?.let {
+            Text(text = it, color = MaterialTheme.colorScheme.error)
+        }
 
         if (state.query.isNotBlank() && state.results.isEmpty() && !state.loading) {
             Text(text = "No matches.")

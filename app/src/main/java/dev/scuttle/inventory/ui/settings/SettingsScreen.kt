@@ -6,13 +6,18 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -26,6 +31,7 @@ fun SettingsScreen(
     themeViewModel: ThemeViewModel = hiltViewModel(),
 ) {
     val mode by themeViewModel.mode.collectAsState()
+    var confirmSignOut by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier
@@ -51,9 +57,28 @@ fun SettingsScreen(
         }
 
         Text(text = "Account")
-        Button(onClick = onSignOut, modifier = Modifier.fillMaxWidth()) {
+        Button(
+            onClick = { confirmSignOut = true },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
             Text("Sign out")
         }
+    }
+
+    if (confirmSignOut) {
+        AlertDialog(
+            onDismissRequest = { confirmSignOut = false },
+            title = { Text("Sign out?") },
+            text = { Text("You'll need to log in again.") },
+            confirmButton = {
+                TextButton(onClick = onSignOut) {
+                    Text("Sign out", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmSignOut = false }) { Text("Cancel") }
+            },
+        )
     }
 }
 

@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import dev.scuttle.inventory.data.dto.SearchResultDto
 import dev.scuttle.inventory.data.search.SearchRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,35 +27,48 @@ class SearchViewModel @Inject constructor(
 ) : ViewModel() {
 
     private var householdId: Long? = null
+    private var searchJob: Job? = null
 
     private val _state = MutableStateFlow(SearchUiState())
     val state: StateFlow<SearchUiState> = _state.asStateFlow()
 
     fun setHousehold(householdId: Long) {
+        if (this.householdId == householdId) {
+            if (_state.value.query.isNotBlank()) search()
+            return
+        }
         this.householdId = householdId
+        _state.update { SearchUiState() }
     }
 
     fun onQueryChange(value: String) {
         _state.update { it.copy(query = value, error = null) }
-        search()
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            delay(300)
+            doSearch()
+        }
     }
 
     fun search() {
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch { doSearch() }
+    }
+
+    private suspend fun doSearch() {
         val h = householdId ?: return
         val q = _state.value.query.trim()
         if (q.isEmpty()) {
             _state.update { it.copy(results = emptyList(), loading = false) }
             return
         }
-        viewModelScope.launch {
-            _state.update { it.copy(loading = true, error = null) }
-            val result = runCatching { repository.search(h, q) }
-            _state.update { state ->
-                result.fold(
-                    onSuccess = { results -> state.copy(loading = false, results = results) },
-                    onFailure = { error -> state.copy(loading = false, error = error.message ?: "Search failed.") },
-                )
-            }
+        _state.update { it.copy(loading = true, error = null) }
+        val result = runCatching { repository.search(h, q) }
+        _state.update { state ->
+            result.fold(
+                onSuccess = { results -> state.copy(loading = false, results = results) },
+                onFailure = { error -> state.copy(loading = false, error = error.message ?: "Search failed.") },
+            )
         }
     }
 }

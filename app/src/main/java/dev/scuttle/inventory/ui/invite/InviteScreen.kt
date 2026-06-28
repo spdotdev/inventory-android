@@ -11,13 +11,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -27,6 +30,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import dev.scuttle.inventory.ui.theme.SpaceMono
+import kotlinx.coroutines.delay
 
 @Composable
 fun InviteScreen(
@@ -37,9 +41,17 @@ fun InviteScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val clipboard = LocalClipboardManager.current
+    var copied by remember { mutableStateOf(false) }
 
     LaunchedEffect(householdId) {
         viewModel.load(householdId)
+    }
+
+    LaunchedEffect(copied) {
+        if (copied) {
+            delay(2000)
+            copied = false
+        }
     }
 
     Column(
@@ -58,7 +70,9 @@ fun InviteScreen(
             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
         }
 
-        state.error?.let { Text(text = it) }
+        state.error?.let {
+            Text(text = it, color = MaterialTheme.colorScheme.error)
+        }
 
         if (state.code.isNotEmpty()) {
             Text(text = "Join code")
@@ -74,10 +88,13 @@ fun InviteScreen(
             }
 
             Button(
-                onClick = { clipboard.setText(AnnotatedString(state.link)) },
+                onClick = {
+                    clipboard.setText(AnnotatedString(state.link))
+                    copied = true
+                },
                 enabled = state.link.isNotEmpty(),
             ) {
-                Text("Copy link")
+                Text(if (copied) "Copied!" else "Copy link")
             }
         }
     }

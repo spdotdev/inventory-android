@@ -8,8 +8,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
@@ -21,6 +24,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.ui.products.ProductsPane
@@ -42,6 +47,7 @@ fun LocationDetailScreen(
     val state by shelvesViewModel.state.collectAsState()
     val scope = rememberCoroutineScope()
     val pagerState = rememberPagerState(pageCount = { state.shelves.size })
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     LaunchedEffect(householdId, locationId) {
         shelvesViewModel.load(householdId, locationId)
@@ -63,9 +69,19 @@ fun LocationDetailScreen(
                 onValueChange = shelvesViewModel::onNewNameChange,
                 label = { Text("New shelf") },
                 singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    autoCorrect = false,
+                    imeAction = ImeAction.Done,
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = { keyboardController?.hide(); shelvesViewModel.create() }
+                ),
                 modifier = Modifier.weight(1f),
             )
-            Button(onClick = shelvesViewModel::create, enabled = !state.loading) {
+            Button(
+                onClick = { keyboardController?.hide(); shelvesViewModel.create() },
+                enabled = !state.loading && state.newName.isNotBlank(),
+            ) {
                 Text("Add shelf")
             }
         }
@@ -75,7 +91,11 @@ fun LocationDetailScreen(
         }
 
         state.error?.let {
-            Text(text = it, modifier = Modifier.padding(16.dp))
+            Text(
+                text = it,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(16.dp),
+            )
         }
 
         if (state.shelves.isEmpty()) {

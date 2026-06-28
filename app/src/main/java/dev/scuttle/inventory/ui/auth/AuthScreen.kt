@@ -6,9 +6,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -17,6 +19,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -29,6 +34,7 @@ fun AuthScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val isRegister = state.mode == AuthMode.REGISTER
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     Column(
         modifier = modifier
@@ -44,6 +50,11 @@ fun AuthScreen(
                 onValueChange = viewModel::onNameChange,
                 label = { Text("Name") },
                 singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Words,
+                    autoCorrect = false,
+                    imeAction = ImeAction.Next,
+                ),
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -53,7 +64,11 @@ fun AuthScreen(
             onValueChange = viewModel::onEmailChange,
             label = { Text("Email") },
             singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Email,
+                autoCorrect = false,
+                imeAction = ImeAction.Next,
+            ),
             modifier = Modifier.fillMaxWidth(),
         )
 
@@ -63,15 +78,23 @@ fun AuthScreen(
             label = { Text("Password") },
             singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Password,
+                imeAction = ImeAction.Done,
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = { keyboardController?.hide(); viewModel.submit() }
+            ),
             modifier = Modifier.fillMaxWidth(),
         )
 
-        state.error?.let { Text(text = it) }
+        state.error?.let {
+            Text(text = it, color = MaterialTheme.colorScheme.error)
+        }
 
         Button(
-            onClick = viewModel::submit,
-            enabled = !state.loading,
+            onClick = { keyboardController?.hide(); viewModel.submit() },
+            enabled = !state.loading && state.email.isNotBlank() && state.password.isNotBlank(),
             modifier = Modifier.fillMaxWidth(),
         ) {
             if (state.loading) {
