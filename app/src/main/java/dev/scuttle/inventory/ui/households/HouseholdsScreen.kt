@@ -17,7 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.StarBorder
+import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -131,7 +131,7 @@ fun HouseholdsScreen(
                             },
                         ) {
                             Icon(
-                                imageVector = if (isDefault) Icons.Default.Star else Icons.Outlined.StarBorder,
+                                imageVector = if (isDefault) Icons.Default.Star else Icons.Outlined.Star,
                                 contentDescription = if (isDefault) "Default household" else "Set as default",
                             )
                         }

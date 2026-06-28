@@ -7,7 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.StarBorder
+import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -62,7 +62,7 @@ fun AppDrawer(
                             },
                         ) {
                             Icon(
-                                imageVector = if (isDefault) Icons.Default.Star else Icons.Outlined.StarBorder,
+                                imageVector = if (isDefault) Icons.Default.Star else Icons.Outlined.Star,
                                 contentDescription = if (isDefault) "Remove default" else "Set as default",
                             )
                         }
