@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.scuttle.inventory.data.dto.HouseholdDto
 import dev.scuttle.inventory.data.household.HouseholdRepository
+import dev.scuttle.inventory.data.settings.DefaultHouseholdStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,25 +17,25 @@ data class HouseholdsUiState(
     val loading: Boolean = false,
     val households: List<HouseholdDto> = emptyList(),
     val newName: String = "",
-    val joinCode: String = "",
     val error: String? = null,
+    val defaultHouseholdId: Long? = null,
 )
 
 @HiltViewModel
 class HouseholdsViewModel @Inject constructor(
     private val repository: HouseholdRepository,
+    private val defaultHouseholdStore: DefaultHouseholdStore,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HouseholdsUiState())
     val state: StateFlow<HouseholdsUiState> = _state.asStateFlow()
 
     init {
+        _state.update { it.copy(defaultHouseholdId = defaultHouseholdStore.get()) }
         refresh()
     }
 
     fun onNewNameChange(value: String) = _state.update { it.copy(newName = value, error = null) }
-
-    fun onJoinCodeChange(value: String) = _state.update { it.copy(joinCode = value, error = null) }
 
     fun refresh() = launchLoading {
         val households = repository.list()
@@ -51,19 +52,23 @@ class HouseholdsViewModel @Inject constructor(
         }
     }
 
-    fun join() {
-        val code = _state.value.joinCode.trim()
-        if (code.isEmpty()) return
-        launchLoading {
-            repository.join(code)
-            _state.update { it.copy(joinCode = "") }
-            _state.update { it.copy(households = repository.list()) }
-        }
-    }
-
     fun leave(householdId: Long) = launchLoading {
+        if (defaultHouseholdStore.get() == householdId) {
+            defaultHouseholdStore.clear()
+            _state.update { it.copy(defaultHouseholdId = null) }
+        }
         repository.leave(householdId)
         _state.update { it.copy(households = repository.list()) }
+    }
+
+    fun setDefault(householdId: Long) {
+        defaultHouseholdStore.set(householdId)
+        _state.update { it.copy(defaultHouseholdId = householdId) }
+    }
+
+    fun clearDefault() {
+        defaultHouseholdStore.clear()
+        _state.update { it.copy(defaultHouseholdId = null) }
     }
 
     private fun launchLoading(block: suspend () -> Unit) {

@@ -4,146 +4,185 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HouseholdsScreen(
     modifier: Modifier = Modifier,
     onOpenHousehold: (Long) -> Unit = {},
-    onOpenSettings: () -> Unit = {},
+    onOpenDrawer: () -> Unit = {},
     viewModel: HouseholdsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
-    val keyboardController = LocalSoftwareKeyboardController.current
     var confirmLeaveId by remember { mutableStateOf<Long?>(null) }
+    var showCreateSheet by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val keyboardController = LocalSoftwareKeyboardController.current
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        TextButton(onClick = onOpenSettings) {
-            Text("Settings")
-        }
-
-        Text(text = "Your households")
-
-        if (state.loading) {
-            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-        }
-
-        state.error?.let {
-            Text(text = it, color = MaterialTheme.colorScheme.error)
-        }
-
-        if (state.households.isEmpty() && !state.loading) {
-            Text(text = "No households yet. Create one or join with a code.")
-        }
-
-        state.households.forEach { household ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .semantics { contentDescription = "Open ${household.name}" }
-                    .clickable { onOpenHousehold(household.id) },
-            ) {
-                Row(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Column {
-                        Text(text = household.name)
-                        Text(text = "Code: ${household.join_code}")
+    Scaffold(
+        modifier = modifier,
+        topBar = {
+            TopAppBar(
+                title = { Text("Households") },
+                navigationIcon = {
+                    IconButton(onClick = onOpenDrawer) {
+                        Icon(Icons.Default.Menu, contentDescription = "Open menu")
                     }
-                    TextButton(onClick = { confirmLeaveId = household.id }) {
-                        Text("Leave", color = MaterialTheme.colorScheme.error)
+                },
+            )
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = { showCreateSheet = true }) {
+                Icon(Icons.Default.Add, contentDescription = "Create household")
+            }
+        },
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(padding)
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Spacer(Modifier.height(4.dp))
+
+            if (state.loading) {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            }
+
+            state.error?.let {
+                Text(text = it, color = MaterialTheme.colorScheme.error)
+            }
+
+            if (state.households.isEmpty() && !state.loading) {
+                Text(
+                    text = "No households yet. Tap + to create one.",
+                    modifier = Modifier.padding(top = 24.dp),
+                )
+            }
+
+            state.households.forEach { household ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .semantics { contentDescription = "Open ${household.name}" }
+                        .clickable { onOpenHousehold(household.id) },
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(text = household.name)
+                        }
+                        val isDefault = state.defaultHouseholdId == household.id
+                        IconButton(
+                            onClick = {
+                                if (isDefault) viewModel.clearDefault()
+                                else viewModel.setDefault(household.id)
+                            },
+                        ) {
+                            Icon(
+                                imageVector = if (isDefault) Icons.Default.Star else Icons.Outlined.StarBorder,
+                                contentDescription = if (isDefault) "Default household" else "Set as default",
+                            )
+                        }
+                        TextButton(onClick = { confirmLeaveId = household.id }) {
+                            Text("Leave", color = MaterialTheme.colorScheme.error)
+                        }
                     }
                 }
             }
-        }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            OutlinedTextField(
-                value = state.newName,
-                onValueChange = viewModel::onNewNameChange,
-                label = { Text("New household") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(
-                    autoCorrect = false,
-                    imeAction = ImeAction.Done,
-                ),
-                keyboardActions = KeyboardActions(
-                    onDone = { keyboardController?.hide(); viewModel.create() }
-                ),
-                modifier = Modifier.weight(1f),
-            )
-            Button(
-                onClick = { keyboardController?.hide(); viewModel.create() },
-                enabled = !state.loading && state.newName.isNotBlank(),
-            ) {
-                Text("Create")
-            }
+            Spacer(Modifier.height(80.dp)) // FAB clearance
         }
+    }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+    if (showCreateSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showCreateSheet = false },
+            sheetState = sheetState,
         ) {
-            OutlinedTextField(
-                value = state.joinCode,
-                onValueChange = viewModel::onJoinCodeChange,
-                label = { Text("Join code") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.Characters,
-                    autoCorrect = false,
-                    imeAction = ImeAction.Done,
-                ),
-                keyboardActions = KeyboardActions(
-                    onDone = { keyboardController?.hide(); viewModel.join() }
-                ),
-                modifier = Modifier.weight(1f),
-            )
-            Button(
-                onClick = { keyboardController?.hide(); viewModel.join() },
-                enabled = !state.loading && state.joinCode.isNotBlank(),
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 32.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                Text("Join")
+                Text(text = "Create household", style = MaterialTheme.typography.titleLarge)
+                OutlinedTextField(
+                    value = state.newName,
+                    onValueChange = viewModel::onNewNameChange,
+                    label = { Text("Household name") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(autoCorrect = false, imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = {
+                        keyboardController?.hide()
+                        viewModel.create()
+                        showCreateSheet = false
+                    }),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Button(
+                    onClick = {
+                        keyboardController?.hide()
+                        viewModel.create()
+                        showCreateSheet = false
+                    },
+                    enabled = !state.loading && state.newName.isNotBlank(),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("Create")
+                }
             }
         }
     }
@@ -155,9 +194,7 @@ fun HouseholdsScreen(
             title = { Text("Leave $name?") },
             text = { Text("You'll need a new invite to rejoin.") },
             confirmButton = {
-                TextButton(
-                    onClick = { viewModel.leave(id); confirmLeaveId = null },
-                ) {
+                TextButton(onClick = { viewModel.leave(id); confirmLeaveId = null }) {
                     Text("Leave", color = MaterialTheme.colorScheme.error)
                 }
             },
