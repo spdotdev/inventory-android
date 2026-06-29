@@ -20,6 +20,7 @@ data class LocationStats(val location: LocationDto, val householdId: Long, val p
 
 data class DashboardUiState(
     val loading: Boolean = false,
+    val hasNoHouseholds: Boolean = false,
     val totalLocations: Int = 0,
     val totalShelves: Int = 0,
     val totalProducts: Int = 0,
@@ -77,6 +78,7 @@ class DashboardViewModel @Inject constructor(
                 _state.update {
                     it.copy(
                         loading = false,
+                        hasNoHouseholds = households.isEmpty(),
                         totalLocations = locationStats.size,
                         totalShelves = totalShelves,
                         totalProducts = totalProducts,
