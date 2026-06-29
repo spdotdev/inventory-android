@@ -3,6 +3,8 @@ package dev.scuttle.inventory.ui.households
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -62,10 +64,12 @@ fun HouseholdsScreen(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val keyboardController = LocalSoftwareKeyboardController.current
 
+    val statusBarInsets = WindowInsets.statusBars
     Scaffold(
         modifier = modifier,
         topBar = {
             TopAppBar(
+                windowInsets = statusBarInsets,
                 title = { Text("My Households") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {

@@ -6,6 +6,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -85,10 +87,12 @@ fun ProductDetailScreen(
     }
     val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()) { _ -> }
 
+    val statusBarInsets = WindowInsets.statusBars
     Scaffold(
         modifier = modifier,
         topBar = {
             TopAppBar(
+                windowInsets = statusBarInsets,
                 title = { Text(product?.name ?: "Product") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {

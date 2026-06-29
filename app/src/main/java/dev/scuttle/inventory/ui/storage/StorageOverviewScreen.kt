@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -81,10 +83,12 @@ fun StorageOverviewScreen(
 
     LaunchedEffect(householdId) { viewModel.load(householdId) }
 
+    val statusBarInsets = WindowInsets.statusBars
     Scaffold(
         modifier = modifier,
         topBar = {
             TopAppBar(
+                windowInsets = statusBarInsets,
                 title = { Text("Storage") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {

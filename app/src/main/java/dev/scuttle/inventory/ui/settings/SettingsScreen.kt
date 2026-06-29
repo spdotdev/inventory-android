@@ -3,6 +3,8 @@ package dev.scuttle.inventory.ui.settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -60,10 +62,12 @@ fun SettingsScreen(
         result.contents?.let { joinViewModel.onCodeChange(it) }
     }
 
+    val statusBarInsets = WindowInsets.statusBars
     Scaffold(
         modifier = modifier,
         topBar = {
             TopAppBar(
+                windowInsets = statusBarInsets,
                 title = { Text("Settings") },
                 navigationIcon = {
                     IconButton(onClick = onOpenDrawer) {
