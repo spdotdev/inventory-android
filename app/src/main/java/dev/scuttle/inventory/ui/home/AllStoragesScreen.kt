@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Refresh
@@ -61,6 +62,7 @@ fun AllStoragesScreen(
     viewModel: DrawerViewModel,
     onOpenDrawer: () -> Unit = {},
     onOpenLocation: (householdId: Long, locationId: Long) -> Unit = { _, _ -> },
+    onOpenStorage: (householdId: Long) -> Unit = {},
     localViewModel: AllStoragesViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -112,14 +114,20 @@ fun AllStoragesScreen(
                 }
 
                 state.entries.forEach { entry ->
-                    if (entry.locations.isEmpty()) return@forEach
-
-                    Text(
-                        text = entry.name,
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 8.dp, start = 4.dp),
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp, start = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = entry.name,
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        IconButton(onClick = { onOpenStorage(entry.id) }) {
+                            Icon(Icons.Default.Add, contentDescription = "Add storage location")
+                        }
+                    }
 
                     entry.locations.forEach { location ->
                         key(location.id) {

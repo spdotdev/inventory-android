@@ -166,6 +166,9 @@ private fun InventoryNavHost(
                     onOpenLocation = { hhId, locId ->
                         navController.navigate(Routes.location(hhId, locId))
                     },
+                    onOpenStorage = { hhId ->
+                        navController.navigate(Routes.storage(hhId))
+                    },
                 )
             }
 
