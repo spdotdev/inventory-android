@@ -2,9 +2,11 @@ package dev.scuttle.inventory
 
 import dev.scuttle.inventory.data.dto.LocationDto
 import dev.scuttle.inventory.data.dto.ProductDto
+import dev.scuttle.inventory.data.dto.SearchResultDto
 import dev.scuttle.inventory.data.dto.ShelfDto
 import dev.scuttle.inventory.data.location.LocationRepository
 import dev.scuttle.inventory.data.product.ProductRepository
+import dev.scuttle.inventory.data.search.SearchRepository
 import dev.scuttle.inventory.data.shelf.ShelfRepository
 import dev.scuttle.inventory.ui.products.ProductsViewModel
 import kotlinx.coroutines.test.runTest
@@ -66,11 +68,16 @@ class ProductsViewModelTest {
             ShelfDto(99, name, 0, locationId)
     }
 
+    private class FakeSearchRepository : SearchRepository {
+        override suspend fun search(householdId: Long, query: String): List<SearchResultDto> = emptyList()
+    }
+
     private fun viewModel(
         products: FakeProductRepository = FakeProductRepository(),
         locations: FakeLocationRepository = FakeLocationRepository(emptyList()),
         shelves: FakeShelfRepository = FakeShelfRepository(emptyMap()),
-    ) = ProductsViewModel(products, locations, shelves)
+        search: FakeSearchRepository = FakeSearchRepository(),
+    ) = ProductsViewModel(products, locations, shelves, search)
 
     @Test
     fun load_populates_products() = runTest {

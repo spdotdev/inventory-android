@@ -2,6 +2,7 @@ package dev.scuttle.inventory
 
 import dev.scuttle.inventory.data.dto.HouseholdDto
 import dev.scuttle.inventory.data.household.HouseholdRepository
+import dev.scuttle.inventory.data.settings.DefaultHouseholdStore
 import dev.scuttle.inventory.ui.households.HouseholdsViewModel
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -14,6 +15,13 @@ class HouseholdsViewModelTest {
 
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
+
+    private class FakeDefaultHouseholdStore : DefaultHouseholdStore {
+        private var value: Long? = null
+        override fun get(): Long? = value
+        override fun set(householdId: Long) { value = householdId }
+        override fun clear() { value = null }
+    }
 
     private class FakeHouseholdRepository : HouseholdRepository {
         val items = mutableListOf(HouseholdDto(id = 1, name = "Garage", join_code = "AAAA-1111"))
@@ -37,7 +45,7 @@ class HouseholdsViewModelTest {
 
     @Test
     fun loads_households_on_init() = runTest {
-        val viewModel = HouseholdsViewModel(FakeHouseholdRepository())
+        val viewModel = HouseholdsViewModel(FakeHouseholdRepository(), FakeDefaultHouseholdStore())
 
         val state = viewModel.state.value
         assertEquals(1, state.households.size)
@@ -47,7 +55,7 @@ class HouseholdsViewModelTest {
 
     @Test
     fun create_adds_a_household_and_clears_the_field() = runTest {
-        val viewModel = HouseholdsViewModel(FakeHouseholdRepository())
+        val viewModel = HouseholdsViewModel(FakeHouseholdRepository(), FakeDefaultHouseholdStore())
         viewModel.onNewNameChange("Pantry")
 
         viewModel.create()
@@ -61,7 +69,7 @@ class HouseholdsViewModelTest {
     @Test
     fun list_failure_surfaces_an_error() = runTest {
         val repo = FakeHouseholdRepository().apply { failList = true }
-        val viewModel = HouseholdsViewModel(repo)
+        val viewModel = HouseholdsViewModel(repo, FakeDefaultHouseholdStore())
 
         assertEquals("offline", viewModel.state.value.error)
     }
