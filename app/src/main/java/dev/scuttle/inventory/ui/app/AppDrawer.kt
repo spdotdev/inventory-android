@@ -14,6 +14,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.DrawerDefaults
@@ -34,6 +36,8 @@ fun AppDrawer(
     viewModel: DrawerViewModel,
     onNavigateHome: () -> Unit,
     onNavigateDashboard: () -> Unit,
+    onNavigateSearch: (householdId: Long) -> Unit,
+    onNavigateHouseholds: () -> Unit,
     onNavigateLocation: (householdId: Long, locationId: Long) -> Unit,
     onNavigateSettings: () -> Unit,
 ) {
@@ -68,6 +72,24 @@ fun AppDrawer(
                 label = { Text("Dashboard") },
                 selected = false,
                 onClick = onNavigateDashboard,
+                modifier = Modifier.padding(horizontal = 12.dp),
+            )
+
+            val firstHouseholdId = state.entries.firstOrNull()?.id
+            NavigationDrawerItem(
+                icon = { Icon(Icons.Default.Search, contentDescription = null) },
+                label = { Text("Search") },
+                selected = false,
+                onClick = { firstHouseholdId?.let(onNavigateSearch) },
+                enabled = firstHouseholdId != null,
+                modifier = Modifier.padding(horizontal = 12.dp),
+            )
+
+            NavigationDrawerItem(
+                icon = { Icon(Icons.Default.People, contentDescription = null) },
+                label = { Text("Households") },
+                selected = false,
+                onClick = onNavigateHouseholds,
                 modifier = Modifier.padding(horizontal = 12.dp),
             )
 
