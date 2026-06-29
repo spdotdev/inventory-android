@@ -19,12 +19,15 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -44,10 +47,25 @@ fun DashboardScreen(
     modifier: Modifier = Modifier,
     onOpenDrawer: () -> Unit = {},
     onOpenLocation: (householdId: Long, locationId: Long) -> Unit = { _, _ -> },
+    onOpenHouseholds: () -> Unit = {},
     viewModel: DashboardViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
     val primaryColor = MaterialTheme.colorScheme.primary
+
+    if (state.hasNoHouseholds && !state.loading) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text("Welcome!") },
+            text = { Text("You're not part of any household yet. Create a new one or join an existing one with an invite code.") },
+            confirmButton = {
+                Button(onClick = onOpenHouseholds) { Text("Create household") }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = onOpenHouseholds) { Text("Join with invite") }
+            },
+        )
+    }
 
     Scaffold(
         modifier = modifier,

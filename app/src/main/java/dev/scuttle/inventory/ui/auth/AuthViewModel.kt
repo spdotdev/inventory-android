@@ -19,6 +19,7 @@ data class AuthUiState(
     val email: String = "",
     val password: String = "",
     val loading: Boolean = false,
+    val googleLoading: Boolean = false,
     val error: String? = null,
     val authenticated: Boolean = false,
 )
@@ -45,6 +46,21 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             runCatching { repository.logout() }
             _state.value = AuthUiState()
+        }
+    }
+
+    fun onGoogleError(message: String) = _state.update { it.copy(googleLoading = false, error = message) }
+
+    fun loginWithGoogle(idToken: String) {
+        viewModelScope.launch {
+            _state.update { it.copy(googleLoading = true, error = null) }
+            val result = runCatching { repository.loginWithGoogle(idToken) }
+            _state.update { state ->
+                result.fold(
+                    onSuccess = { state.copy(googleLoading = false, authenticated = true) },
+                    onFailure = { error -> state.copy(googleLoading = false, error = error.message ?: "Google sign-in failed.") },
+                )
+            }
         }
     }
 
