@@ -97,7 +97,7 @@ private fun InventoryNavHost(
 
     LaunchedEffect(authState.authenticated) {
         if (authState.authenticated) {
-            navController.navigate(Routes.HOME) {
+            navController.navigate(Routes.DASHBOARD) {
                 popUpTo(navController.graph.id) { inclusive = true }
                 launchSingleTop = true
             }
@@ -238,16 +238,8 @@ private fun InventoryNavHost(
                     navArgument("shelfId") { type = NavType.LongType },
                     navArgument("productId") { type = NavType.LongType },
                 ),
-            ) { entry ->
-                val householdId = entry.arguments?.getLong("householdId") ?: return@composable
-                val shelfId = entry.arguments?.getLong("shelfId") ?: return@composable
-                val productId = entry.arguments?.getLong("productId") ?: return@composable
-                ProductDetailScreen(
-                    householdId = householdId,
-                    shelfId = shelfId,
-                    productId = productId,
-                    onBack = { navController.popBackStack() },
-                )
+            ) {
+                ProductDetailScreen(onBack = { navController.popBackStack() })
             }
         }
     }

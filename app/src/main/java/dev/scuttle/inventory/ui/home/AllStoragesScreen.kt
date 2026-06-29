@@ -15,6 +15,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.AlertDialog
@@ -32,6 +33,7 @@ import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -74,115 +76,127 @@ fun AllStoragesScreen(
                         Icon(Icons.Default.Menu, contentDescription = "Open menu")
                     }
                 },
+                actions = {
+                    IconButton(onClick = { viewModel.refresh() }) {
+                        Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+                    }
+                },
             )
         },
     ) { padding ->
-        Column(
+        PullToRefreshBox(
+            isRefreshing = state.loading,
+            onRefresh = { viewModel.refresh() },
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(padding)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+                .padding(padding),
         ) {
-            Spacer(Modifier.height(4.dp))
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Spacer(Modifier.height(4.dp))
 
-            if (state.entries.isEmpty()) {
-                Text("No storage locations yet. Add a household and create storage from Settings.")
-            }
+                if (state.entries.isEmpty()) {
+                    Text("No storage locations yet. Add a household and create storage from Settings.")
+                }
 
-            state.entries.forEach { entry ->
-                if (entry.locations.isEmpty()) return@forEach
+                state.entries.forEach { entry ->
+                    if (entry.locations.isEmpty()) return@forEach
 
-                Text(
-                    text = entry.name,
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 8.dp, start = 4.dp),
-                )
+                    Text(
+                        text = entry.name,
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 8.dp, start = 4.dp),
+                    )
 
-                entry.locations.forEach { location ->
-                    key(location.id) {
-                        val hasWarning = state.locationWarnings[location.id] == true
-                        val isFavorite = location.id in localState.favoriteLocationIds
+                    entry.locations.forEach { location ->
+                        key(location.id) {
+                            val hasWarning = state.locationWarnings[location.id] == true
+                            val isFavorite = location.id in localState.favoriteLocationIds
 
-                        val swipeState = rememberSwipeToDismissBoxState(
-                            confirmValueChange = { value ->
-                                if (value == SwipeToDismissBoxValue.EndToStart) {
-                                    pendingDelete = entry to location
-                                }
-                                false
-                            },
-                        )
-                        SwipeToDismissBox(
-                            state = swipeState,
-                            enableDismissFromStartToEnd = false,
-                            backgroundContent = {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .background(
-                                            color = MaterialTheme.colorScheme.errorContainer,
-                                            shape = MaterialTheme.shapes.medium,
-                                        ),
-                                    contentAlignment = Alignment.CenterEnd,
-                                ) {
-                                    Icon(
-                                        Icons.Default.Delete,
-                                        contentDescription = "Delete",
-                                        tint = MaterialTheme.colorScheme.onErrorContainer,
-                                        modifier = Modifier.padding(horizontal = 20.dp),
-                                    )
-                                }
-                            },
-                        ) {
-                            Card(
-                                onClick = { onOpenLocation(entry.id, location.id) },
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = if (hasWarning)
-                                    CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f))
-                                else
-                                    CardDefaults.cardColors(),
+                            val swipeState = rememberSwipeToDismissBoxState(
+                                confirmValueChange = { value ->
+                                    if (value == SwipeToDismissBoxValue.EndToStart) {
+                                        pendingDelete = entry to location
+                                    }
+                                    false
+                                },
+                            )
+                            SwipeToDismissBox(
+                                state = swipeState,
+                                enableDismissFromStartToEnd = false,
+                                backgroundContent = {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .background(
+                                                color = MaterialTheme.colorScheme.errorContainer,
+                                                shape = MaterialTheme.shapes.medium,
+                                            ),
+                                        contentAlignment = Alignment.CenterEnd,
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Delete,
+                                            contentDescription = "Delete",
+                                            tint = MaterialTheme.colorScheme.onErrorContainer,
+                                            modifier = Modifier.padding(horizontal = 20.dp),
+                                        )
+                                    }
+                                },
                             ) {
-                                Row(
-                                    modifier = Modifier
-                                        .padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp)
-                                        .fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically,
+                                Card(
+                                    onClick = { onOpenLocation(entry.id, location.id) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = if (hasWarning)
+                                        CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f))
+                                    else
+                                        CardDefaults.cardColors(),
                                 ) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(location.name, style = MaterialTheme.typography.bodyLarge)
-                                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                            Text(
-                                                location.type,
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            )
-                                            if (hasWarning) {
+                                    Row(
+                                        modifier = Modifier
+                                            .padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp)
+                                            .fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(location.name, style = MaterialTheme.typography.bodyLarge)
+                                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                                 Text(
-                                                    "⚠ Stock warning",
+                                                    location.type,
                                                     style = MaterialTheme.typography.bodySmall,
-                                                    color = MaterialTheme.colorScheme.error,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                 )
+                                                if (hasWarning) {
+                                                    Text(
+                                                        "⚠ Stock warning",
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.error,
+                                                    )
+                                                }
                                             }
                                         }
-                                    }
-                                    IconButton(onClick = { localViewModel.toggleFavorite(location.id) }) {
-                                        Icon(
-                                            if (isFavorite) Icons.Default.Star else Icons.Outlined.StarOutline,
-                                            contentDescription = if (isFavorite) "Remove favorite" else "Add to favorites",
-                                            tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                        )
+                                        IconButton(onClick = { localViewModel.toggleFavorite(location.id) }) {
+                                            Icon(
+                                                if (isFavorite) Icons.Default.Star else Icons.Outlined.StarOutline,
+                                                contentDescription = if (isFavorite) "Remove favorite" else "Add to favorites",
+                                                tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                            )
+                                        }
                                     }
                                 }
                             }
                         }
                     }
                 }
-            }
 
-            Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(24.dp))
+            }
         }
     }
 

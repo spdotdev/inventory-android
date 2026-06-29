@@ -24,6 +24,7 @@ data class HouseholdWithLocations(
 data class DrawerUiState(
     val entries: List<HouseholdWithLocations> = emptyList(),
     val locationWarnings: Map<Long, Boolean> = emptyMap(),
+    val loading: Boolean = false,
 )
 
 @HiltViewModel
@@ -39,13 +40,16 @@ class DrawerViewModel @Inject constructor(
 
     fun refresh() {
         viewModelScope.launch {
+            _state.update { it.copy(loading = true) }
             runCatching {
                 val households = householdRepository.list()
                 val entries = households.map { hh ->
                     val locations = runCatching { locationRepository.list(hh.id) }.getOrDefault(emptyList())
                     HouseholdWithLocations(hh.id, hh.name, locations)
                 }
-                _state.update { it.copy(entries = entries) }
+                _state.update { it.copy(entries = entries, loading = false) }
+            }.onFailure {
+                _state.update { it.copy(loading = false) }
             }
         }
     }

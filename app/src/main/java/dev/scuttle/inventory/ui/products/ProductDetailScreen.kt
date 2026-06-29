@@ -51,32 +51,39 @@ import coil.compose.AsyncImage
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductDetailScreen(
-    householdId: Long,
-    shelfId: Long,
-    productId: Long,
     modifier: Modifier = Modifier,
     onBack: () -> Unit = {},
-    viewModel: ProductsViewModel = hiltViewModel(key = "products-$shelfId"),
+    viewModel: ProductDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
-    val product = state.products.find { it.id == productId }
+    val product = state.product
 
-    LaunchedEffect(householdId, shelfId) { viewModel.load(householdId, shelfId) }
+    // Navigate back when saved or deleted
+    LaunchedEffect(state.saved) { if (state.saved) onBack() }
+    LaunchedEffect(state.deleted) { if (state.deleted) onBack() }
 
-    var name by rememberSaveable(product?.name) { mutableStateOf(product?.name ?: "") }
-    var description by rememberSaveable(product?.description) { mutableStateOf(product?.description ?: "") }
-    var code by rememberSaveable(product?.code) { mutableStateOf(product?.code ?: "") }
-    var isMandatory by rememberSaveable(product?.is_mandatory) { mutableStateOf(product?.is_mandatory ?: false) }
+    // Local edit fields — re-seed when product loads from null
+    var name by rememberSaveable(product?.id) { mutableStateOf(product?.name ?: "") }
+    var description by rememberSaveable(product?.id) { mutableStateOf(product?.description ?: "") }
+    var code by rememberSaveable(product?.id) { mutableStateOf(product?.code ?: "") }
+    var isMandatory by rememberSaveable(product?.id) { mutableStateOf(product?.is_mandatory ?: false) }
     var localImageUri by remember { mutableStateOf<Uri?>(null) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
 
-    val galleryLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.GetContent()
-    ) { uri -> uri?.let { localImageUri = it } }
+    // Re-seed fields once the product loads
+    LaunchedEffect(product?.id) {
+        product?.let {
+            name = it.name
+            description = it.description ?: ""
+            code = it.code ?: ""
+            isMandatory = it.is_mandatory
+        }
+    }
 
-    val cameraLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.TakePicturePreview()
-    ) { /* bitmap shown inline - for real upload we'd save to file */ }
+    val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        uri?.let { localImageUri = it }
+    }
+    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()) { _ -> }
 
     Scaffold(
         modifier = modifier,
@@ -91,13 +98,15 @@ fun ProductDetailScreen(
                 actions = {
                     TextButton(
                         onClick = {
-                            viewModel.update(productId, name.trim(), description.takeIf { it.isNotBlank() }, code.takeIf { it.isNotBlank() }, isMandatory)
-                            onBack()
+                            viewModel.save(
+                                name.trim(),
+                                description.takeIf { it.isNotBlank() },
+                                code.takeIf { it.isNotBlank() },
+                                isMandatory,
+                            )
                         },
                         enabled = name.isNotBlank() && !state.loading,
-                    ) {
-                        Text("Save")
-                    }
+                    ) { Text("Save") }
                 },
             )
         },
@@ -111,7 +120,10 @@ fun ProductDetailScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             if (state.loading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-            state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+
+            state.error?.let {
+                Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            }
 
             // Image section
             Box(
@@ -140,14 +152,12 @@ fun ProductDetailScreen(
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(
-                    onClick = { galleryLauncher.launch("image/*") },
-                    modifier = Modifier.weight(1f),
-                ) { Text("Gallery") }
-                Button(
-                    onClick = { cameraLauncher.launch(null) },
-                    modifier = Modifier.weight(1f),
-                ) { Text("Camera") }
+                Button(onClick = { galleryLauncher.launch("image/*") }, modifier = Modifier.weight(1f)) {
+                    Text("Gallery")
+                }
+                Button(onClick = { cameraLauncher.launch(null) }, modifier = Modifier.weight(1f)) {
+                    Text("Camera")
+                }
             }
 
             OutlinedTextField(
@@ -180,7 +190,7 @@ fun ProductDetailScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text("Mandatory on this shelf", style = MaterialTheme.typography.bodyLarge)
                     Text(
                         "Shows a warning when quantity reaches 0",
@@ -197,6 +207,7 @@ fun ProductDetailScreen(
                 onClick = { showDeleteConfirm = true },
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                 modifier = Modifier.fillMaxWidth(),
+                enabled = !state.loading,
             ) {
                 Text("Delete product")
             }
@@ -212,7 +223,7 @@ fun ProductDetailScreen(
             text = { Text("This product will be permanently removed from the shelf.") },
             confirmButton = {
                 Button(
-                    onClick = { viewModel.delete(productId); showDeleteConfirm = false; onBack() },
+                    onClick = { viewModel.delete(); showDeleteConfirm = false },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                 ) { Text("Delete") }
             },
