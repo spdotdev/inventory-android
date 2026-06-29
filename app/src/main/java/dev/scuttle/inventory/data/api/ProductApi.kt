@@ -5,9 +5,11 @@ import dev.scuttle.inventory.data.dto.CreateProductRequest
 import dev.scuttle.inventory.data.dto.MoveProductRequest
 import dev.scuttle.inventory.data.dto.ProductListResponse
 import dev.scuttle.inventory.data.dto.ProductResponse
+import dev.scuttle.inventory.data.dto.UpdateProductRequest
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Path
 
@@ -23,6 +25,14 @@ interface ProductApi {
         @Path("household") householdId: Long,
         @Path("shelf") shelfId: Long,
         @Body body: CreateProductRequest,
+    ): ProductResponse
+
+    @PATCH("households/{household}/shelves/{shelf}/products/{product}")
+    suspend fun update(
+        @Path("household") householdId: Long,
+        @Path("shelf") shelfId: Long,
+        @Path("product") productId: Long,
+        @Body body: UpdateProductRequest,
     ): ProductResponse
 
     @POST("households/{household}/shelves/{shelf}/products/{product}/add")

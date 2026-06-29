@@ -5,6 +5,7 @@ import dev.scuttle.inventory.data.dto.AmountRequest
 import dev.scuttle.inventory.data.dto.CreateProductRequest
 import dev.scuttle.inventory.data.dto.MoveProductRequest
 import dev.scuttle.inventory.data.dto.ProductDto
+import dev.scuttle.inventory.data.dto.UpdateProductRequest
 import javax.inject.Inject
 
 class ProductRepositoryImpl @Inject constructor(
@@ -16,6 +17,9 @@ class ProductRepositoryImpl @Inject constructor(
 
     override suspend fun create(householdId: Long, shelfId: Long, name: String, quantity: Int): ProductDto =
         api.create(householdId, shelfId, CreateProductRequest(name = name, quantity = quantity)).data
+
+    override suspend fun update(householdId: Long, shelfId: Long, productId: Long, name: String, description: String?, code: String?, isMandatory: Boolean): ProductDto =
+        api.update(householdId, shelfId, productId, UpdateProductRequest(name, description, code, isMandatory)).data
 
     override suspend fun add(householdId: Long, shelfId: Long, productId: Long, amount: Int): ProductDto =
         api.add(householdId, shelfId, productId, AmountRequest(amount)).data

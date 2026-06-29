@@ -15,10 +15,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -41,6 +44,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.data.dto.LocationDto
 import dev.scuttle.inventory.ui.app.DrawerViewModel
 import dev.scuttle.inventory.ui.app.HouseholdWithLocations
@@ -52,8 +56,10 @@ fun AllStoragesScreen(
     viewModel: DrawerViewModel,
     onOpenDrawer: () -> Unit = {},
     onOpenLocation: (householdId: Long, locationId: Long) -> Unit = { _, _ -> },
+    localViewModel: AllStoragesViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+    val localState by localViewModel.state.collectAsState()
     var pendingDelete by remember { mutableStateOf<Pair<HouseholdWithLocations, LocationDto>?>(null) }
 
     LaunchedEffect(Unit) { viewModel.refresh() }
@@ -82,10 +88,7 @@ fun AllStoragesScreen(
             Spacer(Modifier.height(4.dp))
 
             if (state.entries.isEmpty()) {
-                Text(
-                    text = "No storage locations yet. Add a household and create storage from Settings.",
-                    modifier = Modifier.padding(top = 8.dp),
-                )
+                Text("No storage locations yet. Add a household and create storage from Settings.")
             }
 
             state.entries.forEach { entry ->
@@ -100,6 +103,9 @@ fun AllStoragesScreen(
 
                 entry.locations.forEach { location ->
                     key(location.id) {
+                        val hasWarning = state.locationWarnings[location.id] == true
+                        val isFavorite = location.id in localState.favoriteLocationIds
+
                         val swipeState = rememberSwipeToDismissBoxState(
                             confirmValueChange = { value ->
                                 if (value == SwipeToDismissBoxValue.EndToStart) {
@@ -133,14 +139,42 @@ fun AllStoragesScreen(
                             Card(
                                 onClick = { onOpenLocation(entry.id, location.id) },
                                 modifier = Modifier.fillMaxWidth(),
+                                colors = if (hasWarning)
+                                    CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f))
+                                else
+                                    CardDefaults.cardColors(),
                             ) {
                                 Row(
-                                    modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                                    modifier = Modifier
+                                        .padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp)
+                                        .fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically,
                                 ) {
-                                    Text(location.name, style = MaterialTheme.typography.bodyLarge)
-                                    Text(location.type, style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(location.name, style = MaterialTheme.typography.bodyLarge)
+                                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            Text(
+                                                location.type,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            )
+                                            if (hasWarning) {
+                                                Text(
+                                                    "⚠ Stock warning",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.error,
+                                                )
+                                            }
+                                        }
+                                    }
+                                    IconButton(onClick = { localViewModel.toggleFavorite(location.id) }) {
+                                        Icon(
+                                            if (isFavorite) Icons.Default.Star else Icons.Outlined.StarOutline,
+                                            contentDescription = if (isFavorite) "Remove favorite" else "Add to favorites",
+                                            tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -159,10 +193,7 @@ fun AllStoragesScreen(
             text = { Text("All shelves and products inside will be permanently deleted.") },
             confirmButton = {
                 Button(
-                    onClick = {
-                        viewModel.deleteLocation(entry.id, location.id)
-                        pendingDelete = null
-                    },
+                    onClick = { viewModel.deleteLocation(entry.id, location.id); pendingDelete = null },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                 ) { Text("Delete") }
             },

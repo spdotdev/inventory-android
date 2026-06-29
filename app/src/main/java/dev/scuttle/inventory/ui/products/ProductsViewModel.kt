@@ -98,6 +98,17 @@ class ProductsViewModel @Inject constructor(
         }
     }
 
+    fun update(productId: Long, name: String, description: String?, code: String?, isMandatory: Boolean) {
+        val h = householdId ?: return
+        val s = shelfId ?: return
+        launch {
+            val updated = productRepository.update(h, s, productId, name, description, code, isMandatory)
+            _state.update { state ->
+                state.copy(products = state.products.map { if (it.id == updated.id) updated else it })
+            }
+        }
+    }
+
     fun delete(productId: Long) {
         val h = householdId ?: return
         val s = shelfId ?: return

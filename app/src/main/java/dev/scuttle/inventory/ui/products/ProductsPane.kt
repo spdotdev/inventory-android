@@ -1,6 +1,7 @@
 package dev.scuttle.inventory.ui.products
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,12 +34,16 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import dev.scuttle.inventory.data.dto.ProductDto
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,12 +51,21 @@ fun ProductsPane(
     householdId: Long,
     shelfId: Long,
     modifier: Modifier = Modifier,
+    onOpenProduct: (ProductDto) -> Unit = {},
+    onWarningChange: (Boolean) -> Unit = {},
     viewModel: ProductsViewModel = hiltViewModel(key = "products-$shelfId"),
 ) {
     val state by viewModel.state.collectAsState()
+    var pendingDeleteId by remember { mutableStateOf<Long?>(null) }
 
     LaunchedEffect(householdId, shelfId) {
         viewModel.load(householdId, shelfId)
+    }
+
+    // Compute and report mandatory warning
+    LaunchedEffect(state.products) {
+        val hasWarning = state.products.any { it.is_mandatory && it.quantity == 0 }
+        onWarningChange(hasWarning)
     }
 
     Column(
@@ -78,9 +92,9 @@ fun ProductsPane(
                 val swipeState = rememberSwipeToDismissBoxState(
                     confirmValueChange = { value ->
                         if (value == SwipeToDismissBoxValue.EndToStart) {
-                            viewModel.delete(product.id)
+                            pendingDeleteId = product.id
                         }
-                        value != SwipeToDismissBoxValue.StartToEnd
+                        false
                     },
                 )
                 SwipeToDismissBox(
@@ -105,15 +119,34 @@ fun ProductsPane(
                         }
                     },
                 ) {
-                    Card(modifier = Modifier.fillMaxWidth()) {
+                    val isMandatoryWarning = product.is_mandatory && product.quantity == 0
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onOpenProduct(product) },
+                    ) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .background(
+                                    if (isMandatoryWarning) MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+                                    else MaterialTheme.colorScheme.surface
+                                )
                                 .padding(horizontal = 16.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            Text(text = product.name, modifier = Modifier.weight(1f))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(text = product.name, style = MaterialTheme.typography.bodyLarge)
+                                if (product.is_mandatory) {
+                                    Text(
+                                        text = "Mandatory",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = if (isMandatoryWarning) MaterialTheme.colorScheme.error
+                                                else MaterialTheme.colorScheme.primary,
+                                    )
+                                }
+                            }
                             OutlinedButton(
                                 onClick = { viewModel.decrement(product.id) },
                                 enabled = !state.loading && product.quantity > 0,
@@ -123,7 +156,11 @@ fun ProductsPane(
                             ) {
                                 Text("−")
                             }
-                            Text(text = product.quantity.toString())
+                            Text(
+                                text = product.quantity.toString(),
+                                color = if (isMandatoryWarning) MaterialTheme.colorScheme.error
+                                        else MaterialTheme.colorScheme.onSurface,
+                            )
                             OutlinedButton(
                                 onClick = { viewModel.increment(product.id) },
                                 enabled = !state.loading,
@@ -148,7 +185,23 @@ fun ProductsPane(
             }
         }
 
-        Spacer(Modifier.height(80.dp)) // FAB clearance
+        Spacer(Modifier.height(80.dp))
+    }
+
+    pendingDeleteId?.let { id ->
+        val name = state.products.find { it.id == id }?.name ?: "this product"
+        AlertDialog(
+            onDismissRequest = { pendingDeleteId = null },
+            title = { Text("Delete \"$name\"?") },
+            confirmButton = {
+                TextButton(onClick = { viewModel.delete(id); pendingDeleteId = null }) {
+                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingDeleteId = null }) { Text("Cancel") }
+            },
+        )
     }
 
     if (state.movingProductId != null) {

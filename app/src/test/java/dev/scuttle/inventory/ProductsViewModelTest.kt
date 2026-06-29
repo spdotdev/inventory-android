@@ -37,6 +37,13 @@ class ProductsViewModelTest {
             return dto
         }
 
+        override suspend fun update(householdId: Long, shelfId: Long, productId: Long, name: String, description: String?, code: String?, isMandatory: Boolean): ProductDto {
+            val index = items.indexOfFirst { it.id == productId }
+            val updated = items[index].copy(name = name, description = description, code = code, is_mandatory = isMandatory)
+            items[index] = updated
+            return updated
+        }
+
         override suspend fun add(householdId: Long, shelfId: Long, productId: Long, amount: Int): ProductDto =
             adjust(productId, amount)
 

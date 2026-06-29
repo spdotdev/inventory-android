@@ -26,10 +26,12 @@ import dev.scuttle.inventory.ui.app.AppDrawer
 import dev.scuttle.inventory.ui.app.DrawerViewModel
 import dev.scuttle.inventory.ui.auth.AuthScreen
 import dev.scuttle.inventory.ui.auth.AuthViewModel
+import dev.scuttle.inventory.ui.dashboard.DashboardScreen
 import dev.scuttle.inventory.ui.home.AllStoragesScreen
 import dev.scuttle.inventory.ui.households.HouseholdsScreen
 import dev.scuttle.inventory.ui.invite.InviteScreen
 import dev.scuttle.inventory.ui.location.LocationDetailScreen
+import dev.scuttle.inventory.ui.products.ProductDetailScreen
 import dev.scuttle.inventory.ui.search.SearchScreen
 import dev.scuttle.inventory.ui.settings.SettingsScreen
 import dev.scuttle.inventory.ui.settings.ThemeViewModel
@@ -63,17 +65,20 @@ class MainActivity : ComponentActivity() {
 private object Routes {
     const val AUTH = "auth"
     const val HOME = "home"
+    const val DASHBOARD = "dashboard"
     const val HOUSEHOLDS = "households"
     const val SETTINGS = "settings"
     const val STORAGE = "storage/{householdId}"
     const val SEARCH = "search/{householdId}"
     const val INVITE = "invite/{householdId}"
     const val LOCATION = "location/{householdId}/{locationId}"
+    const val PRODUCT_DETAIL = "product-detail/{householdId}/{shelfId}/{productId}"
 
     fun storage(householdId: Long) = "storage/$householdId"
     fun search(householdId: Long) = "search/$householdId"
     fun invite(householdId: Long) = "invite/$householdId"
     fun location(householdId: Long, locationId: Long) = "location/$householdId/$locationId"
+    fun productDetail(householdId: Long, shelfId: Long, productId: Long) = "product-detail/$householdId/$shelfId/$productId"
 }
 
 @Composable
@@ -117,6 +122,10 @@ private fun InventoryNavHost(
                         launchSingleTop = true
                     }
                 },
+                onNavigateDashboard = {
+                    closeDrawer()
+                    navController.navigate(Routes.DASHBOARD) { launchSingleTop = true }
+                },
                 onNavigateLocation = { householdId, locationId ->
                     closeDrawer()
                     navController.navigate(Routes.location(householdId, locationId)) {
@@ -139,6 +148,15 @@ private fun InventoryNavHost(
             composable(Routes.HOME) {
                 AllStoragesScreen(
                     viewModel = drawerViewModel,
+                    onOpenDrawer = openDrawer,
+                    onOpenLocation = { hhId, locId ->
+                        navController.navigate(Routes.location(hhId, locId))
+                    },
+                )
+            }
+
+            composable(Routes.DASHBOARD) {
+                DashboardScreen(
                     onOpenDrawer = openDrawer,
                     onOpenLocation = { hhId, locId ->
                         navController.navigate(Routes.location(hhId, locId))
@@ -204,8 +222,31 @@ private fun InventoryNavHost(
                 LocationDetailScreen(
                     householdId = householdId,
                     locationId = locationId,
+                    drawerViewModel = drawerViewModel,
                     onBack = { navController.popBackStack() },
                     onOpenDrawer = openDrawer,
+                    onOpenProduct = { hhId, shelfId, productId ->
+                        navController.navigate(Routes.productDetail(hhId, shelfId, productId))
+                    },
+                )
+            }
+
+            composable(
+                route = Routes.PRODUCT_DETAIL,
+                arguments = listOf(
+                    navArgument("householdId") { type = NavType.LongType },
+                    navArgument("shelfId") { type = NavType.LongType },
+                    navArgument("productId") { type = NavType.LongType },
+                ),
+            ) { entry ->
+                val householdId = entry.arguments?.getLong("householdId") ?: return@composable
+                val shelfId = entry.arguments?.getLong("shelfId") ?: return@composable
+                val productId = entry.arguments?.getLong("productId") ?: return@composable
+                ProductDetailScreen(
+                    householdId = householdId,
+                    shelfId = shelfId,
+                    productId = productId,
+                    onBack = { navController.popBackStack() },
                 )
             }
         }

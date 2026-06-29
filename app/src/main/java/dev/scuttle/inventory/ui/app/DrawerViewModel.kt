@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import dev.scuttle.inventory.data.dto.LocationDto
 import dev.scuttle.inventory.data.household.HouseholdRepository
 import dev.scuttle.inventory.data.location.LocationRepository
+import dev.scuttle.inventory.data.product.ProductRepository
+import dev.scuttle.inventory.data.shelf.ShelfRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,12 +23,15 @@ data class HouseholdWithLocations(
 
 data class DrawerUiState(
     val entries: List<HouseholdWithLocations> = emptyList(),
+    val locationWarnings: Map<Long, Boolean> = emptyMap(),
 )
 
 @HiltViewModel
 class DrawerViewModel @Inject constructor(
     private val householdRepository: HouseholdRepository,
     private val locationRepository: LocationRepository,
+    private val shelfRepository: ShelfRepository,
+    private val productRepository: ProductRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(DrawerUiState())
@@ -48,6 +53,12 @@ class DrawerViewModel @Inject constructor(
     fun deleteLocation(householdId: Long, locationId: Long) {
         viewModelScope.launch {
             runCatching { locationRepository.delete(householdId, locationId) }.onSuccess { refresh() }
+        }
+    }
+
+    fun reportLocationWarning(locationId: Long, hasWarning: Boolean) {
+        _state.update { state ->
+            state.copy(locationWarnings = state.locationWarnings + (locationId to hasWarning))
         }
     }
 }

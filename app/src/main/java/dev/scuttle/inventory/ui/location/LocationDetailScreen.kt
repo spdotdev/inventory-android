@@ -1,7 +1,9 @@
 package dev.scuttle.inventory.ui.location
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -46,11 +49,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import dev.scuttle.inventory.data.dto.ProductDto
+import dev.scuttle.inventory.ui.app.DrawerViewModel
 import dev.scuttle.inventory.ui.products.ProductsPane
 import dev.scuttle.inventory.ui.products.ProductsViewModel
 import dev.scuttle.inventory.ui.shelves.ShelvesViewModel
@@ -61,9 +68,11 @@ import kotlinx.coroutines.launch
 fun LocationDetailScreen(
     householdId: Long,
     locationId: Long,
+    drawerViewModel: DrawerViewModel,
     modifier: Modifier = Modifier,
     onBack: () -> Unit = {},
     onOpenDrawer: () -> Unit = {},
+    onOpenProduct: (householdId: Long, shelfId: Long, productId: Long) -> Unit = { _, _, _ -> },
     shelvesViewModel: ShelvesViewModel = hiltViewModel(),
 ) {
     val state by shelvesViewModel.state.collectAsState()
@@ -75,6 +84,9 @@ fun LocationDetailScreen(
     var showAddShelfSheet by remember { mutableStateOf(false) }
     var showAddProductSheet by remember { mutableStateOf(false) }
     val keyboardController = LocalSoftwareKeyboardController.current
+
+    // Track per-shelf warning state so we can roll up to location level
+    var shelfWarnings by remember { mutableStateOf(mapOf<Long, Boolean>()) }
 
     LaunchedEffect(householdId, locationId) {
         shelvesViewModel.load(householdId, locationId)
@@ -168,6 +180,7 @@ fun LocationDetailScreen(
                     state.shelves.forEachIndexed { index, shelf ->
                         val isSelected = if (state.deleteMode) shelf.id in state.selectedShelves
                                          else currentPage == index
+                        val tabHasWarning = shelfWarnings[shelf.id] == true
                         Tab(
                             selected = isSelected,
                             onClick = {
@@ -177,7 +190,28 @@ fun LocationDetailScreen(
                                     scope.launch { pagerState.animateScrollToPage(index) }
                                 }
                             },
-                            text = { Text(shelf.name) },
+                            text = {
+                                if (state.deleteMode && shelf.id in state.selectedShelves) {
+                                    Text(shelf.name)
+                                } else {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                    ) {
+                                        Text(
+                                            shelf.name,
+                                            color = if (tabHasWarning && !state.deleteMode) MaterialTheme.colorScheme.error else Color.Unspecified,
+                                        )
+                                        if (tabHasWarning && !state.deleteMode) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(6.dp)
+                                                    .background(MaterialTheme.colorScheme.error, CircleShape),
+                                            )
+                                        }
+                                    }
+                                }
+                            },
                             icon = if (state.deleteMode && shelf.id in state.selectedShelves) {
                                 { Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(16.dp)) }
                             } else null,
@@ -192,7 +226,16 @@ fun LocationDetailScreen(
                         .fillMaxWidth()
                         .weight(1f),
                 ) { page ->
-                    ProductsPane(householdId = householdId, shelfId = state.shelves[page].id)
+                    val shelf = state.shelves[page]
+                    ProductsPane(
+                        householdId = householdId,
+                        shelfId = shelf.id,
+                        onOpenProduct = { product -> onOpenProduct(householdId, product.shelf_id, product.id) },
+                        onWarningChange = { hasWarning ->
+                            shelfWarnings = shelfWarnings + (shelf.id to hasWarning)
+                            drawerViewModel.reportLocationWarning(locationId, shelfWarnings.values.any { it })
+                        },
+                    )
                 }
             }
         }
