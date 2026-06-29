@@ -83,7 +83,6 @@ fun AppDrawer(
                 label = { Text("Search") },
                 selected = false,
                 onClick = { firstHouseholdId?.let(onNavigateSearch) },
-                enabled = firstHouseholdId != null,
                 modifier = Modifier.padding(horizontal = 12.dp),
             )
 
