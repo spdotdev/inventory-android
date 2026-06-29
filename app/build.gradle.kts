@@ -9,12 +9,12 @@ plugins {
 
 android {
     namespace = "dev.scuttle.inventory"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "dev.scuttle.inventory"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "0.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -22,6 +22,7 @@ android {
         // Base URL of the inventory API. Override per build type / flavor as needed;
         // the trailing slash is required by Retrofit.
         buildConfigField("String", "BASE_URL", "\"https://inventory.scuttle.dev/api/v1/\"")
+        buildConfigField("String", "GOOGLE_CLIENT_ID", "\"\"") // set your Web client ID from Google Cloud Console
     }
 
     buildTypes {
@@ -82,6 +83,11 @@ dependencies {
 
     // Secure token storage
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
+
+    // Google Sign-In via Credential Manager
+    implementation("androidx.credentials:credentials:1.3.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
 
     // QR generation for household invites (pure-Java, no Android deps)
     implementation("com.google.zxing:core:3.5.3")
