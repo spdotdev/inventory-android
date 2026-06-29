@@ -128,6 +128,14 @@ private fun InventoryNavHost(
                     closeDrawer()
                     navController.navigate(Routes.DASHBOARD) { launchSingleTop = true }
                 },
+                onNavigateSearch = { householdId ->
+                    closeDrawer()
+                    navController.navigate(Routes.search(householdId)) { launchSingleTop = true }
+                },
+                onNavigateHouseholds = {
+                    closeDrawer()
+                    navController.navigate(Routes.HOUSEHOLDS) { launchSingleTop = true }
+                },
                 onNavigateLocation = { householdId, locationId ->
                     closeDrawer()
                     navController.navigate(Routes.location(householdId, locationId)) {
