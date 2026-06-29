@@ -1,5 +1,6 @@
 package dev.scuttle.inventory.ui.location
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,6 +20,7 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -225,39 +227,65 @@ private fun AddProductSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp)
                 .padding(bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(0.dp),
         ) {
-            Text(text = "Add product", style = MaterialTheme.typography.titleLarge)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                OutlinedTextField(
-                    value = state.newName,
-                    onValueChange = viewModel::onNewNameChange,
-                    label = { Text("Product name") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(autoCorrect = false, imeAction = ImeAction.Done),
-                    keyboardActions = KeyboardActions(onDone = {
-                        keyboardController?.hide()
-                        viewModel.create()
-                        onDismiss()
-                    }),
-                    modifier = Modifier.weight(1f),
-                )
-                Button(
-                    onClick = {
-                        keyboardController?.hide()
-                        viewModel.create()
-                        onDismiss()
-                    },
-                    enabled = !state.loading && state.newName.isNotBlank(),
+                Text(text = "Add product", style = MaterialTheme.typography.titleLarge)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    Text("Add")
+                    OutlinedTextField(
+                        value = state.newName,
+                        onValueChange = viewModel::onNewNameChange,
+                        label = { Text("Product name") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(autoCorrect = false, imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(onDone = {
+                            keyboardController?.hide()
+                            viewModel.create()
+                            onDismiss()
+                        }),
+                        modifier = Modifier.weight(1f),
+                    )
+                    Button(
+                        onClick = {
+                            keyboardController?.hide()
+                            viewModel.create()
+                            onDismiss()
+                        },
+                        enabled = !state.loading && state.newName.isNotBlank(),
+                    ) {
+                        Text("Add")
+                    }
                 }
             }
+
+            if (state.suggestions.isNotEmpty()) {
+                HorizontalDivider(modifier = Modifier.padding(top = 8.dp))
+                state.suggestions.forEach { name ->
+                    Text(
+                        text = name,
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                keyboardController?.hide()
+                                viewModel.selectSuggestion(name)
+                            }
+                            .padding(horizontal = 24.dp, vertical = 14.dp),
+                    )
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 24.dp))
+                }
+            }
+
+            Spacer(Modifier.height(8.dp))
         }
     }
 }

@@ -5,8 +5,11 @@ import androidx.lifecycle.viewModelScope
 import dev.scuttle.inventory.data.dto.ProductDto
 import dev.scuttle.inventory.data.location.LocationRepository
 import dev.scuttle.inventory.data.product.ProductRepository
+import dev.scuttle.inventory.data.search.SearchRepository
 import dev.scuttle.inventory.data.shelf.ShelfRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,6 +26,7 @@ data class ProductsUiState(
     val loading: Boolean = false,
     val products: List<ProductDto> = emptyList(),
     val newName: String = "",
+    val suggestions: List<String> = emptyList(),
     val error: String? = null,
     val movingProductId: Long? = null,
     val moveTargets: List<MoveTarget> = emptyList(),
@@ -33,10 +37,12 @@ class ProductsViewModel @Inject constructor(
     private val productRepository: ProductRepository,
     private val locationRepository: LocationRepository,
     private val shelfRepository: ShelfRepository,
+    private val searchRepository: SearchRepository,
 ) : ViewModel() {
 
     private var householdId: Long? = null
     private var shelfId: Long? = null
+    private var searchJob: Job? = null
 
     private val _state = MutableStateFlow(ProductsUiState())
     val state: StateFlow<ProductsUiState> = _state.asStateFlow()
@@ -48,7 +54,28 @@ class ProductsViewModel @Inject constructor(
         refresh()
     }
 
-    fun onNewNameChange(value: String) = _state.update { it.copy(newName = value, error = null) }
+    fun onNewNameChange(value: String) {
+        _state.update { it.copy(newName = value, error = null) }
+        searchJob?.cancel()
+        if (value.isBlank()) {
+            _state.update { it.copy(suggestions = emptyList()) }
+            return
+        }
+        searchJob = viewModelScope.launch {
+            delay(300)
+            val h = householdId ?: return@launch
+            runCatching { searchRepository.search(h, value) }
+                .onSuccess { results ->
+                    val names = results.map { it.name }.distinct().take(5)
+                    _state.update { it.copy(suggestions = names) }
+                }
+        }
+    }
+
+    fun selectSuggestion(name: String) {
+        searchJob?.cancel()
+        _state.update { it.copy(newName = name, suggestions = emptyList()) }
+    }
 
     fun refresh() {
         val h = householdId ?: return
@@ -64,9 +91,10 @@ class ProductsViewModel @Inject constructor(
         val s = shelfId ?: return
         val name = _state.value.newName.trim()
         if (name.isEmpty()) return
+        searchJob?.cancel()
         launch {
             productRepository.create(h, s, name, 0)
-            _state.update { it.copy(newName = "", products = productRepository.list(h, s)) }
+            _state.update { it.copy(newName = "", suggestions = emptyList(), products = productRepository.list(h, s)) }
         }
     }
 
