@@ -14,10 +14,9 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.Star
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -53,8 +52,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 @Composable
 fun HouseholdsScreen(
     modifier: Modifier = Modifier,
-    onOpenHousehold: (Long) -> Unit = {},
-    onOpenDrawer: () -> Unit = {},
+    onBack: () -> Unit = {},
+    onOpenInvite: (householdId: Long) -> Unit = {},
     viewModel: HouseholdsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -67,10 +66,10 @@ fun HouseholdsScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("Households") },
+                title = { Text("My Households") },
                 navigationIcon = {
-                    IconButton(onClick = onOpenDrawer) {
-                        Icon(Icons.Default.Menu, contentDescription = "Open menu")
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
             )
@@ -110,30 +109,22 @@ fun HouseholdsScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .semantics { contentDescription = "Open ${household.name}" }
-                        .clickable { onOpenHousehold(household.id) },
+                        .semantics { contentDescription = household.name },
                 ) {
                     Row(
                         modifier = Modifier
-                            .padding(16.dp)
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
                             .fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(text = household.name)
-                        }
-                        val isDefault = state.defaultHouseholdId == household.id
-                        IconButton(
-                            onClick = {
-                                if (isDefault) viewModel.clearDefault()
-                                else viewModel.setDefault(household.id)
-                            },
-                        ) {
-                            Icon(
-                                imageVector = if (isDefault) Icons.Default.Star else Icons.Outlined.Star,
-                                contentDescription = if (isDefault) "Default household" else "Set as default",
-                            )
+                        Text(
+                            text = household.name,
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.weight(1f),
+                        )
+                        IconButton(onClick = { onOpenInvite(household.id) }) {
+                            Icon(Icons.Default.Share, contentDescription = "Invite to ${household.name}")
                         }
                         TextButton(onClick = { confirmLeaveId = household.id }) {
                             Text("Leave", color = MaterialTheme.colorScheme.error)
@@ -142,7 +133,7 @@ fun HouseholdsScreen(
                 }
             }
 
-            Spacer(Modifier.height(80.dp)) // FAB clearance
+            Spacer(Modifier.height(80.dp))
         }
     }
 

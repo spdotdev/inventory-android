@@ -85,6 +85,7 @@ dependencies {
 
     // QR generation for household invites (pure-Java, no Android deps)
     implementation("com.google.zxing:core:3.5.3")
+    implementation("com.journeyapps:zxing-android-embedded:4.3.0") { isTransitive = false }
 
     debugImplementation("androidx.compose.ui:ui-tooling")
 

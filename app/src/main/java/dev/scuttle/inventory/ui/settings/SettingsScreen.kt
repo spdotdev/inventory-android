@@ -36,6 +36,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.activity.compose.rememberLauncherForActivityResult
+import com.journeyapps.barcodescanner.ScanContract
+import com.journeyapps.barcodescanner.ScanOptions
 import dev.scuttle.inventory.ui.theme.ThemeMode
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,7 +47,7 @@ fun SettingsScreen(
     modifier: Modifier = Modifier,
     onOpenDrawer: () -> Unit = {},
     onSignOut: () -> Unit = {},
-    onOpenInvite: () -> Unit = {},
+    onOpenHouseholds: () -> Unit = {},
     themeViewModel: ThemeViewModel = hiltViewModel(),
     joinViewModel: JoinHouseholdViewModel = hiltViewModel(),
 ) {
@@ -52,6 +55,10 @@ fun SettingsScreen(
     val joinState by joinViewModel.state.collectAsState()
     var confirmSignOut by remember { mutableStateOf(false) }
     val keyboardController = LocalSoftwareKeyboardController.current
+
+    val scanLauncher = rememberLauncherForActivityResult(ScanContract()) { result ->
+        result.contents?.let { joinViewModel.onCodeChange(it) }
+    }
 
     Scaffold(
         modifier = modifier,
@@ -119,13 +126,27 @@ fun SettingsScreen(
                     Text("Join")
                 }
             }
-
-            Text(text = "Household", style = MaterialTheme.typography.titleMedium)
             Button(
-                onClick = onOpenInvite,
+                onClick = {
+                    scanLauncher.launch(
+                        ScanOptions().apply {
+                            setPrompt("Scan household QR code")
+                            setBeepEnabled(false)
+                            setOrientationLocked(false)
+                        }
+                    )
+                },
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text("Invite members")
+                Text("Scan QR code to join")
+            }
+
+            Text(text = "Households", style = MaterialTheme.typography.titleMedium)
+            Button(
+                onClick = onOpenHouseholds,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("My households")
             }
 
             Text(text = "Account", style = MaterialTheme.typography.titleMedium)

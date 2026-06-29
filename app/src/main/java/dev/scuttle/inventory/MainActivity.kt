@@ -26,6 +26,7 @@ import dev.scuttle.inventory.ui.app.AppDrawer
 import dev.scuttle.inventory.ui.app.DrawerViewModel
 import dev.scuttle.inventory.ui.auth.AuthScreen
 import dev.scuttle.inventory.ui.auth.AuthViewModel
+import dev.scuttle.inventory.ui.home.AllStoragesScreen
 import dev.scuttle.inventory.ui.households.HouseholdsScreen
 import dev.scuttle.inventory.ui.invite.InviteScreen
 import dev.scuttle.inventory.ui.location.LocationDetailScreen
@@ -61,6 +62,7 @@ class MainActivity : ComponentActivity() {
 
 private object Routes {
     const val AUTH = "auth"
+    const val HOME = "home"
     const val HOUSEHOLDS = "households"
     const val SETTINGS = "settings"
     const val STORAGE = "storage/{householdId}"
@@ -90,9 +92,7 @@ private fun InventoryNavHost(
 
     LaunchedEffect(authState.authenticated) {
         if (authState.authenticated) {
-            val defaultId = drawerViewModel.getDefault()
-            val target = if (defaultId != null) Routes.storage(defaultId) else Routes.HOUSEHOLDS
-            navController.navigate(target) {
+            navController.navigate(Routes.HOME) {
                 popUpTo(navController.graph.id) { inclusive = true }
                 launchSingleTop = true
             }
@@ -112,14 +112,14 @@ private fun InventoryNavHost(
                 viewModel = drawerViewModel,
                 onNavigateHome = {
                     closeDrawer()
-                    navController.navigate(Routes.HOUSEHOLDS) {
-                        popUpTo(Routes.HOUSEHOLDS) { inclusive = true }
+                    navController.navigate(Routes.HOME) {
+                        popUpTo(Routes.HOME) { inclusive = true }
                         launchSingleTop = true
                     }
                 },
-                onNavigateHousehold = { householdId ->
+                onNavigateLocation = { householdId, locationId ->
                     closeDrawer()
-                    navController.navigate(Routes.storage(householdId)) {
+                    navController.navigate(Routes.location(householdId, locationId)) {
                         launchSingleTop = true
                     }
                 },
@@ -136,10 +136,13 @@ private fun InventoryNavHost(
                 AuthScreen(viewModel = authViewModel)
             }
 
-            composable(Routes.HOUSEHOLDS) {
-                HouseholdsScreen(
-                    onOpenHousehold = { navController.navigate(Routes.storage(it)) },
+            composable(Routes.HOME) {
+                AllStoragesScreen(
+                    viewModel = drawerViewModel,
                     onOpenDrawer = openDrawer,
+                    onOpenLocation = { hhId, locId ->
+                        navController.navigate(Routes.location(hhId, locId))
+                    },
                 )
             }
 
@@ -147,11 +150,15 @@ private fun InventoryNavHost(
                 SettingsScreen(
                     onOpenDrawer = openDrawer,
                     onSignOut = { authViewModel.signOut() },
-                    onOpenInvite = {
-                        val id = drawerViewModel.getDefault()
-                        if (id != null) navController.navigate(Routes.invite(id))
-                    },
+                    onOpenHouseholds = { navController.navigate(Routes.HOUSEHOLDS) },
                     themeViewModel = themeViewModel,
+                )
+            }
+
+            composable(Routes.HOUSEHOLDS) {
+                HouseholdsScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenInvite = { navController.navigate(Routes.invite(it)) },
                 )
             }
 

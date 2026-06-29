@@ -6,11 +6,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Text
@@ -24,9 +22,8 @@ import androidx.compose.ui.unit.dp
 fun AppDrawer(
     viewModel: DrawerViewModel,
     onNavigateHome: () -> Unit,
-    onNavigateHousehold: (Long) -> Unit,
+    onNavigateLocation: (householdId: Long, locationId: Long) -> Unit,
     onNavigateSettings: () -> Unit,
-    currentHouseholdId: Long? = null,
 ) {
     val state by viewModel.state.collectAsState()
 
@@ -35,40 +32,30 @@ fun AppDrawer(
 
         NavigationDrawerItem(
             icon = { Icon(Icons.Default.Home, contentDescription = null) },
-            label = { Text("Households") },
-            selected = currentHouseholdId == null,
+            label = { Text("All storage") },
+            selected = false,
             onClick = onNavigateHome,
             modifier = Modifier.padding(horizontal = 12.dp),
         )
 
-        if (state.households.isNotEmpty()) {
+        if (state.entries.isNotEmpty()) {
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp, horizontal = 12.dp))
-            Text(
-                text = "Your households",
-                modifier = Modifier.padding(horizontal = 28.dp, vertical = 4.dp),
-            )
 
-            state.households.forEach { household ->
-                val isDefault = state.defaultHouseholdId == household.id
-                NavigationDrawerItem(
-                    label = { Text(household.name) },
-                    selected = currentHouseholdId == household.id,
-                    onClick = { onNavigateHousehold(household.id) },
-                    badge = {
-                        IconButton(
-                            onClick = {
-                                if (isDefault) viewModel.clearDefault()
-                                else viewModel.setDefault(household.id)
-                            },
-                        ) {
-                            Icon(
-                                imageVector = if (isDefault) Icons.Default.Star else Icons.Outlined.Star,
-                                contentDescription = if (isDefault) "Remove default" else "Set as default",
-                            )
-                        }
-                    },
-                    modifier = Modifier.padding(horizontal = 12.dp),
+            state.entries.forEach { entry ->
+                Text(
+                    text = entry.name,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 28.dp, vertical = 4.dp),
                 )
+                entry.locations.forEach { location ->
+                    NavigationDrawerItem(
+                        label = { Text(location.name) },
+                        selected = false,
+                        onClick = { onNavigateLocation(entry.id, location.id) },
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                    )
+                }
             }
         }
 
