@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.text.KeyboardActions
@@ -16,9 +17,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -73,7 +74,6 @@ fun LocationDetailScreen(
 
     var showAddShelfSheet by remember { mutableStateOf(false) }
     var showAddProductSheet by remember { mutableStateOf(false) }
-    var showDeleteShelfDialog by remember { mutableStateOf(false) }
     val keyboardController = LocalSoftwareKeyboardController.current
 
     LaunchedEffect(householdId, locationId) {
@@ -84,29 +84,53 @@ fun LocationDetailScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("Shelves") },
+                title = {
+                    if (state.deleteMode && state.selectedShelves.isNotEmpty()) {
+                        Text("${state.selectedShelves.size} selected")
+                    } else {
+                        Text("Shelves")
+                    }
+                },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    if (state.deleteMode) {
+                        TextButton(onClick = shelvesViewModel::exitDeleteMode) { Text("Cancel") }
+                    } else {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
                     }
                 },
                 actions = {
-                    if (currentShelfId != null) {
-                        IconButton(onClick = { showDeleteShelfDialog = true }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Delete shelf")
+                    if (state.deleteMode) {
+                        Button(
+                            onClick = shelvesViewModel::deleteSelected,
+                            enabled = state.selectedShelves.isNotEmpty() && !state.loading,
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                            modifier = Modifier.padding(end = 8.dp),
+                        ) {
+                            Text(
+                                if (state.selectedShelves.isEmpty()) "Delete"
+                                else "Delete (${state.selectedShelves.size})"
+                            )
                         }
-                    }
-                    IconButton(onClick = { showAddShelfSheet = true }) {
-                        Icon(Icons.Default.Add, contentDescription = "Add shelf")
-                    }
-                    IconButton(onClick = onOpenDrawer) {
-                        Icon(Icons.Default.Menu, contentDescription = "Open menu")
+                    } else {
+                        if (state.shelves.isNotEmpty()) {
+                            IconButton(onClick = shelvesViewModel::enterDeleteMode) {
+                                Icon(Icons.Default.Delete, contentDescription = "Select shelves to delete")
+                            }
+                        }
+                        IconButton(onClick = { showAddShelfSheet = true }) {
+                            Icon(Icons.Default.Add, contentDescription = "Add shelf")
+                        }
+                        IconButton(onClick = onOpenDrawer) {
+                            Icon(Icons.Default.Menu, contentDescription = "Open menu")
+                        }
                     }
                 },
             )
         },
         floatingActionButton = {
-            if (currentShelfId != null) {
+            if (!state.deleteMode && currentShelfId != null) {
                 FloatingActionButton(onClick = { showAddProductSheet = true }) {
                     Icon(Icons.Default.Add, contentDescription = "Add product")
                 }
@@ -138,18 +162,32 @@ fun LocationDetailScreen(
                     )
                 }
             } else {
-                ScrollableTabRow(selectedTabIndex = currentPage) {
+                ScrollableTabRow(
+                    selectedTabIndex = currentPage,
+                ) {
                     state.shelves.forEachIndexed { index, shelf ->
+                        val isSelected = if (state.deleteMode) shelf.id in state.selectedShelves
+                                         else currentPage == index
                         Tab(
-                            selected = currentPage == index,
-                            onClick = { scope.launch { pagerState.animateScrollToPage(index) } },
+                            selected = isSelected,
+                            onClick = {
+                                if (state.deleteMode) {
+                                    shelvesViewModel.toggleShelfSelection(shelf.id)
+                                } else {
+                                    scope.launch { pagerState.animateScrollToPage(index) }
+                                }
+                            },
                             text = { Text(shelf.name) },
+                            icon = if (state.deleteMode && shelf.id in state.selectedShelves) {
+                                { Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                            } else null,
                         )
                     }
                 }
 
                 HorizontalPager(
                     state = pagerState,
+                    userScrollEnabled = !state.deleteMode,
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f),
@@ -158,27 +196,6 @@ fun LocationDetailScreen(
                 }
             }
         }
-    }
-
-    if (showDeleteShelfDialog && currentShelfId != null) {
-        val shelfName = state.shelves.find { it.id == currentShelfId }?.name ?: "this shelf"
-        AlertDialog(
-            onDismissRequest = { showDeleteShelfDialog = false },
-            title = { Text("Delete \"$shelfName\"?") },
-            text = { Text("All products on this shelf will be permanently deleted.") },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        shelvesViewModel.deleteShelf(currentShelfId)
-                        showDeleteShelfDialog = false
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                ) { Text("Delete") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteShelfDialog = false }) { Text("Cancel") }
-            },
-        )
     }
 
     if (showAddShelfSheet) {

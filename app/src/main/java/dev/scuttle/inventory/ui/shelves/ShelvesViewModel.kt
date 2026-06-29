@@ -17,6 +17,8 @@ data class ShelvesUiState(
     val shelves: List<ShelfDto> = emptyList(),
     val newName: String = "",
     val error: String? = null,
+    val deleteMode: Boolean = false,
+    val selectedShelves: Set<Long> = emptySet(),
 )
 
 @HiltViewModel
@@ -60,12 +62,24 @@ class ShelvesViewModel @Inject constructor(
         }
     }
 
-    fun deleteShelf(shelfId: Long) {
+    fun enterDeleteMode() = _state.update { it.copy(deleteMode = true, selectedShelves = emptySet()) }
+
+    fun exitDeleteMode() = _state.update { it.copy(deleteMode = false, selectedShelves = emptySet()) }
+
+    fun toggleShelfSelection(shelfId: Long) = _state.update { state ->
+        val updated = if (shelfId in state.selectedShelves) state.selectedShelves - shelfId
+                      else state.selectedShelves + shelfId
+        state.copy(selectedShelves = updated)
+    }
+
+    fun deleteSelected() {
         val h = householdId ?: return
         val l = locationId ?: return
+        val ids = _state.value.selectedShelves.toList()
+        if (ids.isEmpty()) return
         launchLoading {
-            repository.delete(h, l, shelfId)
-            _state.update { it.copy(shelves = repository.list(h, l)) }
+            ids.forEach { id -> repository.delete(h, l, id) }
+            _state.update { it.copy(deleteMode = false, selectedShelves = emptySet(), shelves = repository.list(h, l)) }
         }
     }
 
