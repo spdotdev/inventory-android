@@ -151,37 +151,38 @@ fun DashboardScreen(
                     ) {
                         val maxVal = state.locationStats.maxOfOrNull { it.productCount } ?: 1
                         state.locationStats.forEach { stat ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
+                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                 Text(
                                     stat.location.name,
-                                    modifier = Modifier.weight(0.4f),
                                     style = MaterialTheme.typography.bodySmall,
                                     maxLines = 1,
                                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                                 )
-                                Box(
-                                    modifier = Modifier
-                                        .weight(0.6f)
-                                        .height(20.dp)
-                                        .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(4.dp)),
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 ) {
-                                    val fraction = if (maxVal > 0) stat.productCount.toFloat() / maxVal else 0f
                                     Box(
                                         modifier = Modifier
-                                            .fillMaxWidth(fraction.coerceIn(0f, 1f))
-                                            .height(20.dp)
-                                            .background(primaryColor, RoundedCornerShape(4.dp)),
+                                            .weight(1f)
+                                            .height(12.dp)
+                                            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(4.dp)),
+                                    ) {
+                                        val fraction = if (maxVal > 0) stat.productCount.toFloat() / maxVal else 0f
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth(fraction.coerceIn(0f, 1f))
+                                                .height(12.dp)
+                                                .background(primaryColor, RoundedCornerShape(4.dp)),
+                                        )
+                                    }
+                                    Text(
+                                        stat.productCount.toString(),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        modifier = Modifier.width(24.dp),
                                     )
                                 }
-                                Text(
-                                    stat.productCount.toString(),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    modifier = Modifier.width(24.dp),
-                                )
                             }
                         }
                     }
