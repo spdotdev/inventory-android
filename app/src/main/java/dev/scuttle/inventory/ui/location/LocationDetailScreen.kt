@@ -149,7 +149,7 @@ fun LocationDetailScreen(
         },
         floatingActionButton = {
             if (!state.deleteMode && currentShelfId != null) {
-                FloatingActionButton(onClick = { showAddProductSheet = true }) {
+                FloatingActionButton(modifier = Modifier.navigationBarsPadding(), onClick = { showAddProductSheet = true }) {
                     Icon(Icons.Default.Add, contentDescription = "Add product")
                 }
             }

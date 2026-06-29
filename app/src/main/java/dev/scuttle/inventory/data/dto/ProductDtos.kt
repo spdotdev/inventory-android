@@ -10,7 +10,7 @@ data class ProductDto(
     val shelf_id: Long,
     val description: String? = null,
     val code: String? = null,
-    val is_mandatory: Boolean = false,
+    val is_mandatory: Boolean? = false,
     val image_url: String? = null,
 )
 

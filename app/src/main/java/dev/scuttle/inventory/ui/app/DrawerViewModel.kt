@@ -51,7 +51,7 @@ class DrawerViewModel @Inject constructor(
                         val shelves = runCatching { shelfRepository.list(hh.id, location.id) }.getOrDefault(emptyList())
                         for (shelf in shelves) {
                             val products = runCatching { productRepository.list(hh.id, shelf.id) }.getOrDefault(emptyList())
-                            missingItemCount += products.count { it.is_mandatory && it.quantity == 0 }
+                            missingItemCount += products.count { it.is_mandatory == true && it.quantity == 0 }
                         }
                     }
                     HouseholdWithLocations(hh.id, hh.name, locations)

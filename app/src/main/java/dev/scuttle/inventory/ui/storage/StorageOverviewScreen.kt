@@ -108,7 +108,7 @@ fun StorageOverviewScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showAddSheet = true }) {
+            FloatingActionButton(modifier = Modifier.navigationBarsPadding(), onClick = { showAddSheet = true }) {
                 Icon(Icons.Default.Add, contentDescription = "Add storage location")
             }
         },

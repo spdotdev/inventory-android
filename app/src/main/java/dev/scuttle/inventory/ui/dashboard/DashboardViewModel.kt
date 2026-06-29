@@ -69,7 +69,7 @@ class DashboardViewModel @Inject constructor(
                             val products = runCatching { productRepository.list(hh.id, shelf.id) }.getOrDefault(emptyList())
                             totalProducts += products.size
                             locationProductCount += products.size
-                            mandatoryWarnings += products.count { it.is_mandatory && it.quantity == 0 }
+                            mandatoryWarnings += products.count { it.is_mandatory == true && it.quantity == 0 }
                         }
                         locationStats.add(LocationStats(location, hh.id, locationProductCount))
                     }

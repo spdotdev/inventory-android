@@ -81,7 +81,7 @@ fun HouseholdsScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showCreateSheet = true }) {
+            FloatingActionButton(modifier = Modifier.navigationBarsPadding(), onClick = { showCreateSheet = true }) {
                 Icon(Icons.Default.Add, contentDescription = "Create household")
             }
         },

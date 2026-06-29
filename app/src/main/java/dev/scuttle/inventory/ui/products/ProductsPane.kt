@@ -64,7 +64,7 @@ fun ProductsPane(
 
     // Compute and report mandatory warning
     LaunchedEffect(state.products) {
-        val hasWarning = state.products.any { it.is_mandatory && it.quantity == 0 }
+        val hasWarning = state.products.any { it.is_mandatory == true && it.quantity == 0 }
         onWarningChange(hasWarning)
     }
 
@@ -119,7 +119,7 @@ fun ProductsPane(
                         }
                     },
                 ) {
-                    val isMandatoryWarning = product.is_mandatory && product.quantity == 0
+                    val isMandatoryWarning = product.is_mandatory == true && product.quantity == 0
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -150,7 +150,7 @@ fun ProductsPane(
                                         )
                                     }
                                 }
-                                if (product.is_mandatory) {
+                                if (product.is_mandatory == true) {
                                     Text(
                                         text = "Mandatory",
                                         style = MaterialTheme.typography.labelSmall,

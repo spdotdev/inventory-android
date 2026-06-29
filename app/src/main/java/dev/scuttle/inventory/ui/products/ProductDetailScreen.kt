@@ -79,7 +79,7 @@ fun ProductDetailScreen(
             name = it.name
             description = it.description ?: ""
             code = it.code ?: ""
-            isMandatory = it.is_mandatory
+            isMandatory = it.is_mandatory ?: false
         }
     }
 
