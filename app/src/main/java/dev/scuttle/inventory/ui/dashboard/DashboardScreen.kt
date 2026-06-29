@@ -134,11 +134,18 @@ fun DashboardScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error)
-                        Text(
-                            "${state.mandatoryWarnings} mandatory product${if (state.mandatoryWarnings > 1) "s" else ""} at 0",
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                            fontWeight = FontWeight.Medium,
-                        )
+                        Column {
+                            Text(
+                                if (state.mandatoryWarnings == 1) "1 item is missing" else "${state.mandatoryWarnings} items are missing",
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                fontWeight = FontWeight.Medium,
+                            )
+                            Text(
+                                "Tap to see what needs restocking",
+                                color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.7f),
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
                     }
                 }
             }
