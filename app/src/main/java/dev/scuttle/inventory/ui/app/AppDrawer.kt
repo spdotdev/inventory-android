@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.DrawerDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -38,6 +39,7 @@ fun AppDrawer(
     onNavigateDashboard: () -> Unit,
     onNavigateSearch: (householdId: Long) -> Unit,
     onNavigateHouseholds: () -> Unit,
+    onNavigateMissingItems: () -> Unit,
     onNavigateLocation: (householdId: Long, locationId: Long) -> Unit,
     onNavigateSettings: () -> Unit,
 ) {
@@ -90,6 +92,28 @@ fun AppDrawer(
                 label = { Text("Households") },
                 selected = false,
                 onClick = onNavigateHouseholds,
+                modifier = Modifier.padding(horizontal = 12.dp),
+            )
+
+            val missingCount = state.missingItemCount
+            NavigationDrawerItem(
+                icon = {
+                    Icon(
+                        Icons.Default.Warning,
+                        contentDescription = null,
+                        tint = if (missingCount > 0) MaterialTheme.colorScheme.error
+                               else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                },
+                label = {
+                    Text(
+                        text = if (missingCount > 0) "Missing items · $missingCount" else "Missing items",
+                        color = if (missingCount > 0) MaterialTheme.colorScheme.error
+                                else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                },
+                selected = false,
+                onClick = onNavigateMissingItems,
                 modifier = Modifier.padding(horizontal = 12.dp),
             )
 

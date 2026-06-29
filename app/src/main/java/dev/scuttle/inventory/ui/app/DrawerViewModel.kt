@@ -24,6 +24,7 @@ data class HouseholdWithLocations(
 data class DrawerUiState(
     val entries: List<HouseholdWithLocations> = emptyList(),
     val locationWarnings: Map<Long, Boolean> = emptyMap(),
+    val missingItemCount: Int = 0,
     val loading: Boolean = false,
 )
 
@@ -43,11 +44,19 @@ class DrawerViewModel @Inject constructor(
             _state.update { it.copy(loading = true) }
             runCatching {
                 val households = householdRepository.list()
+                var missingItemCount = 0
                 val entries = households.map { hh ->
                     val locations = runCatching { locationRepository.list(hh.id) }.getOrDefault(emptyList())
+                    for (location in locations) {
+                        val shelves = runCatching { shelfRepository.list(hh.id, location.id) }.getOrDefault(emptyList())
+                        for (shelf in shelves) {
+                            val products = runCatching { productRepository.list(hh.id, shelf.id) }.getOrDefault(emptyList())
+                            missingItemCount += products.count { it.is_mandatory && it.quantity == 0 }
+                        }
+                    }
                     HouseholdWithLocations(hh.id, hh.name, locations)
                 }
-                _state.update { it.copy(entries = entries, loading = false) }
+                _state.update { it.copy(entries = entries, missingItemCount = missingItemCount, loading = false) }
             }.onFailure {
                 _state.update { it.copy(loading = false) }
             }
