@@ -4,6 +4,7 @@ import dev.scuttle.inventory.data.dto.CreateShelfRequest
 import dev.scuttle.inventory.data.dto.ShelfListResponse
 import dev.scuttle.inventory.data.dto.ShelfResponse
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
@@ -21,4 +22,11 @@ interface ShelfApi {
         @Path("location") locationId: Long,
         @Body body: CreateShelfRequest,
     ): ShelfResponse
+
+    @DELETE("households/{household}/locations/{location}/shelves/{shelf}")
+    suspend fun delete(
+        @Path("household") householdId: Long,
+        @Path("location") locationId: Long,
+        @Path("shelf") shelfId: Long,
+    )
 }

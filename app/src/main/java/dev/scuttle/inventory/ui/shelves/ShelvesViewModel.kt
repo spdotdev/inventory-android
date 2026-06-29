@@ -60,6 +60,15 @@ class ShelvesViewModel @Inject constructor(
         }
     }
 
+    fun deleteShelf(shelfId: Long) {
+        val h = householdId ?: return
+        val l = locationId ?: return
+        launchLoading {
+            repository.delete(h, l, shelfId)
+            _state.update { it.copy(shelves = repository.list(h, l)) }
+        }
+    }
+
     private fun launchLoading(block: suspend () -> Unit) {
         viewModelScope.launch {
             _state.update { it.copy(loading = true, error = null) }

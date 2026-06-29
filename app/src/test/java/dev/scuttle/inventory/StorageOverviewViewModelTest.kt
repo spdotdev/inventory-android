@@ -28,6 +28,10 @@ class StorageOverviewViewModelTest {
             items.add(dto)
             return dto
         }
+
+        override suspend fun delete(householdId: Long, locationId: Long) {
+            items.removeIf { it.id == locationId }
+        }
     }
 
     @Test

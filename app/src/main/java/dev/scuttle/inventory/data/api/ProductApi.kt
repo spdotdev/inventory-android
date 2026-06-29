@@ -6,6 +6,7 @@ import dev.scuttle.inventory.data.dto.MoveProductRequest
 import dev.scuttle.inventory.data.dto.ProductListResponse
 import dev.scuttle.inventory.data.dto.ProductResponse
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
@@ -47,4 +48,11 @@ interface ProductApi {
         @Path("product") productId: Long,
         @Body body: MoveProductRequest,
     ): ProductResponse
+
+    @DELETE("households/{household}/shelves/{shelf}/products/{product}")
+    suspend fun delete(
+        @Path("household") householdId: Long,
+        @Path("shelf") shelfId: Long,
+        @Path("product") productId: Long,
+    )
 }

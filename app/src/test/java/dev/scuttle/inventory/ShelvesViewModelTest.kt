@@ -28,6 +28,10 @@ class ShelvesViewModelTest {
             items.add(dto)
             return dto
         }
+
+        override suspend fun delete(householdId: Long, locationId: Long, shelfId: Long) {
+            items.removeIf { it.id == shelfId }
+        }
     }
 
     @Test

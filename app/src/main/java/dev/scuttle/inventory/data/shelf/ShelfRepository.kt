@@ -6,4 +6,6 @@ interface ShelfRepository {
     suspend fun list(householdId: Long, locationId: Long): List<ShelfDto>
 
     suspend fun create(householdId: Long, locationId: Long, name: String): ShelfDto
+
+    suspend fun delete(householdId: Long, locationId: Long, shelfId: Long)
 }

@@ -14,4 +14,7 @@ class ShelfRepositoryImpl @Inject constructor(
 
     override suspend fun create(householdId: Long, locationId: Long, name: String): ShelfDto =
         api.create(householdId, locationId, CreateShelfRequest(name = name)).data
+
+    override suspend fun delete(householdId: Long, locationId: Long, shelfId: Long) =
+        api.delete(householdId, locationId, shelfId)
 }

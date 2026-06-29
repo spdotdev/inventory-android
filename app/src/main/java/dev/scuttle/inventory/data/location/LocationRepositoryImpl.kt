@@ -13,4 +13,7 @@ class LocationRepositoryImpl @Inject constructor(
 
     override suspend fun create(householdId: Long, name: String, type: String): LocationDto =
         api.create(householdId, CreateLocationRequest(name = name, type = type)).data
+
+    override suspend fun delete(householdId: Long, locationId: Long) =
+        api.delete(householdId, locationId)
 }

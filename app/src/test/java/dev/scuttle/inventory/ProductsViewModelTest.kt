@@ -48,6 +48,10 @@ class ProductsViewModelTest {
             return items.first { it.id == productId }
         }
 
+        override suspend fun delete(householdId: Long, shelfId: Long, productId: Long) {
+            items.removeIf { it.id == productId }
+        }
+
         private fun adjust(productId: Long, delta: Int): ProductDto {
             val index = items.indexOfFirst { it.id == productId }
             val updated = items[index].let { it.copy(quantity = (it.quantity + delta).coerceAtLeast(0)) }
@@ -60,12 +64,14 @@ class ProductsViewModelTest {
         override suspend fun list(householdId: Long): List<LocationDto> = locations
         override suspend fun create(householdId: Long, name: String, type: String): LocationDto =
             LocationDto(99, name, type)
+        override suspend fun delete(householdId: Long, locationId: Long) {}
     }
 
     private class FakeShelfRepository(private val byLocation: Map<Long, List<ShelfDto>>) : ShelfRepository {
         override suspend fun list(householdId: Long, locationId: Long): List<ShelfDto> = byLocation[locationId].orEmpty()
         override suspend fun create(householdId: Long, locationId: Long, name: String): ShelfDto =
             ShelfDto(99, name, 0, locationId)
+        override suspend fun delete(householdId: Long, locationId: Long, shelfId: Long) {}
     }
 
     private class FakeSearchRepository : SearchRepository {

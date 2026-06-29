@@ -62,6 +62,14 @@ class StorageOverviewViewModel @Inject constructor(
         }
     }
 
+    fun deleteLocation(locationId: Long) {
+        val id = householdId ?: return
+        launchLoading {
+            repository.delete(id, locationId)
+            _state.update { it.copy(locations = repository.list(id)) }
+        }
+    }
+
     private fun launchLoading(block: suspend () -> Unit) {
         viewModelScope.launch {
             _state.update { it.copy(loading = true, error = null) }

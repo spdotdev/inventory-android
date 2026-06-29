@@ -12,4 +12,6 @@ interface ProductRepository {
     suspend fun remove(householdId: Long, shelfId: Long, productId: Long, amount: Int): ProductDto
 
     suspend fun move(householdId: Long, shelfId: Long, productId: Long, targetShelfId: Long): ProductDto
+
+    suspend fun delete(householdId: Long, shelfId: Long, productId: Long)
 }

@@ -6,4 +6,6 @@ interface LocationRepository {
     suspend fun list(householdId: Long): List<LocationDto>
 
     suspend fun create(householdId: Long, name: String, type: String): LocationDto
+
+    suspend fun delete(householdId: Long, locationId: Long)
 }

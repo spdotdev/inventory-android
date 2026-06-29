@@ -98,6 +98,19 @@ class ProductsViewModel @Inject constructor(
         }
     }
 
+    fun delete(productId: Long) {
+        val h = householdId ?: return
+        val s = shelfId ?: return
+        _state.update { it.copy(products = it.products.filterNot { p -> p.id == productId }) }
+        viewModelScope.launch {
+            runCatching { productRepository.delete(h, s, productId) }
+                .onFailure { error ->
+                    _state.update { it.copy(error = error.message ?: "Failed to delete product.") }
+                    refresh()
+                }
+        }
+    }
+
     fun increment(productId: Long) = mutateOne { h, s -> productRepository.add(h, s, productId, 1) }
 
     fun decrement(productId: Long) {

@@ -1,6 +1,8 @@
 package dev.scuttle.inventory.ui.products
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,18 +13,26 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
@@ -30,6 +40,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductsPane(
     householdId: Long,
@@ -63,42 +74,75 @@ fun ProductsPane(
         }
 
         state.products.forEach { product ->
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+            key(product.id) {
+                val swipeState = rememberSwipeToDismissBoxState(
+                    confirmValueChange = { value ->
+                        if (value == SwipeToDismissBoxValue.EndToStart) {
+                            viewModel.delete(product.id)
+                        }
+                        value != SwipeToDismissBoxValue.StartToEnd
+                    },
+                )
+                SwipeToDismissBox(
+                    state = swipeState,
+                    enableDismissFromStartToEnd = false,
+                    backgroundContent = {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    color = MaterialTheme.colorScheme.errorContainer,
+                                    shape = MaterialTheme.shapes.medium,
+                                ),
+                            contentAlignment = Alignment.CenterEnd,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Delete",
+                                tint = MaterialTheme.colorScheme.onErrorContainer,
+                                modifier = Modifier.padding(horizontal = 20.dp),
+                            )
+                        }
+                    },
                 ) {
-                    Text(text = product.name, modifier = Modifier.weight(1f))
-                    OutlinedButton(
-                        onClick = { viewModel.decrement(product.id) },
-                        enabled = !state.loading && product.quantity > 0,
-                        modifier = Modifier.semantics {
-                            contentDescription = "Decrease ${product.name} quantity"
-                        },
-                    ) {
-                        Text("−")
-                    }
-                    Text(text = product.quantity.toString())
-                    OutlinedButton(
-                        onClick = { viewModel.increment(product.id) },
-                        enabled = !state.loading,
-                        modifier = Modifier.semantics {
-                            contentDescription = "Increase ${product.name} quantity"
-                        },
-                    ) {
-                        Text("+")
-                    }
-                    TextButton(
-                        onClick = { viewModel.startMove(product.id) },
-                        enabled = !state.loading,
-                        modifier = Modifier.semantics {
-                            contentDescription = "Move ${product.name}"
-                        },
-                    ) {
-                        Text("Move")
+                    Card(modifier = Modifier.fillMaxWidth()) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Text(text = product.name, modifier = Modifier.weight(1f))
+                            OutlinedButton(
+                                onClick = { viewModel.decrement(product.id) },
+                                enabled = !state.loading && product.quantity > 0,
+                                modifier = Modifier.semantics {
+                                    contentDescription = "Decrease ${product.name} quantity"
+                                },
+                            ) {
+                                Text("−")
+                            }
+                            Text(text = product.quantity.toString())
+                            OutlinedButton(
+                                onClick = { viewModel.increment(product.id) },
+                                enabled = !state.loading,
+                                modifier = Modifier.semantics {
+                                    contentDescription = "Increase ${product.name} quantity"
+                                },
+                            ) {
+                                Text("+")
+                            }
+                            TextButton(
+                                onClick = { viewModel.startMove(product.id) },
+                                enabled = !state.loading,
+                                modifier = Modifier.semantics {
+                                    contentDescription = "Move ${product.name}"
+                                },
+                            ) {
+                                Text("Move")
+                            }
+                        }
                     }
                 }
             }

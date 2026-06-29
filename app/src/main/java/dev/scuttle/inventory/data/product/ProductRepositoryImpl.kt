@@ -25,4 +25,7 @@ class ProductRepositoryImpl @Inject constructor(
 
     override suspend fun move(householdId: Long, shelfId: Long, productId: Long, targetShelfId: Long): ProductDto =
         api.move(householdId, shelfId, productId, MoveProductRequest(targetShelfId)).data
+
+    override suspend fun delete(householdId: Long, shelfId: Long, productId: Long) =
+        api.delete(householdId, shelfId, productId)
 }
