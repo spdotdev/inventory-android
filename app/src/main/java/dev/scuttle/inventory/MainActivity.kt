@@ -136,6 +136,10 @@ private fun InventoryNavHost(
                     closeDrawer()
                     navController.navigate(Routes.HOUSEHOLDS) { launchSingleTop = true }
                 },
+                onNavigateMissingItems = {
+                    closeDrawer()
+                    navController.navigate(Routes.DASHBOARD) { launchSingleTop = true }
+                },
                 onNavigateLocation = { householdId, locationId ->
                     closeDrawer()
                     navController.navigate(Routes.location(householdId, locationId)) {
