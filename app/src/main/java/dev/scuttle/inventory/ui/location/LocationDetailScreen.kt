@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -96,6 +97,7 @@ fun LocationDetailScreen(
 
     val statusBarInsets = WindowInsets.statusBars
     Scaffold(
+        contentWindowInsets = WindowInsets(0),
         modifier = modifier,
         topBar = {
             TopAppBar(
@@ -156,7 +158,8 @@ fun LocationDetailScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding),
+                .padding(padding)
+                .navigationBarsPadding(),
         ) {
             if (state.loading) {
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())

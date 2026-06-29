@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -89,6 +90,7 @@ fun ProductDetailScreen(
 
     val statusBarInsets = WindowInsets.statusBars
     Scaffold(
+        contentWindowInsets = WindowInsets(0),
         modifier = modifier,
         topBar = {
             TopAppBar(
@@ -120,6 +122,7 @@ fun ProductDetailScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(padding)
+                .navigationBarsPadding()
                 .padding(horizontal = 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {

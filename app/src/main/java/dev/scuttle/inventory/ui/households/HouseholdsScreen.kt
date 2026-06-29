@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -66,6 +67,7 @@ fun HouseholdsScreen(
 
     val statusBarInsets = WindowInsets.statusBars
     Scaffold(
+        contentWindowInsets = WindowInsets(0),
         modifier = modifier,
         topBar = {
             TopAppBar(
@@ -89,7 +91,8 @@ fun HouseholdsScreen(
             onRefresh = viewModel::refresh,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding),
+                .padding(padding)
+                .navigationBarsPadding(),
         ) {
         Column(
             modifier = Modifier
