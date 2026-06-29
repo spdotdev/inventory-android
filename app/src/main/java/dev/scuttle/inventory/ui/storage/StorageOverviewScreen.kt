@@ -71,7 +71,6 @@ fun StorageOverviewScreen(
     onOpenDrawer: () -> Unit = {},
     onOpenLocation: (Long) -> Unit = {},
     onOpenSearch: () -> Unit = {},
-    onOpenInvite: () -> Unit = {},
     viewModel: StorageOverviewViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -117,10 +116,6 @@ fun StorageOverviewScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Spacer(Modifier.height(4.dp))
-
-            TextButton(onClick = onOpenInvite) {
-                Text("Invite members")
-            }
 
             if (state.loading) {
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())

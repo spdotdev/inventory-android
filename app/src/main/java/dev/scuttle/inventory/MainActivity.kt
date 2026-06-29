@@ -147,6 +147,10 @@ private fun InventoryNavHost(
                 SettingsScreen(
                     onOpenDrawer = openDrawer,
                     onSignOut = { authViewModel.signOut() },
+                    onOpenInvite = {
+                        val id = drawerViewModel.getDefault()
+                        if (id != null) navController.navigate(Routes.invite(id))
+                    },
                     themeViewModel = themeViewModel,
                 )
             }
@@ -162,7 +166,6 @@ private fun InventoryNavHost(
                     onOpenDrawer = openDrawer,
                     onOpenLocation = { navController.navigate(Routes.location(householdId, it)) },
                     onOpenSearch = { navController.navigate(Routes.search(householdId)) },
-                    onOpenInvite = { navController.navigate(Routes.invite(householdId)) },
                 )
             }
 

@@ -44,6 +44,7 @@ fun SettingsScreen(
     modifier: Modifier = Modifier,
     onOpenDrawer: () -> Unit = {},
     onSignOut: () -> Unit = {},
+    onOpenInvite: () -> Unit = {},
     themeViewModel: ThemeViewModel = hiltViewModel(),
     joinViewModel: JoinHouseholdViewModel = hiltViewModel(),
 ) {
@@ -117,6 +118,14 @@ fun SettingsScreen(
                 ) {
                     Text("Join")
                 }
+            }
+
+            Text(text = "Household", style = MaterialTheme.typography.titleMedium)
+            Button(
+                onClick = onOpenInvite,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("Invite members")
             }
 
             Text(text = "Account", style = MaterialTheme.typography.titleMedium)
