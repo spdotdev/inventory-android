@@ -3,6 +3,7 @@ package dev.scuttle.inventory
 import dev.scuttle.inventory.data.dto.SearchResultDto
 import dev.scuttle.inventory.data.search.SearchRepository
 import dev.scuttle.inventory.ui.search.SearchViewModel
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -33,6 +34,7 @@ class SearchViewModelTest {
         viewModel.setHousehold(1)
 
         viewModel.onQueryChange("ice")
+        advanceUntilIdle()
 
         val results = viewModel.state.value.results
         assertEquals(1, results.size)
@@ -44,9 +46,11 @@ class SearchViewModelTest {
         val viewModel = SearchViewModel(FakeSearchRepository())
         viewModel.setHousehold(1)
         viewModel.onQueryChange("ice")
+        advanceUntilIdle()
         assertTrue(viewModel.state.value.results.isNotEmpty())
 
         viewModel.onQueryChange("")
+        advanceUntilIdle()
 
         assertTrue(viewModel.state.value.results.isEmpty())
     }
@@ -58,6 +62,7 @@ class SearchViewModelTest {
         viewModel.setHousehold(1)
 
         viewModel.onQueryChange("ice")
+        advanceUntilIdle()
 
         assertEquals("offline", viewModel.state.value.error)
     }
