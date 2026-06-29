@@ -158,13 +158,14 @@ fun DashboardScreen(
                             ) {
                                 Text(
                                     stat.location.name,
-                                    modifier = Modifier.width(80.dp),
+                                    modifier = Modifier.weight(0.4f),
                                     style = MaterialTheme.typography.bodySmall,
                                     maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                                 )
                                 Box(
                                     modifier = Modifier
-                                        .weight(1f)
+                                        .weight(0.6f)
                                         .height(20.dp)
                                         .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(4.dp)),
                                 ) {
