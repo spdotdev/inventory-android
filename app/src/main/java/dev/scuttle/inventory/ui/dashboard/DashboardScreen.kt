@@ -52,6 +52,7 @@ fun DashboardScreen(
     onOpenDrawer: () -> Unit = {},
     onOpenLocation: (householdId: Long, locationId: Long) -> Unit = { _, _ -> },
     onOpenHouseholds: () -> Unit = {},
+    onOpenMissingItems: () -> Unit = {},
     viewModel: DashboardViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -123,6 +124,7 @@ fun DashboardScreen(
 
             if (state.mandatoryWarnings > 0) {
                 Card(
+                    onClick = onOpenMissingItems,
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
                     modifier = Modifier.fillMaxWidth(),
                 ) {

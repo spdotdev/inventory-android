@@ -36,6 +36,7 @@ import dev.scuttle.inventory.ui.products.ProductDetailScreen
 import dev.scuttle.inventory.ui.search.SearchScreen
 import dev.scuttle.inventory.ui.settings.SettingsScreen
 import dev.scuttle.inventory.ui.settings.ThemeViewModel
+import dev.scuttle.inventory.ui.missing.MissingItemsScreen
 import dev.scuttle.inventory.ui.storage.StorageOverviewScreen
 import dev.scuttle.inventory.ui.theme.InventoryTheme
 import dev.scuttle.inventory.ui.theme.ThemeMode
@@ -75,6 +76,7 @@ private object Routes {
     const val INVITE = "invite/{householdId}"
     const val LOCATION = "location/{householdId}/{locationId}"
     const val PRODUCT_DETAIL = "product-detail/{householdId}/{shelfId}/{productId}"
+    const val MISSING_ITEMS = "missing-items"
 
     fun storage(householdId: Long) = "storage/$householdId"
     fun search(householdId: Long) = "search/$householdId"
@@ -138,7 +140,7 @@ private fun InventoryNavHost(
                 },
                 onNavigateMissingItems = {
                     closeDrawer()
-                    navController.navigate(Routes.DASHBOARD) { launchSingleTop = true }
+                    navController.navigate(Routes.MISSING_ITEMS) { launchSingleTop = true }
                 },
                 onNavigateLocation = { householdId, locationId ->
                     closeDrawer()
@@ -179,6 +181,7 @@ private fun InventoryNavHost(
                         navController.navigate(Routes.location(hhId, locId))
                     },
                     onOpenHouseholds = { navController.navigate(Routes.HOUSEHOLDS) },
+                    onOpenMissingItems = { navController.navigate(Routes.MISSING_ITEMS) { launchSingleTop = true } },
                 )
             }
 
@@ -245,6 +248,15 @@ private fun InventoryNavHost(
                     onOpenDrawer = openDrawer,
                     onOpenProduct = { hhId, shelfId, productId ->
                         navController.navigate(Routes.productDetail(hhId, shelfId, productId))
+                    },
+                )
+            }
+
+            composable(Routes.MISSING_ITEMS) {
+                MissingItemsScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenLocation = { hhId, locId ->
+                        navController.navigate(Routes.location(hhId, locId))
                     },
                 )
             }
