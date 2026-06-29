@@ -55,7 +55,7 @@ class ProductsViewModel @Inject constructor(
     }
 
     fun onNewNameChange(value: String) {
-        _state.update { it.copy(newName = value, error = null) }
+        _state.update { it.copy(newName = value.take(50), error = null) }
         searchJob?.cancel()
         if (value.isBlank()) {
             _state.update { it.copy(suggestions = emptyList()) }

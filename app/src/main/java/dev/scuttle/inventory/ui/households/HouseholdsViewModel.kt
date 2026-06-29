@@ -29,7 +29,7 @@ class HouseholdsViewModel @Inject constructor(
 
     init { refresh() }
 
-    fun onNewNameChange(value: String) = _state.update { it.copy(newName = value, error = null) }
+    fun onNewNameChange(value: String) = _state.update { it.copy(newName = value.take(50), error = null) }
 
     fun refresh() = launchLoading {
         _state.update { it.copy(households = repository.list()) }

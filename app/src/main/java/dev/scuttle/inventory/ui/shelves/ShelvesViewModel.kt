@@ -39,7 +39,7 @@ class ShelvesViewModel @Inject constructor(
         refresh()
     }
 
-    fun onNewNameChange(value: String) = _state.update { it.copy(newName = value, error = null) }
+    fun onNewNameChange(value: String) = _state.update { it.copy(newName = value.take(50), error = null) }
 
     fun refresh() {
         val h = householdId ?: return
