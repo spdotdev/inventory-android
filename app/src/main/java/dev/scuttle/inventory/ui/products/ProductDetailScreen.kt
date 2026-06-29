@@ -169,7 +169,7 @@ fun ProductDetailScreen(
 
             OutlinedTextField(
                 value = code,
-                onValueChange = { code = it },
+                onValueChange = { code = it.uppercase() },
                 label = { Text("Product code / barcode") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),

@@ -137,7 +137,19 @@ fun ProductsPane(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(text = product.name, style = MaterialTheme.typography.bodyLarge)
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text(text = product.name, style = MaterialTheme.typography.bodyLarge)
+                                    if (!product.code.isNullOrBlank()) {
+                                        Text(
+                                            text = product.code,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
+                                }
                                 if (product.is_mandatory) {
                                     Text(
                                         text = "Mandatory",
