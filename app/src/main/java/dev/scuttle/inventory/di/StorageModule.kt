@@ -5,6 +5,8 @@ import dev.scuttle.inventory.data.settings.DefaultHouseholdStore
 import dev.scuttle.inventory.data.settings.FavoritesStore
 import dev.scuttle.inventory.data.settings.SharedPrefsDefaultHouseholdStore
 import dev.scuttle.inventory.data.settings.SharedPrefsFavoritesStore
+import dev.scuttle.inventory.data.settings.LanguageStore
+import dev.scuttle.inventory.data.settings.SharedPrefsLanguageStore
 import dev.scuttle.inventory.data.settings.SharedPrefsThemeModeStore
 import dev.scuttle.inventory.data.settings.ThemeModeStore
 import dev.scuttle.inventory.data.storage.EncryptedTokenStore
@@ -39,4 +41,9 @@ object StorageModule {
     @Singleton
     fun provideFavoritesStore(@ApplicationContext context: Context): FavoritesStore =
         SharedPrefsFavoritesStore(context)
+
+    @Provides
+    @Singleton
+    fun provideLanguageStore(@ApplicationContext context: Context): LanguageStore =
+        SharedPrefsLanguageStore(context)
 }

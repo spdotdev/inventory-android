@@ -1,5 +1,7 @@
 package dev.scuttle.inventory
 
+import android.content.Context
+import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -36,6 +38,7 @@ import dev.scuttle.inventory.ui.products.ProductDetailScreen
 import dev.scuttle.inventory.ui.search.SearchScreen
 import dev.scuttle.inventory.ui.settings.SettingsScreen
 import dev.scuttle.inventory.ui.settings.ThemeViewModel
+import dev.scuttle.inventory.data.settings.SharedPrefsLanguageStore
 import dev.scuttle.inventory.ui.missing.MissingItemsScreen
 import dev.scuttle.inventory.ui.storage.StorageOverviewScreen
 import dev.scuttle.inventory.ui.theme.InventoryTheme
@@ -44,6 +47,15 @@ import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    override fun attachBaseContext(newBase: Context) {
+        val lang = SharedPrefsLanguageStore(newBase).get()
+        val locale = java.util.Locale(lang.tag)
+        val config = Configuration(newBase.resources.configuration)
+        config.setLocale(locale)
+        super.attachBaseContext(newBase.createConfigurationContext(config))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()

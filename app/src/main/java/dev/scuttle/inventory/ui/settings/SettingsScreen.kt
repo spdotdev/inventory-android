@@ -40,8 +40,10 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.compose.ui.platform.LocalContext
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
+import dev.scuttle.inventory.data.settings.AppLanguage
 import dev.scuttle.inventory.ui.theme.ThemeMode
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,9 +54,12 @@ fun SettingsScreen(
     onSignOut: () -> Unit = {},
     onOpenHouseholds: () -> Unit = {},
     themeViewModel: ThemeViewModel = hiltViewModel(),
+    languageViewModel: LanguageViewModel = hiltViewModel(),
     joinViewModel: JoinHouseholdViewModel = hiltViewModel(),
 ) {
     val mode by themeViewModel.mode.collectAsState()
+    val language by languageViewModel.language.collectAsState()
+    val activity = LocalContext.current as? android.app.Activity
     val joinState by joinViewModel.state.collectAsState()
     var confirmSignOut by remember { mutableStateOf(false) }
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -88,6 +93,20 @@ fun SettingsScreen(
                 .padding(horizontal = 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            Text(text = "Language", style = MaterialTheme.typography.titleMedium)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                AppLanguage.entries.forEach { option ->
+                    FilterChip(
+                        selected = language == option,
+                        onClick = {
+                            languageViewModel.setLanguage(option)
+                            activity?.recreate()
+                        },
+                        label = { Text(option.label) },
+                    )
+                }
+            }
+
             Text(text = "Theme", style = MaterialTheme.typography.titleMedium)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 ThemeMode.entries.forEach { option ->
