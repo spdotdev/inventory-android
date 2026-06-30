@@ -37,6 +37,9 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -60,8 +63,11 @@ fun ProductsPane(
     val state by viewModel.state.collectAsState()
     var pendingDeleteId by remember { mutableStateOf<Long?>(null) }
 
-    LaunchedEffect(householdId, shelfId) {
-        viewModel.load(householdId, shelfId)
+    val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(lifecycleOwner, householdId, shelfId) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            viewModel.load(householdId, shelfId)
+        }
     }
 
     // Compute and report mandatory warning

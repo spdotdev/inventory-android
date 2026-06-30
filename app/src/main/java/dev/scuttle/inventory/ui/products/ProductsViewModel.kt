@@ -52,6 +52,9 @@ class ProductsViewModel @Inject constructor(
         this.householdId = householdId
         this.shelfId = shelfId
         if (!switched) {
+            productRepository.getCached(householdId, shelfId)?.let { cached ->
+                _state.update { it.copy(products = cached) }
+            }
             refreshSilent()
             return
         }
