@@ -56,6 +56,7 @@ fun ProductsPane(
     householdId: Long,
     shelfId: Long,
     modifier: Modifier = Modifier,
+    refreshKey: Int = 0,
     onOpenProduct: (ProductDto) -> Unit = {},
     onWarningChange: (Boolean) -> Unit = {},
     viewModel: ProductsViewModel = hiltViewModel(key = "products-$shelfId"),
@@ -64,7 +65,7 @@ fun ProductsPane(
     var pendingDeleteId by remember { mutableStateOf<Long?>(null) }
 
     val lifecycleOwner = LocalLifecycleOwner.current
-    LaunchedEffect(lifecycleOwner, householdId, shelfId) {
+    LaunchedEffect(lifecycleOwner, householdId, shelfId, refreshKey) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
             viewModel.load(householdId, shelfId)
         }

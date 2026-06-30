@@ -30,6 +30,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -48,6 +49,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -88,6 +90,7 @@ fun LocationDetailScreen(
 
     var showAddShelfSheet by remember { mutableStateOf(false) }
     var showAddProductSheet by remember { mutableStateOf(false) }
+    var productsRefreshKey by remember { mutableIntStateOf(0) }
     val keyboardController = LocalSoftwareKeyboardController.current
 
     // Track per-shelf warning state so we can roll up to location level
@@ -157,10 +160,19 @@ fun LocationDetailScreen(
             }
         },
     ) { padding ->
+        PullToRefreshBox(
+            isRefreshing = state.loading,
+            onRefresh = {
+                shelvesViewModel.refresh()
+                productsRefreshKey++
+            },
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
+        ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
                 .navigationBarsPadding(),
         ) {
             if (state.loading) {
@@ -244,10 +256,12 @@ fun LocationDetailScreen(
                             shelfWarnings = shelfWarnings + (shelf.id to hasWarning)
                             drawerViewModel.reportLocationWarning(locationId, shelfWarnings.values.any { it })
                         },
+                        refreshKey = productsRefreshKey,
                     )
                 }
             }
         }
+        } // end PullToRefreshBox
     }
 
     if (showAddShelfSheet) {

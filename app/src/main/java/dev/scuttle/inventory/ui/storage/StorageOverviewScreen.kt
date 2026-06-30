@@ -32,6 +32,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -115,11 +116,17 @@ fun StorageOverviewScreen(
             }
         },
     ) { padding ->
+        PullToRefreshBox(
+            isRefreshing = state.loading,
+            onRefresh = viewModel::refresh,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
+        ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(padding)
                 .navigationBarsPadding()
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -193,6 +200,7 @@ fun StorageOverviewScreen(
 
             Spacer(Modifier.height(80.dp))
         }
+        } // end PullToRefreshBox
     }
 
     pendingDeleteLocation?.let { location ->

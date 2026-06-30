@@ -27,6 +27,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -119,11 +120,17 @@ fun ProductDetailScreen(
             )
         },
     ) { padding ->
+        PullToRefreshBox(
+            isRefreshing = state.loading,
+            onRefresh = viewModel::load,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
+        ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(padding)
                 .navigationBarsPadding()
                 .padding(horizontal = 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -223,6 +230,7 @@ fun ProductDetailScreen(
 
             Spacer(Modifier.height(24.dp))
         }
+        } // end PullToRefreshBox
     }
 
     if (showDeleteConfirm) {
