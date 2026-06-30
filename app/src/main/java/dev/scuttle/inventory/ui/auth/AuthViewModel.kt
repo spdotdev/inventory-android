@@ -51,7 +51,7 @@ class AuthViewModel @Inject constructor(
 
     fun onGoogleLoading() = _state.update { it.copy(googleLoading = true, error = null) }
 
-    fun onGoogleError(message: String) = _state.update { it.copy(googleLoading = false, error = message) }
+    fun onGoogleError(message: String?) = _state.update { it.copy(googleLoading = false, error = message) }
 
     fun loginWithGoogle(idToken: String) {
         viewModelScope.launch {

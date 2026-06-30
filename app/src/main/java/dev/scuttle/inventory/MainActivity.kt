@@ -1,12 +1,9 @@
 package dev.scuttle.inventory
 
 import android.content.Context
-import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.launch
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -46,20 +43,8 @@ import dev.scuttle.inventory.ui.missing.MissingItemsScreen
 import dev.scuttle.inventory.ui.storage.StorageOverviewScreen
 import dev.scuttle.inventory.ui.theme.InventoryTheme
 import dev.scuttle.inventory.ui.theme.ThemeMode
-import dev.scuttle.inventory.OAuthCallbackBus
-
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        setIntent(intent)
-        val uri = intent.data ?: return
-        if (uri.scheme == "dev.scuttle.inventory" && uri.host == "oauth2redirect") {
-            val code = uri.getQueryParameter("code") ?: return
-            lifecycleScope.launch { OAuthCallbackBus.codeFlow.emit(code) }
-        }
-    }
 
     override fun attachBaseContext(newBase: Context) {
         val lang = SharedPrefsLanguageStore(newBase).get()

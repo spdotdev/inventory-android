@@ -1,7 +1,7 @@
 package dev.scuttle.inventory.ui.auth
 
-import android.net.Uri
-import androidx.browser.customtabs.CustomTabsIntent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -22,7 +22,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -36,25 +35,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
 import dev.scuttle.inventory.BuildConfig
-import dev.scuttle.inventory.OAuthCallbackBus
 import dev.scuttle.inventory.R
-import java.security.MessageDigest
-import java.security.SecureRandom
-import java.util.Base64
-
-private const val REDIRECT_URI = "dev.scuttle.inventory://oauth2redirect"
-
-private fun generateCodeVerifier(): String {
-    val bytes = ByteArray(32)
-    SecureRandom().nextBytes(bytes)
-    return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
-}
-
-private fun generateCodeChallenge(verifier: String): String {
-    val digest = MessageDigest.getInstance("SHA-256").digest(verifier.toByteArray(Charsets.US_ASCII))
-    return Base64.getUrlEncoder().withoutPadding().encodeToString(digest)
-}
 
 @Composable
 fun AuthScreen(
@@ -66,34 +51,36 @@ fun AuthScreen(
     val keyboardController = LocalSoftwareKeyboardController.current
     val context = LocalContext.current
 
-    LaunchedEffect(Unit) {
-        OAuthCallbackBus.codeFlow.collect { code ->
-            val verifier = OAuthCallbackBus.pendingCodeVerifier ?: return@collect
-            OAuthCallbackBus.pendingCodeVerifier = null
-            viewModel.loginWithGoogleCode(code, verifier, REDIRECT_URI)
+    val googleSignInLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+        try {
+            val account = task.getResult(ApiException::class.java)
+            val idToken = account?.idToken
+            if (idToken != null) {
+                viewModel.loginWithGoogle(idToken)
+            } else {
+                viewModel.onGoogleError("No ID token returned from Google.")
+            }
+        } catch (e: ApiException) {
+            if (e.statusCode != 12501) { // 12501 = user cancelled
+                viewModel.onGoogleError("Google sign-in failed (${e.statusCode}).")
+            } else {
+                viewModel.onGoogleError(null)
+            }
         }
     }
 
     fun launchGoogleSignIn() {
-        if (BuildConfig.GOOGLE_CLIENT_ID.isBlank()) {
-            viewModel.onGoogleError("Google sign-in is not configured yet (no client ID).")
-            return
-        }
-        val verifier = generateCodeVerifier()
-        val challenge = generateCodeChallenge(verifier)
-        OAuthCallbackBus.pendingCodeVerifier = verifier
-
-        val uri = Uri.parse("https://accounts.google.com/o/oauth2/v2/auth").buildUpon()
-            .appendQueryParameter("client_id", BuildConfig.GOOGLE_CLIENT_ID)
-            .appendQueryParameter("redirect_uri", REDIRECT_URI)
-            .appendQueryParameter("response_type", "code")
-            .appendQueryParameter("scope", "openid email profile")
-            .appendQueryParameter("code_challenge", challenge)
-            .appendQueryParameter("code_challenge_method", "S256")
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(BuildConfig.GOOGLE_CLIENT_ID)
+            .requestEmail()
             .build()
-
-        viewModel.onGoogleLoading()
-        CustomTabsIntent.Builder().build().launchUrl(context, uri)
+        val client = GoogleSignIn.getClient(context, gso)
+        client.signOut().addOnCompleteListener {
+            googleSignInLauncher.launch(client.signInIntent)
+        }
     }
 
     Column(
