@@ -153,6 +153,51 @@ class ProductsViewModelTest {
     }
 
     @Test
+    fun update_replaces_product_in_list() = runTest {
+        val repo = FakeProductRepository().apply { items.add(ProductDto(1, "Milk", 2, 1)) }
+        val vm = viewModel(products = repo)
+        vm.load(householdId = 1, shelfId = 1)
+
+        vm.update(productId = 1, name = "Oat Milk", description = "lactose free", code = null, isMandatory = true)
+
+        val product = vm.state.value.products.first { it.id == 1L }
+        assertEquals("Oat Milk", product.name)
+        assertTrue(product.is_mandatory == true)
+    }
+
+    @Test
+    fun delete_optimistically_removes_product() = runTest {
+        val repo = FakeProductRepository().apply {
+            items.add(ProductDto(1, "Milk", 2, 1))
+            items.add(ProductDto(2, "Butter", 1, 1))
+        }
+        val vm = viewModel(products = repo)
+        vm.load(householdId = 1, shelfId = 1)
+        assertEquals(2, vm.state.value.products.size)
+
+        vm.delete(productId = 1)
+
+        assertEquals(1, vm.state.value.products.size)
+        assertEquals("Butter", vm.state.value.products.first().name)
+    }
+
+    @Test
+    fun cancel_move_clears_move_state() = runTest {
+        val repo = FakeProductRepository().apply { items.add(ProductDto(1, "Peas", 2, 1)) }
+        val locations = FakeLocationRepository(listOf(LocationDto(10, "Chest", "freezer")))
+        val shelves = FakeShelfRepository(mapOf(10L to listOf(ShelfDto(1, "Top", 0, 10L), ShelfDto(2, "Bottom", 1, 10L))))
+        val vm = viewModel(repo, locations, shelves)
+        vm.load(householdId = 1, shelfId = 1)
+        vm.startMove(productId = 1)
+        assertTrue(vm.state.value.movingProductId != null)
+
+        vm.cancelMove()
+
+        assertEquals(null, vm.state.value.movingProductId)
+        assertTrue(vm.state.value.moveTargets.isEmpty())
+    }
+
+    @Test
     fun list_failure_surfaces_an_error() = runTest {
         val repo = FakeProductRepository().apply { failList = true }
         val vm = viewModel(products = repo)

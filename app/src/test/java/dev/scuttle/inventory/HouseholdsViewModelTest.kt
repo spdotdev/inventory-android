@@ -67,4 +67,18 @@ class HouseholdsViewModelTest {
 
         assertEquals("offline", viewModel.state.value.error)
     }
+
+    @Test
+    fun leave_removes_household_from_list() = runTest {
+        val repo = FakeHouseholdRepository().apply {
+            items.add(HouseholdDto(id = 2, name = "Office", join_code = "BBBB-2222"))
+        }
+        val viewModel = HouseholdsViewModel(repo)
+        assertEquals(2, viewModel.state.value.households.size)
+
+        viewModel.leave(householdId = 1)
+
+        assertEquals(1, viewModel.state.value.households.size)
+        assertEquals("Office", viewModel.state.value.households.first().name)
+    }
 }

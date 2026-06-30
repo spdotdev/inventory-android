@@ -5,6 +5,7 @@ import dev.scuttle.inventory.data.shelf.ShelfRepository
 import dev.scuttle.inventory.ui.shelves.ShelvesViewModel
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -67,5 +68,44 @@ class ShelvesViewModelTest {
         viewModel.load(householdId = 1, locationId = 1)
 
         assertEquals("offline", viewModel.state.value.error)
+    }
+
+    @Test
+    fun enter_delete_mode_toggles_flag_and_clears_selection() = runTest {
+        val repo = FakeShelfRepository().apply {
+            items.add(ShelfDto(1, "Top", 0, 1L))
+            items.add(ShelfDto(2, "Bottom", 1, 1L))
+        }
+        val viewModel = ShelvesViewModel(repo)
+        viewModel.load(householdId = 1, locationId = 1)
+
+        viewModel.enterDeleteMode()
+        assertTrue(viewModel.state.value.deleteMode)
+        assertTrue(viewModel.state.value.selectedShelves.isEmpty())
+
+        viewModel.toggleShelfSelection(1L)
+        assertTrue(1L in viewModel.state.value.selectedShelves)
+
+        viewModel.exitDeleteMode()
+        assertFalse(viewModel.state.value.deleteMode)
+        assertTrue(viewModel.state.value.selectedShelves.isEmpty())
+    }
+
+    @Test
+    fun delete_selected_removes_checked_shelves() = runTest {
+        val repo = FakeShelfRepository().apply {
+            items.add(ShelfDto(1, "Top", 0, 1L))
+            items.add(ShelfDto(2, "Bottom", 1, 1L))
+        }
+        val viewModel = ShelvesViewModel(repo)
+        viewModel.load(householdId = 1, locationId = 1)
+
+        viewModel.enterDeleteMode()
+        viewModel.toggleShelfSelection(1L)
+        viewModel.deleteSelected()
+
+        assertEquals(1, viewModel.state.value.shelves.size)
+        assertEquals("Bottom", viewModel.state.value.shelves.first().name)
+        assertFalse(viewModel.state.value.deleteMode)
     }
 }
