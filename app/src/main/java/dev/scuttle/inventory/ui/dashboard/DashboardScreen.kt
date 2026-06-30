@@ -36,7 +36,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -59,8 +58,6 @@ fun DashboardScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val primaryColor = MaterialTheme.colorScheme.primary
-
-    LaunchedEffect(Unit) { viewModel.refresh() }
 
     if (state.hasNoHouseholds && !state.loading) {
         AlertDialog(
