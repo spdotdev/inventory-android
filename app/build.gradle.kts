@@ -17,7 +17,8 @@ android {
         targetSdk = 35
         versionCode = 5
         versionName = "0.1.4"
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "dev.scuttle.inventory.HiltTestRunner"
+        // Disable Espresso's InputManager.getInstance() call, removed in Android 16 (API 36).
 
         // Base URL of the inventory API. Override per build type / flavor as needed;
         // the trailing slash is required by Retrofit.
@@ -67,8 +68,9 @@ android {
     }
 }
 
+
 dependencies {
-    val composeBom = platform("androidx.compose:compose-bom:2024.09.03")
+    val composeBom = platform("androidx.compose:compose-bom:2025.05.01")
     implementation(composeBom)
 
     implementation("androidx.core:core-ktx:1.13.1")
@@ -106,7 +108,22 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
+
+    // Instrumented / UI tests
+    androidTestImplementation(composeBom)
+    // Exclude espresso-core from ui-test-junit4: it calls InputManager.getInstance()
+    // which was removed in Android 16 (API 36). Compose semantics-based idle sync
+    // still works without it.
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.test:rules:1.6.1")
+    androidTestImplementation("com.google.dagger:hilt-android-testing:2.52")
+    kspAndroidTest("com.google.dagger:hilt-android-compiler:2.52")
+    androidTestImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
 }
