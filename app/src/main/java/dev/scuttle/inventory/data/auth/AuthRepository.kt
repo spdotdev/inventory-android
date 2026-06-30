@@ -9,5 +9,7 @@ interface AuthRepository {
 
     suspend fun loginWithGoogle(idToken: String)
 
+    suspend fun loginWithGoogleCode(code: String, codeVerifier: String, redirectUri: String)
+
     suspend fun logout()
 }

@@ -49,12 +49,27 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    fun onGoogleLoading() = _state.update { it.copy(googleLoading = true, error = null) }
+
     fun onGoogleError(message: String) = _state.update { it.copy(googleLoading = false, error = message) }
 
     fun loginWithGoogle(idToken: String) {
         viewModelScope.launch {
             _state.update { it.copy(googleLoading = true, error = null) }
             val result = runCatching { repository.loginWithGoogle(idToken) }
+            _state.update { state ->
+                result.fold(
+                    onSuccess = { state.copy(googleLoading = false, authenticated = true) },
+                    onFailure = { error -> state.copy(googleLoading = false, error = error.message ?: "Google sign-in failed.") },
+                )
+            }
+        }
+    }
+
+    fun loginWithGoogleCode(code: String, codeVerifier: String, redirectUri: String) {
+        viewModelScope.launch {
+            _state.update { it.copy(googleLoading = true, error = null) }
+            val result = runCatching { repository.loginWithGoogleCode(code, codeVerifier, redirectUri) }
             _state.update { state ->
                 result.fold(
                     onSuccess = { state.copy(googleLoading = false, authenticated = true) },

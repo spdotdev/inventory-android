@@ -22,7 +22,7 @@ android {
         // Base URL of the inventory API. Override per build type / flavor as needed;
         // the trailing slash is required by Retrofit.
         buildConfigField("String", "BASE_URL", "\"https://inventory.scuttle.dev/api/v1/\"")
-        buildConfigField("String", "GOOGLE_CLIENT_ID", "\"758637503304-np301l9sc7saepermpm2so9kcghet5k6.apps.googleusercontent.com\"") // Web OAuth client ID — used by Android Credential Manager
+        buildConfigField("String", "GOOGLE_CLIENT_ID", "\"758637503304-b10auoag8htr9ksmf8qlapc8clb0mea7.apps.googleusercontent.com\"") // Desktop OAuth client ID — used for Chrome Custom Tabs PKCE flow
     }
 
     buildTypes {
@@ -84,10 +84,8 @@ dependencies {
     // Secure token storage
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
-    // Google Sign-In via Credential Manager
-    implementation("androidx.credentials:credentials:1.3.0")
-    implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
-    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
+    // Google Sign-In via Chrome Custom Tabs + PKCE OAuth
+    implementation("androidx.browser:browser:1.8.0")
 
     // QR generation for household invites (pure-Java, no Android deps)
     implementation("com.google.zxing:core:3.5.3")
