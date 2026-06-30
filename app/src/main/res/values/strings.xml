@@ -154,7 +154,7 @@
     <string name="drawer_settings">Settings</string>
 
     <!-- Invite -->
-    <string name="invite_title">Invite to household</string>
+    <string name="invite_title">Invite to storage</string>
     <string name="invite_join_code_label">Join code</string>
     <string name="invite_qr_cd">Invite QR code</string>
     <string name="invite_copy_link">Copy link</string>

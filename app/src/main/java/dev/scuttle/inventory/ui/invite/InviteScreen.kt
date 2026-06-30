@@ -21,11 +21,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.zxing.BarcodeFormat
@@ -37,6 +39,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun InviteScreen(
     householdId: Long,
+    storageName: String = "",
     modifier: Modifier = Modifier,
     onBack: () -> Unit = {},
     viewModel: InviteViewModel = hiltViewModel(),
@@ -77,26 +80,47 @@ fun InviteScreen(
         }
 
         if (state.code.isNotEmpty()) {
-            Text(text = stringResource(R.string.invite_join_code_label))
-            Text(text = state.code, fontFamily = SpaceMono)
-
-            val qr = remember(state.link) { qrBitmap(state.link) }
-            if (qr != null) {
-                Image(
-                    bitmap = qr.asImageBitmap(),
-                    contentDescription = stringResource(R.string.invite_qr_cd),
-                    modifier = Modifier.size(220.dp),
-                )
-            }
-
-            Button(
-                onClick = {
-                    clipboard.setText(AnnotatedString(state.link))
-                    copied = true
-                },
-                enabled = state.link.isNotEmpty(),
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Text(if (copied) stringResource(R.string.invite_copied) else stringResource(R.string.invite_copy_link))
+                if (storageName.isNotEmpty()) {
+                    Text(
+                        text = storageName,
+                        style = MaterialTheme.typography.titleLarge,
+                        textAlign = TextAlign.Center,
+                    )
+                }
+
+                Text(
+                    text = stringResource(R.string.invite_join_code_label),
+                    textAlign = TextAlign.Center,
+                )
+                Text(
+                    text = state.code,
+                    fontFamily = SpaceMono,
+                    textAlign = TextAlign.Center,
+                )
+
+                val qr = remember(state.link) { qrBitmap(state.link) }
+                if (qr != null) {
+                    Image(
+                        bitmap = qr.asImageBitmap(),
+                        contentDescription = stringResource(R.string.invite_qr_cd),
+                        modifier = Modifier.size(220.dp),
+                    )
+                }
+
+                Button(
+                    onClick = {
+                        clipboard.setText(AnnotatedString(state.link))
+                        copied = true
+                    },
+                    enabled = state.link.isNotEmpty(),
+                ) {
+                    Text(if (copied) stringResource(R.string.invite_copied) else stringResource(R.string.invite_copy_link))
+                }
             }
         }
     }

@@ -58,7 +58,7 @@ import dev.scuttle.inventory.R
 fun HouseholdsScreen(
     modifier: Modifier = Modifier,
     onBack: () -> Unit = {},
-    onOpenInvite: (householdId: Long) -> Unit = {},
+    onOpenInvite: (householdId: Long, householdName: String) -> Unit = { _, _ -> },
     viewModel: HouseholdsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -134,7 +134,7 @@ fun HouseholdsScreen(
                             style = MaterialTheme.typography.bodyLarge,
                             modifier = Modifier.weight(1f),
                         )
-                        IconButton(onClick = { onOpenInvite(household.id) }) {
+                        IconButton(onClick = { onOpenInvite(household.id, household.name) }) {
                             Icon(Icons.Default.Share, contentDescription = stringResource(R.string.households_invite_cd, household.name))
                         }
                         TextButton(onClick = { confirmLeaveId = household.id }) {
