@@ -147,6 +147,7 @@ fun AllStoragesScreen(
                             SwipeToDismissBox(
                                 state = swipeState,
                                 enableDismissFromStartToEnd = false,
+                                modifier = Modifier.fillMaxWidth(),
                                 backgroundContent = {
                                     Box(
                                         modifier = Modifier
