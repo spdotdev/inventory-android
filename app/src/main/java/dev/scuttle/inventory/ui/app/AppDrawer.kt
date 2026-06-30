@@ -64,18 +64,18 @@ fun AppDrawer(
             Spacer(Modifier.height(8.dp))
 
             NavigationDrawerItem(
-                icon = { Icon(Icons.Default.Home, contentDescription = null) },
-                label = { Text(stringResource(R.string.drawer_all_storage)) },
-                selected = false,
-                onClick = onNavigateHome,
-                modifier = Modifier.padding(horizontal = 12.dp),
-            )
-
-            NavigationDrawerItem(
                 icon = { Icon(Icons.Default.Star, contentDescription = null) },
                 label = { Text(stringResource(R.string.drawer_dashboard)) },
                 selected = false,
                 onClick = onNavigateDashboard,
+                modifier = Modifier.padding(horizontal = 12.dp),
+            )
+
+            NavigationDrawerItem(
+                icon = { Icon(Icons.Default.Home, contentDescription = null) },
+                label = { Text(stringResource(R.string.drawer_all_storage)) },
+                selected = false,
+                onClick = onNavigateHome,
                 modifier = Modifier.padding(horizontal = 12.dp),
             )
 
