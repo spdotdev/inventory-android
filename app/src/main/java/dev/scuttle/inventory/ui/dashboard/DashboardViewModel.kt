@@ -43,7 +43,86 @@ class DashboardViewModel @Inject constructor(
     private val _state = MutableStateFlow(DashboardUiState())
     val state: StateFlow<DashboardUiState> = _state.asStateFlow()
 
-    init { refresh() }
+    init {
+        if (householdRepository.getCached() != null) {
+            loadFromCache()
+            refreshSilent()
+        } else {
+            refresh()
+        }
+    }
+
+    private fun loadFromCache() {
+        val cachedHouseholds = householdRepository.getCached() ?: return
+        var totalShelves = 0
+        var totalProducts = 0
+        var mandatoryWarnings = 0
+        val locationStats = mutableListOf<LocationStats>()
+        for (hh in cachedHouseholds) {
+            val locations = locationRepository.getCached(hh.id) ?: continue
+            for (location in locations) {
+                var locationProductCount = 0
+                val shelves = shelfRepository.getCached(hh.id, location.id) ?: continue
+                totalShelves += shelves.size
+                for (shelf in shelves) {
+                    val products = productRepository.getCached(hh.id, shelf.id) ?: continue
+                    totalProducts += products.size
+                    locationProductCount += products.size
+                    mandatoryWarnings += products.count { it.is_mandatory == true && it.quantity == 0 }
+                }
+                locationStats.add(LocationStats(location, hh.id, locationProductCount))
+            }
+        }
+        _state.update {
+            it.copy(
+                hasNoHouseholds = cachedHouseholds.isEmpty(),
+                totalLocations = locationStats.size,
+                totalShelves = totalShelves,
+                totalProducts = totalProducts,
+                mandatoryWarnings = mandatoryWarnings,
+                locationStats = locationStats,
+                favoriteLocationIds = favoritesStore.getFavoriteLocations(),
+                favoriteShelfIds = favoritesStore.getFavoriteShelves(),
+            )
+        }
+    }
+
+    private fun refreshSilent() {
+        viewModelScope.launch {
+            runCatching {
+                val households = householdRepository.list()
+                var totalShelves = 0
+                var totalProducts = 0
+                var mandatoryWarnings = 0
+                val locationStats = mutableListOf<LocationStats>()
+                for (hh in households) {
+                    val locations = locationRepository.list(hh.id)
+                    for (location in locations) {
+                        var locationProductCount = 0
+                        val shelves = runCatching { shelfRepository.list(hh.id, location.id) }.getOrDefault(emptyList())
+                        totalShelves += shelves.size
+                        for (shelf in shelves) {
+                            val products = runCatching { productRepository.list(hh.id, shelf.id) }.getOrDefault(emptyList())
+                            totalProducts += products.size
+                            locationProductCount += products.size
+                            mandatoryWarnings += products.count { it.is_mandatory == true && it.quantity == 0 }
+                        }
+                        locationStats.add(LocationStats(location, hh.id, locationProductCount))
+                    }
+                }
+                _state.update {
+                    it.copy(
+                        hasNoHouseholds = households.isEmpty(),
+                        totalLocations = locationStats.size,
+                        totalShelves = totalShelves,
+                        totalProducts = totalProducts,
+                        mandatoryWarnings = mandatoryWarnings,
+                        locationStats = locationStats,
+                    )
+                }
+            }
+        }
+    }
 
     fun refresh() {
         viewModelScope.launch {

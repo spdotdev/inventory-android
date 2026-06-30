@@ -33,10 +33,21 @@ class ShelvesViewModel @Inject constructor(
     val state: StateFlow<ShelvesUiState> = _state.asStateFlow()
 
     fun load(householdId: Long, locationId: Long) {
-        if (this.householdId == householdId && this.locationId == locationId && _state.value.shelves.isNotEmpty()) return
+        val switched = this.householdId != householdId || this.locationId != locationId
         this.householdId = householdId
         this.locationId = locationId
-        refresh()
+        if (!switched) {
+            refreshSilent()
+            return
+        }
+        val cached = repository.getCached(householdId, locationId)
+        if (cached != null) {
+            _state.update { it.copy(shelves = cached) }
+            refreshSilent()
+        } else {
+            _state.update { it.copy(shelves = emptyList()) }
+            refresh()
+        }
     }
 
     fun onNewNameChange(value: String) = _state.update { it.copy(newName = value.take(50), error = null) }
@@ -56,9 +67,8 @@ class ShelvesViewModel @Inject constructor(
         val name = _state.value.newName.trim()
         if (name.isEmpty()) return
         launchLoading {
-            repository.create(h, l, name)
-            _state.update { it.copy(newName = "") }
-            _state.update { it.copy(shelves = repository.list(h, l)) }
+            val created = repository.create(h, l, name)
+            _state.update { it.copy(newName = "", shelves = it.shelves + created) }
         }
     }
 
@@ -79,7 +89,16 @@ class ShelvesViewModel @Inject constructor(
         if (ids.isEmpty()) return
         launchLoading {
             ids.forEach { id -> repository.delete(h, l, id) }
-            _state.update { it.copy(deleteMode = false, selectedShelves = emptySet(), shelves = repository.list(h, l)) }
+            _state.update { it.copy(deleteMode = false, selectedShelves = emptySet(), shelves = it.shelves.filter { s -> s.id !in ids }) }
+        }
+    }
+
+    private fun refreshSilent() {
+        val h = householdId ?: return
+        val l = locationId ?: return
+        viewModelScope.launch {
+            runCatching { repository.list(h, l) }
+                .onSuccess { shelves -> _state.update { it.copy(shelves = shelves) } }
         }
     }
 

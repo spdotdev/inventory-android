@@ -18,6 +18,8 @@ class StorageOverviewViewModelTest {
         val items = mutableListOf<LocationDto>()
         var failList = false
 
+        override fun getCached(householdId: Long): List<LocationDto>? = null
+
         override suspend fun list(householdId: Long): List<LocationDto> {
             if (failList) throw RuntimeException("offline")
             return items.toList()

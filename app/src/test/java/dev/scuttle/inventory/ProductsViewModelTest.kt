@@ -26,6 +26,8 @@ class ProductsViewModelTest {
         var failList = false
         var lastMove: Triple<Long, Long, Long>? = null
 
+        override fun getCached(householdId: Long, shelfId: Long): List<ProductDto>? = null
+
         override suspend fun list(householdId: Long, shelfId: Long): List<ProductDto> {
             if (failList) throw RuntimeException("offline")
             return items.toList()
@@ -68,6 +70,7 @@ class ProductsViewModelTest {
     }
 
     private class FakeLocationRepository(private val locations: List<LocationDto>) : LocationRepository {
+        override fun getCached(householdId: Long): List<LocationDto>? = null
         override suspend fun list(householdId: Long): List<LocationDto> = locations
         override suspend fun create(householdId: Long, name: String, type: String): LocationDto =
             LocationDto(99, name, type)
@@ -75,6 +78,7 @@ class ProductsViewModelTest {
     }
 
     private class FakeShelfRepository(private val byLocation: Map<Long, List<ShelfDto>>) : ShelfRepository {
+        override fun getCached(householdId: Long, locationId: Long): List<ShelfDto>? = null
         override suspend fun list(householdId: Long, locationId: Long): List<ShelfDto> = byLocation[locationId].orEmpty()
         override suspend fun create(householdId: Long, locationId: Long, name: String): ShelfDto =
             ShelfDto(99, name, 0, locationId)

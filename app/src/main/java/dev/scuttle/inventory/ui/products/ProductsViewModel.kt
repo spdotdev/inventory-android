@@ -48,10 +48,21 @@ class ProductsViewModel @Inject constructor(
     val state: StateFlow<ProductsUiState> = _state.asStateFlow()
 
     fun load(householdId: Long, shelfId: Long) {
-        if (this.householdId == householdId && this.shelfId == shelfId && _state.value.products.isNotEmpty()) return
+        val switched = this.householdId != householdId || this.shelfId != shelfId
         this.householdId = householdId
         this.shelfId = shelfId
-        refresh()
+        if (!switched) {
+            refreshSilent()
+            return
+        }
+        val cached = productRepository.getCached(householdId, shelfId)
+        if (cached != null) {
+            _state.update { it.copy(products = cached) }
+            refreshSilent()
+        } else {
+            _state.update { it.copy(products = emptyList()) }
+            refresh()
+        }
     }
 
     fun onNewNameChange(value: String) {
@@ -83,6 +94,15 @@ class ProductsViewModel @Inject constructor(
         launch {
             val products = productRepository.list(h, s)
             _state.update { it.copy(products = products) }
+        }
+    }
+
+    private fun refreshSilent() {
+        val h = householdId ?: return
+        val s = shelfId ?: return
+        viewModelScope.launch {
+            runCatching { productRepository.list(h, s) }
+                .onSuccess { products -> _state.update { it.copy(products = products) } }
         }
     }
 

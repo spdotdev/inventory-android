@@ -3,6 +3,8 @@ package dev.scuttle.inventory.data.household
 import dev.scuttle.inventory.data.dto.HouseholdDto
 
 interface HouseholdRepository {
+    fun getCached(): List<HouseholdDto>?
+
     suspend fun list(): List<HouseholdDto>
 
     suspend fun create(name: String): HouseholdDto

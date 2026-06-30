@@ -40,7 +40,69 @@ class MissingItemsViewModel @Inject constructor(
     val state: StateFlow<MissingItemsUiState> = _state.asStateFlow()
 
     init {
-        refresh()
+        if (householdRepository.getCached() != null) {
+            loadFromCache()
+            refreshSilent()
+        } else {
+            refresh()
+        }
+    }
+
+    private fun loadFromCache() {
+        val households = householdRepository.getCached() ?: return
+        val missing = mutableListOf<MissingItem>()
+        for (household in households) {
+            val locations = locationRepository.getCached(household.id) ?: continue
+            for (location in locations) {
+                val shelves = shelfRepository.getCached(household.id, location.id) ?: continue
+                for (shelf in shelves) {
+                    val products = productRepository.getCached(household.id, shelf.id) ?: continue
+                    for (product in products) {
+                        if (product.is_mandatory == true && product.quantity == 0) {
+                            missing += MissingItem(
+                                productName = product.name,
+                                shelfName = shelf.name,
+                                locationName = location.name,
+                                householdId = household.id,
+                                locationId = location.id,
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        _state.update { it.copy(items = missing.sortedWith(compareBy({ it.locationName }, { it.shelfName }, { it.productName }))) }
+    }
+
+    private fun refreshSilent() {
+        viewModelScope.launch {
+            runCatching {
+                val missing = mutableListOf<MissingItem>()
+                val households = householdRepository.list()
+                for (household in households) {
+                    val locations = locationRepository.list(household.id)
+                    for (location in locations) {
+                        val shelves = shelfRepository.list(household.id, location.id)
+                        for (shelf in shelves) {
+                            val products = productRepository.list(household.id, shelf.id)
+                            for (product in products) {
+                                if (product.is_mandatory == true && product.quantity == 0) {
+                                    missing += MissingItem(
+                                        productName = product.name,
+                                        shelfName = shelf.name,
+                                        locationName = location.name,
+                                        householdId = household.id,
+                                        locationId = location.id,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+                missing.sortWith(compareBy({ it.locationName }, { it.shelfName }, { it.productName }))
+                missing
+            }.onSuccess { items -> _state.update { it.copy(items = items) } }
+        }
     }
 
     fun refresh() {

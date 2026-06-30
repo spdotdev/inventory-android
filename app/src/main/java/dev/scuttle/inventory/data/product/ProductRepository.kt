@@ -3,6 +3,8 @@ package dev.scuttle.inventory.data.product
 import dev.scuttle.inventory.data.dto.ProductDto
 
 interface ProductRepository {
+    fun getCached(householdId: Long, shelfId: Long): List<ProductDto>?
+
     suspend fun list(householdId: Long, shelfId: Long): List<ProductDto>
     suspend fun create(householdId: Long, shelfId: Long, name: String, quantity: Int): ProductDto
     suspend fun update(householdId: Long, shelfId: Long, productId: Long, name: String, description: String?, code: String?, isMandatory: Boolean): ProductDto

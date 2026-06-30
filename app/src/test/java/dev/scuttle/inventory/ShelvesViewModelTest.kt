@@ -18,6 +18,8 @@ class ShelvesViewModelTest {
         val items = mutableListOf<ShelfDto>()
         var failList = false
 
+        override fun getCached(householdId: Long, locationId: Long): List<ShelfDto>? = null
+
         override suspend fun list(householdId: Long, locationId: Long): List<ShelfDto> {
             if (failList) throw RuntimeException("offline")
             return items.toList()

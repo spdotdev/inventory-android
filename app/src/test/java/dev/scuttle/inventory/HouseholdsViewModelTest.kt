@@ -19,6 +19,8 @@ class HouseholdsViewModelTest {
         val items = mutableListOf(HouseholdDto(id = 1, name = "Garage", join_code = "AAAA-1111"))
         var failList = false
 
+        override fun getCached(): List<HouseholdDto>? = null
+
         override suspend fun list(): List<HouseholdDto> {
             if (failList) throw RuntimeException("offline")
             return items.toList()

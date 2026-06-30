@@ -32,11 +32,21 @@ class StorageOverviewViewModel @Inject constructor(
     private val _state = MutableStateFlow(StorageOverviewUiState())
     val state: StateFlow<StorageOverviewUiState> = _state.asStateFlow()
 
-    /** Bind the screen's household and load its locations. Idempotent per id. */
     fun load(householdId: Long) {
-        if (this.householdId == householdId && _state.value.locations.isNotEmpty()) return
+        val switched = this.householdId != householdId
         this.householdId = householdId
-        refresh()
+        if (!switched) {
+            refreshSilent()
+            return
+        }
+        val cached = repository.getCached(householdId)
+        if (cached != null) {
+            _state.update { it.copy(locations = cached) }
+            refreshSilent()
+        } else {
+            _state.update { it.copy(locations = emptyList()) }
+            refresh()
+        }
     }
 
     fun onNewNameChange(value: String) = _state.update { it.copy(newName = value.take(50), error = null) }
@@ -56,9 +66,8 @@ class StorageOverviewViewModel @Inject constructor(
         val name = _state.value.newName.trim()
         if (name.isEmpty()) return
         launchLoading {
-            repository.create(id, name, _state.value.newType)
-            _state.update { it.copy(newName = "") }
-            _state.update { it.copy(locations = repository.list(id)) }
+            val created = repository.create(id, name, _state.value.newType)
+            _state.update { it.copy(newName = "", locations = it.locations + created) }
         }
     }
 
@@ -66,7 +75,15 @@ class StorageOverviewViewModel @Inject constructor(
         val id = householdId ?: return
         launchLoading {
             repository.delete(id, locationId)
-            _state.update { it.copy(locations = repository.list(id)) }
+            _state.update { it.copy(locations = it.locations.filter { l -> l.id != locationId }) }
+        }
+    }
+
+    private fun refreshSilent() {
+        val id = householdId ?: return
+        viewModelScope.launch {
+            runCatching { repository.list(id) }
+                .onSuccess { locations -> _state.update { it.copy(locations = locations) } }
         }
     }
 

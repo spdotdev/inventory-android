@@ -40,8 +40,8 @@ class DrawerViewModel @Inject constructor(
     val state: StateFlow<DrawerUiState> = _state.asStateFlow()
 
     fun refresh() {
+        loadFromCache()
         viewModelScope.launch {
-            _state.update { it.copy(loading = true) }
             runCatching {
                 val households = householdRepository.list()
                 var missingItemCount = 0
@@ -61,6 +61,23 @@ class DrawerViewModel @Inject constructor(
                 _state.update { it.copy(loading = false) }
             }
         }
+    }
+
+    private fun loadFromCache() {
+        val households = householdRepository.getCached() ?: return
+        var missingItemCount = 0
+        val entries = households.map { hh ->
+            val locations = locationRepository.getCached(hh.id) ?: emptyList()
+            for (location in locations) {
+                val shelves = shelfRepository.getCached(hh.id, location.id) ?: emptyList()
+                for (shelf in shelves) {
+                    val products = productRepository.getCached(hh.id, shelf.id) ?: emptyList()
+                    missingItemCount += products.count { it.is_mandatory == true && it.quantity == 0 }
+                }
+            }
+            HouseholdWithLocations(hh.id, hh.name, locations)
+        }
+        _state.update { it.copy(entries = entries, missingItemCount = missingItemCount) }
     }
 
     fun deleteLocation(householdId: Long, locationId: Long) {

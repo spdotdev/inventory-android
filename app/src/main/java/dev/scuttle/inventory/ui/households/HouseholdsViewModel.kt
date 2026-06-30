@@ -27,12 +27,27 @@ class HouseholdsViewModel @Inject constructor(
     private val _state = MutableStateFlow(HouseholdsUiState())
     val state: StateFlow<HouseholdsUiState> = _state.asStateFlow()
 
-    init { refresh() }
+    init {
+        val cached = repository.getCached()
+        if (cached != null) {
+            _state.update { it.copy(households = cached) }
+            refreshSilent()
+        } else {
+            refresh()
+        }
+    }
 
     fun onNewNameChange(value: String) = _state.update { it.copy(newName = value.take(50), error = null) }
 
     fun refresh() = launchLoading {
         _state.update { it.copy(households = repository.list()) }
+    }
+
+    private fun refreshSilent() {
+        viewModelScope.launch {
+            runCatching { repository.list() }
+                .onSuccess { households -> _state.update { it.copy(households = households) } }
+        }
     }
 
     fun create() {

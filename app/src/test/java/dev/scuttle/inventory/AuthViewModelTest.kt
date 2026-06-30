@@ -26,6 +26,8 @@ class AuthViewModelTest {
 
         override suspend fun loginWithGoogle(idToken: String) = maybeFail()
 
+        override suspend fun loginWithGoogleCode(code: String, codeVerifier: String, redirectUri: String) = maybeFail()
+
         override suspend fun logout() {
             authed = false
         }
