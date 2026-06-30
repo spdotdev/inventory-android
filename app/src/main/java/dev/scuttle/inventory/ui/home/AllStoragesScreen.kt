@@ -55,7 +55,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.dto.LocationDto
 import dev.scuttle.inventory.ui.app.DrawerViewModel
-import dev.scuttle.inventory.ui.app.HouseholdWithLocations
+import dev.scuttle.inventory.data.HouseholdWithLocations
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,8 +70,6 @@ fun AllStoragesScreen(
     val state by viewModel.state.collectAsState()
     val localState by localViewModel.state.collectAsState()
     var pendingDelete by remember { mutableStateOf<Pair<HouseholdWithLocations, LocationDto>?>(null) }
-
-    LaunchedEffect(Unit) { viewModel.refresh() }
 
     val statusBarInsets = WindowInsets.statusBars
     Scaffold(

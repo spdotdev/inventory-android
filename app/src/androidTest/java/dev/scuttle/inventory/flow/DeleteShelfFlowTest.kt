@@ -23,15 +23,10 @@ class DeleteShelfFlowTest : FlowTestBase() {
     fun select_and_delete_shelf_removes_it_from_tabs() {
         mockServer.enqueue(fixture("auth_login.json"))
         mockServer.route("/households", fixture("households_one.json"))
-        mockServer.route("/households", fixture("households_one.json"))
-        mockServer.route("/households/1/locations", fixture("locations_one.json"))
         mockServer.route("/households/1/locations", fixture("locations_one.json"))
         // Use shelves_two to have "Top shelf" and "Middle shelf" — delete "Top shelf"
         mockServer.route("/households/1/locations/10/shelves", fixture("shelves_two.json"))
-        mockServer.route("/households/1/locations/10/shelves", fixture("shelves_two.json"))
         mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
-        mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
-        mockServer.route("/households/1/shelves/101/products", fixture("products_empty.json"))
         mockServer.route("/households/1/shelves/101/products", fixture("products_empty.json"))
 
         composeRule.apply {

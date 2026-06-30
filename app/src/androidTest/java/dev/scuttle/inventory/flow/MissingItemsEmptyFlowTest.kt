@@ -24,12 +24,8 @@ class MissingItemsEmptyFlowTest : FlowTestBase() {
         // products_one.json: Milk, is_mandatory: false → zero missing items
         mockServer.enqueue(fixture("auth_login.json"))
         mockServer.route("/households", fixture("households_one.json"))
-        mockServer.route("/households", fixture("households_one.json"))
-        mockServer.route("/households/1/locations", fixture("locations_one.json"))
         mockServer.route("/households/1/locations", fixture("locations_one.json"))
         mockServer.route("/households/1/locations/10/shelves", fixture("shelves_one.json"))
-        mockServer.route("/households/1/locations/10/shelves", fixture("shelves_one.json"))
-        mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
         mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
 
         composeRule.apply {
@@ -44,11 +40,6 @@ class MissingItemsEmptyFlowTest : FlowTestBase() {
             onNodeWithContentDescription("Open menu").performClick()
             waitUntilAtLeastOneExists(hasText("Missing items").and(hasClickAction()), timeoutMillis = 5_000)
 
-            // MissingItemsViewModel.refreshSilent() runs on navigation — register routes for it
-            mockServer.route("/households", fixture("households_one.json"))
-            mockServer.route("/households/1/locations", fixture("locations_one.json"))
-            mockServer.route("/households/1/locations/10/shelves", fixture("shelves_one.json"))
-            mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
             onAllNodesWithText("Missing items").filterToOne(hasClickAction()).performClick()
             waitForIdle()
 

@@ -2,6 +2,7 @@ package dev.scuttle.inventory.ui.storage
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.scuttle.inventory.data.HierarchyStore
 import dev.scuttle.inventory.data.dto.LocationDto
 import dev.scuttle.inventory.data.location.LocationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -25,6 +26,7 @@ data class StorageOverviewUiState(
 @HiltViewModel
 class StorageOverviewViewModel @Inject constructor(
     private val repository: LocationRepository,
+    private val hierarchyStore: HierarchyStore,
 ) : ViewModel() {
 
     private var householdId: Long? = null
@@ -68,6 +70,7 @@ class StorageOverviewViewModel @Inject constructor(
         launchLoading {
             val created = repository.create(id, name, _state.value.newType)
             _state.update { it.copy(newName = "", locations = it.locations + created) }
+            hierarchyStore.refresh()
         }
     }
 
@@ -76,6 +79,7 @@ class StorageOverviewViewModel @Inject constructor(
         launchLoading {
             repository.delete(id, locationId)
             _state.update { it.copy(locations = it.locations.filter { l -> l.id != locationId }) }
+            hierarchyStore.refresh()
         }
     }
 

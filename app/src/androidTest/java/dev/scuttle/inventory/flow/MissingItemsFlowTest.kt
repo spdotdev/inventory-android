@@ -23,12 +23,8 @@ class MissingItemsFlowTest : FlowTestBase() {
     fun mandatory_product_with_zero_stock_appears_in_missing_items() {
         mockServer.enqueue(fixture("auth_login.json"))
         mockServer.route("/households", fixture("households_one.json"))
-        mockServer.route("/households", fixture("households_one.json"))
-        mockServer.route("/households/1/locations", fixture("locations_one.json"))
         mockServer.route("/households/1/locations", fixture("locations_one.json"))
         mockServer.route("/households/1/locations/10/shelves", fixture("shelves_one.json"))
-        mockServer.route("/households/1/locations/10/shelves", fixture("shelves_one.json"))
-        mockServer.route("/households/1/shelves/100/products", fixture("products_mandatory_one.json"))
         mockServer.route("/households/1/shelves/100/products", fixture("products_mandatory_one.json"))
 
         composeRule.apply {
@@ -40,11 +36,6 @@ class MissingItemsFlowTest : FlowTestBase() {
             waitUntilAtLeastOneExists(hasText("1 item is missing"), timeoutMillis = 5_000)
             onNodeWithText("1 item is missing").assertIsDisplayed()
 
-            // MissingItemsViewModel loads its own full data set
-            mockServer.route("/households", fixture("households_one.json"))
-            mockServer.route("/households/1/locations", fixture("locations_one.json"))
-            mockServer.route("/households/1/locations/10/shelves", fixture("shelves_one.json"))
-            mockServer.route("/households/1/shelves/100/products", fixture("products_mandatory_one.json"))
             onNodeWithText("1 item is missing").performClick()
             Thread.sleep(2_000)
             waitForIdle()
@@ -60,12 +51,8 @@ class MissingItemsFlowTest : FlowTestBase() {
         // Navigate to the product detail screen and verify it shows the product correctly
         mockServer.enqueue(fixture("auth_login.json"))
         mockServer.route("/households", fixture("households_one.json"))
-        mockServer.route("/households", fixture("households_one.json"))
-        mockServer.route("/households/1/locations", fixture("locations_one.json"))
         mockServer.route("/households/1/locations", fixture("locations_one.json"))
         mockServer.route("/households/1/locations/10/shelves", fixture("shelves_one.json"))
-        mockServer.route("/households/1/locations/10/shelves", fixture("shelves_one.json"))
-        mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
         mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
 
         composeRule.apply {

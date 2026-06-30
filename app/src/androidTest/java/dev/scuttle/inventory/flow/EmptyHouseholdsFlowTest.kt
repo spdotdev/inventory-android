@@ -24,7 +24,6 @@ class EmptyHouseholdsFlowTest : FlowTestBase() {
         // Login succeeds but household list is empty (new account with no households yet)
         mockServer.enqueue(fixture("auth_login.json"))
         mockServer.route("/households", fixture("households_empty.json"))
-        mockServer.route("/households", fixture("households_empty.json"))
 
         composeRule.apply {
             onNodeWithText("Email").performTextInput("test@example.com")

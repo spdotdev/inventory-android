@@ -23,12 +23,8 @@ class RegisterFlowTest : FlowTestBase() {
         // POST /auth/register returns same token shape as login
         mockServer.enqueue(fixture("auth_login.json"))
         mockServer.route("/households", fixture("households_one.json"))
-        mockServer.route("/households", fixture("households_one.json"))
-        mockServer.route("/households/1/locations", fixture("locations_one.json"))
         mockServer.route("/households/1/locations", fixture("locations_one.json"))
         mockServer.route("/households/1/locations/10/shelves", fixture("shelves_one.json"))
-        mockServer.route("/households/1/locations/10/shelves", fixture("shelves_one.json"))
-        mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
         mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
 
         composeRule.apply {

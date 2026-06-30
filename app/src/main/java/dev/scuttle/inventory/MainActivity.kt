@@ -112,11 +112,11 @@ private fun InventoryNavHost(
 
     LaunchedEffect(authState.authenticated) {
         if (authState.authenticated) {
+            drawerViewModel.refresh()
             navController.navigate(Routes.DASHBOARD) {
                 popUpTo(navController.graph.id) { inclusive = true }
                 launchSingleTop = true
             }
-            drawerViewModel.refresh()
         } else {
             navController.navigate(Routes.AUTH) {
                 popUpTo(navController.graph.id) { inclusive = true }

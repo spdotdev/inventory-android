@@ -24,12 +24,8 @@ class AddProductFlowTest : FlowTestBase() {
     fun add_product_appears_in_shelf_list() {
         mockServer.enqueue(fixture("auth_login.json"))
         mockServer.route("/households", fixture("households_one.json"))
-        mockServer.route("/households", fixture("households_one.json"))
-        mockServer.route("/households/1/locations", fixture("locations_one.json"))
         mockServer.route("/households/1/locations", fixture("locations_one.json"))
         mockServer.route("/households/1/locations/10/shelves", fixture("shelves_one.json"))
-        mockServer.route("/households/1/locations/10/shelves", fixture("shelves_one.json"))
-        mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
         mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
 
         composeRule.apply {
@@ -49,10 +45,9 @@ class AddProductFlowTest : FlowTestBase() {
             onAllNodesWithText("Fridge").filterToOne(hasClickAction()).performClick()
             waitForIdle()
 
-            // Tap FAB "Add product" → sheet opens; AddProductSheet's own VM calls load() → GET
+            // Tap FAB "Add product" → sheet opens
             waitUntilAtLeastOneExists(hasText("Milk"), timeoutMillis = 5_000)
-            // Sheet VM load: GET → products_one.json; POST create → product_butter.json; GET refresh → products_two.json
-            mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
+            // POST create → product_butter.json; GET refresh → products_two.json
             mockServer.route("/households/1/shelves/100/products", fixture("product_butter.json"))
             mockServer.route("/households/1/shelves/100/products", fixture("products_two.json"))
             onNodeWithContentDescription("Add product").performClick()

@@ -2,21 +2,17 @@ package dev.scuttle.inventory.ui.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.scuttle.inventory.data.dto.LocationDto
-import dev.scuttle.inventory.data.household.HouseholdRepository
-import dev.scuttle.inventory.data.location.LocationRepository
-import dev.scuttle.inventory.data.product.ProductRepository
+import dev.scuttle.inventory.data.HierarchyStore
+import dev.scuttle.inventory.data.LocationStats
 import dev.scuttle.inventory.data.settings.FavoritesStore
-import dev.scuttle.inventory.data.shelf.ShelfRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import javax.inject.Inject
-
-data class LocationStats(val location: LocationDto, val householdId: Long, val productCount: Int)
 
 data class DashboardUiState(
     val loading: Boolean = false,
@@ -33,151 +29,38 @@ data class DashboardUiState(
 
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
-    private val householdRepository: HouseholdRepository,
-    private val locationRepository: LocationRepository,
-    private val shelfRepository: ShelfRepository,
-    private val productRepository: ProductRepository,
+    private val store: HierarchyStore,
     private val favoritesStore: FavoritesStore,
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(DashboardUiState())
-    val state: StateFlow<DashboardUiState> = _state.asStateFlow()
+    private val _favState = MutableStateFlow(
+        favoritesStore.getFavoriteLocations() to favoritesStore.getFavoriteShelves(),
+    )
 
-    init {
-        if (householdRepository.getCached() != null) {
-            loadFromCache()
-            refreshSilent()
-        } else {
-            refresh()
-        }
-    }
+    val state: StateFlow<DashboardUiState> = combine(store.state, _favState) { s, (favLocs, favShelves) ->
+        DashboardUiState(
+            loading = s.loading,
+            hasNoHouseholds = s.entries.isEmpty() && !s.loading,
+            totalLocations = s.locationStats.size,
+            totalShelves = s.totalShelves,
+            totalProducts = s.totalProducts,
+            mandatoryWarnings = s.mandatoryWarnings,
+            locationStats = s.locationStats,
+            favoriteLocationIds = favLocs,
+            favoriteShelfIds = favShelves,
+            error = s.error,
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DashboardUiState())
 
-    private fun loadFromCache() {
-        val cachedHouseholds = householdRepository.getCached() ?: return
-        var totalShelves = 0
-        var totalProducts = 0
-        var mandatoryWarnings = 0
-        val locationStats = mutableListOf<LocationStats>()
-        for (hh in cachedHouseholds) {
-            val locations = locationRepository.getCached(hh.id) ?: continue
-            for (location in locations) {
-                var locationProductCount = 0
-                val shelves = shelfRepository.getCached(hh.id, location.id) ?: continue
-                totalShelves += shelves.size
-                for (shelf in shelves) {
-                    val products = productRepository.getCached(hh.id, shelf.id) ?: continue
-                    totalProducts += products.size
-                    locationProductCount += products.size
-                    mandatoryWarnings += products.count { it.is_mandatory == true && it.quantity == 0 }
-                }
-                locationStats.add(LocationStats(location, hh.id, locationProductCount))
-            }
-        }
-        _state.update {
-            it.copy(
-                hasNoHouseholds = cachedHouseholds.isEmpty(),
-                totalLocations = locationStats.size,
-                totalShelves = totalShelves,
-                totalProducts = totalProducts,
-                mandatoryWarnings = mandatoryWarnings,
-                locationStats = locationStats,
-                favoriteLocationIds = favoritesStore.getFavoriteLocations(),
-                favoriteShelfIds = favoritesStore.getFavoriteShelves(),
-            )
-        }
-    }
-
-    private fun refreshSilent() {
-        viewModelScope.launch {
-            runCatching {
-                val households = householdRepository.list()
-                var totalShelves = 0
-                var totalProducts = 0
-                var mandatoryWarnings = 0
-                val locationStats = mutableListOf<LocationStats>()
-                for (hh in households) {
-                    val locations = locationRepository.list(hh.id)
-                    for (location in locations) {
-                        var locationProductCount = 0
-                        val shelves = runCatching { shelfRepository.list(hh.id, location.id) }.getOrDefault(emptyList())
-                        totalShelves += shelves.size
-                        for (shelf in shelves) {
-                            val products = runCatching { productRepository.list(hh.id, shelf.id) }.getOrDefault(emptyList())
-                            totalProducts += products.size
-                            locationProductCount += products.size
-                            mandatoryWarnings += products.count { it.is_mandatory == true && it.quantity == 0 }
-                        }
-                        locationStats.add(LocationStats(location, hh.id, locationProductCount))
-                    }
-                }
-                _state.update {
-                    it.copy(
-                        hasNoHouseholds = households.isEmpty(),
-                        totalLocations = locationStats.size,
-                        totalShelves = totalShelves,
-                        totalProducts = totalProducts,
-                        mandatoryWarnings = mandatoryWarnings,
-                        locationStats = locationStats,
-                    )
-                }
-            }
-        }
-    }
-
-    fun refresh() {
-        viewModelScope.launch {
-            _state.update { it.copy(loading = true, error = null) }
-            _state.update { it.copy(
-                favoriteLocationIds = favoritesStore.getFavoriteLocations(),
-                favoriteShelfIds = favoritesStore.getFavoriteShelves(),
-            )}
-            runCatching {
-                val households = householdRepository.list()
-                var totalShelves = 0
-                var totalProducts = 0
-                var mandatoryWarnings = 0
-                val locationStats = mutableListOf<LocationStats>()
-
-                for (hh in households) {
-                    val locations = locationRepository.list(hh.id)
-                    for (location in locations) {
-                        var locationProductCount = 0
-                        val shelves = runCatching { shelfRepository.list(hh.id, location.id) }.getOrDefault(emptyList())
-                        totalShelves += shelves.size
-                        for (shelf in shelves) {
-                            val products = runCatching { productRepository.list(hh.id, shelf.id) }.getOrDefault(emptyList())
-                            totalProducts += products.size
-                            locationProductCount += products.size
-                            mandatoryWarnings += products.count { it.is_mandatory == true && it.quantity == 0 }
-                        }
-                        locationStats.add(LocationStats(location, hh.id, locationProductCount))
-                    }
-                }
-
-                _state.update {
-                    it.copy(
-                        loading = false,
-                        hasNoHouseholds = households.isEmpty(),
-                        totalLocations = locationStats.size,
-                        totalShelves = totalShelves,
-                        totalProducts = totalProducts,
-                        mandatoryWarnings = mandatoryWarnings,
-                        locationStats = locationStats,
-                    )
-                }
-            }.onFailure { e ->
-                _state.update { it.copy(loading = false, error = e.message ?: "Failed to load stats.") }
-            }
-        }
-    }
+    fun refresh() = store.refresh()
 
     fun toggleFavoriteLocation(id: Long) {
         favoritesStore.toggleFavoriteLocation(id)
-        _state.update { it.copy(favoriteLocationIds = favoritesStore.getFavoriteLocations()) }
+        _favState.update { favoritesStore.getFavoriteLocations() to favoritesStore.getFavoriteShelves() }
     }
 
     fun toggleFavoriteShelf(id: Long) {
         favoritesStore.toggleFavoriteShelf(id)
-        _state.update { it.copy(favoriteShelfIds = favoritesStore.getFavoriteShelves()) }
+        _favState.update { favoritesStore.getFavoriteLocations() to favoritesStore.getFavoriteShelves() }
     }
 }

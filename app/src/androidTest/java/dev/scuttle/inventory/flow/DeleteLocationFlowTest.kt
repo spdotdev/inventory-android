@@ -25,12 +25,8 @@ class DeleteLocationFlowTest : FlowTestBase() {
     fun swipe_to_delete_location_removes_it_from_list() {
         mockServer.enqueue(fixture("auth_login.json"))
         mockServer.route("/households", fixture("households_one.json"))
-        mockServer.route("/households", fixture("households_one.json"))
-        mockServer.route("/households/1/locations", fixture("locations_one.json"))
         mockServer.route("/households/1/locations", fixture("locations_one.json"))
         mockServer.route("/households/1/locations/10/shelves", fixture("shelves_one.json"))
-        mockServer.route("/households/1/locations/10/shelves", fixture("shelves_one.json"))
-        mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
         mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
 
         composeRule.apply {
@@ -41,14 +37,10 @@ class DeleteLocationFlowTest : FlowTestBase() {
             Thread.sleep(3_000)
             waitUntilAtLeastOneExists(hasText("Dashboard"), timeoutMillis = 5_000)
 
-            // Drawer → "All storage" → AllStoragesScreen triggers DrawerViewModel.refresh()
+            // Drawer → "All storage" → AllStoragesScreen (no auto-refresh, uses HierarchyStore cache)
             onNodeWithContentDescription("Open menu").performClick()
             waitUntilAtLeastOneExists(hasText("All storage").and(hasClickAction()), timeoutMillis = 5_000)
 
-            mockServer.route("/households", fixture("households_one.json"))
-            mockServer.route("/households/1/locations", fixture("locations_one.json"))
-            mockServer.route("/households/1/locations/10/shelves", fixture("shelves_one.json"))
-            mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
             onAllNodesWithText("All storage").filterToOne(hasClickAction()).performClick()
             Thread.sleep(2_000)
             waitForIdle()

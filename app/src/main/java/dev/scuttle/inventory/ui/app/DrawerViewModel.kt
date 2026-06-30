@@ -2,24 +2,16 @@ package dev.scuttle.inventory.ui.app
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.scuttle.inventory.data.dto.LocationDto
-import dev.scuttle.inventory.data.household.HouseholdRepository
+import dev.scuttle.inventory.data.HierarchyStore
+import dev.scuttle.inventory.data.HouseholdWithLocations
 import dev.scuttle.inventory.data.location.LocationRepository
-import dev.scuttle.inventory.data.product.ProductRepository
-import dev.scuttle.inventory.data.shelf.ShelfRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
-data class HouseholdWithLocations(
-    val id: Long,
-    val name: String,
-    val locations: List<LocationDto>,
-)
 
 data class DrawerUiState(
     val entries: List<HouseholdWithLocations> = emptyList(),
@@ -30,65 +22,27 @@ data class DrawerUiState(
 
 @HiltViewModel
 class DrawerViewModel @Inject constructor(
-    private val householdRepository: HouseholdRepository,
+    private val store: HierarchyStore,
     private val locationRepository: LocationRepository,
-    private val shelfRepository: ShelfRepository,
-    private val productRepository: ProductRepository,
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(DrawerUiState())
-    val state: StateFlow<DrawerUiState> = _state.asStateFlow()
+    val state: StateFlow<DrawerUiState> = store.state.map { s ->
+        DrawerUiState(
+            entries = s.entries,
+            locationWarnings = s.locationWarnings,
+            missingItemCount = s.missingItemCount,
+            loading = s.loading,
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DrawerUiState())
 
-    fun refresh() {
-        loadFromCache()
-        viewModelScope.launch {
-            runCatching {
-                val households = householdRepository.list()
-                var missingItemCount = 0
-                val entries = households.map { hh ->
-                    val locations = runCatching { locationRepository.list(hh.id) }.getOrDefault(emptyList())
-                    for (location in locations) {
-                        val shelves = runCatching { shelfRepository.list(hh.id, location.id) }.getOrDefault(emptyList())
-                        for (shelf in shelves) {
-                            val products = runCatching { productRepository.list(hh.id, shelf.id) }.getOrDefault(emptyList())
-                            missingItemCount += products.count { it.is_mandatory == true && it.quantity == 0 }
-                        }
-                    }
-                    HouseholdWithLocations(hh.id, hh.name, locations)
-                }
-                _state.update { it.copy(entries = entries, missingItemCount = missingItemCount, loading = false) }
-            }.onFailure {
-                _state.update { it.copy(loading = false) }
-            }
-        }
-    }
-
-    private fun loadFromCache() {
-        val households = householdRepository.getCached() ?: return
-        var missingItemCount = 0
-        val entries = households.map { hh ->
-            val locations = locationRepository.getCached(hh.id) ?: emptyList()
-            for (location in locations) {
-                val shelves = shelfRepository.getCached(hh.id, location.id) ?: emptyList()
-                for (shelf in shelves) {
-                    val products = productRepository.getCached(hh.id, shelf.id) ?: emptyList()
-                    missingItemCount += products.count { it.is_mandatory == true && it.quantity == 0 }
-                }
-            }
-            HouseholdWithLocations(hh.id, hh.name, locations)
-        }
-        _state.update { it.copy(entries = entries, missingItemCount = missingItemCount) }
-    }
+    fun refresh() = store.refresh()
 
     fun deleteLocation(householdId: Long, locationId: Long) {
         viewModelScope.launch {
-            runCatching { locationRepository.delete(householdId, locationId) }.onSuccess { refresh() }
+            runCatching { locationRepository.delete(householdId, locationId) }.onSuccess { store.refresh() }
         }
     }
 
-    fun reportLocationWarning(locationId: Long, hasWarning: Boolean) {
-        _state.update { state ->
-            state.copy(locationWarnings = state.locationWarnings + (locationId to hasWarning))
-        }
-    }
+    fun reportLocationWarning(locationId: Long, hasWarning: Boolean) =
+        store.reportLocationWarning(locationId, hasWarning)
 }

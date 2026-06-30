@@ -332,8 +332,6 @@ private fun AddProductSheet(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    LaunchedEffect(householdId, shelfId) { viewModel.load(householdId, shelfId) }
-
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,

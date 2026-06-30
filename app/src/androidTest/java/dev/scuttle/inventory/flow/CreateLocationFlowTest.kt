@@ -6,6 +6,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.filterToOne
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -24,12 +25,8 @@ class CreateLocationFlowTest : FlowTestBase() {
         // Login: Dashboard + Drawer both call full hierarchy (×2 each)
         mockServer.enqueue(fixture("auth_login.json"))
         mockServer.route("/households", fixture("households_one.json"))
-        mockServer.route("/households", fixture("households_one.json"))
-        mockServer.route("/households/1/locations", fixture("locations_one.json"))
         mockServer.route("/households/1/locations", fixture("locations_one.json"))
         mockServer.route("/households/1/locations/10/shelves", fixture("shelves_one.json"))
-        mockServer.route("/households/1/locations/10/shelves", fixture("shelves_one.json"))
-        mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
         mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
 
         composeRule.apply {
@@ -44,11 +41,6 @@ class CreateLocationFlowTest : FlowTestBase() {
             onNodeWithContentDescription("Open menu").performClick()
             waitUntilAtLeastOneExists(hasText("All storage").and(hasClickAction()), timeoutMillis = 5_000)
 
-            // AllStoragesScreen.LaunchedEffect calls DrawerViewModel.refresh() — full hierarchy ×1
-            mockServer.route("/households", fixture("households_one.json"))
-            mockServer.route("/households/1/locations", fixture("locations_one.json"))
-            mockServer.route("/households/1/locations/10/shelves", fixture("shelves_one.json"))
-            mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
             onAllNodesWithText("All storage").filterToOne(hasClickAction()).performClick()
             Thread.sleep(2_000)
             waitForIdle()
@@ -72,8 +64,8 @@ class CreateLocationFlowTest : FlowTestBase() {
             Thread.sleep(2_000)
             waitForIdle()
 
-            waitUntilAtLeastOneExists(hasText("Pantry"), timeoutMillis = 5_000)
-            onNodeWithText("Pantry").assertIsDisplayed()
+            waitUntilAtLeastOneExists(hasContentDescription("Open Pantry"), timeoutMillis = 5_000)
+            onNodeWithContentDescription("Open Pantry").assertIsDisplayed()
         }
     }
 }

@@ -23,12 +23,8 @@ class LeaveHouseholdFlowTest : FlowTestBase() {
     fun leave_household_removes_it_from_list() {
         mockServer.enqueue(fixture("auth_login.json"))
         mockServer.route("/households", fixture("households_two.json"))
-        mockServer.route("/households", fixture("households_two.json"))
-        mockServer.route("/households/1/locations", fixture("locations_one.json"))
         mockServer.route("/households/1/locations", fixture("locations_one.json"))
         mockServer.route("/households/1/locations/10/shelves", fixture("shelves_one.json"))
-        mockServer.route("/households/1/locations/10/shelves", fixture("shelves_one.json"))
-        mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
         mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
 
         composeRule.apply {

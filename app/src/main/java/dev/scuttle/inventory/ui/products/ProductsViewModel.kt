@@ -2,6 +2,7 @@ package dev.scuttle.inventory.ui.products
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.scuttle.inventory.data.HierarchyStore
 import dev.scuttle.inventory.data.dto.ProductDto
 import dev.scuttle.inventory.data.location.LocationRepository
 import dev.scuttle.inventory.data.product.ProductRepository
@@ -38,6 +39,7 @@ class ProductsViewModel @Inject constructor(
     private val locationRepository: LocationRepository,
     private val shelfRepository: ShelfRepository,
     private val searchRepository: SearchRepository,
+    private val hierarchyStore: HierarchyStore,
 ) : ViewModel() {
 
     private var householdId: Long? = null
@@ -118,6 +120,7 @@ class ProductsViewModel @Inject constructor(
         launch {
             productRepository.create(h, s, name, 0)
             _state.update { it.copy(newName = "", suggestions = emptyList(), products = productRepository.list(h, s)) }
+            hierarchyStore.refresh()
         }
     }
 
@@ -138,6 +141,7 @@ class ProductsViewModel @Inject constructor(
         _state.update { it.copy(products = it.products.filterNot { p -> p.id == productId }) }
         viewModelScope.launch {
             runCatching { productRepository.delete(h, s, productId) }
+                .onSuccess { hierarchyStore.refresh() }
                 .onFailure { error ->
                     _state.update { it.copy(error = error.message ?: "Failed to delete product.") }
                     refresh()
