@@ -71,9 +71,7 @@ fun AuthScreen(
                 val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(result.credential.data)
                 viewModel.loginWithGoogle(googleIdTokenCredential.idToken)
             }.onFailure { e ->
-                if (e !is GetCredentialCancellationException) {
-                    viewModel.onGoogleError(e.message ?: "Google sign-in failed.")
-                }
+                viewModel.onGoogleError(e.javaClass.simpleName + ": " + (e.message ?: "Google sign-in failed."))
             }
         }
     }
