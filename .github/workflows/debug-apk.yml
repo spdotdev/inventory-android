@@ -1,10 +1,5 @@
 name: Debug APK
 
-# Builds a consistently-signed debug APK on demand for local testing.
-# Uses a stable keystore (stored as a secret) so the SHA-1 stays fixed
-# across builds — required for Google Sign-In (Credential Manager).
-# Trigger manually from the GitHub Actions UI or via gh workflow run.
-
 on:
   workflow_dispatch:
 
@@ -31,9 +26,13 @@ jobs:
           DEBUG_KEYSTORE_B64: ${{ secrets.DEBUG_KEYSTORE_B64 }}
         run: |
           mkdir -p ~/.android
-          echo "$DEBUG_KEYSTORE_B64" | base64 -d > ~/.android/debug.keystore
+          echo "$DEBUG_KEYSTORE_B64" | base64 -d > ~/.android/inventory-debug.jks
 
       - name: Build debug APK
+        env:
+          DEBUG_KEYSTORE_PASSWORD: ${{ secrets.DEBUG_KEYSTORE_PASSWORD }}
+          DEBUG_KEY_ALIAS: ${{ secrets.DEBUG_KEY_ALIAS }}
+          DEBUG_KEY_PASSWORD: ${{ secrets.DEBUG_KEY_PASSWORD }}
         run: ./gradlew assembleDebug
 
       - name: Upload APK

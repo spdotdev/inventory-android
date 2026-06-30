@@ -25,7 +25,19 @@ android {
         buildConfigField("String", "GOOGLE_CLIENT_ID", "\"758637503304-np301l9sc7saepermpm2so9kcghet5k6.apps.googleusercontent.com\"") // Web OAuth client ID — used with Google Sign-In SDK
     }
 
+    signingConfigs {
+        create("stableDebug") {
+            storeFile = file("${System.getProperty("user.home")}/.android/inventory-debug.jks")
+            storePassword = System.getenv("DEBUG_KEYSTORE_PASSWORD") ?: "inventoryDebug"
+            keyAlias = System.getenv("DEBUG_KEY_ALIAS") ?: "inventory-debug"
+            keyPassword = System.getenv("DEBUG_KEY_PASSWORD") ?: "inventoryDebug"
+        }
+    }
+
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("stableDebug")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
