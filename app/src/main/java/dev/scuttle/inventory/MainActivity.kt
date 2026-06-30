@@ -85,14 +85,14 @@ private object Routes {
     const val SETTINGS = "settings"
     const val STORAGE = "storage/{householdId}"
     const val SEARCH = "search/{householdId}"
-    const val INVITE = "invite/{householdId}"
+    const val INVITE = "invite/{householdId}/{householdName}"
     const val LOCATION = "location/{householdId}/{locationId}"
     const val PRODUCT_DETAIL = "product-detail/{householdId}/{shelfId}/{productId}"
     const val MISSING_ITEMS = "missing-items"
 
     fun storage(householdId: Long) = "storage/$householdId"
     fun search(householdId: Long) = "search/$householdId"
-    fun invite(householdId: Long) = "invite/$householdId"
+    fun invite(householdId: Long, householdName: String) = "invite/$householdId/${java.net.URLEncoder.encode(householdName, "UTF-8")}"
     fun location(householdId: Long, locationId: Long) = "location/$householdId/$locationId"
     fun productDetail(householdId: Long, shelfId: Long, productId: Long) = "product-detail/$householdId/$shelfId/$productId"
 }
@@ -209,7 +209,7 @@ private fun InventoryNavHost(
             composable(Routes.HOUSEHOLDS) {
                 HouseholdsScreen(
                     onBack = { navController.popBackStack() },
-                    onOpenInvite = { navController.navigate(Routes.invite(it)) },
+                    onOpenInvite = { id, name -> navController.navigate(Routes.invite(id, name)) },
                 )
             }
 
@@ -237,10 +237,14 @@ private fun InventoryNavHost(
 
             composable(
                 route = Routes.INVITE,
-                arguments = listOf(navArgument("householdId") { type = NavType.LongType }),
+                arguments = listOf(
+                    navArgument("householdId") { type = NavType.LongType },
+                    navArgument("householdName") { type = NavType.StringType },
+                ),
             ) { entry ->
                 val householdId = entry.arguments?.getLong("householdId") ?: return@composable
-                InviteScreen(householdId = householdId, onBack = { navController.popBackStack() })
+                val householdName = entry.arguments?.getString("householdName") ?: ""
+                InviteScreen(householdId = householdId, storageName = householdName, onBack = { navController.popBackStack() })
             }
 
             composable(
