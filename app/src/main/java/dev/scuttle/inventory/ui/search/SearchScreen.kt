@@ -22,9 +22,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import dev.scuttle.inventory.R
 
 @Composable
 fun SearchScreen(
@@ -49,13 +51,13 @@ fun SearchScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         TextButton(onClick = onBack) {
-            Text("← Storage")
+            Text(stringResource(R.string.search_back_button))
         }
 
         OutlinedTextField(
             value = state.query,
             onValueChange = viewModel::onQueryChange,
-            label = { Text("Search products") },
+            label = { Text(stringResource(R.string.search_field_label)) },
             singleLine = true,
             keyboardOptions = KeyboardOptions(
                 autoCorrect = false,
@@ -76,7 +78,7 @@ fun SearchScreen(
         }
 
         if (state.query.isNotBlank() && state.results.isEmpty() && !state.loading) {
-            Text(text = "No matches.")
+            Text(text = stringResource(R.string.search_no_results))
         }
 
         state.results.forEach { result ->
@@ -84,7 +86,7 @@ fun SearchScreen(
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(text = result.name)
                     Text(text = result.path)
-                    Text(text = "Qty: ${result.quantity}")
+                    Text(text = stringResource(R.string.search_result_qty, result.quantity))
                 }
             }
         }

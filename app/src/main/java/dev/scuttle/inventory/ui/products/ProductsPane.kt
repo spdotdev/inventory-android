@@ -39,10 +39,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.dto.ProductDto
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -84,11 +86,16 @@ fun ProductsPane(
         }
 
         if (state.products.isEmpty() && !state.loading) {
-            Text(text = "No products on this shelf yet. Tap + to add one.")
+            Text(text = stringResource(R.string.products_pane_empty))
         }
 
         state.products.forEach { product ->
             key(product.id) {
+                // Hoist formatted strings so they can be used inside non-composable semantics blocks
+                val decreaseDesc = stringResource(R.string.products_pane_decrease_cd, product.name)
+                val increaseDesc = stringResource(R.string.products_pane_increase_cd, product.name)
+                val moveDesc = stringResource(R.string.products_pane_move_cd, product.name)
+
                 val swipeState = rememberSwipeToDismissBoxState(
                     confirmValueChange = { value ->
                         if (value == SwipeToDismissBoxValue.EndToStart) {
@@ -112,7 +119,7 @@ fun ProductsPane(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Delete,
-                                contentDescription = "Delete",
+                                contentDescription = stringResource(R.string.action_delete),
                                 tint = MaterialTheme.colorScheme.onErrorContainer,
                                 modifier = Modifier.padding(horizontal = 20.dp),
                             )
@@ -152,7 +159,7 @@ fun ProductsPane(
                                 }
                                 if (product.is_mandatory == true) {
                                     Text(
-                                        text = "Mandatory",
+                                        text = stringResource(R.string.products_pane_mandatory_label),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = if (isMandatoryWarning) MaterialTheme.colorScheme.error
                                                 else MaterialTheme.colorScheme.primary,
@@ -163,7 +170,7 @@ fun ProductsPane(
                                 onClick = { viewModel.decrement(product.id) },
                                 enabled = !state.loading && product.quantity > 0,
                                 modifier = Modifier.semantics {
-                                    contentDescription = "Decrease ${product.name} quantity"
+                                    contentDescription = decreaseDesc
                                 },
                             ) {
                                 Text("−")
@@ -177,7 +184,7 @@ fun ProductsPane(
                                 onClick = { viewModel.increment(product.id) },
                                 enabled = !state.loading,
                                 modifier = Modifier.semantics {
-                                    contentDescription = "Increase ${product.name} quantity"
+                                    contentDescription = increaseDesc
                                 },
                             ) {
                                 Text("+")
@@ -186,10 +193,10 @@ fun ProductsPane(
                                 onClick = { viewModel.startMove(product.id) },
                                 enabled = !state.loading,
                                 modifier = Modifier.semantics {
-                                    contentDescription = "Move ${product.name}"
+                                    contentDescription = moveDesc
                                 },
                             ) {
-                                Text("Move")
+                                Text(stringResource(R.string.products_pane_move_button))
                             }
                         }
                     }
@@ -204,14 +211,14 @@ fun ProductsPane(
         val name = state.products.find { it.id == id }?.name ?: "this product"
         AlertDialog(
             onDismissRequest = { pendingDeleteId = null },
-            title = { Text("Delete \"$name\"?") },
+            title = { Text(stringResource(R.string.delete_dialog_product_title, name)) },
             confirmButton = {
                 TextButton(onClick = { viewModel.delete(id); pendingDeleteId = null }) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { pendingDeleteId = null }) { Text("Cancel") }
+                TextButton(onClick = { pendingDeleteId = null }) { Text(stringResource(R.string.action_cancel)) }
             },
         )
     }
@@ -221,16 +228,16 @@ fun ProductsPane(
             onDismissRequest = viewModel::cancelMove,
             confirmButton = {},
             dismissButton = {
-                TextButton(onClick = viewModel::cancelMove) { Text("Cancel") }
+                TextButton(onClick = viewModel::cancelMove) { Text(stringResource(R.string.action_cancel)) }
             },
-            title = { Text("Move to…") },
+            title = { Text(stringResource(R.string.products_pane_move_dialog_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     when {
                         state.loading && state.moveTargets.isEmpty() ->
                             CircularProgressIndicator(modifier = Modifier.size(24.dp))
                         state.moveTargets.isEmpty() ->
-                            Text("No other shelves available.")
+                            Text(stringResource(R.string.products_pane_no_shelves_to_move))
                         else -> state.moveTargets.forEach { target ->
                             TextButton(onClick = { viewModel.confirmMove(target.shelfId) }) {
                                 Text(target.label)

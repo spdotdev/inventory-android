@@ -56,9 +56,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.dto.ProductDto
 import dev.scuttle.inventory.ui.app.DrawerViewModel
 import dev.scuttle.inventory.ui.products.ProductsPane
@@ -104,17 +106,17 @@ fun LocationDetailScreen(
                 windowInsets = statusBarInsets,
                 title = {
                     if (state.deleteMode && state.selectedShelves.isNotEmpty()) {
-                        Text("${state.selectedShelves.size} selected")
+                        Text(stringResource(R.string.location_selected_count, state.selectedShelves.size))
                     } else {
-                        Text("Shelves")
+                        Text(stringResource(R.string.location_shelves_title))
                     }
                 },
                 navigationIcon = {
                     if (state.deleteMode) {
-                        TextButton(onClick = shelvesViewModel::exitDeleteMode) { Text("Cancel") }
+                        TextButton(onClick = shelvesViewModel::exitDeleteMode) { Text(stringResource(R.string.action_cancel)) }
                     } else {
                         IconButton(onClick = onBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                         }
                     }
                 },
@@ -127,21 +129,21 @@ fun LocationDetailScreen(
                             modifier = Modifier.padding(end = 8.dp),
                         ) {
                             Text(
-                                if (state.selectedShelves.isEmpty()) "Delete"
-                                else "Delete (${state.selectedShelves.size})"
+                                if (state.selectedShelves.isEmpty()) stringResource(R.string.location_delete_button)
+                                else stringResource(R.string.location_delete_count_button, state.selectedShelves.size)
                             )
                         }
                     } else {
                         if (state.shelves.isNotEmpty()) {
                             IconButton(onClick = shelvesViewModel::enterDeleteMode) {
-                                Icon(Icons.Default.Delete, contentDescription = "Select shelves to delete")
+                                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.location_delete_shelves_cd))
                             }
                         }
                         IconButton(onClick = { showAddShelfSheet = true }) {
-                            Icon(Icons.Default.Add, contentDescription = "Add shelf")
+                            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.location_add_shelf_cd))
                         }
                         IconButton(onClick = onOpenDrawer) {
-                            Icon(Icons.Default.Menu, contentDescription = "Open menu")
+                            Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.action_open_menu))
                         }
                     }
                 },
@@ -150,7 +152,7 @@ fun LocationDetailScreen(
         floatingActionButton = {
             if (!state.deleteMode && currentShelfId != null) {
                 FloatingActionButton(modifier = Modifier.navigationBarsPadding(), onClick = { showAddProductSheet = true }) {
-                    Icon(Icons.Default.Add, contentDescription = "Add product")
+                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.location_add_product_cd))
                 }
             }
         },
@@ -176,7 +178,7 @@ fun LocationDetailScreen(
             if (state.shelves.isEmpty()) {
                 if (!state.loading) {
                     Text(
-                        text = "No shelves yet. Tap + in the top bar to add one.",
+                        text = stringResource(R.string.location_no_shelves),
                         modifier = Modifier.padding(16.dp),
                     )
                 }
@@ -261,7 +263,7 @@ fun LocationDetailScreen(
                     .padding(bottom = 32.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                Text(text = "Add shelf", style = MaterialTheme.typography.titleLarge)
+                Text(text = stringResource(R.string.add_shelf_sheet_title), style = MaterialTheme.typography.titleLarge)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -269,7 +271,7 @@ fun LocationDetailScreen(
                     OutlinedTextField(
                         value = state.newName,
                         onValueChange = shelvesViewModel::onNewNameChange,
-                        label = { Text("Shelf name") },
+                        label = { Text(stringResource(R.string.add_shelf_field_name)) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(autoCorrect = false, imeAction = ImeAction.Done),
                         keyboardActions = KeyboardActions(onDone = {
@@ -287,7 +289,7 @@ fun LocationDetailScreen(
                         },
                         enabled = !state.loading && state.newName.isNotBlank(),
                     ) {
-                        Text("Add")
+                        Text(stringResource(R.string.action_add))
                     }
                 }
                 Spacer(Modifier.height(0.dp))
@@ -334,7 +336,7 @@ private fun AddProductSheet(
                     .padding(horizontal = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                Text(text = "Add product", style = MaterialTheme.typography.titleLarge)
+                Text(text = stringResource(R.string.add_product_sheet_title), style = MaterialTheme.typography.titleLarge)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -342,7 +344,7 @@ private fun AddProductSheet(
                     OutlinedTextField(
                         value = state.newName,
                         onValueChange = viewModel::onNewNameChange,
-                        label = { Text("Product name") },
+                        label = { Text(stringResource(R.string.add_product_field_name)) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(autoCorrect = false, imeAction = ImeAction.Done),
                         keyboardActions = KeyboardActions(onDone = {
@@ -360,7 +362,7 @@ private fun AddProductSheet(
                         },
                         enabled = !state.loading && state.newName.isNotBlank(),
                     ) {
-                        Text("Add")
+                        Text(stringResource(R.string.action_add))
                     }
                 }
             }

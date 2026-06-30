@@ -58,11 +58,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.dto.LocationDto
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -91,25 +93,25 @@ fun StorageOverviewScreen(
         topBar = {
             TopAppBar(
                 windowInsets = statusBarInsets,
-                title = { Text("Storage") },
+                title = { Text(stringResource(R.string.all_storage_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 actions = {
                     IconButton(onClick = onOpenSearch) {
-                        Icon(Icons.Default.Search, contentDescription = "Search products")
+                        Icon(Icons.Default.Search, contentDescription = stringResource(R.string.storage_overview_search_cd))
                     }
                     IconButton(onClick = onOpenDrawer) {
-                        Icon(Icons.Default.Menu, contentDescription = "Open menu")
+                        Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.action_open_menu))
                     }
                 },
             )
         },
         floatingActionButton = {
             FloatingActionButton(modifier = Modifier.navigationBarsPadding(), onClick = { showAddSheet = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Add storage location")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.all_storage_add_location_cd))
             }
         },
     ) { padding ->
@@ -134,13 +136,16 @@ fun StorageOverviewScreen(
 
             if (state.locations.isEmpty() && !state.loading) {
                 Text(
-                    text = "No storage locations yet. Tap + to add a fridge, freezer or pantry.",
+                    text = stringResource(R.string.storage_overview_empty),
                     modifier = Modifier.padding(top = 8.dp),
                 )
             }
 
             state.locations.forEach { location ->
                 key(location.id) {
+                    // Hoist formatted string for use inside non-composable semantics block
+                    val openDesc = stringResource(R.string.storage_overview_open_cd, location.name)
+
                     val swipeState = rememberSwipeToDismissBoxState(
                         confirmValueChange = { value ->
                             if (value == SwipeToDismissBoxValue.EndToStart) {
@@ -164,7 +169,7 @@ fun StorageOverviewScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Delete,
-                                    contentDescription = "Delete",
+                                    contentDescription = stringResource(R.string.action_delete),
                                     tint = MaterialTheme.colorScheme.onErrorContainer,
                                     modifier = Modifier.padding(horizontal = 20.dp),
                                 )
@@ -174,7 +179,7 @@ fun StorageOverviewScreen(
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .semantics { contentDescription = "Open ${location.name}" }
+                                .semantics { contentDescription = openDesc }
                                 .clickable { onOpenLocation(location.id) },
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
@@ -193,8 +198,8 @@ fun StorageOverviewScreen(
     pendingDeleteLocation?.let { location ->
         AlertDialog(
             onDismissRequest = { pendingDeleteLocation = null },
-            title = { Text("Delete \"${location.name}\"?") },
-            text = { Text("All shelves and products inside will be permanently deleted.") },
+            title = { Text(stringResource(R.string.delete_dialog_location_title, location.name)) },
+            text = { Text(stringResource(R.string.delete_dialog_location_text)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -202,10 +207,10 @@ fun StorageOverviewScreen(
                         pendingDeleteLocation = null
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                ) { Text("Delete") }
+                ) { Text(stringResource(R.string.action_delete)) }
             },
             dismissButton = {
-                TextButton(onClick = { pendingDeleteLocation = null }) { Text("Cancel") }
+                TextButton(onClick = { pendingDeleteLocation = null }) { Text(stringResource(R.string.action_cancel)) }
             },
         )
     }
@@ -222,9 +227,9 @@ fun StorageOverviewScreen(
                     .padding(bottom = 32.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                Text(text = "Add storage", style = MaterialTheme.typography.titleLarge)
+                Text(text = stringResource(R.string.add_storage_sheet_title), style = MaterialTheme.typography.titleLarge)
 
-                Text(text = "Type")
+                Text(text = stringResource(R.string.add_storage_type_label))
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     STORAGE_TYPES.forEach { type ->
                         FilterChip(
@@ -242,7 +247,7 @@ fun StorageOverviewScreen(
                     OutlinedTextField(
                         value = state.newName,
                         onValueChange = viewModel::onNewNameChange,
-                        label = { Text("Name") },
+                        label = { Text(stringResource(R.string.add_storage_name_field)) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(autoCorrect = false, imeAction = ImeAction.Done),
                         keyboardActions = KeyboardActions(onDone = {
@@ -260,7 +265,7 @@ fun StorageOverviewScreen(
                         },
                         enabled = !state.loading && state.newName.isNotBlank(),
                     ) {
-                        Text("Add")
+                        Text(stringResource(R.string.action_add))
                     }
                 }
             }

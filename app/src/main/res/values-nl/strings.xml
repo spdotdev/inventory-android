@@ -1,0 +1,162 @@
+<resources>
+    <string name="app_name">Inventory</string>
+
+    <!-- Auth -->
+    <string name="auth_create_account">Account aanmaken</string>
+    <string name="auth_sign_in">Inloggen</string>
+    <string name="auth_field_name">Naam</string>
+    <string name="auth_field_email">E-mail</string>
+    <string name="auth_field_password">Wachtwoord</string>
+    <string name="auth_divider_or">of</string>
+    <string name="auth_continue_with_google">Doorgaan met Google</string>
+    <string name="auth_toggle_to_register">Nieuw hier? Maak een account aan</string>
+    <string name="auth_toggle_to_login">Al een account? Inloggen</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_title">Dashboard</string>
+    <string name="dashboard_welcome_title">Welkom!</string>
+    <string name="dashboard_welcome_text">Je bent nog geen lid van een huishouden. Maak een nieuw huishouden aan of sluit je aan bij een bestaand huishouden met een uitnodigingscode.</string>
+    <string name="dashboard_create_household">Huishouden aanmaken</string>
+    <string name="dashboard_join_with_invite">Deelnemen met uitnodiging</string>
+    <string name="dashboard_stat_locations">Locaties</string>
+    <string name="dashboard_stat_shelves">Planken</string>
+    <string name="dashboard_stat_products">Producten</string>
+    <string name="dashboard_missing_one">1 artikel ontbreekt</string>
+    <string name="dashboard_missing_many">%d artikelen ontbreken</string>
+    <string name="dashboard_tap_to_restock">Tik om te zien wat aangevuld moet worden</string>
+    <string name="dashboard_products_by_location">Producten per locatie</string>
+    <string name="dashboard_favorite_locations">Favoriete locaties</string>
+
+    <!-- Global actions -->
+    <string name="action_open_menu">Menu openen</string>
+    <string name="action_refresh">Vernieuwen</string>
+    <string name="action_back">Terug</string>
+    <string name="action_cancel">Annuleren</string>
+    <string name="action_delete">Verwijderen</string>
+    <string name="action_add">Toevoegen</string>
+
+    <!-- All Storages -->
+    <string name="all_storage_title">Opslag</string>
+    <string name="all_storage_empty">Nog geen opslaglocaties. Voeg een huishouden toe en maak opslag aan via Instellingen.</string>
+    <string name="all_storage_add_location_cd">Opslaglocatie toevoegen</string>
+    <string name="all_storage_stock_warning">⚠ Voorraadwaarschuwing</string>
+    <string name="all_storage_favorite_add_cd">Toevoegen aan favorieten</string>
+    <string name="all_storage_favorite_remove_cd">Verwijderen uit favorieten</string>
+
+    <!-- Delete dialogs -->
+    <string name="delete_dialog_location_title">\"%s\" verwijderen?</string>
+    <string name="delete_dialog_location_text">Alle planken en producten hierin worden permanent verwijderd.</string>
+    <string name="delete_dialog_product_title">\"%s\" verwijderen?</string>
+    <string name="delete_dialog_product_text">Dit product wordt permanent van de plank verwijderd.</string>
+
+    <!-- Households -->
+    <string name="households_title">Mijn huishoudens</string>
+    <string name="households_empty">Nog geen huishoudens. Tik op + om er een aan te maken.</string>
+    <string name="households_invite_cd">Uitnodigen voor %s</string>
+    <string name="households_leave">Verlaten</string>
+    <string name="households_leave_dialog_title">%s verlaten?</string>
+    <string name="households_leave_dialog_text">Je hebt een nieuwe uitnodiging nodig om opnieuw deel te nemen.</string>
+    <string name="households_create_fab_cd">Huishouden aanmaken</string>
+    <string name="households_field_name">Naam huishouden</string>
+    <string name="households_create_button">Aanmaken</string>
+
+    <!-- Location detail / Shelves -->
+    <string name="location_shelves_title">Planken</string>
+    <string name="location_selected_count">%d geselecteerd</string>
+    <string name="location_delete_shelves_cd">Planken selecteren om te verwijderen</string>
+    <string name="location_add_shelf_cd">Plank toevoegen</string>
+    <string name="location_add_product_cd">Product toevoegen</string>
+    <string name="location_no_shelves">Nog geen planken. Tik op + in de bovenbalk om er een toe te voegen.</string>
+    <string name="location_delete_count_button">Verwijderen (%d)</string>
+    <string name="location_delete_button">Verwijderen</string>
+
+    <!-- Add shelf sheet -->
+    <string name="add_shelf_sheet_title">Plank toevoegen</string>
+    <string name="add_shelf_field_name">Naam plank</string>
+
+    <!-- Add product sheet -->
+    <string name="add_product_sheet_title">Product toevoegen</string>
+    <string name="add_product_field_name">Productnaam</string>
+
+    <!-- Missing items -->
+    <string name="missing_items_title">Ontbrekende artikelen</string>
+    <string name="missing_items_warning_cd">Sommige verplichte artikelen ontbreken</string>
+    <string name="missing_items_empty">Geen ontbrekende artikelen</string>
+
+    <!-- Product detail -->
+    <string name="product_detail_title_fallback">Product</string>
+    <string name="product_detail_save">Opslaan</string>
+    <string name="product_detail_gallery">Galerij</string>
+    <string name="product_detail_camera">Camera</string>
+    <string name="product_detail_image_cd">Productafbeelding</string>
+    <string name="product_detail_field_name">Naam</string>
+    <string name="product_detail_field_description">Omschrijving</string>
+    <string name="product_detail_field_code">Productcode / barcode</string>
+    <string name="product_detail_mandatory_label">Verplicht op deze plank</string>
+    <string name="product_detail_mandatory_hint">Toont een waarschuwing als de hoeveelheid 0 bereikt</string>
+    <string name="product_detail_delete_button">Product verwijderen</string>
+
+    <!-- Products pane -->
+    <string name="products_pane_empty">Nog geen producten op deze plank. Tik op + om er een toe te voegen.</string>
+    <string name="products_pane_mandatory_label">Verplicht</string>
+    <string name="products_pane_decrease_cd">Hoeveelheid van %s verlagen</string>
+    <string name="products_pane_increase_cd">Hoeveelheid van %s verhogen</string>
+    <string name="products_pane_move_cd">%s verplaatsen</string>
+    <string name="products_pane_move_button">Verplaatsen</string>
+    <string name="products_pane_move_dialog_title">Verplaatsen naar…</string>
+    <string name="products_pane_no_shelves_to_move">Geen andere planken beschikbaar.</string>
+
+    <!-- Search -->
+    <string name="search_back_button">← Opslag</string>
+    <string name="search_field_label">Producten zoeken</string>
+    <string name="search_no_results">Geen resultaten.</string>
+    <string name="search_result_qty">Aantal: %s</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Instellingen</string>
+    <string name="settings_language_section">Taal</string>
+    <string name="settings_theme_section">Thema</string>
+    <string name="settings_join_section">Huishouden deelnemen</string>
+    <string name="settings_join_success">Succesvol deelgenomen!</string>
+    <string name="settings_join_field">Deelnamecode</string>
+    <string name="settings_join_button">Deelnemen</string>
+    <string name="settings_scan_qr_button">QR-code scannen om deel te nemen</string>
+    <string name="settings_scan_prompt">Huishouden QR-code scannen</string>
+    <string name="settings_households_section">Huishoudens</string>
+    <string name="settings_my_households_button">Mijn huishoudens</string>
+    <string name="settings_account_section">Account</string>
+    <string name="settings_sign_out_button">Uitloggen</string>
+    <string name="settings_sign_out_dialog_title">Uitloggen?</string>
+    <string name="settings_sign_out_dialog_text">Je moet opnieuw inloggen.</string>
+
+    <!-- Theme -->
+    <string name="theme_system">Systeem</string>
+    <string name="theme_light">Licht</string>
+    <string name="theme_dark">Donker</string>
+
+    <!-- Storage overview -->
+    <string name="storage_overview_empty">Nog geen opslaglocaties. Tik op + om een koelkast, vriezer of voorraadkast toe te voegen.</string>
+    <string name="storage_overview_search_cd">Producten zoeken</string>
+    <string name="storage_overview_open_cd">%s openen</string>
+
+    <!-- Add storage sheet -->
+    <string name="add_storage_sheet_title">Opslag toevoegen</string>
+    <string name="add_storage_type_label">Type</string>
+    <string name="add_storage_name_field">Naam</string>
+
+    <!-- Drawer -->
+    <string name="drawer_all_storage">Alle opslag</string>
+    <string name="drawer_dashboard">Dashboard</string>
+    <string name="drawer_search">Zoeken</string>
+    <string name="drawer_households">Huishoudens</string>
+    <string name="drawer_missing_items">Ontbrekende artikelen</string>
+    <string name="drawer_missing_items_count">Ontbrekende artikelen · %d</string>
+    <string name="drawer_settings">Instellingen</string>
+
+    <!-- Invite -->
+    <string name="invite_title">Uitnodigen voor huishouden</string>
+    <string name="invite_join_code_label">Deelnamecode</string>
+    <string name="invite_qr_cd">Uitnodigings-QR-code</string>
+    <string name="invite_copy_link">Link kopiëren</string>
+    <string name="invite_copied">Gekopieerd!</string>
+</resources>

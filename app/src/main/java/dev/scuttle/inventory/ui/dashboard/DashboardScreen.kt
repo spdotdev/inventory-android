@@ -41,9 +41,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import dev.scuttle.inventory.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,13 +65,13 @@ fun DashboardScreen(
     if (state.hasNoHouseholds && !state.loading) {
         AlertDialog(
             onDismissRequest = {},
-            title = { Text("Welcome!") },
-            text = { Text("You're not part of any household yet. Create a new one or join an existing one with an invite code.") },
+            title = { Text(stringResource(R.string.dashboard_welcome_title)) },
+            text = { Text(stringResource(R.string.dashboard_welcome_text)) },
             confirmButton = {
-                Button(onClick = onOpenHouseholds) { Text("Create household") }
+                Button(onClick = onOpenHouseholds) { Text(stringResource(R.string.dashboard_create_household)) }
             },
             dismissButton = {
-                OutlinedButton(onClick = onOpenHouseholds) { Text("Join with invite") }
+                OutlinedButton(onClick = onOpenHouseholds) { Text(stringResource(R.string.dashboard_join_with_invite)) }
             },
         )
     }
@@ -81,15 +83,15 @@ fun DashboardScreen(
         topBar = {
             TopAppBar(
                 windowInsets = statusBarInsets,
-                title = { Text("Dashboard") },
+                title = { Text(stringResource(R.string.dashboard_title)) },
                 navigationIcon = {
                     IconButton(onClick = onOpenDrawer) {
-                        Icon(Icons.Default.Menu, contentDescription = "Open menu")
+                        Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.action_open_menu))
                     }
                 },
                 actions = {
                     IconButton(onClick = viewModel::refresh) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+                        Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.action_refresh))
                     }
                 },
             )
@@ -117,9 +119,9 @@ fun DashboardScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                StatCard(label = "Locations", value = state.totalLocations.toString(), modifier = Modifier.weight(1f))
-                StatCard(label = "Shelves", value = state.totalShelves.toString(), modifier = Modifier.weight(1f))
-                StatCard(label = "Products", value = state.totalProducts.toString(), modifier = Modifier.weight(1f))
+                StatCard(label = stringResource(R.string.dashboard_stat_locations), value = state.totalLocations.toString(), modifier = Modifier.weight(1f))
+                StatCard(label = stringResource(R.string.dashboard_stat_shelves), value = state.totalShelves.toString(), modifier = Modifier.weight(1f))
+                StatCard(label = stringResource(R.string.dashboard_stat_products), value = state.totalProducts.toString(), modifier = Modifier.weight(1f))
             }
 
             if (state.mandatoryWarnings > 0) {
@@ -136,12 +138,13 @@ fun DashboardScreen(
                         Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error)
                         Column {
                             Text(
-                                if (state.mandatoryWarnings == 1) "1 item is missing" else "${state.mandatoryWarnings} items are missing",
+                                if (state.mandatoryWarnings == 1) stringResource(R.string.dashboard_missing_one)
+                                else stringResource(R.string.dashboard_missing_many, state.mandatoryWarnings),
                                 color = MaterialTheme.colorScheme.onErrorContainer,
                                 fontWeight = FontWeight.Medium,
                             )
                             Text(
-                                "Tap to see what needs restocking",
+                                stringResource(R.string.dashboard_tap_to_restock),
                                 color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.7f),
                                 style = MaterialTheme.typography.bodySmall,
                             )
@@ -152,7 +155,7 @@ fun DashboardScreen(
 
             // Bar chart
             if (state.locationStats.isNotEmpty()) {
-                Text("Products by location", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.dashboard_products_by_location), style = MaterialTheme.typography.titleMedium)
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(
                         modifier = Modifier.padding(16.dp),
@@ -200,7 +203,7 @@ fun DashboardScreen(
 
             // Favorite locations
             if (state.favoriteLocationIds.isNotEmpty()) {
-                Text("Favorite locations", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.dashboard_favorite_locations), style = MaterialTheme.typography.titleMedium)
                 state.locationStats
                     .filter { it.location.id in state.favoriteLocationIds }
                     .forEach { stat ->

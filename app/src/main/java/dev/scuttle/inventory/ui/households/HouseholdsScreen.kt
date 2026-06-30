@@ -45,11 +45,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import dev.scuttle.inventory.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,17 +74,17 @@ fun HouseholdsScreen(
         topBar = {
             TopAppBar(
                 windowInsets = statusBarInsets,
-                title = { Text("My Households") },
+                title = { Text(stringResource(R.string.households_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
             )
         },
         floatingActionButton = {
             FloatingActionButton(modifier = Modifier.navigationBarsPadding(), onClick = { showCreateSheet = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Create household")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.households_create_fab_cd))
             }
         },
     ) { padding ->
@@ -109,7 +111,7 @@ fun HouseholdsScreen(
 
             if (state.households.isEmpty() && !state.loading) {
                 Text(
-                    text = "No households yet. Tap + to create one.",
+                    text = stringResource(R.string.households_empty),
                     modifier = Modifier.padding(top = 24.dp),
                 )
             }
@@ -133,10 +135,10 @@ fun HouseholdsScreen(
                             modifier = Modifier.weight(1f),
                         )
                         IconButton(onClick = { onOpenInvite(household.id) }) {
-                            Icon(Icons.Default.Share, contentDescription = "Invite to ${household.name}")
+                            Icon(Icons.Default.Share, contentDescription = stringResource(R.string.households_invite_cd, household.name))
                         }
                         TextButton(onClick = { confirmLeaveId = household.id }) {
-                            Text("Leave", color = MaterialTheme.colorScheme.error)
+                            Text(stringResource(R.string.households_leave), color = MaterialTheme.colorScheme.error)
                         }
                     }
                 }
@@ -159,11 +161,11 @@ fun HouseholdsScreen(
                     .padding(bottom = 32.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                Text(text = "Create household", style = MaterialTheme.typography.titleLarge)
+                Text(text = stringResource(R.string.dashboard_create_household), style = MaterialTheme.typography.titleLarge)
                 OutlinedTextField(
                     value = state.newName,
                     onValueChange = viewModel::onNewNameChange,
-                    label = { Text("Household name") },
+                    label = { Text(stringResource(R.string.households_field_name)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(autoCorrect = false, imeAction = ImeAction.Done),
                     keyboardActions = KeyboardActions(onDone = {
@@ -182,7 +184,7 @@ fun HouseholdsScreen(
                     enabled = !state.loading && state.newName.isNotBlank(),
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text("Create")
+                    Text(stringResource(R.string.households_create_button))
                 }
             }
         }
@@ -192,15 +194,15 @@ fun HouseholdsScreen(
         val name = state.households.find { it.id == id }?.name ?: "this household"
         AlertDialog(
             onDismissRequest = { confirmLeaveId = null },
-            title = { Text("Leave $name?") },
-            text = { Text("You'll need a new invite to rejoin.") },
+            title = { Text(stringResource(R.string.households_leave_dialog_title, name)) },
+            text = { Text(stringResource(R.string.households_leave_dialog_text)) },
             confirmButton = {
                 TextButton(onClick = { viewModel.leave(id); confirmLeaveId = null }) {
-                    Text("Leave", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.households_leave), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { confirmLeaveId = null }) { Text("Cancel") }
+                TextButton(onClick = { confirmLeaveId = null }) { Text(stringResource(R.string.action_cancel)) }
             },
         )
     }

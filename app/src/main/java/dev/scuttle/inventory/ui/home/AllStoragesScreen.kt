@@ -49,8 +49,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.dto.LocationDto
 import dev.scuttle.inventory.ui.app.DrawerViewModel
 import dev.scuttle.inventory.ui.app.HouseholdWithLocations
@@ -78,15 +80,15 @@ fun AllStoragesScreen(
         topBar = {
             TopAppBar(
                 windowInsets = statusBarInsets,
-                title = { Text("Storage") },
+                title = { Text(stringResource(R.string.all_storage_title)) },
                 navigationIcon = {
                     IconButton(onClick = onOpenDrawer) {
-                        Icon(Icons.Default.Menu, contentDescription = "Open menu")
+                        Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.action_open_menu))
                     }
                 },
                 actions = {
                     IconButton(onClick = { viewModel.refresh() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+                        Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.action_refresh))
                     }
                 },
             )
@@ -110,7 +112,7 @@ fun AllStoragesScreen(
                 Spacer(Modifier.height(4.dp))
 
                 if (state.entries.isEmpty()) {
-                    Text("No storage locations yet. Add a household and create storage from Settings.")
+                    Text(stringResource(R.string.all_storage_empty))
                 }
 
                 state.entries.forEach { entry ->
@@ -125,7 +127,7 @@ fun AllStoragesScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                         IconButton(onClick = { onOpenStorage(entry.id) }) {
-                            Icon(Icons.Default.Add, contentDescription = "Add storage location")
+                            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.all_storage_add_location_cd))
                         }
                     }
 
@@ -157,7 +159,7 @@ fun AllStoragesScreen(
                                     ) {
                                         Icon(
                                             Icons.Default.Delete,
-                                            contentDescription = "Delete",
+                                            contentDescription = stringResource(R.string.action_delete),
                                             tint = MaterialTheme.colorScheme.onErrorContainer,
                                             modifier = Modifier.padding(horizontal = 20.dp),
                                         )
@@ -189,7 +191,7 @@ fun AllStoragesScreen(
                                                 )
                                                 if (hasWarning) {
                                                     Text(
-                                                        "⚠ Stock warning",
+                                                        stringResource(R.string.all_storage_stock_warning),
                                                         style = MaterialTheme.typography.bodySmall,
                                                         color = MaterialTheme.colorScheme.error,
                                                     )
@@ -199,7 +201,7 @@ fun AllStoragesScreen(
                                         IconButton(onClick = { localViewModel.toggleFavorite(location.id) }) {
                                             Icon(
                                                 if (isFavorite) Icons.Default.Star else Icons.Outlined.StarOutline,
-                                                contentDescription = if (isFavorite) "Remove favorite" else "Add to favorites",
+                                                contentDescription = if (isFavorite) stringResource(R.string.all_storage_favorite_remove_cd) else stringResource(R.string.all_storage_favorite_add_cd),
                                                 tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                                             )
                                         }
@@ -218,16 +220,16 @@ fun AllStoragesScreen(
     pendingDelete?.let { (entry, location) ->
         AlertDialog(
             onDismissRequest = { pendingDelete = null },
-            title = { Text("Delete \"${location.name}\"?") },
-            text = { Text("All shelves and products inside will be permanently deleted.") },
+            title = { Text(stringResource(R.string.delete_dialog_location_title, location.name)) },
+            text = { Text(stringResource(R.string.delete_dialog_location_text)) },
             confirmButton = {
                 Button(
                     onClick = { viewModel.deleteLocation(entry.id, location.id); pendingDelete = null },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                ) { Text("Delete") }
+                ) { Text(stringResource(R.string.action_delete)) }
             },
             dismissButton = {
-                TextButton(onClick = { pendingDelete = null }) { Text("Cancel") }
+                TextButton(onClick = { pendingDelete = null }) { Text(stringResource(R.string.action_cancel)) }
             },
         )
     }

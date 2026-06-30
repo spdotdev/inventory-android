@@ -30,7 +30,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import dev.scuttle.inventory.R
 
 @Composable
 fun AppDrawer(
@@ -63,7 +65,7 @@ fun AppDrawer(
 
             NavigationDrawerItem(
                 icon = { Icon(Icons.Default.Home, contentDescription = null) },
-                label = { Text("All storage") },
+                label = { Text(stringResource(R.string.drawer_all_storage)) },
                 selected = false,
                 onClick = onNavigateHome,
                 modifier = Modifier.padding(horizontal = 12.dp),
@@ -71,7 +73,7 @@ fun AppDrawer(
 
             NavigationDrawerItem(
                 icon = { Icon(Icons.Default.Star, contentDescription = null) },
-                label = { Text("Dashboard") },
+                label = { Text(stringResource(R.string.drawer_dashboard)) },
                 selected = false,
                 onClick = onNavigateDashboard,
                 modifier = Modifier.padding(horizontal = 12.dp),
@@ -80,7 +82,7 @@ fun AppDrawer(
             val firstHouseholdId = state.entries.firstOrNull()?.id
             NavigationDrawerItem(
                 icon = { Icon(Icons.Default.Search, contentDescription = null) },
-                label = { Text("Search") },
+                label = { Text(stringResource(R.string.drawer_search)) },
                 selected = false,
                 onClick = { firstHouseholdId?.let(onNavigateSearch) },
                 modifier = Modifier.padding(horizontal = 12.dp),
@@ -88,7 +90,7 @@ fun AppDrawer(
 
             NavigationDrawerItem(
                 icon = { Icon(Icons.Default.People, contentDescription = null) },
-                label = { Text("Households") },
+                label = { Text(stringResource(R.string.drawer_households)) },
                 selected = false,
                 onClick = onNavigateHouseholds,
                 modifier = Modifier.padding(horizontal = 12.dp),
@@ -106,7 +108,8 @@ fun AppDrawer(
                 },
                 label = {
                     Text(
-                        text = if (missingCount > 0) "Missing items · $missingCount" else "Missing items",
+                        text = if (missingCount > 0) stringResource(R.string.drawer_missing_items_count, missingCount)
+                               else stringResource(R.string.drawer_missing_items),
                         color = if (missingCount > 0) MaterialTheme.colorScheme.error
                                 else MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -155,7 +158,7 @@ fun AppDrawer(
 
             NavigationDrawerItem(
                 icon = { Icon(Icons.Default.Settings, contentDescription = null) },
-                label = { Text("Settings") },
+                label = { Text(stringResource(R.string.drawer_settings)) },
                 selected = false,
                 onClick = onNavigateSettings,
                 modifier = Modifier.padding(horizontal = 12.dp),

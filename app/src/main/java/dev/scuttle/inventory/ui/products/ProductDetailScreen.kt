@@ -47,9 +47,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import dev.scuttle.inventory.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -95,10 +97,10 @@ fun ProductDetailScreen(
         topBar = {
             TopAppBar(
                 windowInsets = statusBarInsets,
-                title = { Text(product?.name ?: "Product") },
+                title = { Text(product?.name ?: stringResource(R.string.product_detail_title_fallback)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 actions = {
@@ -112,7 +114,7 @@ fun ProductDetailScreen(
                             )
                         },
                         enabled = name.isNotBlank() && !state.loading,
-                    ) { Text("Save") }
+                    ) { Text(stringResource(R.string.product_detail_save)) }
                 },
             )
         },
@@ -144,7 +146,7 @@ fun ProductDetailScreen(
                 if (imageSource != null) {
                     AsyncImage(
                         model = imageSource,
-                        contentDescription = "Product image",
+                        contentDescription = stringResource(R.string.product_detail_image_cd),
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize(),
                     )
@@ -160,17 +162,17 @@ fun ProductDetailScreen(
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = { galleryLauncher.launch("image/*") }, modifier = Modifier.weight(1f)) {
-                    Text("Gallery")
+                    Text(stringResource(R.string.product_detail_gallery))
                 }
                 Button(onClick = { cameraLauncher.launch(null) }, modifier = Modifier.weight(1f)) {
-                    Text("Camera")
+                    Text(stringResource(R.string.product_detail_camera))
                 }
             }
 
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it.take(50) },
-                label = { Text("Name") },
+                label = { Text(stringResource(R.string.product_detail_field_name)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -178,7 +180,7 @@ fun ProductDetailScreen(
             OutlinedTextField(
                 value = description,
                 onValueChange = { description = it },
-                label = { Text("Description") },
+                label = { Text(stringResource(R.string.product_detail_field_description)) },
                 minLines = 3,
                 maxLines = 5,
                 modifier = Modifier.fillMaxWidth(),
@@ -187,7 +189,7 @@ fun ProductDetailScreen(
             OutlinedTextField(
                 value = code,
                 onValueChange = { code = it.uppercase() },
-                label = { Text("Product code / barcode") },
+                label = { Text(stringResource(R.string.product_detail_field_code)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -198,9 +200,9 @@ fun ProductDetailScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Mandatory on this shelf", style = MaterialTheme.typography.bodyLarge)
+                    Text(stringResource(R.string.product_detail_mandatory_label), style = MaterialTheme.typography.bodyLarge)
                     Text(
-                        "Shows a warning when quantity reaches 0",
+                        stringResource(R.string.product_detail_mandatory_hint),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -216,7 +218,7 @@ fun ProductDetailScreen(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !state.loading,
             ) {
-                Text("Delete product")
+                Text(stringResource(R.string.product_detail_delete_button))
             }
 
             Spacer(Modifier.height(24.dp))
@@ -226,16 +228,16 @@ fun ProductDetailScreen(
     if (showDeleteConfirm) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
-            title = { Text("Delete \"${product?.name}\"?") },
-            text = { Text("This product will be permanently removed from the shelf.") },
+            title = { Text(stringResource(R.string.delete_dialog_product_title, product?.name ?: "")) },
+            text = { Text(stringResource(R.string.delete_dialog_product_text)) },
             confirmButton = {
                 Button(
                     onClick = { viewModel.delete(); showDeleteConfirm = false },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                ) { Text("Delete") }
+                ) { Text(stringResource(R.string.action_delete)) }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancel") }
+                TextButton(onClick = { showDeleteConfirm = false }) { Text(stringResource(R.string.action_cancel)) }
             },
         )
     }

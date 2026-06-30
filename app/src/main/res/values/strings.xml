@@ -1,3 +1,162 @@
 <resources>
     <string name="app_name">Inventory</string>
+
+    <!-- Auth -->
+    <string name="auth_create_account">Create account</string>
+    <string name="auth_sign_in">Sign in</string>
+    <string name="auth_field_name">Name</string>
+    <string name="auth_field_email">Email</string>
+    <string name="auth_field_password">Password</string>
+    <string name="auth_divider_or">or</string>
+    <string name="auth_continue_with_google">Continue with Google</string>
+    <string name="auth_toggle_to_register">New here? Create an account</string>
+    <string name="auth_toggle_to_login">Have an account? Sign in</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_title">Dashboard</string>
+    <string name="dashboard_welcome_title">Welcome!</string>
+    <string name="dashboard_welcome_text">You\'re not part of any household yet. Create a new one or join an existing one with an invite code.</string>
+    <string name="dashboard_create_household">Create household</string>
+    <string name="dashboard_join_with_invite">Join with invite</string>
+    <string name="dashboard_stat_locations">Locations</string>
+    <string name="dashboard_stat_shelves">Shelves</string>
+    <string name="dashboard_stat_products">Products</string>
+    <string name="dashboard_missing_one">1 item is missing</string>
+    <string name="dashboard_missing_many">%d items are missing</string>
+    <string name="dashboard_tap_to_restock">Tap to see what needs restocking</string>
+    <string name="dashboard_products_by_location">Products by location</string>
+    <string name="dashboard_favorite_locations">Favorite locations</string>
+
+    <!-- Global actions -->
+    <string name="action_open_menu">Open menu</string>
+    <string name="action_refresh">Refresh</string>
+    <string name="action_back">Back</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_add">Add</string>
+
+    <!-- All Storages -->
+    <string name="all_storage_title">Storage</string>
+    <string name="all_storage_empty">No storage locations yet. Add a household and create storage from Settings.</string>
+    <string name="all_storage_add_location_cd">Add storage location</string>
+    <string name="all_storage_stock_warning">⚠ Stock warning</string>
+    <string name="all_storage_favorite_add_cd">Add to favorites</string>
+    <string name="all_storage_favorite_remove_cd">Remove favorite</string>
+
+    <!-- Delete dialogs -->
+    <string name="delete_dialog_location_title">Delete \"%s\"?</string>
+    <string name="delete_dialog_location_text">All shelves and products inside will be permanently deleted.</string>
+    <string name="delete_dialog_product_title">Delete \"%s\"?</string>
+    <string name="delete_dialog_product_text">This product will be permanently removed from the shelf.</string>
+
+    <!-- Households -->
+    <string name="households_title">My Households</string>
+    <string name="households_empty">No households yet. Tap + to create one.</string>
+    <string name="households_invite_cd">Invite to %s</string>
+    <string name="households_leave">Leave</string>
+    <string name="households_leave_dialog_title">Leave %s?</string>
+    <string name="households_leave_dialog_text">You\'ll need a new invite to rejoin.</string>
+    <string name="households_create_fab_cd">Create household</string>
+    <string name="households_field_name">Household name</string>
+    <string name="households_create_button">Create</string>
+
+    <!-- Location detail / Shelves -->
+    <string name="location_shelves_title">Shelves</string>
+    <string name="location_selected_count">%d selected</string>
+    <string name="location_delete_shelves_cd">Select shelves to delete</string>
+    <string name="location_add_shelf_cd">Add shelf</string>
+    <string name="location_add_product_cd">Add product</string>
+    <string name="location_no_shelves">No shelves yet. Tap + in the top bar to add one.</string>
+    <string name="location_delete_count_button">Delete (%d)</string>
+    <string name="location_delete_button">Delete</string>
+
+    <!-- Add shelf sheet -->
+    <string name="add_shelf_sheet_title">Add shelf</string>
+    <string name="add_shelf_field_name">Shelf name</string>
+
+    <!-- Add product sheet -->
+    <string name="add_product_sheet_title">Add product</string>
+    <string name="add_product_field_name">Product name</string>
+
+    <!-- Missing items -->
+    <string name="missing_items_title">Missing Items</string>
+    <string name="missing_items_warning_cd">Some mandatory items are missing</string>
+    <string name="missing_items_empty">No missing items</string>
+
+    <!-- Product detail -->
+    <string name="product_detail_title_fallback">Product</string>
+    <string name="product_detail_save">Save</string>
+    <string name="product_detail_gallery">Gallery</string>
+    <string name="product_detail_camera">Camera</string>
+    <string name="product_detail_image_cd">Product image</string>
+    <string name="product_detail_field_name">Name</string>
+    <string name="product_detail_field_description">Description</string>
+    <string name="product_detail_field_code">Product code / barcode</string>
+    <string name="product_detail_mandatory_label">Mandatory on this shelf</string>
+    <string name="product_detail_mandatory_hint">Shows a warning when quantity reaches 0</string>
+    <string name="product_detail_delete_button">Delete product</string>
+
+    <!-- Products pane -->
+    <string name="products_pane_empty">No products on this shelf yet. Tap + to add one.</string>
+    <string name="products_pane_mandatory_label">Mandatory</string>
+    <string name="products_pane_decrease_cd">Decrease %s quantity</string>
+    <string name="products_pane_increase_cd">Increase %s quantity</string>
+    <string name="products_pane_move_cd">Move %s</string>
+    <string name="products_pane_move_button">Move</string>
+    <string name="products_pane_move_dialog_title">Move to…</string>
+    <string name="products_pane_no_shelves_to_move">No other shelves available.</string>
+
+    <!-- Search -->
+    <string name="search_back_button">← Storage</string>
+    <string name="search_field_label">Search products</string>
+    <string name="search_no_results">No matches.</string>
+    <string name="search_result_qty">Qty: %s</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_language_section">Language</string>
+    <string name="settings_theme_section">Theme</string>
+    <string name="settings_join_section">Join household</string>
+    <string name="settings_join_success">Joined successfully!</string>
+    <string name="settings_join_field">Join code</string>
+    <string name="settings_join_button">Join</string>
+    <string name="settings_scan_qr_button">Scan QR code to join</string>
+    <string name="settings_scan_prompt">Scan household QR code</string>
+    <string name="settings_households_section">Households</string>
+    <string name="settings_my_households_button">My households</string>
+    <string name="settings_account_section">Account</string>
+    <string name="settings_sign_out_button">Sign out</string>
+    <string name="settings_sign_out_dialog_title">Sign out?</string>
+    <string name="settings_sign_out_dialog_text">You\'ll need to log in again.</string>
+
+    <!-- Theme -->
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+
+    <!-- Storage overview -->
+    <string name="storage_overview_empty">No storage locations yet. Tap + to add a fridge, freezer or pantry.</string>
+    <string name="storage_overview_search_cd">Search products</string>
+    <string name="storage_overview_open_cd">Open %s</string>
+
+    <!-- Add storage sheet -->
+    <string name="add_storage_sheet_title">Add storage</string>
+    <string name="add_storage_type_label">Type</string>
+    <string name="add_storage_name_field">Name</string>
+
+    <!-- Drawer -->
+    <string name="drawer_all_storage">All storage</string>
+    <string name="drawer_dashboard">Dashboard</string>
+    <string name="drawer_search">Search</string>
+    <string name="drawer_households">Households</string>
+    <string name="drawer_missing_items">Missing items</string>
+    <string name="drawer_missing_items_count">Missing items · %d</string>
+    <string name="drawer_settings">Settings</string>
+
+    <!-- Invite -->
+    <string name="invite_title">Invite to household</string>
+    <string name="invite_join_code_label">Join code</string>
+    <string name="invite_qr_cd">Invite QR code</string>
+    <string name="invite_copy_link">Copy link</string>
+    <string name="invite_copied">Copied!</string>
 </resources>

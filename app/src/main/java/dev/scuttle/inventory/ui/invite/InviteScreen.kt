@@ -24,11 +24,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
+import dev.scuttle.inventory.R
 import dev.scuttle.inventory.ui.theme.SpaceMono
 import kotlinx.coroutines.delay
 
@@ -61,10 +63,10 @@ fun InviteScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         TextButton(onClick = onBack) {
-            Text("← Storage")
+            Text(stringResource(R.string.search_back_button))
         }
 
-        Text(text = "Invite to household")
+        Text(text = stringResource(R.string.invite_title))
 
         if (state.loading) {
             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
@@ -75,14 +77,14 @@ fun InviteScreen(
         }
 
         if (state.code.isNotEmpty()) {
-            Text(text = "Join code")
+            Text(text = stringResource(R.string.invite_join_code_label))
             Text(text = state.code, fontFamily = SpaceMono)
 
             val qr = remember(state.link) { qrBitmap(state.link) }
             if (qr != null) {
                 Image(
                     bitmap = qr.asImageBitmap(),
-                    contentDescription = "Invite QR code",
+                    contentDescription = stringResource(R.string.invite_qr_cd),
                     modifier = Modifier.size(220.dp),
                 )
             }
@@ -94,7 +96,7 @@ fun InviteScreen(
                 },
                 enabled = state.link.isNotEmpty(),
             ) {
-                Text(if (copied) "Copied!" else "Copy link")
+                Text(if (copied) stringResource(R.string.invite_copied) else stringResource(R.string.invite_copy_link))
             }
         }
     }

@@ -29,8 +29,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import dev.scuttle.inventory.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,17 +51,17 @@ fun MissingItemsScreen(
         topBar = {
             TopAppBar(
                 windowInsets = statusBarInsets,
-                title = { Text("Missing Items") },
+                title = { Text(stringResource(R.string.missing_items_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 actions = {
                     if (state.items.isNotEmpty()) {
                         Icon(
                             imageVector = Icons.Default.Warning,
-                            contentDescription = "Some mandatory items are missing",
+                            contentDescription = stringResource(R.string.missing_items_warning_cd),
                             tint = MaterialTheme.colorScheme.error,
                             modifier = Modifier.padding(end = 16.dp),
                         )
@@ -83,7 +85,7 @@ fun MissingItemsScreen(
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Text("No missing items")
+                    Text(stringResource(R.string.missing_items_empty))
                 }
             } else {
                 LazyColumn(

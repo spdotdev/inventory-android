@@ -35,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
@@ -43,6 +44,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.ui.platform.LocalContext
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
+import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.settings.AppLanguage
 import dev.scuttle.inventory.ui.theme.ThemeMode
 
@@ -64,6 +66,8 @@ fun SettingsScreen(
     var confirmSignOut by remember { mutableStateOf(false) }
     val keyboardController = LocalSoftwareKeyboardController.current
 
+    val scanPrompt = stringResource(R.string.settings_scan_prompt)
+
     val scanLauncher = rememberLauncherForActivityResult(ScanContract()) { result ->
         result.contents?.let { joinViewModel.onCodeChange(it) }
     }
@@ -75,10 +79,10 @@ fun SettingsScreen(
         topBar = {
             TopAppBar(
                 windowInsets = statusBarInsets,
-                title = { Text("Settings") },
+                title = { Text(stringResource(R.string.settings_title)) },
                 navigationIcon = {
                     IconButton(onClick = onOpenDrawer) {
-                        Icon(Icons.Default.Menu, contentDescription = "Open menu")
+                        Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.action_open_menu))
                     }
                 },
             )
@@ -93,7 +97,7 @@ fun SettingsScreen(
                 .padding(horizontal = 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text(text = "Language", style = MaterialTheme.typography.titleMedium)
+            Text(text = stringResource(R.string.settings_language_section), style = MaterialTheme.typography.titleMedium)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 AppLanguage.entries.forEach { option ->
                     FilterChip(
@@ -107,23 +111,31 @@ fun SettingsScreen(
                 }
             }
 
-            Text(text = "Theme", style = MaterialTheme.typography.titleMedium)
+            Text(text = stringResource(R.string.settings_theme_section), style = MaterialTheme.typography.titleMedium)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 ThemeMode.entries.forEach { option ->
                     FilterChip(
                         selected = mode == option,
                         onClick = { themeViewModel.setMode(option) },
-                        label = { Text(option.label()) },
+                        label = {
+                            Text(
+                                when (option) {
+                                    ThemeMode.SYSTEM -> stringResource(R.string.theme_system)
+                                    ThemeMode.LIGHT -> stringResource(R.string.theme_light)
+                                    ThemeMode.DARK -> stringResource(R.string.theme_dark)
+                                }
+                            )
+                        },
                     )
                 }
             }
 
-            Text(text = "Join household", style = MaterialTheme.typography.titleMedium)
+            Text(text = stringResource(R.string.settings_join_section), style = MaterialTheme.typography.titleMedium)
             joinState.error?.let {
                 Text(text = it, color = MaterialTheme.colorScheme.error)
             }
             if (joinState.success) {
-                Text(text = "Joined successfully!", color = MaterialTheme.colorScheme.primary)
+                Text(text = stringResource(R.string.settings_join_success), color = MaterialTheme.colorScheme.primary)
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -132,7 +144,7 @@ fun SettingsScreen(
                 OutlinedTextField(
                     value = joinState.code,
                     onValueChange = joinViewModel::onCodeChange,
-                    label = { Text("Join code") },
+                    label = { Text(stringResource(R.string.settings_join_field)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(
                         capitalization = KeyboardCapitalization.Characters,
@@ -149,14 +161,14 @@ fun SettingsScreen(
                     onClick = { keyboardController?.hide(); joinViewModel.join() },
                     enabled = !joinState.loading && joinState.code.isNotBlank(),
                 ) {
-                    Text("Join")
+                    Text(stringResource(R.string.settings_join_button))
                 }
             }
             Button(
                 onClick = {
                     scanLauncher.launch(
                         ScanOptions().apply {
-                            setPrompt("Scan household QR code")
+                            setPrompt(scanPrompt)
                             setBeepEnabled(false)
                             setOrientationLocked(false)
                         }
@@ -164,23 +176,23 @@ fun SettingsScreen(
                 },
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text("Scan QR code to join")
+                Text(stringResource(R.string.settings_scan_qr_button))
             }
 
-            Text(text = "Households", style = MaterialTheme.typography.titleMedium)
+            Text(text = stringResource(R.string.settings_households_section), style = MaterialTheme.typography.titleMedium)
             Button(
                 onClick = onOpenHouseholds,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text("My households")
+                Text(stringResource(R.string.settings_my_households_button))
             }
 
-            Text(text = "Account", style = MaterialTheme.typography.titleMedium)
+            Text(text = stringResource(R.string.settings_account_section), style = MaterialTheme.typography.titleMedium)
             Button(
                 onClick = { confirmSignOut = true },
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text("Sign out")
+                Text(stringResource(R.string.settings_sign_out_button))
             }
         }
     }
@@ -188,22 +200,16 @@ fun SettingsScreen(
     if (confirmSignOut) {
         AlertDialog(
             onDismissRequest = { confirmSignOut = false },
-            title = { Text("Sign out?") },
-            text = { Text("You'll need to log in again.") },
+            title = { Text(stringResource(R.string.settings_sign_out_dialog_title)) },
+            text = { Text(stringResource(R.string.settings_sign_out_dialog_text)) },
             confirmButton = {
                 TextButton(onClick = onSignOut) {
-                    Text("Sign out", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.settings_sign_out_button), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { confirmSignOut = false }) { Text("Cancel") }
+                TextButton(onClick = { confirmSignOut = false }) { Text(stringResource(R.string.action_cancel)) }
             },
         )
     }
-}
-
-private fun ThemeMode.label(): String = when (this) {
-    ThemeMode.SYSTEM -> "System"
-    ThemeMode.LIGHT -> "Light"
-    ThemeMode.DARK -> "Dark"
 }
