@@ -11,16 +11,20 @@ private val DarkColors = darkColorScheme(
     onPrimary = FrostOnAccent,
     background = FrostDarkBackground,
     surface = FrostDarkSurface,
+    surfaceVariant = FrostDarkSurfaceVariant,
     onSurface = FrostDarkOnSurface,
+    onSurfaceVariant = FrostDarkOnSurfaceVariant,
     onBackground = FrostDarkOnSurface,
 )
 
 private val LightColors = lightColorScheme(
-    primary = FrostAccent,
-    onPrimary = FrostOnAccent,
+    primary = FrostLightPrimary,
+    onPrimary = FrostLightOnPrimary,
     background = FrostLightBackground,
     surface = FrostLightSurface,
+    surfaceVariant = FrostLightSurfaceVariant,
     onSurface = FrostLightOnSurface,
+    onSurfaceVariant = FrostLightOnSurfaceVariant,
     onBackground = FrostLightOnSurface,
 )
 
