@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.scuttle.inventory.data.HierarchyStore
 import dev.scuttle.inventory.data.LocationStats
+import dev.scuttle.inventory.data.ShelfEntry
 import dev.scuttle.inventory.data.settings.FavoritesStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,6 +25,7 @@ data class DashboardUiState(
     val locationStats: List<LocationStats> = emptyList(),
     val favoriteLocationIds: Set<Long> = emptySet(),
     val favoriteShelfIds: Set<Long> = emptySet(),
+    val favoriteShelves: List<ShelfEntry> = emptyList(),
     val error: String? = null,
 )
 
@@ -48,6 +50,7 @@ class DashboardViewModel @Inject constructor(
             locationStats = s.locationStats,
             favoriteLocationIds = favLocs,
             favoriteShelfIds = favShelves,
+            favoriteShelves = s.allShelves.filter { it.shelf.id in favShelves },
             error = s.error,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DashboardUiState())

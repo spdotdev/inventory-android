@@ -221,6 +221,28 @@ fun DashboardScreen(
                     }
             }
 
+            // Favorite shelves
+            if (state.favoriteShelves.isNotEmpty()) {
+                Text(stringResource(R.string.dashboard_favorite_shelves), style = MaterialTheme.typography.titleMedium)
+                state.favoriteShelves.forEach { entry ->
+                    Card(
+                        onClick = { onOpenLocation(entry.householdId, entry.shelf.location_id) },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .padding(16.dp)
+                                .fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(entry.shelf.name, style = MaterialTheme.typography.bodyLarge)
+                            Icon(Icons.Default.Star, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        }
+                    }
+                }
+            }
+
             Spacer(Modifier.height(24.dp))
         }
         } // end PullToRefreshBox

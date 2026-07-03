@@ -1,6 +1,7 @@
 package dev.scuttle.inventory.data
 
 import dev.scuttle.inventory.data.dto.LocationDto
+import dev.scuttle.inventory.data.dto.ShelfDto
 import dev.scuttle.inventory.data.household.HouseholdRepository
 import dev.scuttle.inventory.data.location.LocationRepository
 import dev.scuttle.inventory.data.product.ProductRepository
@@ -29,6 +30,11 @@ data class LocationStats(
     val productCount: Int,
 )
 
+data class ShelfEntry(
+    val householdId: Long,
+    val shelf: ShelfDto,
+)
+
 data class MissingItem(
     val productName: String,
     val shelfName: String,
@@ -48,6 +54,7 @@ data class HierarchyState(
     val mandatoryWarnings: Int = 0,
     val locationStats: List<LocationStats> = emptyList(),
     val locationWarnings: Map<Long, Boolean> = emptyMap(),
+    val allShelves: List<ShelfEntry> = emptyList(),
 )
 
 @Singleton
@@ -69,6 +76,7 @@ class HierarchyStore @Inject constructor(
         val entries = mutableListOf<HouseholdWithLocations>()
         val locationStats = mutableListOf<LocationStats>()
         val missingItems = mutableListOf<MissingItem>()
+        val allShelves = mutableListOf<ShelfEntry>()
         for (hh in households) {
             val locations = locationRepository.getCached(hh.id) ?: emptyList()
             for (location in locations) {
@@ -76,6 +84,7 @@ class HierarchyStore @Inject constructor(
                 val shelves = shelfRepository.getCached(hh.id, location.id) ?: emptyList()
                 totalShelves += shelves.size
                 for (shelf in shelves) {
+                    allShelves += ShelfEntry(hh.id, shelf)
                     val products = productRepository.getCached(hh.id, shelf.id) ?: emptyList()
                     totalProducts += products.size; count += products.size
                     for (p in products) {
@@ -95,6 +104,7 @@ class HierarchyStore @Inject constructor(
                 entries = entries, missingItems = missingItems, missingItemCount = mandatoryWarnings,
                 totalShelves = totalShelves, totalProducts = totalProducts,
                 mandatoryWarnings = mandatoryWarnings, locationStats = locationStats,
+                allShelves = allShelves,
             )
         }
     }
@@ -130,6 +140,7 @@ class HierarchyStore @Inject constructor(
         val entries = mutableListOf<HouseholdWithLocations>()
         val locationStats = mutableListOf<LocationStats>()
         val missingItems = mutableListOf<MissingItem>()
+        val allShelves = mutableListOf<ShelfEntry>()
 
         for (hh in households) {
             val locations = locationRepository.list(hh.id)
@@ -138,6 +149,7 @@ class HierarchyStore @Inject constructor(
                 val shelves = shelfRepository.list(hh.id, location.id)
                 totalShelves += shelves.size
                 for (shelf in shelves) {
+                    allShelves += ShelfEntry(hh.id, shelf)
                     val products = productRepository.list(hh.id, shelf.id)
                     totalProducts += products.size
                     locationProductCount += products.size
@@ -171,6 +183,7 @@ class HierarchyStore @Inject constructor(
             totalProducts = totalProducts,
             mandatoryWarnings = mandatoryWarnings,
             locationStats = locationStats,
+            allShelves = allShelves,
         )
     }
 

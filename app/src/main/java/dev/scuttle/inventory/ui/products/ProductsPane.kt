@@ -216,6 +216,14 @@ fun ProductsPane(
             }
         }
 
+        if (state.products.isNotEmpty()) {
+            Text(
+                text = stringResource(R.string.products_pane_swipe_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+            )
+        }
+
         Spacer(Modifier.height(80.dp))
     }
 

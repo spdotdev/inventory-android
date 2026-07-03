@@ -26,6 +26,7 @@
     <string name="dashboard_tap_to_restock">Tap to see what needs restocking</string>
     <string name="dashboard_products_by_location">Products by location</string>
     <string name="dashboard_favorite_locations">Favorite locations</string>
+    <string name="dashboard_favorite_shelves">Favorite shelves</string>
 
     <!-- Global actions -->
     <string name="action_open_menu">Open menu</string>
@@ -98,6 +99,7 @@
 
     <!-- Products pane -->
     <string name="products_pane_empty">No products on this shelf yet. Tap + to add one.</string>
+    <string name="products_pane_swipe_hint">← Swipe left on a product to delete</string>
     <string name="products_pane_mandatory_label">Mandatory</string>
     <string name="products_pane_decrease_cd">Decrease %s quantity</string>
     <string name="products_pane_increase_cd">Increase %s quantity</string>
