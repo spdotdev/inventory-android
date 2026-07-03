@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 import javax.inject.Inject
 
 enum class AuthMode { LOGIN, REGISTER }
@@ -60,7 +61,7 @@ class AuthViewModel @Inject constructor(
             _state.update { state ->
                 result.fold(
                     onSuccess = { state.copy(googleLoading = false, authenticated = true) },
-                    onFailure = { error -> state.copy(googleLoading = false, error = error.message ?: "Google sign-in failed.") },
+                    onFailure = { error -> state.copy(googleLoading = false, error = error.toGoogleAuthErrorMessage()) },
                 )
             }
         }
@@ -73,10 +74,30 @@ class AuthViewModel @Inject constructor(
             _state.update { state ->
                 result.fold(
                     onSuccess = { state.copy(googleLoading = false, authenticated = true) },
-                    onFailure = { error -> state.copy(googleLoading = false, error = error.message ?: "Google sign-in failed.") },
+                    onFailure = { error -> state.copy(googleLoading = false, error = error.toGoogleAuthErrorMessage()) },
                 )
             }
         }
+    }
+
+    private fun Throwable.toAuthErrorMessage(mode: AuthMode): String = when {
+        this is HttpException -> when (code()) {
+            401 -> "Incorrect email or password."
+            409 -> "An account with this email already exists."
+            422 -> "Please check your details and try again."
+            in 500..599 -> "Server error. Please try again later."
+            else -> "Authentication failed (${code()})."
+        }
+        else -> message ?: "Authentication failed."
+    }
+
+    private fun Throwable.toGoogleAuthErrorMessage(): String = when {
+        this is HttpException -> when (code()) {
+            401 -> "Google sign-in failed. Please try again."
+            in 500..599 -> "Server error. Please try again later."
+            else -> "Google sign-in failed (${code()})."
+        }
+        else -> message ?: "Google sign-in failed."
     }
 
     fun submit() {
@@ -92,7 +113,7 @@ class AuthViewModel @Inject constructor(
             _state.update { state ->
                 result.fold(
                     onSuccess = { state.copy(loading = false, authenticated = true) },
-                    onFailure = { error -> state.copy(loading = false, error = error.message ?: "Authentication failed.") },
+                    onFailure = { error -> state.copy(loading = false, error = error.toAuthErrorMessage(current.mode)) },
                 )
             }
         }

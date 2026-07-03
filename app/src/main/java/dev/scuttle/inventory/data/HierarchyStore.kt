@@ -100,7 +100,7 @@ class HierarchyStore @Inject constructor(
     }
 
     fun refresh() {
-        if (activeJob?.isActive == true) return
+        activeJob?.cancel()
         _state.update { it.copy(loading = true, error = null) }
         loadFromCache()
         activeJob = scope.launch {

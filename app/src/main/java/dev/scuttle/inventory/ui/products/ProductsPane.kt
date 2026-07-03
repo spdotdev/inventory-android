@@ -36,6 +36,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -71,10 +72,14 @@ fun ProductsPane(
         }
     }
 
-    // Compute and report mandatory warning
+    // Only report warning when it actually changes — avoids HierarchyStore state thrashing
+    var lastWarning by rememberSaveable { mutableStateOf<Boolean?>(null) }
     LaunchedEffect(state.products) {
         val hasWarning = state.products.any { it.is_mandatory == true && it.quantity == 0 }
-        onWarningChange(hasWarning)
+        if (hasWarning != lastWarning) {
+            lastWarning = hasWarning
+            onWarningChange(hasWarning)
+        }
     }
 
     Column(
