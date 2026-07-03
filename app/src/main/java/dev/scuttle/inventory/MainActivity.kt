@@ -30,6 +30,7 @@ import dev.scuttle.inventory.ui.app.AppDrawer
 import dev.scuttle.inventory.ui.app.DrawerViewModel
 import dev.scuttle.inventory.ui.auth.AuthScreen
 import dev.scuttle.inventory.ui.auth.AuthViewModel
+import dev.scuttle.inventory.ui.auth.ForgotPasswordScreen
 import dev.scuttle.inventory.ui.dashboard.DashboardScreen
 import dev.scuttle.inventory.ui.home.AllStoragesScreen
 import dev.scuttle.inventory.ui.households.HouseholdsScreen
@@ -78,6 +79,7 @@ class MainActivity : ComponentActivity() {
 
 private object Routes {
     const val AUTH = "auth"
+    const val FORGOT_PASSWORD = "forgot-password"
     const val HOME = "home"
     const val DASHBOARD = "dashboard"
     const val HOUSEHOLDS = "households"
@@ -169,7 +171,14 @@ private fun InventoryNavHost(
     ) {
         NavHost(navController = navController, startDestination = Routes.AUTH) {
             composable(Routes.AUTH) {
-                AuthScreen(viewModel = authViewModel)
+                AuthScreen(
+                    viewModel = authViewModel,
+                    onForgotPassword = { navController.navigate(Routes.FORGOT_PASSWORD) },
+                )
+            }
+
+            composable(Routes.FORGOT_PASSWORD) {
+                ForgotPasswordScreen(onBack = { navController.popBackStack() })
             }
 
             composable(Routes.HOME) {

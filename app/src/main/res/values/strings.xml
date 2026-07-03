@@ -11,6 +11,7 @@
     <string name="auth_continue_with_google">Continue with Google</string>
     <string name="auth_toggle_to_register">New here? Create an account</string>
     <string name="auth_toggle_to_login">Have an account? Sign in</string>
+    <string name="auth_forgot_password">Forgot your password?</string>
 
     <!-- Dashboard -->
     <string name="dashboard_title">Dashboard</string>

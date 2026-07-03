@@ -33,3 +33,8 @@ data class AuthResponse(
     val user: UserDto,
     val token: String,
 )
+
+@Serializable
+data class ForgotPasswordRequest(
+    val email: String,
+)

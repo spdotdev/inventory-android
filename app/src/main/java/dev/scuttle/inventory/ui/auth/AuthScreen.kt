@@ -44,6 +44,7 @@ import dev.scuttle.inventory.R
 
 @Composable
 fun AuthScreen(
+    onForgotPassword: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: AuthViewModel = hiltViewModel(),
 ) {
@@ -179,6 +180,12 @@ fun AuthScreen(
 
         TextButton(onClick = viewModel::toggleMode, modifier = Modifier.fillMaxWidth()) {
             Text(text = if (isRegister) stringResource(R.string.auth_toggle_to_login) else stringResource(R.string.auth_toggle_to_register))
+        }
+
+        if (!isRegister) {
+            TextButton(onClick = onForgotPassword, modifier = Modifier.fillMaxWidth()) {
+                Text(text = stringResource(R.string.auth_forgot_password))
+            }
         }
     }
 }

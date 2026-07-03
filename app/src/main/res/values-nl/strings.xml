@@ -11,6 +11,7 @@
     <string name="auth_continue_with_google">Doorgaan met Google</string>
     <string name="auth_toggle_to_register">Nieuw hier? Maak een account aan</string>
     <string name="auth_toggle_to_login">Al een account? Inloggen</string>
+    <string name="auth_forgot_password">Wachtwoord vergeten?</string>
 
     <!-- Dashboard -->
     <string name="dashboard_title">Dashboard</string>

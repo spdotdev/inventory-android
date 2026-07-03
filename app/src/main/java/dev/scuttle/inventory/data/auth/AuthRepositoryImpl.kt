@@ -1,6 +1,7 @@
 package dev.scuttle.inventory.data.auth
 
 import dev.scuttle.inventory.data.api.AuthApi
+import dev.scuttle.inventory.data.dto.ForgotPasswordRequest
 import dev.scuttle.inventory.data.dto.GoogleRequest
 import dev.scuttle.inventory.data.dto.LoginRequest
 import dev.scuttle.inventory.data.dto.RegisterRequest
@@ -31,6 +32,10 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun loginWithGoogleCode(code: String, codeVerifier: String, redirectUri: String) =
         throw UnsupportedOperationException()
+
+    override suspend fun forgotPassword(email: String) {
+        api.forgotPassword(ForgotPasswordRequest(email = email))
+    }
 
     override suspend fun logout() {
         runCatching { api.logout() }

@@ -11,5 +11,7 @@ interface AuthRepository {
 
     suspend fun loginWithGoogleCode(code: String, codeVerifier: String, redirectUri: String)
 
+    suspend fun forgotPassword(email: String)
+
     suspend fun logout()
 }
