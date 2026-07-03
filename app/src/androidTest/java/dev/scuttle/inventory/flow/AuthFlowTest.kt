@@ -6,12 +6,10 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.filterToOne
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
-import androidx.compose.ui.test.printToLog
 import androidx.compose.ui.test.waitUntilAtLeastOneExists
 import dagger.hilt.android.testing.HiltAndroidTest
 import dev.scuttle.inventory.FlowTestBase
@@ -40,7 +38,7 @@ class AuthFlowTest : FlowTestBase() {
     }
 
     @Test
-    fun wrong_credentials_show_error() {
+    fun wrong_credentials_show_user_friendly_error() {
         mockServer.enqueue("""{"message":"Invalid credentials."}""", code = 401)
 
         composeRule.apply {
@@ -49,9 +47,43 @@ class AuthFlowTest : FlowTestBase() {
             onAllNodesWithText("Sign in").filterToOne(hasClickAction()).performClick()
 
             Thread.sleep(3_000)
-            onRoot().printToLog("AuthFlowTest")
-            waitUntilAtLeastOneExists(hasText("401", substring = true), timeoutMillis = 5_000)
-            onAllNodesWithText("401", substring = true)[0].assertIsDisplayed()
+            waitUntilAtLeastOneExists(hasText("Incorrect email or password."), timeoutMillis = 5_000)
+            onNodeWithText("Incorrect email or password.").assertIsDisplayed()
+        }
+    }
+
+    @Test
+    fun server_error_shows_friendly_message() {
+        mockServer.enqueue("""{"message":"Internal Server Error"}""", code = 500)
+
+        composeRule.apply {
+            onNodeWithText("Email").performTextInput("test@example.com")
+            onNodeWithText("Password").performTextInput("password123")
+            onAllNodesWithText("Sign in").filterToOne(hasClickAction()).performClick()
+
+            Thread.sleep(3_000)
+            waitUntilAtLeastOneExists(hasText("Server error. Please try again later."), timeoutMillis = 5_000)
+            onNodeWithText("Server error. Please try again later.").assertIsDisplayed()
+        }
+    }
+
+    @Test
+    fun duplicate_email_on_register_shows_friendly_message() {
+        composeRule.apply {
+            // Switch to register mode
+            onNodeWithText("New here? Create an account").performClick()
+            waitUntilAtLeastOneExists(hasText("Name"), timeoutMillis = 3_000)
+
+            mockServer.enqueue("""{"message":"Email already taken."}""", code = 409)
+
+            onNodeWithText("Name").performTextInput("Test User")
+            onNodeWithText("Email").performTextInput("existing@example.com")
+            onNodeWithText("Password").performTextInput("password123")
+            onAllNodesWithText("Create account").filterToOne(hasClickAction()).performClick()
+
+            Thread.sleep(3_000)
+            waitUntilAtLeastOneExists(hasText("An account with this email already exists."), timeoutMillis = 5_000)
+            onNodeWithText("An account with this email already exists.").assertIsDisplayed()
         }
     }
 }
