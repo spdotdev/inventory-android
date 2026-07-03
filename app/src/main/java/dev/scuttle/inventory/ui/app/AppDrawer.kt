@@ -128,6 +128,14 @@ fun AppDrawer(
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState()),
             ) {
+                if (state.entries.isEmpty() && !state.loading) {
+                    Text(
+                        text = stringResource(R.string.drawer_no_households_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 28.dp, vertical = 12.dp),
+                    )
+                }
                 state.entries.forEach { entry ->
                     Text(
                         text = entry.name,

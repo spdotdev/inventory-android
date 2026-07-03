@@ -6,6 +6,7 @@ import dev.scuttle.inventory.data.HierarchyStore
 import dev.scuttle.inventory.data.dto.LocationDto
 import dev.scuttle.inventory.data.location.LocationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -95,6 +96,7 @@ class StorageOverviewViewModel @Inject constructor(
         viewModelScope.launch {
             _state.update { it.copy(loading = true, error = null) }
             val result = runCatching { block() }
+            result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
             _state.update { state ->
                 result.fold(
                     onSuccess = { state.copy(loading = false) },

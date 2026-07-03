@@ -104,7 +104,7 @@
     <string name="products_pane_move_cd">Move %s</string>
     <string name="products_pane_move_button">Move</string>
     <string name="products_pane_move_dialog_title">Move to…</string>
-    <string name="products_pane_no_shelves_to_move">No other shelves available.</string>
+    <string name="products_pane_no_shelves_to_move">No other shelves available. Add more shelves to this location first.</string>
 
     <!-- Search -->
     <string name="search_back_button">← Storage</string>
@@ -152,6 +152,7 @@
     <string name="drawer_missing_items">Missing items</string>
     <string name="drawer_missing_items_count">Missing items · %d</string>
     <string name="drawer_settings">Settings</string>
+    <string name="drawer_no_households_hint">No households yet. Go to Settings to create one or join with an invite code.</string>
 
     <!-- Invite -->
     <string name="invite_title">Invite to storage</string>
