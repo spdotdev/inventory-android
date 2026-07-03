@@ -10,6 +10,9 @@ data class SearchResultDto(
     val location: String,
     val shelf: String,
     val path: String,
+    val household_id: Long? = null,
+    val location_id: Long? = null,
+    val shelf_id: Long? = null,
 )
 
 @Serializable

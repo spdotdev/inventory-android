@@ -1,1 +1,1 @@
-{"data":[{"id":1000,"name":"Milk","quantity":2,"location":"Fridge","shelf":"Top shelf"}]}
+{"data":[{"id":1000,"name":"Milk","quantity":2,"location":"Fridge","shelf":"Top shelf","path":"Fridge › Top shelf","household_id":1,"location_id":10,"shelf_id":100}]}

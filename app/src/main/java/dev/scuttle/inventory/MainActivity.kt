@@ -231,7 +231,13 @@ private fun InventoryNavHost(
                 arguments = listOf(navArgument("householdId") { type = NavType.LongType }),
             ) { entry ->
                 val householdId = entry.arguments?.getLong("householdId") ?: return@composable
-                SearchScreen(householdId = householdId, onBack = { navController.popBackStack() })
+                SearchScreen(
+                    householdId = householdId,
+                    onBack = { navController.popBackStack() },
+                    onOpenProduct = { hhId, shelfId, productId ->
+                        navController.navigate(Routes.productDetail(hhId, shelfId, productId))
+                    },
+                )
             }
 
             composable(

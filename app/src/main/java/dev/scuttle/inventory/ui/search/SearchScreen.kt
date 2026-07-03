@@ -36,6 +36,7 @@ fun SearchScreen(
     householdId: Long,
     modifier: Modifier = Modifier,
     onBack: () -> Unit = {},
+    onOpenProduct: (householdId: Long, shelfId: Long, productId: Long) -> Unit = { _, _, _ -> },
     viewModel: SearchViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -90,12 +91,30 @@ fun SearchScreen(
         }
 
         state.results.forEach { result ->
-            Card(modifier = Modifier.fillMaxWidth()) {
+            val hhId = result.household_id
+            val shelfId = result.shelf_id
+            val content: @Composable () -> Unit = {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text(text = result.name)
-                    Text(text = result.path)
-                    Text(text = stringResource(R.string.search_result_qty, result.quantity))
+                    Text(text = result.name, style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        text = result.path.ifBlank { "${result.location} › ${result.shelf}" },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text = stringResource(R.string.search_result_qty, result.quantity),
+                        style = MaterialTheme.typography.bodySmall,
+                    )
                 }
+            }
+            if (hhId != null && shelfId != null) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = { onOpenProduct(hhId, shelfId, result.id) },
+                    content = { content() },
+                )
+            } else {
+                Card(modifier = Modifier.fillMaxWidth(), content = { content() })
             }
         }
     }

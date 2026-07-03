@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
@@ -176,14 +175,14 @@ fun DashboardScreen(
                                         modifier = Modifier
                                             .weight(1f)
                                             .height(12.dp)
-                                            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(4.dp)),
+                                            .background(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.shapes.extraSmall),
                                     ) {
                                         val fraction = if (maxVal > 0) stat.productCount.toFloat() / maxVal else 0f
                                         Box(
                                             modifier = Modifier
                                                 .fillMaxWidth(fraction.coerceIn(0f, 1f))
                                                 .height(12.dp)
-                                                .background(primaryColor, RoundedCornerShape(4.dp)),
+                                                .background(primaryColor, MaterialTheme.shapes.extraSmall),
                                         )
                                     }
                                     Text(
