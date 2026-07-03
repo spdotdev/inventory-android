@@ -20,6 +20,43 @@ import org.junit.Test
 class SearchFlowTest : FlowTestBase() {
 
     @Test
+    fun clicking_search_result_navigates_to_product_detail() {
+        mockServer.enqueue(fixture("auth_login.json"))
+        mockServer.route("/households", fixture("households_one.json"))
+        mockServer.route("/households/1/locations", fixture("locations_one.json"))
+        mockServer.route("/households/1/locations/10/shelves", fixture("shelves_one.json"))
+        mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
+
+        composeRule.apply {
+            onNodeWithText("Email").performTextInput("test@example.com")
+            onNodeWithText("Password").performTextInput("password123")
+            onAllNodesWithText("Sign in").filterToOne(hasClickAction()).performClick()
+
+            Thread.sleep(3_000)
+            waitUntilAtLeastOneExists(hasText("Dashboard"), timeoutMillis = 5_000)
+
+            onNodeWithContentDescription("Open menu").performClick()
+            waitUntilAtLeastOneExists(hasText("Search").and(hasClickAction()), timeoutMillis = 5_000)
+
+            mockServer.route("/households/1/search", fixture("search_results.json"))
+            onAllNodesWithText("Search").filterToOne(hasClickAction()).performClick()
+            waitForIdle()
+
+            onNodeWithText("Search products").performTextInput("Milk")
+            Thread.sleep(1_500)
+            waitForIdle()
+
+            waitUntilAtLeastOneExists(hasText("Fridge › Top shelf"), timeoutMillis = 5_000)
+            // Click the result card — navigates to product detail
+            onNodeWithText("Fridge › Top shelf").performClick()
+
+            // Product detail screen shows the product name in the top bar
+            waitUntilAtLeastOneExists(hasText("Milk"), timeoutMillis = 5_000)
+            onNodeWithText("Milk").assertIsDisplayed()
+        }
+    }
+
+    @Test
     fun search_returns_matching_product() {
         mockServer.enqueue(fixture("auth_login.json"))
         mockServer.route("/households", fixture("households_one.json"))
