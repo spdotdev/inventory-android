@@ -39,12 +39,12 @@ class DashboardRefreshFlowTest : FlowTestBase() {
             waitUntilAtLeastOneExists(hasText("Locations"), timeoutMillis = 5_000)
 
             // Tap Refresh → DashboardViewModel.refresh() fetches updated hierarchy
-            // locations_two.json gives 2 locations (Fridge id=10, Pantry id=11);
-            // Pantry shelves return 500 (no mock) but runCatching handles it gracefully → 0 shelves/products for Pantry
+            // locations_two.json gives 2 locations (Fridge id=10, Pantry id=11)
             mockServer.route("/households", fixture("households_one.json"))
             mockServer.route("/households/1/locations", fixture("locations_two.json"))
             mockServer.route("/households/1/locations/10/shelves", fixture("shelves_one.json"))
             mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
+            mockServer.route("/households/1/locations/11/shelves", fixture("shelves_empty.json"))
             onNodeWithContentDescription("Refresh").performClick()
 
             Thread.sleep(2_000)
