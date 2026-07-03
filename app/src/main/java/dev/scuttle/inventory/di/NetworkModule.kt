@@ -3,6 +3,7 @@ package dev.scuttle.inventory.di
 import dev.scuttle.inventory.BuildConfig
 import dev.scuttle.inventory.data.api.AuthApi
 import dev.scuttle.inventory.data.api.AuthInterceptor
+import dev.scuttle.inventory.data.api.ErrorApi
 import dev.scuttle.inventory.data.api.HouseholdApi
 import dev.scuttle.inventory.data.api.InviteApi
 import dev.scuttle.inventory.data.api.LocationApi
@@ -85,4 +86,8 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideInviteApi(retrofit: Retrofit): InviteApi = retrofit.create(InviteApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideErrorApi(retrofit: Retrofit): ErrorApi = retrofit.create(ErrorApi::class.java)
 }

@@ -3,6 +3,7 @@ package dev.scuttle.inventory.ui.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.scuttle.inventory.data.auth.AuthRepository
+import dev.scuttle.inventory.data.error.ErrorLogger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,6 +29,7 @@ data class AuthUiState(
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val repository: AuthRepository,
+    private val errorLogger: ErrorLogger,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AuthUiState(authenticated = repository.isAuthenticated()))
@@ -61,7 +63,10 @@ class AuthViewModel @Inject constructor(
             _state.update { state ->
                 result.fold(
                     onSuccess = { state.copy(googleLoading = false, authenticated = true) },
-                    onFailure = { error -> state.copy(googleLoading = false, error = error.toGoogleAuthErrorMessage()) },
+                    onFailure = { error ->
+                        errorLogger.log("google_sign_in", error.message)
+                        state.copy(googleLoading = false, error = error.toGoogleAuthErrorMessage())
+                    },
                 )
             }
         }
@@ -113,7 +118,10 @@ class AuthViewModel @Inject constructor(
             _state.update { state ->
                 result.fold(
                     onSuccess = { state.copy(loading = false, authenticated = true) },
-                    onFailure = { error -> state.copy(loading = false, error = error.toAuthErrorMessage(current.mode)) },
+                    onFailure = { error ->
+                        errorLogger.log("auth_${current.mode.name.lowercase()}", error.message)
+                        state.copy(loading = false, error = error.toAuthErrorMessage(current.mode))
+                    },
                 )
             }
         }
