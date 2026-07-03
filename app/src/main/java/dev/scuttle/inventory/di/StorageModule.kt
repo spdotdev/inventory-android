@@ -1,5 +1,6 @@
 package dev.scuttle.inventory.di
 
+import android.content.ContentResolver
 import android.content.Context
 import dev.scuttle.inventory.data.settings.DefaultHouseholdStore
 import dev.scuttle.inventory.data.settings.FavoritesStore
@@ -46,4 +47,9 @@ object StorageModule {
     @Singleton
     fun provideLanguageStore(@ApplicationContext context: Context): LanguageStore =
         SharedPrefsLanguageStore(context)
+
+    @Provides
+    @Singleton
+    fun provideContentResolver(@ApplicationContext context: Context): ContentResolver =
+        context.contentResolver
 }

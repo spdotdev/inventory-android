@@ -1,5 +1,6 @@
 package dev.scuttle.inventory.data.product
 
+import android.net.Uri
 import dev.scuttle.inventory.data.dto.ProductDto
 
 interface ProductRepository {
@@ -11,5 +12,6 @@ interface ProductRepository {
     suspend fun add(householdId: Long, shelfId: Long, productId: Long, amount: Int): ProductDto
     suspend fun remove(householdId: Long, shelfId: Long, productId: Long, amount: Int): ProductDto
     suspend fun move(householdId: Long, shelfId: Long, productId: Long, targetShelfId: Long): ProductDto
+    suspend fun uploadImage(householdId: Long, shelfId: Long, productId: Long, imageUri: Uri, mimeType: String): ProductDto
     suspend fun delete(householdId: Long, shelfId: Long, productId: Long)
 }

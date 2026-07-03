@@ -32,6 +32,7 @@ fun InventoryTheme(
     MaterialTheme(
         colorScheme = if (darkTheme) DarkColors else LightColors,
         typography = InventoryTypography,
+        shapes = FrostShapes,
         content = content,
     )
 }

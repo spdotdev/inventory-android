@@ -1,8 +1,10 @@
 package dev.scuttle.inventory.ui.products
 
+import android.content.Context
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.FileProvider
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -46,6 +48,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
@@ -53,6 +56,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import dev.scuttle.inventory.R
+import java.io.File
+import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,6 +68,7 @@ fun ProductDetailScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val product = state.product
+    val context = LocalContext.current
 
     // Navigate back when saved or deleted
     LaunchedEffect(state.saved) { if (state.saved) onBack() }
@@ -86,10 +92,24 @@ fun ProductDetailScreen(
         }
     }
 
+    // Camera URI stored in a ref so it's available when TakePicture returns
+    var cameraImageUri by remember { mutableStateOf<Uri?>(null) }
+
     val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let { localImageUri = it }
+        if (uri != null) {
+            localImageUri = uri
+            val mime = context.contentResolver.getType(uri) ?: "image/jpeg"
+            viewModel.uploadImage(uri, mime)
+        }
     }
-    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()) { _ -> }
+    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+        if (success) {
+            cameraImageUri?.let { uri ->
+                localImageUri = uri
+                viewModel.uploadImage(uri, "image/jpeg")
+            }
+        }
+    }
 
     val statusBarInsets = WindowInsets.statusBars
     Scaffold(
@@ -171,7 +191,14 @@ fun ProductDetailScreen(
                 Button(onClick = { galleryLauncher.launch("image/*") }, modifier = Modifier.weight(1f)) {
                     Text(stringResource(R.string.product_detail_gallery))
                 }
-                Button(onClick = { cameraLauncher.launch(null) }, modifier = Modifier.weight(1f)) {
+                Button(
+                    onClick = {
+                        val uri = createCameraUri(context)
+                        cameraImageUri = uri
+                        cameraLauncher.launch(uri)
+                    },
+                    modifier = Modifier.weight(1f),
+                ) {
                     Text(stringResource(R.string.product_detail_camera))
                 }
             }
@@ -249,4 +276,10 @@ fun ProductDetailScreen(
             },
         )
     }
+}
+
+private fun createCameraUri(context: Context): Uri {
+    val dir = File(context.cacheDir, "camera").apply { mkdirs() }
+    val file = File(dir, "${UUID.randomUUID()}.jpg")
+    return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
 }

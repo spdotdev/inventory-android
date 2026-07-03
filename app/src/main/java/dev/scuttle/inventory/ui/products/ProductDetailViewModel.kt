@@ -1,5 +1,6 @@
 package dev.scuttle.inventory.ui.products
 
+import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -58,6 +59,19 @@ class ProductDetailViewModel @Inject constructor(
                 _state.update { it.copy(loading = false, product = updated, saved = true) }
             }.onFailure { e ->
                 _state.update { it.copy(loading = false, error = e.message ?: "Failed to save.") }
+            }
+        }
+    }
+
+    fun uploadImage(imageUri: Uri, mimeType: String) {
+        viewModelScope.launch {
+            _state.update { it.copy(loading = true, error = null) }
+            runCatching {
+                repository.uploadImage(householdId, shelfId, productId, imageUri, mimeType)
+            }.onSuccess { updated ->
+                _state.update { it.copy(loading = false, product = updated) }
+            }.onFailure { e ->
+                _state.update { it.copy(loading = false, error = e.message ?: "Failed to upload image.") }
             }
         }
     }
