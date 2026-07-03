@@ -34,7 +34,7 @@ class DrawerViewModel @Inject constructor(
             missingItemCount = s.missingItemCount,
             loading = s.loading,
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DrawerUiState())
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, DrawerUiState())
 
     private var deleteJob: Job? = null
 

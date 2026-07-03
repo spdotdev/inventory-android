@@ -24,7 +24,7 @@ class MissingItemsViewModel @Inject constructor(
 
     val state: StateFlow<MissingItemsUiState> = store.state.map { s ->
         MissingItemsUiState(loading = s.loading, items = s.missingItems, error = s.error)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MissingItemsUiState())
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, MissingItemsUiState())
 
     fun refresh() = store.refresh()
 }

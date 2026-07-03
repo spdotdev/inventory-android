@@ -1,9 +1,13 @@
 package dev.scuttle.inventory
 
+import android.net.Uri
+import dev.scuttle.inventory.data.HierarchyStore
+import dev.scuttle.inventory.data.dto.HouseholdDto
 import dev.scuttle.inventory.data.dto.LocationDto
 import dev.scuttle.inventory.data.dto.ProductDto
 import dev.scuttle.inventory.data.dto.SearchResultDto
 import dev.scuttle.inventory.data.dto.ShelfDto
+import dev.scuttle.inventory.data.household.HouseholdRepository
 import dev.scuttle.inventory.data.location.LocationRepository
 import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.data.search.SearchRepository
@@ -61,6 +65,9 @@ class ProductsViewModelTest {
             items.removeIf { it.id == productId }
         }
 
+        override suspend fun uploadImage(householdId: Long, shelfId: Long, productId: Long, imageUri: Uri, mimeType: String): ProductDto =
+            items.first { it.id == productId }
+
         private fun adjust(productId: Long, delta: Int): ProductDto {
             val index = items.indexOfFirst { it.id == productId }
             val updated = items[index].let { it.copy(quantity = (it.quantity + delta).coerceAtLeast(0)) }
@@ -89,12 +96,23 @@ class ProductsViewModelTest {
         override suspend fun search(householdId: Long, query: String): List<SearchResultDto> = emptyList()
     }
 
+    private class FakeHouseholdRepository : HouseholdRepository {
+        override fun getCached() = emptyList<HouseholdDto>()
+        override suspend fun list() = emptyList<HouseholdDto>()
+        override suspend fun create(name: String) = HouseholdDto(1, name, "")
+        override suspend fun join(code: String) = HouseholdDto(1, "", code)
+        override suspend fun leave(householdId: Long) {}
+    }
+
     private fun viewModel(
         products: FakeProductRepository = FakeProductRepository(),
         locations: FakeLocationRepository = FakeLocationRepository(emptyList()),
         shelves: FakeShelfRepository = FakeShelfRepository(emptyMap()),
         search: FakeSearchRepository = FakeSearchRepository(),
-    ) = ProductsViewModel(products, locations, shelves, search)
+    ): ProductsViewModel {
+        val store = HierarchyStore(FakeHouseholdRepository(), locations, shelves, products)
+        return ProductsViewModel(products, locations, shelves, search, store)
+    }
 
     @Test
     fun load_populates_products() = runTest {

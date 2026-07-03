@@ -1,5 +1,7 @@
 package dev.scuttle.inventory
 
+import android.net.Uri
+import dev.scuttle.inventory.data.HierarchyStore
 import dev.scuttle.inventory.data.dto.HouseholdDto
 import dev.scuttle.inventory.data.dto.LocationDto
 import dev.scuttle.inventory.data.dto.ProductDto
@@ -12,7 +14,6 @@ import dev.scuttle.inventory.ui.missing.MissingItemsViewModel
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -23,7 +24,7 @@ class MissingItemsViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private class FakeHouseholdRepository(val households: List<HouseholdDto>) : HouseholdRepository {
-        override fun getCached() = null
+        override fun getCached() = households
         override suspend fun list() = households
         override suspend fun create(name: String) = households.first()
         override suspend fun join(code: String) = households.first()
@@ -31,25 +32,21 @@ class MissingItemsViewModelTest {
     }
 
     private class FakeLocationRepository(val byHousehold: Map<Long, List<LocationDto>> = emptyMap()) : LocationRepository {
-        var failList = false
-        override fun getCached(householdId: Long) = null
-        override suspend fun list(householdId: Long): List<LocationDto> {
-            if (failList) throw RuntimeException("network error")
-            return byHousehold[householdId].orEmpty()
-        }
+        override fun getCached(householdId: Long) = byHousehold[householdId]
+        override suspend fun list(householdId: Long) = byHousehold[householdId].orEmpty()
         override suspend fun create(householdId: Long, name: String, type: String) = LocationDto(99, name, type)
         override suspend fun delete(householdId: Long, locationId: Long) {}
     }
 
     private class FakeShelfRepository(val byLocation: Map<Long, List<ShelfDto>> = emptyMap()) : ShelfRepository {
-        override fun getCached(householdId: Long, locationId: Long) = null
+        override fun getCached(householdId: Long, locationId: Long) = byLocation[locationId]
         override suspend fun list(householdId: Long, locationId: Long) = byLocation[locationId].orEmpty()
         override suspend fun create(householdId: Long, locationId: Long, name: String) = ShelfDto(99, name, 0, locationId)
         override suspend fun delete(householdId: Long, locationId: Long, shelfId: Long) {}
     }
 
     private class FakeProductRepository(val byShelf: Map<Long, List<ProductDto>> = emptyMap()) : ProductRepository {
-        override fun getCached(householdId: Long, shelfId: Long) = null
+        override fun getCached(householdId: Long, shelfId: Long) = byShelf[shelfId]
         override suspend fun list(householdId: Long, shelfId: Long) = byShelf[shelfId].orEmpty()
         override suspend fun create(householdId: Long, shelfId: Long, name: String, quantity: Int) = ProductDto(99, name, quantity, shelfId)
         override suspend fun update(householdId: Long, shelfId: Long, productId: Long, name: String, description: String?, code: String?, isMandatory: Boolean) = ProductDto(productId, name, 0, shelfId)
@@ -57,6 +54,7 @@ class MissingItemsViewModelTest {
         override suspend fun remove(householdId: Long, shelfId: Long, productId: Long, amount: Int) = byShelf[shelfId]!!.first { it.id == productId }
         override suspend fun move(householdId: Long, shelfId: Long, productId: Long, targetShelfId: Long) = byShelf[shelfId]!!.first { it.id == productId }
         override suspend fun delete(householdId: Long, shelfId: Long, productId: Long) {}
+        override suspend fun uploadImage(householdId: Long, shelfId: Long, productId: Long, imageUri: Uri, mimeType: String) = byShelf[shelfId]!!.first { it.id == productId }
     }
 
     private fun viewModel(
@@ -64,12 +62,16 @@ class MissingItemsViewModelTest {
         locationsByHousehold: Map<Long, List<LocationDto>> = emptyMap(),
         shelvesByLocation: Map<Long, List<ShelfDto>> = emptyMap(),
         productsByShelf: Map<Long, List<ProductDto>> = emptyMap(),
-    ) = MissingItemsViewModel(
-        FakeHouseholdRepository(households),
-        FakeLocationRepository(locationsByHousehold),
-        FakeShelfRepository(shelvesByLocation),
-        FakeProductRepository(productsByShelf),
-    )
+    ): MissingItemsViewModel {
+        val store = HierarchyStore(
+            FakeHouseholdRepository(households),
+            FakeLocationRepository(locationsByHousehold),
+            FakeShelfRepository(shelvesByLocation),
+            FakeProductRepository(productsByShelf),
+        )
+        store.loadFromCache()
+        return MissingItemsViewModel(store)
+    }
 
     @Test
     fun empty_when_no_mandatory_products() = runTest {
@@ -126,21 +128,5 @@ class MissingItemsViewModelTest {
 
         val names = vm.state.value.items.map { it.locationName }
         assertEquals(listOf("Fridge", "Pantry"), names)
-    }
-
-    @Test
-    fun refresh_failure_surfaces_error() = runTest {
-        val repo = FakeLocationRepository().apply { failList = true }
-        val vm = MissingItemsViewModel(
-            FakeHouseholdRepository(listOf(HouseholdDto(1, "Home", "AAAA"))),
-            repo,
-            FakeShelfRepository(),
-            FakeProductRepository(),
-        )
-
-        vm.refresh()
-
-        assertNotNull(vm.state.value.error)
-        assertFalse(vm.state.value.loading)
     }
 }

@@ -1,5 +1,7 @@
 package dev.scuttle.inventory
 
+import android.net.Uri
+import dev.scuttle.inventory.data.HierarchyStore
 import dev.scuttle.inventory.data.dto.HouseholdDto
 import dev.scuttle.inventory.data.dto.LocationDto
 import dev.scuttle.inventory.data.dto.ProductDto
@@ -23,7 +25,7 @@ class DashboardViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private class FakeHouseholdRepository(val households: List<HouseholdDto>) : HouseholdRepository {
-        override fun getCached() = null
+        override fun getCached() = households
         override suspend fun list() = households
         override suspend fun create(name: String) = households.first()
         override suspend fun join(code: String) = households.first()
@@ -31,21 +33,21 @@ class DashboardViewModelTest {
     }
 
     private class FakeLocationRepository(val byHousehold: Map<Long, List<LocationDto>>) : LocationRepository {
-        override fun getCached(householdId: Long) = null
+        override fun getCached(householdId: Long) = byHousehold[householdId]
         override suspend fun list(householdId: Long) = byHousehold[householdId].orEmpty()
         override suspend fun create(householdId: Long, name: String, type: String) = LocationDto(99, name, type)
         override suspend fun delete(householdId: Long, locationId: Long) {}
     }
 
     private class FakeShelfRepository(val byLocation: Map<Long, List<ShelfDto>>) : ShelfRepository {
-        override fun getCached(householdId: Long, locationId: Long) = null
+        override fun getCached(householdId: Long, locationId: Long) = byLocation[locationId]
         override suspend fun list(householdId: Long, locationId: Long) = byLocation[locationId].orEmpty()
         override suspend fun create(householdId: Long, locationId: Long, name: String) = ShelfDto(99, name, 0, locationId)
         override suspend fun delete(householdId: Long, locationId: Long, shelfId: Long) {}
     }
 
     private class FakeProductRepository(val byShelf: Map<Long, List<ProductDto>>) : ProductRepository {
-        override fun getCached(householdId: Long, shelfId: Long) = null
+        override fun getCached(householdId: Long, shelfId: Long) = byShelf[shelfId]
         override suspend fun list(householdId: Long, shelfId: Long) = byShelf[shelfId].orEmpty()
         override suspend fun create(householdId: Long, shelfId: Long, name: String, quantity: Int) = ProductDto(99, name, quantity, shelfId)
         override suspend fun update(householdId: Long, shelfId: Long, productId: Long, name: String, description: String?, code: String?, isMandatory: Boolean) = ProductDto(productId, name, 0, shelfId)
@@ -53,6 +55,7 @@ class DashboardViewModelTest {
         override suspend fun remove(householdId: Long, shelfId: Long, productId: Long, amount: Int) = byShelf[shelfId]!!.first { it.id == productId }
         override suspend fun move(householdId: Long, shelfId: Long, productId: Long, targetShelfId: Long) = byShelf[shelfId]!!.first { it.id == productId }
         override suspend fun delete(householdId: Long, shelfId: Long, productId: Long) {}
+        override suspend fun uploadImage(householdId: Long, shelfId: Long, productId: Long, imageUri: Uri, mimeType: String) = byShelf[shelfId]!!.first { it.id == productId }
     }
 
     private class FakeFavoritesStore : FavoritesStore {
@@ -72,13 +75,16 @@ class DashboardViewModelTest {
         shelvesByLocation: Map<Long, List<ShelfDto>> = emptyMap(),
         productsByShelf: Map<Long, List<ProductDto>> = emptyMap(),
         favoritesStore: FakeFavoritesStore = FakeFavoritesStore(),
-    ) = DashboardViewModel(
-        FakeHouseholdRepository(households),
-        FakeLocationRepository(locationsByHousehold),
-        FakeShelfRepository(shelvesByLocation),
-        FakeProductRepository(productsByShelf),
-        favoritesStore,
-    )
+    ): DashboardViewModel {
+        val store = HierarchyStore(
+            FakeHouseholdRepository(households),
+            FakeLocationRepository(locationsByHousehold),
+            FakeShelfRepository(shelvesByLocation),
+            FakeProductRepository(productsByShelf),
+        )
+        store.loadFromCache()
+        return DashboardViewModel(store, favoritesStore)
+    }
 
     @Test
     fun aggregates_totals_correctly() = runTest {
@@ -149,5 +155,21 @@ class DashboardViewModelTest {
 
         vm.toggleFavoriteShelf(100L)
         assertFalse(100L in vm.state.value.favoriteShelfIds)
+    }
+
+    @Test
+    fun favorite_shelves_list_reflects_favorited_ids() = runTest {
+        val vm = viewModel(
+            locationsByHousehold = mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge"))),
+            shelvesByLocation = mapOf(10L to listOf(
+                ShelfDto(100, "Top", 0, 10),
+                ShelfDto(101, "Bottom", 1, 10),
+            )),
+        )
+
+        vm.toggleFavoriteShelf(100L)
+
+        assertEquals(1, vm.state.value.favoriteShelves.size)
+        assertEquals("Top", vm.state.value.favoriteShelves.first().shelf.name)
     }
 }

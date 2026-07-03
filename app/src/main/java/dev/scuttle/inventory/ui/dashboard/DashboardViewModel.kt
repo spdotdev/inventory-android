@@ -53,7 +53,7 @@ class DashboardViewModel @Inject constructor(
             favoriteShelves = s.allShelves.filter { it.shelf.id in favShelves },
             error = s.error,
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DashboardUiState())
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, DashboardUiState())
 
     fun refresh() = store.refresh()
 

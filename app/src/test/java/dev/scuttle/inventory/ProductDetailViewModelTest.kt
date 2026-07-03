@@ -1,5 +1,6 @@
 package dev.scuttle.inventory
 
+import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import dev.scuttle.inventory.data.dto.ProductDto
 import dev.scuttle.inventory.data.product.ProductRepository
@@ -65,6 +66,9 @@ class ProductDetailViewModelTest {
             if (failDelete) throw RuntimeException("delete failed")
             items.removeIf { it.id == productId }
         }
+
+        override suspend fun uploadImage(householdId: Long, shelfId: Long, productId: Long, imageUri: Uri, mimeType: String): ProductDto =
+            items.first { it.id == productId }
     }
 
     @Test
