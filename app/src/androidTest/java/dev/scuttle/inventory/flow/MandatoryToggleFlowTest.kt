@@ -53,8 +53,6 @@ class MandatoryToggleFlowTest : FlowTestBase() {
             waitUntilAtLeastOneExists(hasTestTag("product-1000"), timeoutMillis = 5_000)
             onNodeWithTag("product-1000").performClick()
 
-            // Mandatory toggle starts OFF (is_mandatory: false in products_one.json) — toggle it ON
-            // Use isToggleable() to target the Switch node, not the sibling Text label
             waitUntilAtLeastOneExists(hasText("Mandatory on this shelf"), timeoutMillis = 10_000)
             onAllNodes(isToggleable())[0].assertIsOff()
             onAllNodes(isToggleable())[0].performClick()

@@ -28,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import android.util.Log
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -64,6 +65,7 @@ fun AuthScreen(
                 viewModel.onGoogleError("No ID token returned from Google.")
             }
         } catch (e: ApiException) {
+            Log.e("GoogleSignIn", "ApiException statusCode=${e.statusCode} message=${e.message}", e)
             if (e.statusCode != 12501) { // 12501 = user cancelled
                 viewModel.onGoogleError("Google sign-in failed (${e.statusCode}).")
             } else {
