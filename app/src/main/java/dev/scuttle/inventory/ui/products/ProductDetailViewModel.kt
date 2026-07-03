@@ -28,16 +28,32 @@ class ProductDetailViewModel @Inject constructor(
     private val repository: ProductRepository,
 ) : ViewModel() {
 
-    private val householdId: Long = checkNotNull(savedStateHandle["householdId"])
-    private val shelfId: Long = checkNotNull(savedStateHandle["shelfId"])
-    private val productId: Long = checkNotNull(savedStateHandle["productId"])
+    private val householdId: Long = savedStateHandle["householdId"] ?: run {
+        android.util.Log.e("ProductDetailVM", "householdId missing from nav args")
+        -1L
+    }
+    private val shelfId: Long = savedStateHandle["shelfId"] ?: run {
+        android.util.Log.e("ProductDetailVM", "shelfId missing from nav args")
+        -1L
+    }
+    private val productId: Long = savedStateHandle["productId"] ?: run {
+        android.util.Log.e("ProductDetailVM", "productId missing from nav args")
+        -1L
+    }
 
     private val _state = MutableStateFlow(ProductDetailUiState())
     val state: StateFlow<ProductDetailUiState> = _state.asStateFlow()
 
-    init { load() }
+    init {
+        if (householdId == -1L || shelfId == -1L || productId == -1L) {
+            _state.update { it.copy(error = "Invalid navigation — missing product ID.") }
+        } else {
+            load()
+        }
+    }
 
     fun load() {
+        if (householdId == -1L || shelfId == -1L || productId == -1L) return
         viewModelScope.launch {
             _state.update { it.copy(loading = true, error = null) }
             runCatching { repository.list(householdId, shelfId) }
