@@ -48,8 +48,9 @@ class SearchFlowTest : FlowTestBase() {
             Thread.sleep(1_500)
             waitForIdle()
 
-            waitUntilAtLeastOneExists(hasText("Milk"), timeoutMillis = 5_000)
-            onNodeWithText("Milk").assertIsDisplayed()
+            // Assert on the path text — unique to search result card; "Milk" also appears in backstack
+            waitUntilAtLeastOneExists(hasText("Fridge › Top shelf"), timeoutMillis = 5_000)
+            onNodeWithText("Fridge › Top shelf").assertIsDisplayed()
         }
     }
 }
