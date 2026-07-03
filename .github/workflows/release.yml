@@ -32,22 +32,22 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build APK + AAB
-        run: ./gradlew assembleRelease bundleRelease
+      - name: Restore debug keystore
+        env:
+          DEBUG_KEYSTORE_B64: ${{ secrets.DEBUG_KEYSTORE_B64 }}
+        run: |
+          mkdir -p ~/.android
+          echo "$DEBUG_KEYSTORE_B64" | base64 -d > ~/.android/inventory-debug.jks
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: inventory-android-${{ github.ref_name }}
-          path: |
-            **/build/outputs/apk/release/*.apk
-            **/build/outputs/bundle/release/*.aab
-          if-no-files-found: error
+      - name: Build APK
+        run: ./gradlew assembleDebug
+        env:
+          DEBUG_KEYSTORE_PASSWORD: ${{ secrets.DEBUG_KEYSTORE_PASSWORD }}
+          DEBUG_KEY_ALIAS: ${{ secrets.DEBUG_KEY_ALIAS }}
+          DEBUG_KEY_PASSWORD: ${{ secrets.DEBUG_KEY_PASSWORD }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            **/build/outputs/apk/release/*.apk
-            **/build/outputs/bundle/release/*.aab
+          files: app/build/outputs/apk/debug/app-debug.apk
           generate_release_notes: true
