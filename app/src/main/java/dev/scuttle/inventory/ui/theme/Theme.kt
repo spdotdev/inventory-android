@@ -5,6 +5,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.graphics.Color
 
 private val DarkColors = darkColorScheme(
     primary = FrostAccent,
@@ -28,15 +30,30 @@ private val LightColors = lightColorScheme(
     onBackground = FrostLightOnSurface,
 )
 
+// frost-app.html `.card`: tinted-primary wash on dark, near-white translucent wash on light.
+private val DarkFrostCardColors = FrostCardColors(
+    container = FrostAccent.copy(alpha = 0.10f),
+    border = FrostAccent.copy(alpha = 0.20f),
+)
+
+private val LightFrostCardColors = FrostCardColors(
+    container = Color.White.copy(alpha = 0.72f),
+    border = FrostLightPrimary.copy(alpha = 0.18f),
+)
+
 @Composable
 fun InventoryTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
-    MaterialTheme(
-        colorScheme = if (darkTheme) DarkColors else LightColors,
-        typography = InventoryTypography,
-        shapes = FrostShapes,
-        content = content,
-    )
+    CompositionLocalProvider(
+        LocalFrostCardColors provides if (darkTheme) DarkFrostCardColors else LightFrostCardColors,
+    ) {
+        MaterialTheme(
+            colorScheme = if (darkTheme) DarkColors else LightColors,
+            typography = InventoryTypography,
+            shapes = FrostShapes,
+            content = content,
+        )
+    }
 }

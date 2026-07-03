@@ -44,6 +44,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
+import dev.scuttle.inventory.ui.theme.FrostCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -152,7 +153,7 @@ fun DashboardScreen(
             // Bar chart
             if (state.locationStats.isNotEmpty()) {
                 Text(stringResource(R.string.dashboard_products_by_location), style = MaterialTheme.typography.titleMedium)
-                Card(modifier = Modifier.fillMaxWidth()) {
+                FrostCard(modifier = Modifier.fillMaxWidth()) {
                     Column(
                         modifier = Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -203,7 +204,7 @@ fun DashboardScreen(
                 state.locationStats
                     .filter { it.location.id in state.favoriteLocationIds }
                     .forEach { stat ->
-                        Card(
+                        FrostCard(
                             onClick = { onOpenLocation(stat.householdId, stat.location.id) },
                             modifier = Modifier.fillMaxWidth(),
                         ) {
@@ -225,7 +226,7 @@ fun DashboardScreen(
             if (state.favoriteShelves.isNotEmpty()) {
                 Text(stringResource(R.string.dashboard_favorite_shelves), style = MaterialTheme.typography.titleMedium)
                 state.favoriteShelves.forEach { entry ->
-                    Card(
+                    FrostCard(
                         onClick = { onOpenLocation(entry.householdId, entry.shelf.location_id) },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
@@ -251,7 +252,7 @@ fun DashboardScreen(
 
 @Composable
 private fun StatCard(label: String, value: String, modifier: Modifier = Modifier) {
-    Card(modifier = modifier) {
+    FrostCard(modifier = modifier) {
         Column(
             modifier = Modifier.padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,

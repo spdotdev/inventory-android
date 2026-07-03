@@ -10,7 +10,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Card
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -31,6 +30,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
+import dev.scuttle.inventory.ui.theme.FrostCard
 
 @Composable
 fun SearchScreen(
@@ -109,13 +109,13 @@ fun SearchScreen(
                 }
             }
             if (hhId != null && shelfId != null) {
-                Card(
+                FrostCard(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = { onOpenProduct(hhId, shelfId, result.id) },
                     content = { content() },
                 )
             } else {
-                Card(modifier = Modifier.fillMaxWidth(), content = { content() })
+                FrostCard(modifier = Modifier.fillMaxWidth(), content = { content() })
             }
         }
     }

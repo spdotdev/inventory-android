@@ -56,6 +56,7 @@ import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.dto.LocationDto
 import dev.scuttle.inventory.ui.app.DrawerViewModel
 import dev.scuttle.inventory.data.HouseholdWithLocations
+import dev.scuttle.inventory.ui.theme.FrostCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -165,14 +166,7 @@ fun AllStoragesScreen(
                                     }
                                 },
                             ) {
-                                Card(
-                                    onClick = { onOpenLocation(entry.id, location.id) },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = if (hasWarning)
-                                        CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f))
-                                    else
-                                        CardDefaults.cardColors(),
-                                ) {
+                                val rowContent: @Composable () -> Unit = {
                                     Row(
                                         modifier = Modifier
                                             .padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp)
@@ -205,6 +199,20 @@ fun AllStoragesScreen(
                                             )
                                         }
                                     }
+                                }
+                                if (hasWarning) {
+                                    Card(
+                                        onClick = { onOpenLocation(entry.id, location.id) },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f)),
+                                        content = { rowContent() },
+                                    )
+                                } else {
+                                    FrostCard(
+                                        onClick = { onOpenLocation(entry.id, location.id) },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        content = { rowContent() },
+                                    )
                                 }
                             }
                         }

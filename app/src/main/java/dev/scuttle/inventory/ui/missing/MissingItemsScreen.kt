@@ -1,6 +1,5 @@
 package dev.scuttle.inventory.ui.missing
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -14,7 +13,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.Card
+import dev.scuttle.inventory.ui.theme.FrostCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -94,10 +93,9 @@ fun MissingItemsScreen(
                 ) {
                     item { /* top spacing */ }
                     items(state.items) { item ->
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onOpenLocation(item.householdId, item.locationId) },
+                        FrostCard(
+                            onClick = { onOpenLocation(item.householdId, item.locationId) },
+                            modifier = Modifier.fillMaxWidth(),
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
                                 Text(

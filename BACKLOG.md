@@ -36,6 +36,17 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-07-04` — **Frosted-glass card treatment (Frost D-021, ralph-loop r17).** New
+  `FrostCard` composable (`ui/theme/FrostCard.kt`): translucent tinted container + hairline
+  border + 22dp corners, matching `docs/design/frost-app.html` `.card`/`.rcard`/`.fcard`
+  (dark: primary-tinted wash; light: near-white 72%-opacity wash). Colors provided theme-wide
+  via `LocalFrostCardColors`, set in `InventoryTheme`. Swapped the plain M3 `Card` for
+  `FrostCard` on every list/info card across Storage overview, Missing items, Products,
+  Search, Dashboard (stat cards, bar chart, favorites), Households, and All-storages;
+  semantically-colored warning cards (`errorContainer` tint for out-of-stock/mandatory items)
+  intentionally kept on plain `Card` so they still stand out from the Frost tint. Local Gradle
+  build isn't runnable in this environment (pre-existing, unrelated to this change — even
+  `./gradlew help` fails); relying on CI to confirm compile/test-green.
 - ✅ `2026-06-24` — **Frost fonts.** Bundled Plus Jakarta Sans (variable; weights pinned via
   `FontVariation`) + Space Mono TTFs from google/fonts into `res/font/`. `InventoryTypography`
   applies Jakarta across all M3 text styles; join codes render in Space Mono. No runtime font
