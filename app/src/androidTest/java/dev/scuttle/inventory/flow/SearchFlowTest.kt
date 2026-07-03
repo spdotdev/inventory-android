@@ -3,11 +3,13 @@
 package dev.scuttle.inventory.flow
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.filterToOne
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -40,9 +42,9 @@ class SearchFlowTest : FlowTestBase() {
 
             mockServer.route("/households/1/search", fixture("search_results.json"))
             onAllNodesWithText("Search").filterToOne(hasClickAction()).performClick()
-            waitForIdle()
+            waitUntilAtLeastOneExists(hasTestTag("search_field"), timeoutMillis = 5_000)
 
-            onNodeWithText("Search products").performTextInput("Milk")
+            onNodeWithTag("search_field").performTextInput("Milk")
             Thread.sleep(1_500)
             waitForIdle()
 
@@ -81,7 +83,7 @@ class SearchFlowTest : FlowTestBase() {
             waitForIdle()
 
             // Type query in the search field
-            onNodeWithText("Search products").performTextInput("Milk")
+            onNodeWithTag("search_field").performTextInput("Milk")
             Thread.sleep(1_500)
             waitForIdle()
 

@@ -4,12 +4,14 @@ package dev.scuttle.inventory.flow
 
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.filterToOne
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -48,14 +50,12 @@ class MandatoryToggleFlowTest : FlowTestBase() {
 
             // Tap Milk → ProductDetailScreen
             mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
-            waitUntilAtLeastOneExists(hasText("Milk"), timeoutMillis = 5_000)
-            onNodeWithText("Milk").performClick()
-            Thread.sleep(2_000)
-            waitForIdle()
+            waitUntilAtLeastOneExists(hasTestTag("product-1000"), timeoutMillis = 5_000)
+            onNodeWithTag("product-1000").performClick()
 
             // Mandatory toggle starts OFF (is_mandatory: false in products_one.json) — toggle it ON
             // Use isToggleable() to target the Switch node, not the sibling Text label
-            waitUntilAtLeastOneExists(hasText("Mandatory on this shelf"), timeoutMillis = 5_000)
+            waitUntilAtLeastOneExists(hasText("Mandatory on this shelf"), timeoutMillis = 10_000)
             onAllNodes(isToggleable())[0].assertIsOff()
             onAllNodes(isToggleable())[0].performClick()
             waitForIdle()

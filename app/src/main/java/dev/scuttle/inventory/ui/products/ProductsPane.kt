@@ -1,7 +1,6 @@
 package dev.scuttle.inventory.ui.products
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,6 +43,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -140,9 +140,8 @@ fun ProductsPane(
                 ) {
                     val isMandatoryWarning = product.is_mandatory == true && product.quantity == 0
                     Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onOpenProduct(product) },
+                        onClick = { onOpenProduct(product) },
+                        modifier = Modifier.fillMaxWidth().testTag("product-${product.id}"),
                     ) {
                         Row(
                             modifier = Modifier

@@ -3,10 +3,12 @@
 package dev.scuttle.inventory.flow
 
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.filterToOne
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performClick
@@ -73,11 +75,11 @@ class MissingItemsFlowTest : FlowTestBase() {
 
             // Register response for ProductDetailViewModel's list call, then tap "Milk"
             mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
-            onNodeWithText("Milk").performClick()
-            Thread.sleep(2_000)
-            waitForIdle()
+            waitUntilAtLeastOneExists(hasTestTag("product-1000"), timeoutMillis = 5_000)
+            onNodeWithTag("product-1000").performClick()
 
             // Product detail screen shows the product name and the mandatory toggle label
+            waitUntilAtLeastOneExists(hasText("Mandatory on this shelf"), timeoutMillis = 10_000)
             onAllNodesWithText("Milk")[0].assertIsDisplayed()
             onNodeWithText("Mandatory on this shelf").assertIsDisplayed()
         }

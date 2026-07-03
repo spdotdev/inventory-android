@@ -7,8 +7,10 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.filterToOne
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextClearance
@@ -48,13 +50,12 @@ class EditProductDetailFlowTest : FlowTestBase() {
 
             // Tap Milk → ProductDetailScreen
             mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
-            waitUntilAtLeastOneExists(hasText("Milk"), timeoutMillis = 5_000)
-            onNodeWithText("Milk").performClick()
-            Thread.sleep(2_000)
-            waitForIdle()
+            waitUntilAtLeastOneExists(hasTestTag("product-1000"), timeoutMillis = 5_000)
+            onNodeWithTag("product-1000").performClick()
 
             // Clear the editable name field and type new name, then save — PUT .../products/1000
             // [0] = Name field (first OutlinedTextField on screen)
+            waitUntilAtLeastOneExists(hasSetTextAction(), timeoutMillis = 8_000)
             mockServer.enqueue(fixture("product_renamed.json"))
             onAllNodes(hasSetTextAction())[0].performTextClearance()
             onAllNodes(hasSetTextAction())[0].performTextInput("Oat Milk")

@@ -3,11 +3,13 @@
 package dev.scuttle.inventory.flow
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.filterToOne
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -43,9 +45,9 @@ class SearchNoResultsFlowTest : FlowTestBase() {
             waitForIdle()
 
             // Type a query that returns no results
-            waitUntilAtLeastOneExists(hasText("Search products"), timeoutMillis = 5_000)
+            waitUntilAtLeastOneExists(hasTestTag("search_field"), timeoutMillis = 5_000)
             mockServer.route("/households/1/search", fixture("search_empty.json"))
-            onNodeWithText("Search products").performTextInput("Xyzzy")
+            onNodeWithTag("search_field").performTextInput("Xyzzy")
             Thread.sleep(2_000)
             waitForIdle()
 
