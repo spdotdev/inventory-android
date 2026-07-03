@@ -132,13 +132,13 @@ class HierarchyStore @Inject constructor(
         val missingItems = mutableListOf<MissingItem>()
 
         for (hh in households) {
-            val locations = runCatching { locationRepository.list(hh.id) }.getOrDefault(emptyList())
+            val locations = locationRepository.list(hh.id)
             for (location in locations) {
                 var locationProductCount = 0
-                val shelves = runCatching { shelfRepository.list(hh.id, location.id) }.getOrDefault(emptyList())
+                val shelves = shelfRepository.list(hh.id, location.id)
                 totalShelves += shelves.size
                 for (shelf in shelves) {
-                    val products = runCatching { productRepository.list(hh.id, shelf.id) }.getOrDefault(emptyList())
+                    val products = productRepository.list(hh.id, shelf.id)
                     totalProducts += products.size
                     locationProductCount += products.size
                     for (product in products) {

@@ -6,6 +6,7 @@ import dev.scuttle.inventory.data.HierarchyStore
 import dev.scuttle.inventory.data.HouseholdWithLocations
 import dev.scuttle.inventory.data.location.LocationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -35,10 +36,13 @@ class DrawerViewModel @Inject constructor(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DrawerUiState())
 
+    private var deleteJob: Job? = null
+
     fun refresh() = store.refresh()
 
     fun deleteLocation(householdId: Long, locationId: Long) {
-        viewModelScope.launch {
+        if (deleteJob?.isActive == true) return
+        deleteJob = viewModelScope.launch {
             runCatching { locationRepository.delete(householdId, locationId) }.onSuccess { store.refresh() }
         }
     }
