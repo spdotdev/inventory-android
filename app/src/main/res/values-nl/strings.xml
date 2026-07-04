@@ -170,6 +170,7 @@
     <string name="drawer_all_storage">Alle opslag</string>
     <string name="drawer_dashboard">Dashboard</string>
     <string name="drawer_search">Zoeken</string>
+    <string name="drawer_search_household_cd">Zoek in %1$s</string>
     <string name="drawer_households">Huishoudens</string>
     <string name="drawer_missing_items">Ontbrekende artikelen</string>
     <string name="drawer_missing_items_count">Ontbrekende artikelen · %d</string>

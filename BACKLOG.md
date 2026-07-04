@@ -45,6 +45,12 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-07-04` — **Drawer search reaches every household, not just the first** (wave-2 W23). `AppDrawer`
+  wired the single global "Search" entry to `entries.firstOrNull()?.id`, so a multi-household user could
+  only ever search their first household — silently. Search is legitimately household-scoped, so: keep the
+  global entry only when there's exactly one household; when there are several, render a per-household
+  search `IconButton` on each household row (content-described "Search <household>", EN + NL), so every
+  household is reachable and the scope is explicit. No new endpoints.
 - ✅ `2026-07-04` — **Invite QR generated off the composition thread** (wave-2 W22). `InviteScreen` built the
   512×512 QR with a ~262k-pixel `setPixel` loop inside `remember(link)` — on the composition thread, so the
   invite load visibly hitched. Moved it to `produceState(null, link){ withContext(Dispatchers.Default){ … } }`
