@@ -45,6 +45,13 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-07-04` — **Completed the Dutch translation** (gap analysis T12). `values-nl` was missing 3
+  keys (`dashboard_favorite_shelves`, `drawer_no_households_hint`, `products_pane_swipe_hint`), so those
+  strings fell back to English mid-UI on a Dutch device. Added all three (Favoriete planken / "Nog geen
+  huishoudens…" / "← Veeg een product naar links om te verwijderen"). Verified the locales are now in
+  exact lockstep — 140/140 keys, no locale-only keys, and matching `%`-format-arg counts on every key.
+  Android lint's `MissingTranslation` remains the standing guard against future drift. Local Gradle
+  unrunnable here; CI verifies.
 - ✅ `2026-07-04` — **Localized storage-type labels** (gap analysis T11). `location.type` labels and the
   add-sheet type chips rendered the raw server enum ("freezer"…), English-only even on a Dutch device.
   Added `storage_type_{freezer,fridge,pantry,other}` to `values/` and `values-nl/` (Vriezer/Koelkast/
