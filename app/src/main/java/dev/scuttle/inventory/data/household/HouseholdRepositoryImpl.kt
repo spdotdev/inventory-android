@@ -24,4 +24,8 @@ class HouseholdRepositoryImpl @Inject constructor(
         api.leave(householdId)
         cache = cache?.filter { it.id != householdId }
     }
+
+    override fun clear() {
+        cache = null
+    }
 }

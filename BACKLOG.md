@@ -45,6 +45,16 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-07-04` — **Logout/login no longer leaks the previous user's data** (wave-3 X1, HIGH). `logout()`
+  cleared only the bearer token, but every repository + `HierarchyStore` + the favorites/default-household
+  prefs are `@Singleton`, so an account switch on the same process rendered User A's households/locations/
+  products/missing-items/favorites to User B — `HierarchyStore.refresh()` → `loadFromCache()` repopulates
+  synchronously from the stale caches before the network returns. Added `clear()` to each repo cache
+  (default no-op on the interface so test fakes are unaffected), `HierarchyStore` (reset state + cancel the
+  in-flight job), and `FavoritesStore`; centralized in a `SessionCleaner` called on `logout()` **and** at
+  the start of every new sign-in (register/login/google) — the latter also covers the reactive-401 path,
+  where the interceptor clears the token but can't reach the singletons. In-memory/prefs only (no local DB).
+  Tests: `HierarchyStore.clear()` resets, `SessionCleaner.clear()` fans out to every cache/store.
 - ✅ `2026-07-04` — **Drawer search reaches every household, not just the first** (wave-2 W23). `AppDrawer`
   wired the single global "Search" entry to `entries.firstOrNull()?.id`, so a multi-household user could
   only ever search their first household — silently. Search is legitimately household-scoped, so: keep the

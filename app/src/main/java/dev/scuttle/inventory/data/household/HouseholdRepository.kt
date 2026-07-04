@@ -12,4 +12,7 @@ interface HouseholdRepository {
     suspend fun join(code: String): HouseholdDto
 
     suspend fun leave(householdId: Long)
+
+    /** Drop the in-memory cache so one account's data never bleeds into the next session. */
+    fun clear() {}
 }

@@ -136,6 +136,16 @@ class HierarchyStore @Inject constructor(
         }
     }
 
+    /**
+     * Reset to the empty state and drop any in-flight load. Called on session end
+     * (logout / new login) so one account's hierarchy never renders to the next —
+     * loadFromCache() would otherwise repopulate it from the singleton repo caches.
+     */
+    fun clear() {
+        activeJob?.cancel()
+        _state.value = HierarchyState()
+    }
+
     fun reportLocationWarning(locationId: Long, hasWarning: Boolean) {
         _state.update { state ->
             state.copy(locationWarnings = state.locationWarnings + (locationId to hasWarning))

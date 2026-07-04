@@ -25,4 +25,8 @@ class LocationRepositoryImpl @Inject constructor(
         api.delete(householdId, locationId)
         cache[householdId] = cache[householdId]?.filter { it.id != locationId } ?: emptyList()
     }
+
+    override fun clear() {
+        cache.clear()
+    }
 }

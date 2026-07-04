@@ -13,6 +13,10 @@ class SharedPrefsFavoritesStore(context: Context) : FavoritesStore {
     override fun isFavoriteShelf(id: Long): Boolean = id in getFavoriteShelves()
     override fun toggleFavoriteShelf(id: Long) = toggleInSet("shelves", id)
 
+    override fun clear() {
+        prefs.edit().clear().apply()
+    }
+
     private fun getLongSet(key: String): Set<Long> =
         prefs.getStringSet(key, emptySet())?.mapNotNull { it.toLongOrNull() }?.toSet() ?: emptySet()
 

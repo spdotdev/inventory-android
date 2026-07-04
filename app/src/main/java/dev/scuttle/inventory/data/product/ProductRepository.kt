@@ -14,4 +14,7 @@ interface ProductRepository {
     suspend fun move(householdId: Long, shelfId: Long, productId: Long, targetShelfId: Long): ProductDto
     suspend fun uploadImage(householdId: Long, shelfId: Long, productId: Long, imageUri: Uri, mimeType: String): ProductDto
     suspend fun delete(householdId: Long, shelfId: Long, productId: Long)
+
+    /** Drop the in-memory cache so one account's data never bleeds into the next session. */
+    fun clear() {}
 }

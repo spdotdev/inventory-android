@@ -16,6 +16,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import java.io.IOException
@@ -100,5 +101,26 @@ class HierarchyStoreTest {
         assertNotNull(failed.error)
         assertFalse(failed.loading)
         assertFalse(failed.refreshing)
+    }
+
+    @Test
+    fun clear_resets_to_the_empty_state() = runTest {
+        // X1: on session end the store must reset so one account's hierarchy never
+        // renders to the next (loadFromCache would otherwise repopulate it).
+        val store = HierarchyStore(
+            FakeHouseholdRepository(listOf(HouseholdDto(1, "Home", "AAAA"))),
+            FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge")))),
+            FakeShelfRepository(mapOf(10L to listOf(ShelfDto(100, "Top", 0, 10)))),
+            FakeProductRepository(mapOf(100L to listOf(ProductDto(1, "Milk", 0, 100, is_mandatory = true)))),
+        )
+        store.refresh(userInitiated = true)
+        assertEquals(1, store.state.first { !it.loading }.entries.size)
+
+        store.clear()
+
+        val cleared = store.state.value
+        assertTrue(cleared.entries.isEmpty())
+        assertEquals(0, cleared.missingItemCount)
+        assertNull(cleared.error)
     }
 }
