@@ -1,6 +1,7 @@
 package dev.scuttle.inventory.ui.theme
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -29,7 +30,7 @@ private val FrostCardShape = RoundedCornerShape(22.dp)
 fun FrostCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
-    content: @Composable () -> Unit,
+    content: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = LocalFrostCardColors.current
     val cardColors = CardDefaults.cardColors(containerColor = colors.container)
