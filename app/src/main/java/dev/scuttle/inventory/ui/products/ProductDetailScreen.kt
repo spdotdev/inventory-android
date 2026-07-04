@@ -142,7 +142,7 @@ fun ProductDetailScreen(
         },
     ) { padding ->
         PullToRefreshBox(
-            isRefreshing = state.loading,
+            isRefreshing = state.refreshing,
             onRefresh = viewModel::load,
             modifier = Modifier
                 .fillMaxSize()

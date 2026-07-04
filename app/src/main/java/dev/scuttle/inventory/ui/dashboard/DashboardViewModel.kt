@@ -17,6 +17,7 @@ import javax.inject.Inject
 
 data class DashboardUiState(
     val loading: Boolean = false,
+    val refreshing: Boolean = false,
     val hasNoHouseholds: Boolean = false,
     val totalLocations: Int = 0,
     val totalShelves: Int = 0,
@@ -42,6 +43,7 @@ class DashboardViewModel @Inject constructor(
     val state: StateFlow<DashboardUiState> = combine(store.state, _favState) { s, (favLocs, favShelves) ->
         DashboardUiState(
             loading = s.loading,
+            refreshing = s.refreshing,
             hasNoHouseholds = s.entries.isEmpty() && !s.loading,
             totalLocations = s.locationStats.size,
             totalShelves = s.totalShelves,
@@ -55,7 +57,7 @@ class DashboardViewModel @Inject constructor(
         )
     }.stateIn(viewModelScope, SharingStarted.Eagerly, DashboardUiState())
 
-    fun refresh() = store.refresh()
+    fun refresh() = store.refresh(userInitiated = true)
 
     fun toggleFavoriteLocation(id: Long) {
         favoritesStore.toggleFavoriteLocation(id)

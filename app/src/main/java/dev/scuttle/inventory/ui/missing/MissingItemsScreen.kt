@@ -67,7 +67,7 @@ fun MissingItemsScreen(
         },
     ) { padding ->
         PullToRefreshBox(
-            isRefreshing = state.loading,
+            isRefreshing = state.refreshing,
             onRefresh = viewModel::refresh,
             modifier = Modifier
                 .fillMaxSize()

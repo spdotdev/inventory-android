@@ -19,6 +19,9 @@ val STORAGE_TYPES = listOf("freezer", "fridge", "pantry", "other")
 
 data class StorageOverviewUiState(
     val loading: Boolean = false,
+    // Only a user-initiated refresh() flips this — create/delete use `loading` alone,
+    // so the pull-to-refresh spinner no longer fires on every mutation.
+    val refreshing: Boolean = false,
     val locations: List<LocationDto> = emptyList(),
     val newName: String = "",
     val newType: String = "freezer",
@@ -59,7 +62,7 @@ class StorageOverviewViewModel @Inject constructor(
 
     fun refresh() {
         val id = householdId ?: return
-        launchLoading {
+        launchLoading(refreshing = true) {
             val locations = repository.list(id)
             _state.update { it.copy(locations = locations) }
         }
@@ -93,15 +96,15 @@ class StorageOverviewViewModel @Inject constructor(
         }
     }
 
-    private fun launchLoading(block: suspend () -> Unit) {
+    private fun launchLoading(refreshing: Boolean = false, block: suspend () -> Unit) {
         viewModelScope.launch {
-            _state.update { it.copy(loading = true, error = null) }
+            _state.update { it.copy(loading = true, refreshing = refreshing, error = null) }
             val result = runCatching { block() }
             result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
             _state.update { state ->
                 result.fold(
-                    onSuccess = { state.copy(loading = false) },
-                    onFailure = { error -> state.copy(loading = false, error = error.toUserMessage("Something went wrong.")) },
+                    onSuccess = { state.copy(loading = false, refreshing = false) },
+                    onFailure = { error -> state.copy(loading = false, refreshing = false, error = error.toUserMessage("Something went wrong.")) },
                 )
             }
         }

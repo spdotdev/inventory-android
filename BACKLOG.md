@@ -45,6 +45,17 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-07-04` — **Pull-to-refresh spinner no longer fires on mutations** (gap analysis T9). Every
+  `PullToRefreshBox` bound `isRefreshing = state.loading`, but `loading` is also set by create/delete/
+  save/upload/+/- — so any mutation spun the pull indicator. Split a dedicated `refreshing` flag from
+  the generic `loading` across all seven refreshable screens: the shared `HierarchyStore.refresh` gained
+  a `userInitiated` param (pull/refresh-button pass true → `refreshing`; post-mutation reloads pass false
+  → silent), mapped through Drawer/Missing/Dashboard VMs; the `launchLoading` VMs (StorageOverview/
+  Shelves/Households) gained a `refreshing` param that only `refresh()` sets true; ProductDetail's
+  `load()` (its refresh target) sets it, its save/upload/delete don't. Screens now bind
+  `isRefreshing = state.refreshing`; `loading` still drives the inline progress + empty-state gating.
+  Added a gated-repository unit test asserting create() sets `loading` but not `refreshing`, while
+  refresh() sets both. Self-reviewed (local Gradle unrunnable here); CI verifies compile + tests.
 - ✅ `2026-07-04` — **Friendly network-error mapping + Retry** (gap analysis T5). VMs surfaced raw
   `error.message` (e.g. "Unable to resolve host…") as sticky red text. New shared
   `data/error/toUserMessage(fallback)` maps any `IOException` → "Can't reach the server…" and known

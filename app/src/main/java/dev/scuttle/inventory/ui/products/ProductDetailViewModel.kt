@@ -17,6 +17,9 @@ import javax.inject.Inject
 
 data class ProductDetailUiState(
     val loading: Boolean = false,
+    // Only load() (the pull-to-refresh target) flips this; save/upload/delete use
+    // `loading` alone, so the pull spinner doesn't fire on those mutations.
+    val refreshing: Boolean = false,
     val product: ProductDto? = null,
     val error: String? = null,
     val saved: Boolean = false,
@@ -56,13 +59,13 @@ class ProductDetailViewModel @Inject constructor(
     fun load() {
         if (householdId == -1L || shelfId == -1L || productId == -1L) return
         viewModelScope.launch {
-            _state.update { it.copy(loading = true, error = null) }
+            _state.update { it.copy(loading = true, refreshing = true, error = null) }
             runCatching { repository.list(householdId, shelfId) }
                 .onSuccess { products ->
-                    _state.update { it.copy(loading = false, product = products.find { p -> p.id == productId }) }
+                    _state.update { it.copy(loading = false, refreshing = false, product = products.find { p -> p.id == productId }) }
                 }
                 .onFailure { e ->
-                    _state.update { it.copy(loading = false, error = e.toUserMessage("Failed to load product.")) }
+                    _state.update { it.copy(loading = false, refreshing = false, error = e.toUserMessage("Failed to load product.")) }
                 }
         }
     }

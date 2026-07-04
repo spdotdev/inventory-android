@@ -16,6 +16,9 @@ import javax.inject.Inject
 
 data class HouseholdsUiState(
     val loading: Boolean = false,
+    // Only a user-initiated refresh() flips this; create/leave use `loading` alone,
+    // so the pull-to-refresh spinner doesn't fire on mutations.
+    val refreshing: Boolean = false,
     val households: List<HouseholdDto> = emptyList(),
     val newName: String = "",
     val error: String? = null,
@@ -41,7 +44,7 @@ class HouseholdsViewModel @Inject constructor(
 
     fun onNewNameChange(value: String) = _state.update { it.copy(newName = value.take(50), error = null) }
 
-    fun refresh() = launchLoading {
+    fun refresh() = launchLoading(refreshing = true) {
         _state.update { it.copy(households = repository.list()) }
     }
 
@@ -67,15 +70,15 @@ class HouseholdsViewModel @Inject constructor(
         _state.update { it.copy(households = repository.list()) }
     }
 
-    private fun launchLoading(block: suspend () -> Unit) {
+    private fun launchLoading(refreshing: Boolean = false, block: suspend () -> Unit) {
         viewModelScope.launch {
-            _state.update { it.copy(loading = true, error = null) }
+            _state.update { it.copy(loading = true, refreshing = refreshing, error = null) }
             val result = runCatching { block() }
             result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
             _state.update { state ->
                 result.fold(
-                    onSuccess = { state.copy(loading = false) },
-                    onFailure = { e -> state.copy(loading = false, error = e.toUserMessage("Something went wrong.")) },
+                    onSuccess = { state.copy(loading = false, refreshing = false) },
+                    onFailure = { e -> state.copy(loading = false, refreshing = false, error = e.toUserMessage("Something went wrong.")) },
                 )
             }
         }

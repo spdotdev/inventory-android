@@ -161,7 +161,7 @@ fun LocationDetailScreen(
         },
     ) { padding ->
         PullToRefreshBox(
-            isRefreshing = state.loading,
+            isRefreshing = state.refreshing,
             onRefresh = {
                 shelvesViewModel.refresh()
                 productsRefreshKey++

@@ -19,6 +19,7 @@ data class DrawerUiState(
     val locationWarnings: Map<Long, Boolean> = emptyMap(),
     val missingItemCount: Int = 0,
     val loading: Boolean = false,
+    val refreshing: Boolean = false,
 )
 
 @HiltViewModel
@@ -33,12 +34,13 @@ class DrawerViewModel @Inject constructor(
             locationWarnings = s.locationWarnings,
             missingItemCount = s.missingItemCount,
             loading = s.loading,
+            refreshing = s.refreshing,
         )
     }.stateIn(viewModelScope, SharingStarted.Eagerly, DrawerUiState())
 
     private var deleteJob: Job? = null
 
-    fun refresh() = store.refresh()
+    fun refresh() = store.refresh(userInitiated = true)
 
     fun deleteLocation(householdId: Long, locationId: Long) {
         if (deleteJob?.isActive == true) return

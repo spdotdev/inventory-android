@@ -117,7 +117,7 @@ fun StorageOverviewScreen(
         },
     ) { padding ->
         PullToRefreshBox(
-            isRefreshing = state.loading,
+            isRefreshing = state.refreshing,
             onRefresh = viewModel::refresh,
             modifier = Modifier
                 .fillMaxSize()

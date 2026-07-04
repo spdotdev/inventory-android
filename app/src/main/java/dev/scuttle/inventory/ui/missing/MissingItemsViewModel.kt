@@ -13,6 +13,7 @@ import javax.inject.Inject
 
 data class MissingItemsUiState(
     val loading: Boolean = false,
+    val refreshing: Boolean = false,
     val items: List<MissingItem> = emptyList(),
     val error: String? = null,
 )
@@ -23,8 +24,8 @@ class MissingItemsViewModel @Inject constructor(
 ) : ViewModel() {
 
     val state: StateFlow<MissingItemsUiState> = store.state.map { s ->
-        MissingItemsUiState(loading = s.loading, items = s.missingItems, error = s.error)
+        MissingItemsUiState(loading = s.loading, refreshing = s.refreshing, items = s.missingItems, error = s.error)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, MissingItemsUiState())
 
-    fun refresh() = store.refresh()
+    fun refresh() = store.refresh(userInitiated = true)
 }
