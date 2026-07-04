@@ -2,6 +2,7 @@ package dev.scuttle.inventory
 
 import dev.scuttle.inventory.data.dto.SearchResultDto
 import dev.scuttle.inventory.data.search.SearchRepository
+import dev.scuttle.inventory.ui.common.SortOrder
 import dev.scuttle.inventory.ui.search.SearchViewModel
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -53,6 +54,28 @@ class SearchViewModelTest {
         advanceUntilIdle()
 
         assertTrue(viewModel.state.value.results.isEmpty())
+    }
+
+    @Test
+    fun sort_reorders_results_without_refetching() = runTest {
+        val viewModel = SearchViewModel(FakeSearchRepository())
+        viewModel.setHousehold(1)
+        // A query that returns both catalog rows (Peas qty 4, Vanilla ice cream qty 1).
+        viewModel.onQueryChange("a")
+        advanceUntilIdle()
+        assertEquals(2, viewModel.state.value.results.size)
+
+        viewModel.setSort(SortOrder.QUANTITY_DESC)
+        assertEquals(
+            listOf("Peas", "Vanilla ice cream"),
+            viewModel.state.value.sortedResults.map { it.name },
+        )
+
+        viewModel.setSort(SortOrder.NAME_ASC)
+        assertEquals(
+            listOf("Peas", "Vanilla ice cream"),
+            viewModel.state.value.sortedResults.map { it.name },
+        )
     }
 
     @Test

@@ -8,6 +8,7 @@ import dev.scuttle.inventory.data.location.LocationRepository
 import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.data.search.SearchRepository
 import dev.scuttle.inventory.data.shelf.ShelfRepository
+import dev.scuttle.inventory.ui.common.SortOrder
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -32,7 +33,20 @@ data class ProductsUiState(
     val error: String? = null,
     val movingProductId: Long? = null,
     val moveTargets: List<MoveTarget> = emptyList(),
-)
+    // Local view controls (not persisted; never sent to the server).
+    val filterQuery: String = "",
+    val mandatoryOnly: Boolean = false,
+    val outOfStockOnly: Boolean = false,
+    val sort: SortOrder = SortOrder.NAME_ASC,
+) {
+    /** The products after the user's filter + sort is applied. */
+    val visibleProducts: List<ProductDto>
+        get() = products.applyView(filterQuery, mandatoryOnly, outOfStockOnly, sort)
+
+    /** True when a filter hides all products even though the shelf isn't empty. */
+    val filteredToEmpty: Boolean
+        get() = products.isNotEmpty() && visibleProducts.isEmpty()
+}
 
 @HiltViewModel
 class ProductsViewModel @Inject constructor(
@@ -93,6 +107,16 @@ class ProductsViewModel @Inject constructor(
         searchJob?.cancel()
         _state.update { it.copy(newName = name, suggestions = emptyList()) }
     }
+
+    // --- Local view controls (filter + sort) ---
+
+    fun onFilterQueryChange(value: String) = _state.update { it.copy(filterQuery = value.take(50)) }
+
+    fun toggleMandatoryOnly() = _state.update { it.copy(mandatoryOnly = !it.mandatoryOnly) }
+
+    fun toggleOutOfStockOnly() = _state.update { it.copy(outOfStockOnly = !it.outOfStockOnly) }
+
+    fun setSort(order: SortOrder) = _state.update { it.copy(sort = order) }
 
     fun refresh() {
         val h = householdId ?: return

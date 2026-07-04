@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.scuttle.inventory.data.dto.SearchResultDto
 import dev.scuttle.inventory.data.search.SearchRepository
+import dev.scuttle.inventory.ui.common.SortOrder
+import dev.scuttle.inventory.ui.common.sortedByOrder
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -19,7 +21,12 @@ data class SearchUiState(
     val query: String = "",
     val results: List<SearchResultDto> = emptyList(),
     val error: String? = null,
-)
+    val sort: SortOrder = SortOrder.NAME_ASC,
+) {
+    /** Results after the user's local sort — the server query is the filter here. */
+    val sortedResults: List<SearchResultDto>
+        get() = results.sortedByOrder(sort, name = { it.name }, quantity = { it.quantity })
+}
 
 @HiltViewModel
 class SearchViewModel @Inject constructor(
@@ -54,6 +61,8 @@ class SearchViewModel @Inject constructor(
         searchJob?.cancel()
         searchJob = viewModelScope.launch { doSearch() }
     }
+
+    fun setSort(order: SortOrder) = _state.update { it.copy(sort = order) }
 
     private suspend fun doSearch() {
         val h = householdId ?: return

@@ -28,7 +28,6 @@ fast enough in real use, don't build it.
 ---
 
 ## Ideas — parking lot
-- 💡 Filter / sort products within a shelf or search results.
 - 💡 Widget / quick-tile for "what's low" (depends on a low-stock concept — not in MVP).
 - 💡 Per-household color/icon theming on top of Frost.
 - 💡 Q-3: live updates (WebSockets) if pull-to-refresh proves insufficient.
@@ -36,6 +35,22 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-07-04` — **Filter + sort for products and search results (Phase 2).** Shared,
+  server-agnostic view controls (transient — nothing persisted; never sent to the API).
+  New `ui/common/SortOrder.kt` (enum NAME_ASC/NAME_DESC/QUANTITY_DESC/QUANTITY_ASC + a generic
+  `List<T>.sortedByOrder(order, name, quantity)` helper — case-insensitive name compare, quantity
+  ties broken by name) and `ui/common/SortMenu.kt` (reusable "Sort: <current>" dropdown with a
+  check on the active option). Products: `ui/products/ProductView.kt` `List<ProductDto>.applyView`
+  (query over name/code + mandatory-only + out-of-stock-only flags, then sort); `ProductsViewModel`
+  gains `filterQuery`/`mandatoryOnly`/`outOfStockOnly`/`sort` state with a computed `visibleProducts`
+  + `filteredToEmpty`, and `onFilterQueryChange`/`toggleMandatoryOnly`/`toggleOutOfStockOnly`/`setSort`;
+  `ProductsPane` renders a filter field + two FilterChips + the SortMenu (only when the shelf is
+  non-empty) and a "no match" message. Search: `SearchViewModel` gains `sort` + computed
+  `sortedResults` + `setSort`; `SearchScreen` shows the SortMenu above results (the server query is
+  the filter, sort is client-side). Tests: `ProductViewTest` (6 — case-insensitive name sort, desc,
+  quantity tie-break, name/code query, mandatory/out-of-stock flags incl. combined, generic helper)
+  + a `SearchViewModelTest` sort-without-refetch case. Strings added to EN + NL. Local Gradle build
+  isn't runnable in this environment (pre-existing) — relying on CI to confirm compile/test-green.
 - ✅ `2026-07-04` — **Google Sign-In `GOOGLE_CLIENT_ID` wired (verification).** Confirmed the
   Web OAuth 2.0 client ID is set in `app/build.gradle.kts` (`buildConfigField` →
   `BuildConfig.GOOGLE_CLIENT_ID = 758637503304-…apps.googleusercontent.com`) and consumed by

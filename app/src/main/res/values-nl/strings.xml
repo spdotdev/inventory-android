@@ -106,6 +106,17 @@
     <string name="products_pane_move_button">Verplaatsen</string>
     <string name="products_pane_move_dialog_title">Verplaatsen naar…</string>
     <string name="products_pane_no_shelves_to_move">Geen andere planken beschikbaar.</string>
+    <string name="products_pane_filter_label">Producten filteren</string>
+    <string name="products_pane_filter_mandatory">Verplicht</string>
+    <string name="products_pane_filter_out_of_stock">Niet op voorraad</string>
+    <string name="products_pane_no_match">Geen producten komen overeen met je filter.</string>
+
+    <!-- Sorteren (gedeeld: producten + zoeken) -->
+    <string name="sort_label">Sorteren: %s</string>
+    <string name="sort_name_asc">Naam A–Z</string>
+    <string name="sort_name_desc">Naam Z–A</string>
+    <string name="sort_quantity_desc">Meeste voorraad</string>
+    <string name="sort_quantity_asc">Minste voorraad</string>
 
     <!-- Search -->
     <string name="search_back_button">← Opslag</string>
