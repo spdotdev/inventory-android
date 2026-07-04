@@ -45,6 +45,18 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-07-04` — **Google Sign-In → Credential Manager** (gap analysis T19). The auth screen used the
+  deprecated `com.google.android.gms:play-services-auth` `GoogleSignIn` API — a direct `CLAUDE.md`
+  violation ("Native Google Sign-In (Credential Manager)") and a live breakage risk as Google retires
+  it. Migrated to `androidx.credentials.CredentialManager` + `GetGoogleIdOption` / `GoogleIdTokenCredential`
+  (deps swapped to `androidx.credentials:credentials` + `:credentials-play-services-auth` + `googleid`;
+  current API confirmed via Context7). `launchGoogleSignIn` now requests a `GetGoogleIdOption`
+  (`serverClientId = GOOGLE_CLIENT_ID`, `filterByAuthorizedAccounts=false`), awaits the suspend
+  `getCredential`, extracts the ID token, and hands it to the **unchanged** `loginWithGoogle(idToken)`
+  path (server verification untouched); cancellation/parse/credential exceptions map to friendly errors.
+  No test exercises the Google UI, so nothing breaks. ⚠️ **CI verifies compile only** — the live account
+  picker → ID-token handshake needs a **manual device smoke-test with Play Services** before release
+  (tracked as a ROADMAP release gate). Gradle unrunnable locally.
 - ✅ `2026-07-04` — **Corrected stale "planning only" status docs** (gap analysis T18). `CLAUDE.md`'s
   `## Status` still read "Planning only — no Android Studio / Gradle project scaffolded yet" and the
   `README` said "project skeleton" — both the opposite of the shipped MVP. Rewrote them to describe the
