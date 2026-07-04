@@ -18,10 +18,12 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
@@ -50,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.dto.ProductDto
+import dev.scuttle.inventory.ui.common.SortMenu
 import dev.scuttle.inventory.ui.theme.FrostCard
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -98,11 +101,41 @@ fun ProductsPane(
             Text(text = it, color = MaterialTheme.colorScheme.error)
         }
 
-        if (state.products.isEmpty() && !state.loading) {
-            Text(text = stringResource(R.string.products_pane_empty))
+        if (state.products.isNotEmpty()) {
+            OutlinedTextField(
+                value = state.filterQuery,
+                onValueChange = viewModel::onFilterQueryChange,
+                label = { Text(stringResource(R.string.products_pane_filter_label)) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth().testTag("product-filter"),
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                FilterChip(
+                    selected = state.mandatoryOnly,
+                    onClick = viewModel::toggleMandatoryOnly,
+                    label = { Text(stringResource(R.string.products_pane_filter_mandatory)) },
+                )
+                FilterChip(
+                    selected = state.outOfStockOnly,
+                    onClick = viewModel::toggleOutOfStockOnly,
+                    label = { Text(stringResource(R.string.products_pane_filter_out_of_stock)) },
+                )
+                Spacer(Modifier.weight(1f))
+                SortMenu(current = state.sort, onSelect = viewModel::setSort)
+            }
         }
 
-        state.products.forEach { product ->
+        if (state.products.isEmpty() && !state.loading) {
+            Text(text = stringResource(R.string.products_pane_empty))
+        } else if (state.filteredToEmpty) {
+            Text(text = stringResource(R.string.products_pane_no_match))
+        }
+
+        state.visibleProducts.forEach { product ->
             key(product.id) {
                 // Hoist formatted strings so they can be used inside non-composable semantics blocks
                 val decreaseDesc = stringResource(R.string.products_pane_decrease_cd, product.name)

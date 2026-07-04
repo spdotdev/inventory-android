@@ -1,6 +1,8 @@
 package dev.scuttle.inventory.ui.app
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -29,10 +31,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.scuttle.inventory.R
+import dev.scuttle.inventory.ui.theme.HouseholdAvatar
 
 @Composable
 fun AppDrawer(
@@ -137,12 +141,18 @@ fun AppDrawer(
                     )
                 }
                 state.entries.forEach { entry ->
-                    Text(
-                        text = entry.name,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.padding(horizontal = 28.dp, vertical = 4.dp),
-                    )
+                    ) {
+                        HouseholdAvatar(householdId = entry.id, size = 24.dp)
+                        Text(
+                            text = entry.name,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                     entry.locations.forEach { location ->
                         val hasWarning = state.locationWarnings[location.id] == true
                         NavigationDrawerItem(

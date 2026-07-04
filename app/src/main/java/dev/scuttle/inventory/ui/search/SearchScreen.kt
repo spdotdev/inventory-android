@@ -30,6 +30,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
+import dev.scuttle.inventory.ui.common.SortMenu
 import dev.scuttle.inventory.ui.theme.FrostCard
 
 @Composable
@@ -91,7 +92,11 @@ fun SearchScreen(
             Text(text = stringResource(R.string.search_no_results))
         }
 
-        state.results.forEach { result ->
+        if (state.results.isNotEmpty()) {
+            SortMenu(current = state.sort, onSelect = viewModel::setSort)
+        }
+
+        state.sortedResults.forEach { result ->
             val hhId = result.household_id
             val shelfId = result.shelf_id
             val content: @Composable () -> Unit = {

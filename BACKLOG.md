@@ -25,17 +25,64 @@ the backend gaining a `barcode` attribute (Phase 2, see `inventory-docs`).
 (out of scope while always-online). Effort ~3–4 days. **Kill criterion:** if manual add is
 fast enough in real use, don't build it.
 
+> **Deferred 2026-07-04** (backlog-sweep decision). Kept as a Phase-2 idea: manual code entry
+> already works via the product edit form (`code` field), and the CameraX + ML Kit deps +
+> camera permission are a large add for marginal MVP value. Revisit if shelf-side add speed
+> becomes a real pain point.
+
 ---
 
 ## Ideas — parking lot
-- 💡 Filter / sort products within a shelf or search results.
 - 💡 Widget / quick-tile for "what's low" (depends on a low-stock concept — not in MVP).
-- 💡 Per-household color/icon theming on top of Frost.
+  *Deferred 2026-07-04 (backlog-sweep decision):* a real OS home-screen widget fights the
+  always-online + bearer-token model (no background auth), and a low-stock **threshold** concept
+  isn't agreed yet. Revisit as an **in-app** "running low" tile once a threshold is defined
+  (the `is_mandatory` + qty-0 "missing items" view already covers the hard-stop case).
 - 💡 Q-3: live updates (WebSockets) if pull-to-refresh proves insufficient.
+- 💡 User-chosen per-household color/icon (needs a `theme` field on the household resource —
+  Phase-2 backend change; the deterministic id-derived version already ships, see Done).
 
 ---
 
 ## Done
+- ✅ `2026-07-04` — **Per-household color + icon theming on top of Frost.** Each household gets a
+  stable, distinguishable identity in the UI, derived deterministically from its id — purely
+  visual and client-side, nothing persisted or sent to the API (keeps the server-authoritative
+  rule intact). `ui/theme/HouseholdTheme.kt`: `householdTheme(id)` → an ice-toned accent (8-hue
+  palette that harmonises with Frost light/dark) + a place/storage icon, plus a reusable
+  `HouseholdAvatar` composable (round accent-tinted badge, icon tinted `onSurface` so it stays
+  legible on either theme). The accent and icon use different strides so they don't move in
+  lockstep for small sequential ids. Index math split into a Compose-free `HouseholdThemeIndex.kt`
+  so it's unit-testable on a plain JVM: `HouseholdThemeIndexTest` (bounds, determinism,
+  decorrelation). Wired into the households list cards and the drawer's per-household headers.
+  User-chosen colors/icons deferred (needs a household `theme` field — see parking lot). Local
+  Gradle build isn't runnable here (pre-existing) — relying on CI for compile/test-green.
+- ✅ `2026-07-04` — **Filter + sort for products and search results (Phase 2).** Shared,
+  server-agnostic view controls (transient — nothing persisted; never sent to the API).
+  New `ui/common/SortOrder.kt` (enum NAME_ASC/NAME_DESC/QUANTITY_DESC/QUANTITY_ASC + a generic
+  `List<T>.sortedByOrder(order, name, quantity)` helper — case-insensitive name compare, quantity
+  ties broken by name) and `ui/common/SortMenu.kt` (reusable "Sort: <current>" dropdown with a
+  check on the active option). Products: `ui/products/ProductView.kt` `List<ProductDto>.applyView`
+  (query over name/code + mandatory-only + out-of-stock-only flags, then sort); `ProductsViewModel`
+  gains `filterQuery`/`mandatoryOnly`/`outOfStockOnly`/`sort` state with a computed `visibleProducts`
+  + `filteredToEmpty`, and `onFilterQueryChange`/`toggleMandatoryOnly`/`toggleOutOfStockOnly`/`setSort`;
+  `ProductsPane` renders a filter field + two FilterChips + the SortMenu (only when the shelf is
+  non-empty) and a "no match" message. Search: `SearchViewModel` gains `sort` + computed
+  `sortedResults` + `setSort`; `SearchScreen` shows the SortMenu above results (the server query is
+  the filter, sort is client-side). Tests: `ProductViewTest` (6 — case-insensitive name sort, desc,
+  quantity tie-break, name/code query, mandatory/out-of-stock flags incl. combined, generic helper)
+  + a `SearchViewModelTest` sort-without-refetch case. Strings added to EN + NL. Local Gradle build
+  isn't runnable in this environment (pre-existing) — relying on CI to confirm compile/test-green.
+- ✅ `2026-07-04` — **Google Sign-In `GOOGLE_CLIENT_ID` wired (verification).** Confirmed the
+  Web OAuth 2.0 client ID is set in `app/build.gradle.kts` (`buildConfigField` →
+  `BuildConfig.GOOGLE_CLIENT_ID = 758637503304-…apps.googleusercontent.com`) and consumed by
+  `AuthScreen.launchGoogleSignIn()` via `GoogleSignInOptions.Builder(...).requestIdToken(BuildConfig.GOOGLE_CLIENT_ID)`,
+  whose ID token feeds `AuthViewModel.loginWithGoogle` → backend verifier. No code change needed —
+  the RMMBR "set GOOGLE_CLIENT_ID" task was stale. (If the tenant's Web client ID ever rotates,
+  update the single `buildConfigField` line.)
+- ✅ `2026-07-04` — **Q-3 (realtime) resolved → pull-to-refresh** (see `inventory-docs/ROADMAP.md`).
+  WebSockets/Reverb deferred to Phase 2; the live-updates idea stays in this file's parking lot as
+  the re-open trigger.
 - ✅ `2026-07-04` — **Frosted-glass card treatment (Frost D-021, ralph-loop r17).** New
   `FrostCard` composable (`ui/theme/FrostCard.kt`): translucent tinted container + hairline
   border + 22dp corners, matching `docs/design/frost-app.html` `.card`/`.rcard`/`.fcard`
