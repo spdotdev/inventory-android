@@ -52,6 +52,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
+import dev.scuttle.inventory.ui.common.LiveStatusText
 import dev.scuttle.inventory.ui.theme.FrostCard
 import dev.scuttle.inventory.ui.theme.HouseholdAvatar
 
@@ -108,7 +109,7 @@ fun HouseholdsScreen(
             Spacer(Modifier.height(4.dp))
 
             state.error?.let {
-                Text(text = it, color = MaterialTheme.colorScheme.error)
+                LiveStatusText(it)
             }
 
             if (state.households.isEmpty() && !state.loading) {

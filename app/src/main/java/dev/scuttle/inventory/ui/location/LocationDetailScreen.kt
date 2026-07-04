@@ -66,6 +66,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
+import dev.scuttle.inventory.ui.common.LiveStatusText
 import dev.scuttle.inventory.data.dto.ProductDto
 import dev.scuttle.inventory.ui.app.DrawerViewModel
 import dev.scuttle.inventory.ui.products.ProductsPane
@@ -187,11 +188,7 @@ fun LocationDetailScreen(
             }
 
             state.error?.let {
-                Text(
-                    text = it,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(16.dp),
-                )
+                LiveStatusText(it, modifier = Modifier.padding(16.dp))
             }
 
             if (state.shelves.isEmpty()) {

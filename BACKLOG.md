@@ -45,6 +45,11 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-07-04` — **Inline error/status text is now announced by TalkBack on six screens** (wave-2 W8).
+  The wave-1 `liveRegion=Assertive` pattern (AuthScreen/ErrorRetry) wasn't propagated to the bare
+  `Text(error)` on Dashboard, Households, Search, Invite, LocationDetail, and Settings (join error *and*
+  success) — all left silent until focused. Added a shared `LiveStatusText` helper (Assertive live region,
+  error/primary color) and routed all seven sites through it, including announcing the Settings join success.
 - ✅ `2026-07-04` — **Empty vs error no longer conflated on StorageOverview + LocationDetail** (wave-2 W7).
   Both screens rendered their error line *and* the empty text on a failed load ("Something went wrong" +
   "No storages yet" / "no shelves yet") — the empty text reads as a false "your account is empty". Gated

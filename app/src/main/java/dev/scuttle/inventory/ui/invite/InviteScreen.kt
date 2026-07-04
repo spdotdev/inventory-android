@@ -36,6 +36,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import dev.scuttle.inventory.R
+import dev.scuttle.inventory.ui.common.LiveStatusText
 import dev.scuttle.inventory.ui.theme.SpaceMono
 import kotlinx.coroutines.delay
 
@@ -81,7 +82,7 @@ fun InviteScreen(
         }
 
         state.error?.let {
-            Text(text = it, color = MaterialTheme.colorScheme.error)
+            LiveStatusText(it)
         }
 
         if (state.code.isNotEmpty()) {
