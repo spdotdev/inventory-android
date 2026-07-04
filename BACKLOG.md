@@ -45,6 +45,12 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-07-04` — **ForgotPasswordViewModel unit test** (gap analysis T21, found in the final
+  completeness scan). A coverage sweep showed it was the only one of 16 ViewModels without a unit test,
+  despite real `submit()` loading→sent/error logic on a security-adjacent flow. Added
+  `ForgotPasswordViewModelTest` (fake `AuthRepository`): success sets `sent`; failure surfaces the
+  friendly message and asserts the raw "Unable to resolve host…" does **not** leak; `onEmailChange`
+  clears a prior error. All 16 VMs now covered. Local Gradle unrunnable here; CI runs it.
 - ✅ `2026-07-04` — **ProductsPane errors → Snackbar + a11y** (gap analysis T20, found in the Tier-3
   milestone re-scan). The products list surfaced add/remove/move/delete/load failures as a persistent
   inline `Text` with no `liveRegion` — sticky and silent to TalkBack, the exact issue T10 fixed on the
