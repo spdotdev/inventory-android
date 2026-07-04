@@ -96,7 +96,7 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-kotlinx-serialization:2.11.0")
 
     // Secure token storage
-    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+    implementation("androidx.security:security-crypto:1.1.0")
 
     // Google Sign-In via Jetpack Credential Manager (replaces the deprecated
     // com.google.android.gms:play-services-auth GoogleSignIn API). credentials-play-services-auth
