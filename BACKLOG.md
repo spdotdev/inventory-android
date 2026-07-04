@@ -45,6 +45,11 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-07-04` — **Missing-items screen surfaces load errors instead of a false "all stocked"** (wave-2 W4).
+  `MissingItemsViewModel` exposed `error` but `MissingItemsScreen` never rendered it — a failed load fell
+  through to `missing_items_empty`, i.e. a screen whose whole job is surfacing warnings would silently
+  claim everything's fine on a network error. Render `state.error` via `ErrorRetry(onRetry = refresh)`
+  when there are no items, ahead of the empty state. Added a VM error-path unit test.
 - ✅ `2026-07-04` — **AllStorages shows load errors instead of a false empty state** (wave-2 W3).
   `DrawerViewModel` mapped `HierarchyStore.state` but dropped the store's `error` (it wasn't even a field
   on `DrawerUiState`), so a network failure rendered "No storages yet" — indistinguishable from a real
