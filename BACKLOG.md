@@ -45,6 +45,12 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-07-04` — **Household create/join/leave now refreshes the shared hierarchy** (wave-3 X4). `HouseholdsViewModel.create()/leave()`
+  and `JoinHouseholdViewModel.join()` updated only the `HouseholdRepository` cache + their own UI state, so
+  the drawer/home/dashboard (driven by the `@Singleton HierarchyStore`) stayed stale until a manual
+  pull-to-refresh or relaunch — product create/delete already refreshed, but household-level mutations were
+  missed. Inject `HierarchyStore` into both VMs and call `refresh()` after a successful create/join/leave.
+  Tests assert the store reflects the mutation (shared `TestHierarchy` helper).
 - ✅ `2026-07-04` — **Per-location "⚠ needs attention" indicator now lights up on load** (wave-3 X2, HIGH/MED).
   Home (`AllStoragesScreen`) and the drawer rendered the warning purely from `state.locationWarnings`, which
   was populated *only* by a composed `ProductsPane` via `reportLocationWarning` — so a location whose
