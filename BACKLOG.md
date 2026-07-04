@@ -45,6 +45,11 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-07-04` — **Corrected stale "planning only" status docs** (gap analysis T18). `CLAUDE.md`'s
+  `## Status` still read "Planning only — no Android Studio / Gradle project scaffolded yet" and the
+  `README` said "project skeleton" — both the opposite of the shipped MVP. Rewrote them to describe the
+  built app (auth, storage/shelves/products, search, invite, settings, dashboard, missing-items; EN+NL;
+  unit + nightly instrumented tests) and to point at ROADMAP/BACKLOG.
 - ✅ `2026-07-04` — **Release + fork-PR pipeline hardening** (gap analysis T17). Two problems. (1) `ci.yml`
   unconditionally decoded `DEBUG_KEYSTORE_B64` and ran `assembleDebug`, so a fork PR (no secrets) red-failed
   on signing infra it can never have — even though its code was fine. Reordered so unit-tests + lint (the

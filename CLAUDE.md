@@ -65,5 +65,10 @@ scanning + filter/sort are Phase 2, not MVP.
   error/empty/offline states. No trivial UI tests.
 
 ## Status
-Planning only — no Android Studio / Gradle project scaffolded yet. First step is the
-project skeleton (single-activity Compose + Hilt + Retrofit) wired to the API contract.
+Functionally-complete MVP, CI-green. The single-activity Compose + Hilt + Retrofit app is
+built and wired to the API contract: auth (email/password + Google), storage overview,
+shelves (tabs/pager), products (add/remove/move, detail, image), search, invite (QR/join),
+settings, dashboard, and missing-items — with EN + NL localization and the Frost theme.
+Covered by JVM unit tests + instrumented flow tests (the latter run nightly on an emulator
+in CI). Forward-looking work lives in [`ROADMAP.md`](ROADMAP.md); shipped history in
+[`BACKLOG.md`](BACKLOG.md).
