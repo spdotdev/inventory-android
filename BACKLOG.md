@@ -45,6 +45,11 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-07-04` — **Shelf tabs announce missing-stock instead of signalling by color alone** (wave-2 W9).
+  `LocationDetailScreen` marked an out-of-stock-mandatory shelf with red tab text + a decorative 6dp dot
+  and no semantics — color-only (WCAG 1.4.1) and silent to TalkBack. Added a `location_shelf_missing_cd`
+  string (EN + NL) and a `clearAndSetSemantics { contentDescription = "<shelf>, has missing items" }` on
+  the warning tab's text row, so the state is conveyed non-visually without doubling the shelf name.
 - ✅ `2026-07-04` — **Inline error/status text is now announced by TalkBack on six screens** (wave-2 W8).
   The wave-1 `liveRegion=Assertive` pattern (AuthScreen/ErrorRetry) wasn't propagated to the bare
   `Text(error)` on Dashboard, Households, Search, Invite, LocationDetail, and Settings (join error *and*

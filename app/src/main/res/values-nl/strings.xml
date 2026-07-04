@@ -70,6 +70,7 @@
     <string name="location_add_shelf_cd">Plank toevoegen</string>
     <string name="location_add_product_cd">Product toevoegen</string>
     <string name="location_no_shelves">Nog geen planken. Tik op + in de bovenbalk om er een toe te voegen.</string>
+    <string name="location_shelf_missing_cd">%1$s, ontbrekende artikelen</string>
     <string name="location_delete_count_button">Verwijderen (%d)</string>
     <string name="location_delete_button">Verwijderen</string>
 
