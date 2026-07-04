@@ -1,5 +1,11 @@
 name: Release
 
+# Serialize release builds per tag but NEVER cancel one in flight — a half-built
+# release + partial GitHub Release upload is worse than a redundant run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 # Builds the Android app package when a version tag is pushed, and attaches the
 # artifacts to a GitHub Release. Tag with: git tag v0.1.0 && git push --tags
 #

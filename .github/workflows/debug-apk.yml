@@ -1,5 +1,12 @@
 name: Debug APK
 
+# Supersede an in-flight run when a newer commit lands on the same ref, so
+# rapid pushes/PR updates don't stack redundant (and, for the emulator/MySQL
+# jobs, expensive) runs.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   workflow_dispatch:
 

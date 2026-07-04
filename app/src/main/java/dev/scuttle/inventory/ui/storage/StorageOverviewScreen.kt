@@ -143,7 +143,10 @@ fun StorageOverviewScreen(
                 ErrorRetry(message = it, onRetry = viewModel::refresh)
             }
 
-            if (state.locations.isEmpty() && !state.loading) {
+            // Don't show the empty text on a failed load — the ErrorRetry above
+            // already explains it; "No storages yet" alongside would be a false
+            // "your account is empty" (W7).
+            if (state.locations.isEmpty() && !state.loading && state.error == null) {
                 Text(
                     text = stringResource(R.string.storage_overview_empty),
                     modifier = Modifier.padding(top = 8.dp),

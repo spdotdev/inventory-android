@@ -31,6 +31,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
+import dev.scuttle.inventory.ui.common.ErrorRetry
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,7 +74,22 @@ fun MissingItemsScreen(
                 .fillMaxSize()
                 .padding(padding),
         ) {
-            if (state.items.isEmpty() && !state.loading) {
+            val error = state.error
+            if (error != null && state.items.isEmpty()) {
+                // A failed load must not fall through to "all stocked" — for a
+                // screen whose whole job is surfacing warnings that's the worst
+                // failure mode. Show the error with a retry instead (W4).
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .navigationBarsPadding()
+                        .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    ErrorRetry(message = error, onRetry = viewModel::refresh)
+                }
+            } else if (state.items.isEmpty() && !state.loading) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()

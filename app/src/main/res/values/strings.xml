@@ -70,6 +70,7 @@
     <string name="location_add_shelf_cd">Add shelf</string>
     <string name="location_add_product_cd">Add product</string>
     <string name="location_no_shelves">No shelves yet. Tap + in the top bar to add one.</string>
+    <string name="location_shelf_missing_cd">%1$s, has missing items</string>
     <string name="location_delete_count_button">Delete (%d)</string>
     <string name="location_delete_button">Delete</string>
 
@@ -169,6 +170,7 @@
     <string name="drawer_all_storage">All storage</string>
     <string name="drawer_dashboard">Dashboard</string>
     <string name="drawer_search">Search</string>
+    <string name="drawer_search_household_cd">Search %1$s</string>
     <string name="drawer_households">Households</string>
     <string name="drawer_missing_items">Missing items</string>
     <string name="drawer_missing_items_count">Missing items · %d</string>

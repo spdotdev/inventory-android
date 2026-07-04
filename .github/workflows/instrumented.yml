@@ -1,5 +1,12 @@
 name: Instrumented tests
 
+# Supersede an in-flight run when a newer commit lands on the same ref, so
+# rapid pushes/PR updates don't stack redundant (and, for the emulator/MySQL
+# jobs, expensive) runs.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 # End-to-end instrumented flow tests (app/src/androidTest) on an emulator. They
 # drive real navigation + Compose UI against a MockWebServer backend, catching
 # regressions the JVM unit tests can't. Emulator boot is slow (several minutes),

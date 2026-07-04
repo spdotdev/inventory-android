@@ -46,6 +46,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
 import dev.scuttle.inventory.R
+import dev.scuttle.inventory.ui.common.LiveStatusText
 import dev.scuttle.inventory.data.settings.AppLanguage
 import dev.scuttle.inventory.ui.theme.ThemeMode
 
@@ -133,10 +134,13 @@ fun SettingsScreen(
 
             Text(text = stringResource(R.string.settings_join_section), style = MaterialTheme.typography.titleMedium)
             joinState.error?.let {
-                Text(text = it, color = MaterialTheme.colorScheme.error)
+                LiveStatusText(it)
             }
             if (joinState.success) {
-                Text(text = stringResource(R.string.settings_join_success), color = MaterialTheme.colorScheme.primary)
+                LiveStatusText(
+                    stringResource(R.string.settings_join_success),
+                    color = MaterialTheme.colorScheme.primary,
+                )
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),

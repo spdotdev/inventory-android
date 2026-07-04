@@ -11,12 +11,15 @@ import dev.scuttle.inventory.data.location.LocationRepository
 import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.data.shelf.ShelfRepository
 import dev.scuttle.inventory.ui.missing.MissingItemsViewModel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import java.io.IOException
 
 class MissingItemsViewModelTest {
 
@@ -71,6 +74,34 @@ class MissingItemsViewModelTest {
         )
         store.loadFromCache()
         return MissingItemsViewModel(store)
+    }
+
+    private class ThrowingHouseholdRepository : HouseholdRepository {
+        override fun getCached(): List<HouseholdDto>? = null
+        override suspend fun list(): List<HouseholdDto> = throw IOException("network down")
+        override suspend fun create(name: String) = throw NotImplementedError()
+        override suspend fun join(code: String) = throw NotImplementedError()
+        override suspend fun leave(householdId: Long) {}
+    }
+
+    @Test
+    fun load_failure_surfaces_error_and_no_items() = runTest {
+        // W4: a failed load must expose error so the screen shows a retry rather
+        // than the "all stocked" empty state — the worst miss for a warnings screen.
+        val store = HierarchyStore(
+            ThrowingHouseholdRepository(),
+            FakeLocationRepository(),
+            FakeShelfRepository(),
+            FakeProductRepository(),
+        )
+        val vm = MissingItemsViewModel(store)
+
+        store.refresh(userInitiated = true)
+
+        val failed = vm.state.first { it.error != null }
+        assertNotNull(failed.error)
+        assertFalse(failed.loading)
+        assertTrue(failed.items.isEmpty())
     }
 
     @Test

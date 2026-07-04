@@ -11,11 +11,15 @@ import dev.scuttle.inventory.data.location.LocationRepository
 import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.data.shelf.ShelfRepository
 import dev.scuttle.inventory.ui.app.DrawerViewModel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import java.io.IOException
 
 class DrawerViewModelTest {
 
@@ -118,6 +122,54 @@ class DrawerViewModelTest {
 
         vm.reportLocationWarning(locationId = 10, hasWarning = false)
         assertTrue(vm.state.value.locationWarnings[10] == false)
+    }
+
+    private class ThrowingHouseholdRepository : HouseholdRepository {
+        override fun getCached(): List<HouseholdDto>? = null
+        override suspend fun list(): List<HouseholdDto> = throw IOException("network down")
+        override suspend fun create(name: String) = throw NotImplementedError()
+        override suspend fun join(code: String) = throw NotImplementedError()
+        override suspend fun leave(householdId: Long) {}
+    }
+
+    @Test
+    fun refresh_failure_surfaces_error_and_clears_loading() = runTest {
+        // W3: a failed load must reach DrawerUiState.error so AllStorages can show
+        // a retry instead of the "No storages yet" empty state.
+        val store = HierarchyStore(
+            ThrowingHouseholdRepository(),
+            FakeLocationRepository(),
+            FakeShelfRepository(),
+            FakeProductRepository(),
+        )
+        val vm = DrawerViewModel(store, FakeLocationRepository())
+
+        store.refresh(userInitiated = true)
+
+        val failed = vm.state.first { it.error != null }
+        assertNotNull(failed.error)
+        assertFalse(failed.loading)
+        assertFalse(failed.refreshing)
+        assertTrue(failed.entries.isEmpty())
+    }
+
+    @Test
+    fun delete_location_failure_surfaces_action_error() = runTest {
+        // W10: a failed swipe-to-delete must not be swallowed — it surfaces as a
+        // one-shot actionError the screen shows as a snackbar.
+        val throwingLocRepo = object : LocationRepository {
+            override fun getCached(householdId: Long): List<LocationDto>? = null
+            override suspend fun list(householdId: Long) = emptyList<LocationDto>()
+            override suspend fun create(householdId: Long, name: String, type: String) = throw NotImplementedError()
+            override suspend fun delete(householdId: Long, locationId: Long) = throw IOException("delete failed")
+        }
+        val (store, _) = makeStore(households = emptyList())
+        val vm = DrawerViewModel(store, throwingLocRepo)
+
+        vm.deleteLocation(householdId = 1, locationId = 10)
+
+        val message = vm.actionError.first { it != null }
+        assertNotNull(message)
     }
 
     @Test

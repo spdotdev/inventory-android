@@ -59,6 +59,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
@@ -66,6 +68,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
+import dev.scuttle.inventory.ui.common.LiveStatusText
 import dev.scuttle.inventory.data.dto.ProductDto
 import dev.scuttle.inventory.ui.app.DrawerViewModel
 import dev.scuttle.inventory.ui.products.ProductsPane
@@ -187,15 +190,13 @@ fun LocationDetailScreen(
             }
 
             state.error?.let {
-                Text(
-                    text = it,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(16.dp),
-                )
+                LiveStatusText(it, modifier = Modifier.padding(16.dp))
             }
 
             if (state.shelves.isEmpty()) {
-                if (!state.loading) {
+                // Suppress "no shelves yet" on a failed load — the error line above
+                // already explains it; showing both reads as a false empty (W7).
+                if (!state.loading && state.error == null) {
                     Text(
                         text = stringResource(R.string.location_no_shelves),
                         modifier = Modifier.padding(16.dp),
@@ -209,6 +210,14 @@ fun LocationDetailScreen(
                         val isSelected = if (state.deleteMode) shelf.id in state.selectedShelves
                                          else currentPage == index
                         val tabHasWarning = shelfWarnings[shelf.id] == true
+                        // The warning is conveyed visually by red text + a dot; give the
+                        // text row a content description so it isn't color-only (WCAG
+                        // 1.4.1) and TalkBack announces "<shelf>, has missing items" (W9).
+                        val warningCd = if (tabHasWarning && !state.deleteMode) {
+                            stringResource(R.string.location_shelf_missing_cd, shelf.name)
+                        } else {
+                            null
+                        }
                         Tab(
                             selected = isSelected,
                             onClick = {
@@ -225,6 +234,11 @@ fun LocationDetailScreen(
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                        modifier = if (warningCd != null) {
+                                            Modifier.clearAndSetSemantics { contentDescription = warningCd }
+                                        } else {
+                                            Modifier
+                                        },
                                     ) {
                                         Text(
                                             shelf.name,

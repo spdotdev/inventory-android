@@ -45,6 +45,52 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-07-04` — **Drawer search reaches every household, not just the first** (wave-2 W23). `AppDrawer`
+  wired the single global "Search" entry to `entries.firstOrNull()?.id`, so a multi-household user could
+  only ever search their first household — silently. Search is legitimately household-scoped, so: keep the
+  global entry only when there's exactly one household; when there are several, render a per-household
+  search `IconButton` on each household row (content-described "Search <household>", EN + NL), so every
+  household is reachable and the scope is explicit. No new endpoints.
+- ✅ `2026-07-04` — **Invite QR generated off the composition thread** (wave-2 W22). `InviteScreen` built the
+  512×512 QR with a ~262k-pixel `setPixel` loop inside `remember(link)` — on the composition thread, so the
+  invite load visibly hitched. Moved it to `produceState(null, link){ withContext(Dispatchers.Default){ … } }`
+  with a `CircularProgressIndicator` in the QR's 220dp footprint until it's ready.
+- ✅ `2026-07-04` — **Error-path unit tests for the hierarchy layer** (wave-2 W16). There were no error-path
+  tests for `HierarchyStore`/`DrawerViewModel`/`MissingItemsViewModel`. Added a new `HierarchyStoreTest`
+  (refresh success populates + clears indicators; refresh failure sets `error` and clears loading/refreshing),
+  plus the `DrawerUiState.error` mapping (W3), `DrawerViewModel.deleteLocation` failure (W10), and
+  `MissingItemsViewModel` error (W4) tests added alongside those fixes — all pure-JVM, no emulator.
+- ✅ `2026-07-04` — **Drawer/home location-delete failure is surfaced, not swallowed** (wave-2 W10).
+  `DrawerViewModel.deleteLocation` had `runCatching{…}.onSuccess{ refresh() }` with no `onFailure`, so a
+  failed swipe-to-delete on AllStorages left the location in place with no feedback. Added a one-shot
+  `actionError` flow (separate from the store-derived load `error`, since a delete fails while the list is
+  populated and the inline empty-state ErrorRetry would never show it), rendered via the existing
+  `SnackbarErrorEffect` + a new `SnackbarHost` on the screen. Added a VM delete-failure unit test.
+- ✅ `2026-07-04` — **Shelf tabs announce missing-stock instead of signalling by color alone** (wave-2 W9).
+  `LocationDetailScreen` marked an out-of-stock-mandatory shelf with red tab text + a decorative 6dp dot
+  and no semantics — color-only (WCAG 1.4.1) and silent to TalkBack. Added a `location_shelf_missing_cd`
+  string (EN + NL) and a `clearAndSetSemantics { contentDescription = "<shelf>, has missing items" }` on
+  the warning tab's text row, so the state is conveyed non-visually without doubling the shelf name.
+- ✅ `2026-07-04` — **Inline error/status text is now announced by TalkBack on six screens** (wave-2 W8).
+  The wave-1 `liveRegion=Assertive` pattern (AuthScreen/ErrorRetry) wasn't propagated to the bare
+  `Text(error)` on Dashboard, Households, Search, Invite, LocationDetail, and Settings (join error *and*
+  success) — all left silent until focused. Added a shared `LiveStatusText` helper (Assertive live region,
+  error/primary color) and routed all seven sites through it, including announcing the Settings join success.
+- ✅ `2026-07-04` — **Empty vs error no longer conflated on StorageOverview + LocationDetail** (wave-2 W7).
+  Both screens rendered their error line *and* the empty text on a failed load ("Something went wrong" +
+  "No storages yet" / "no shelves yet") — the empty text reads as a false "your account is empty". Gated
+  the empty text on `state.error == null` in both.
+- ✅ `2026-07-04` — **Missing-items screen surfaces load errors instead of a false "all stocked"** (wave-2 W4).
+  `MissingItemsViewModel` exposed `error` but `MissingItemsScreen` never rendered it — a failed load fell
+  through to `missing_items_empty`, i.e. a screen whose whole job is surfacing warnings would silently
+  claim everything's fine on a network error. Render `state.error` via `ErrorRetry(onRetry = refresh)`
+  when there are no items, ahead of the empty state. Added a VM error-path unit test.
+- ✅ `2026-07-04` — **AllStorages shows load errors instead of a false empty state** (wave-2 W3).
+  `DrawerViewModel` mapped `HierarchyStore.state` but dropped the store's `error` (it wasn't even a field
+  on `DrawerUiState`), so a network failure rendered "No storages yet" — indistinguishable from a real
+  empty account, and pull-to-refresh failures vanished silently. Added `error` to `DrawerUiState`, mapped
+  it, and gated the empty text on `error == null`, rendering a failure through the existing `ErrorRetry`
+  (Assertive live region + retry). Added a `DrawerViewModel` error-path unit test.
 - ✅ `2026-07-04` — **ForgotPasswordViewModel unit test** (gap analysis T21, found in the final
   completeness scan). A coverage sweep showed it was the only one of 16 ViewModels without a unit test,
   despite real `submit()` loading→sent/error logic on a security-adjacent flow. Added
