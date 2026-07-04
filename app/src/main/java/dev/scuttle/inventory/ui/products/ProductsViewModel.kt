@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import dev.scuttle.inventory.data.error.toUserMessage
 import javax.inject.Inject
 
 data class MoveTarget(
@@ -110,6 +111,9 @@ class ProductsViewModel @Inject constructor(
 
     // --- Local view controls (filter + sort) ---
 
+    /** Clears the error after it's been shown once (e.g. surfaced as a Snackbar). */
+    fun consumeError() = _state.update { it.copy(error = null) }
+
     fun onFilterQueryChange(value: String) = _state.update { it.copy(filterQuery = value.take(50)) }
 
     fun toggleMandatoryOnly() = _state.update { it.copy(mandatoryOnly = !it.mandatoryOnly) }
@@ -168,7 +172,7 @@ class ProductsViewModel @Inject constructor(
             runCatching { productRepository.delete(h, s, productId) }
                 .onSuccess { hierarchyStore.refresh() }
                 .onFailure { error ->
-                    _state.update { it.copy(error = error.message ?: "Failed to delete product.") }
+                    _state.update { it.copy(error = error.toUserMessage("Failed to delete product.")) }
                     refresh()
                 }
         }
@@ -199,7 +203,7 @@ class ProductsViewModel @Inject constructor(
             _state.update { state ->
                 result.fold(
                     onSuccess = { targets -> state.copy(loading = false, moveTargets = targets) },
-                    onFailure = { e -> state.copy(loading = false, error = e.message ?: "Couldn't load shelves.", movingProductId = null, moveTargets = emptyList()) },
+                    onFailure = { e -> state.copy(loading = false, error = e.toUserMessage("Couldn't load shelves."), movingProductId = null, moveTargets = emptyList()) },
                 )
             }
         }
@@ -244,7 +248,7 @@ class ProductsViewModel @Inject constructor(
             _state.update { state ->
                 result.fold(
                     onSuccess = { state.copy(loading = false) },
-                    onFailure = { error -> state.copy(loading = false, error = error.message ?: "Something went wrong.") },
+                    onFailure = { error -> state.copy(loading = false, error = error.toUserMessage("Something went wrong.")) },
                 )
             }
         }

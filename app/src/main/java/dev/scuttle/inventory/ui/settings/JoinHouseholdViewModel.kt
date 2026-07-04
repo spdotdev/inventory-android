@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import dev.scuttle.inventory.data.error.toUserMessage
 import javax.inject.Inject
 
 data class JoinUiState(
@@ -37,7 +38,7 @@ class JoinHouseholdViewModel @Inject constructor(
             _state.update { state ->
                 result.fold(
                     onSuccess = { state.copy(loading = false, code = "", success = true) },
-                    onFailure = { e -> state.copy(loading = false, error = e.message ?: "Failed to join.") },
+                    onFailure = { e -> state.copy(loading = false, error = e.toUserMessage("Failed to join.")) },
                 )
             }
         }

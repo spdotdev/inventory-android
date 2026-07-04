@@ -40,6 +40,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -64,7 +65,7 @@ fun HouseholdsScreen(
 ) {
     val state by viewModel.state.collectAsState()
     var confirmLeaveId by remember { mutableStateOf<Long?>(null) }
-    var showCreateSheet by remember { mutableStateOf(false) }
+    var showCreateSheet by rememberSaveable { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -90,7 +91,7 @@ fun HouseholdsScreen(
         },
     ) { padding ->
         PullToRefreshBox(
-            isRefreshing = state.loading,
+            isRefreshing = state.refreshing,
             onRefresh = viewModel::refresh,
             modifier = Modifier
                 .fillMaxSize()

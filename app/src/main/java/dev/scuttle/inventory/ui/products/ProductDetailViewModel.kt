@@ -12,10 +12,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import dev.scuttle.inventory.data.error.toUserMessage
 import javax.inject.Inject
 
 data class ProductDetailUiState(
     val loading: Boolean = false,
+    // Only load() (the pull-to-refresh target) flips this; save/upload/delete use
+    // `loading` alone, so the pull spinner doesn't fire on those mutations.
+    val refreshing: Boolean = false,
     val product: ProductDto? = null,
     val error: String? = null,
     val saved: Boolean = false,
@@ -55,13 +59,13 @@ class ProductDetailViewModel @Inject constructor(
     fun load() {
         if (householdId == -1L || shelfId == -1L || productId == -1L) return
         viewModelScope.launch {
-            _state.update { it.copy(loading = true, error = null) }
+            _state.update { it.copy(loading = true, refreshing = true, error = null) }
             runCatching { repository.list(householdId, shelfId) }
                 .onSuccess { products ->
-                    _state.update { it.copy(loading = false, product = products.find { p -> p.id == productId }) }
+                    _state.update { it.copy(loading = false, refreshing = false, product = products.find { p -> p.id == productId }) }
                 }
                 .onFailure { e ->
-                    _state.update { it.copy(loading = false, error = e.message ?: "Failed to load product.") }
+                    _state.update { it.copy(loading = false, refreshing = false, error = e.toUserMessage("Failed to load product.")) }
                 }
         }
     }
@@ -74,7 +78,7 @@ class ProductDetailViewModel @Inject constructor(
             }.onSuccess { updated ->
                 _state.update { it.copy(loading = false, product = updated, saved = true) }
             }.onFailure { e ->
-                _state.update { it.copy(loading = false, error = e.message ?: "Failed to save.") }
+                _state.update { it.copy(loading = false, error = e.toUserMessage("Failed to save.")) }
             }
         }
     }
@@ -87,7 +91,7 @@ class ProductDetailViewModel @Inject constructor(
             }.onSuccess { updated ->
                 _state.update { it.copy(loading = false, product = updated) }
             }.onFailure { e ->
-                _state.update { it.copy(loading = false, error = e.message ?: "Failed to upload image.") }
+                _state.update { it.copy(loading = false, error = e.toUserMessage("Failed to upload image.")) }
             }
         }
     }
@@ -97,7 +101,10 @@ class ProductDetailViewModel @Inject constructor(
             _state.update { it.copy(loading = true, error = null) }
             runCatching { repository.delete(householdId, shelfId, productId) }
                 .onSuccess { _state.update { it.copy(loading = false, deleted = true) } }
-                .onFailure { e -> _state.update { it.copy(loading = false, error = e.message ?: "Failed to delete.") } }
+                .onFailure { e -> _state.update { it.copy(loading = false, error = e.toUserMessage("Failed to delete.")) } }
         }
     }
+
+    /** Clears the error after it's been shown once (e.g. surfaced as a Snackbar). */
+    fun consumeError() = _state.update { it.copy(error = null) }
 }

@@ -54,6 +54,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,6 +67,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.dto.LocationDto
+import dev.scuttle.inventory.ui.common.ErrorRetry
+import dev.scuttle.inventory.ui.common.storageTypeLabel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -79,7 +82,7 @@ fun StorageOverviewScreen(
     viewModel: StorageOverviewViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
-    var showAddSheet by remember { mutableStateOf(false) }
+    var showAddSheet by rememberSaveable { mutableStateOf(false) }
     var pendingDeleteLocation by remember { mutableStateOf<LocationDto?>(null) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -116,7 +119,7 @@ fun StorageOverviewScreen(
         },
     ) { padding ->
         PullToRefreshBox(
-            isRefreshing = state.loading,
+            isRefreshing = state.refreshing,
             onRefresh = viewModel::refresh,
             modifier = Modifier
                 .fillMaxSize()
@@ -137,7 +140,7 @@ fun StorageOverviewScreen(
             }
 
             state.error?.let {
-                Text(text = it, color = MaterialTheme.colorScheme.error)
+                ErrorRetry(message = it, onRetry = viewModel::refresh)
             }
 
             if (state.locations.isEmpty() && !state.loading) {
@@ -190,7 +193,7 @@ fun StorageOverviewScreen(
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
                                 Text(text = location.name, style = MaterialTheme.typography.bodyLarge)
-                                Text(text = location.type, style = MaterialTheme.typography.bodySmall)
+                                Text(text = storageTypeLabel(location.type), style = MaterialTheme.typography.bodySmall)
                             }
                         }
                     }
@@ -242,7 +245,7 @@ fun StorageOverviewScreen(
                         FilterChip(
                             selected = state.newType == type,
                             onClick = { viewModel.onTypeSelect(type) },
-                            label = { Text(type) },
+                            label = { Text(storageTypeLabel(type)) },
                         )
                     }
                 }

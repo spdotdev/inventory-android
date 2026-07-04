@@ -11,10 +11,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import dev.scuttle.inventory.data.error.toUserMessage
 import javax.inject.Inject
 
 data class ShelvesUiState(
     val loading: Boolean = false,
+    // Only a user-initiated refresh() flips this; create/delete use `loading` alone,
+    // so the pull-to-refresh spinner doesn't fire on mutations.
+    val refreshing: Boolean = false,
     val shelves: List<ShelfDto> = emptyList(),
     val newName: String = "",
     val error: String? = null,
@@ -56,7 +60,7 @@ class ShelvesViewModel @Inject constructor(
     fun refresh() {
         val h = householdId ?: return
         val l = locationId ?: return
-        launchLoading {
+        launchLoading(refreshing = true) {
             val shelves = repository.list(h, l)
             _state.update { it.copy(shelves = shelves) }
         }
@@ -103,15 +107,15 @@ class ShelvesViewModel @Inject constructor(
         }
     }
 
-    private fun launchLoading(block: suspend () -> Unit) {
+    private fun launchLoading(refreshing: Boolean = false, block: suspend () -> Unit) {
         viewModelScope.launch {
-            _state.update { it.copy(loading = true, error = null) }
+            _state.update { it.copy(loading = true, refreshing = refreshing, error = null) }
             val result = runCatching { block() }
             result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
             _state.update { state ->
                 result.fold(
-                    onSuccess = { state.copy(loading = false) },
-                    onFailure = { error -> state.copy(loading = false, error = error.message ?: "Something went wrong.") },
+                    onSuccess = { state.copy(loading = false, refreshing = false) },
+                    onFailure = { error -> state.copy(loading = false, refreshing = false, error = error.toUserMessage("Something went wrong.")) },
                 )
             }
         }

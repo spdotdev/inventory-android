@@ -24,6 +24,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
@@ -52,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.dto.ProductDto
+import dev.scuttle.inventory.ui.common.SnackbarErrorEffect
 import dev.scuttle.inventory.ui.common.SortMenu
 import dev.scuttle.inventory.ui.theme.FrostCard
 
@@ -60,6 +62,7 @@ import dev.scuttle.inventory.ui.theme.FrostCard
 fun ProductsPane(
     householdId: Long,
     shelfId: Long,
+    snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
     refreshKey: Int = 0,
     onOpenProduct: (ProductDto) -> Unit = {},
@@ -68,6 +71,11 @@ fun ProductsPane(
 ) {
     val state by viewModel.state.collectAsState()
     var pendingDeleteId by remember { mutableStateOf<Long?>(null) }
+
+    // One-shot action errors (add/remove/move/delete) surface as a transient Snackbar
+    // hosted by LocationDetailScreen's Scaffold, then are consumed so they don't re-fire
+    // or re-announce. Material3's Snackbar is itself a live region (a11y).
+    SnackbarErrorEffect(state.error, snackbarHostState, onConsumed = viewModel::consumeError)
 
     val lifecycleOwner = LocalLifecycleOwner.current
     LaunchedEffect(lifecycleOwner, householdId, shelfId, refreshKey) {
@@ -97,9 +105,8 @@ fun ProductsPane(
             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
         }
 
-        state.error?.let {
-            Text(text = it, color = MaterialTheme.colorScheme.error)
-        }
+        // Errors are shown via the Scaffold's Snackbar (SnackbarErrorEffect above),
+        // which TalkBack announces — no sticky, silent inline error text.
 
         if (state.products.isNotEmpty()) {
             OutlinedTextField(

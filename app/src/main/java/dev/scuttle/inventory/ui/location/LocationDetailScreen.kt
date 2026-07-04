@@ -39,6 +39,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -53,6 +55,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -88,8 +91,8 @@ fun LocationDetailScreen(
     val currentPage = pagerState.currentPage.coerceAtMost((state.shelves.size - 1).coerceAtLeast(0))
     val currentShelfId = state.shelves.getOrNull(currentPage)?.id
 
-    var showAddShelfSheet by remember { mutableStateOf(false) }
-    var showAddProductSheet by remember { mutableStateOf(false) }
+    var showAddShelfSheet by rememberSaveable { mutableStateOf(false) }
+    var showAddProductSheet by rememberSaveable { mutableStateOf(false) }
     var productsRefreshKey by remember { mutableIntStateOf(0) }
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -100,10 +103,14 @@ fun LocationDetailScreen(
         shelvesViewModel.load(householdId, locationId)
     }
 
+    // Hosts one-shot action errors from the ProductsPane(s) below.
+    val snackbarHostState = remember { SnackbarHostState() }
+
     val statusBarInsets = WindowInsets.statusBars
     Scaffold(
         contentWindowInsets = WindowInsets(0),
         modifier = modifier,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 windowInsets = statusBarInsets,
@@ -161,7 +168,7 @@ fun LocationDetailScreen(
         },
     ) { padding ->
         PullToRefreshBox(
-            isRefreshing = state.loading,
+            isRefreshing = state.refreshing,
             onRefresh = {
                 shelvesViewModel.refresh()
                 productsRefreshKey++
@@ -251,6 +258,7 @@ fun LocationDetailScreen(
                     ProductsPane(
                         householdId = householdId,
                         shelfId = shelf.id,
+                        snackbarHostState = snackbarHostState,
                         onOpenProduct = { product -> onOpenProduct(householdId, product.shelf_id, product.id) },
                         onWarningChange = { hasWarning ->
                             shelfWarnings = shelfWarnings + (shelf.id to hasWarning)

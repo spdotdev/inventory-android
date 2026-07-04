@@ -32,6 +32,7 @@
     <!-- Global actions -->
     <string name="action_open_menu">Open menu</string>
     <string name="action_refresh">Refresh</string>
+    <string name="action_retry">Retry</string>
     <string name="action_back">Back</string>
     <string name="action_cancel">Cancel</string>
     <string name="action_delete">Delete</string>
@@ -157,6 +158,12 @@
     <string name="add_storage_sheet_title">Add storage</string>
     <string name="add_storage_type_label">Type</string>
     <string name="add_storage_name_field">Name</string>
+
+    <!-- Storage location types (display only; the raw enum stays on the wire) -->
+    <string name="storage_type_freezer">Freezer</string>
+    <string name="storage_type_fridge">Fridge</string>
+    <string name="storage_type_pantry">Pantry</string>
+    <string name="storage_type_other">Other</string>
 
     <!-- Drawer -->
     <string name="drawer_all_storage">All storage</string>

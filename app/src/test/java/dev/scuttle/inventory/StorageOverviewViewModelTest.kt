@@ -13,6 +13,7 @@ import dev.scuttle.inventory.data.shelf.ShelfRepository
 import dev.scuttle.inventory.ui.storage.StorageOverviewViewModel
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -110,5 +111,56 @@ class StorageOverviewViewModelTest {
         viewModel.load(householdId = 1)
 
         assertEquals("offline", viewModel.state.value.error)
+    }
+
+    /**
+     * T9: the pull-to-refresh spinner (`refreshing`) must fire only on a user
+     * refresh, not on mutations. A gated repo lets us inspect the in-flight state:
+     * create() should show `loading` without `refreshing`, refresh() should show both.
+     */
+    @Test
+    fun refresh_flags_the_pull_spinner_but_create_does_not() = runTest {
+        val gate = GatedLocationRepository()
+        val viewModel = StorageOverviewViewModel(gate, emptyStore())
+        gate.release() // let the initial cache-miss load settle
+        viewModel.load(householdId = 1)
+        gate.reset()
+
+        // A mutation is in flight: generic loading is on, the pull spinner is not.
+        viewModel.onNewNameChange("Pantry")
+        viewModel.create()
+        assertTrue("mutation should set loading", viewModel.state.value.loading)
+        assertFalse("mutation must NOT set the pull spinner", viewModel.state.value.refreshing)
+        gate.release()
+        assertFalse(viewModel.state.value.refreshing)
+
+        // A user refresh is in flight: the pull spinner is on.
+        gate.reset()
+        viewModel.refresh()
+        assertTrue("refresh should set the pull spinner", viewModel.state.value.refreshing)
+        gate.release()
+        assertFalse(viewModel.state.value.refreshing)
+    }
+
+    /** A LocationRepository whose suspend calls block on a gate until released. */
+    private class GatedLocationRepository : LocationRepository {
+        private var gate = kotlinx.coroutines.CompletableDeferred<Unit>()
+
+        fun reset() { gate = kotlinx.coroutines.CompletableDeferred() }
+        fun release() { if (!gate.isCompleted) gate.complete(Unit) }
+
+        override fun getCached(householdId: Long): List<LocationDto>? = null
+
+        override suspend fun list(householdId: Long): List<LocationDto> {
+            gate.await()
+            return emptyList()
+        }
+
+        override suspend fun create(householdId: Long, name: String, type: String): LocationDto {
+            gate.await()
+            return LocationDto(id = 1, name = name, type = type)
+        }
+
+        override suspend fun delete(householdId: Long, locationId: Long) = gate.await()
     }
 }

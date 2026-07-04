@@ -35,6 +35,8 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -57,6 +59,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import dev.scuttle.inventory.R
+import dev.scuttle.inventory.ui.common.SnackbarErrorEffect
 import java.io.File
 import java.util.UUID
 
@@ -81,7 +84,7 @@ fun ProductDetailScreen(
     var code by rememberSaveable(product?.id) { mutableStateOf(product?.code ?: "") }
     var isMandatory by rememberSaveable(product?.id) { mutableStateOf(product?.is_mandatory ?: false) }
     var localImageUri by remember { mutableStateOf<Uri?>(null) }
-    var showDeleteConfirm by remember { mutableStateOf(false) }
+    var showDeleteConfirm by rememberSaveable { mutableStateOf(false) }
 
     // Re-seed fields once the product loads
     LaunchedEffect(product?.id) {
@@ -112,10 +115,17 @@ fun ProductDetailScreen(
         }
     }
 
+    // One-shot action errors (save/upload/delete) surface as a transient Snackbar,
+    // then are consumed so they don't re-announce; load errors still let the user
+    // pull-to-refresh to retry.
+    val snackbarHostState = remember { SnackbarHostState() }
+    SnackbarErrorEffect(state.error, snackbarHostState, onConsumed = viewModel::consumeError)
+
     val statusBarInsets = WindowInsets.statusBars
     Scaffold(
         contentWindowInsets = WindowInsets(0),
         modifier = modifier.testTag("product_detail_screen"),
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 windowInsets = statusBarInsets,
@@ -142,7 +152,7 @@ fun ProductDetailScreen(
         },
     ) { padding ->
         PullToRefreshBox(
-            isRefreshing = state.loading,
+            isRefreshing = state.refreshing,
             onRefresh = viewModel::load,
             modifier = Modifier
                 .fillMaxSize()
@@ -158,9 +168,7 @@ fun ProductDetailScreen(
         ) {
             if (state.loading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
 
-            state.error?.let {
-                Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-            }
+            // Errors are shown via the Scaffold's Snackbar (SnackbarErrorEffect above).
 
             // Image section
             Box(

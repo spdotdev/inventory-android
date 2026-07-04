@@ -27,10 +27,12 @@
     <string name="dashboard_tap_to_restock">Tik om te zien wat aangevuld moet worden</string>
     <string name="dashboard_products_by_location">Producten per locatie</string>
     <string name="dashboard_favorite_locations">Favoriete locaties</string>
+    <string name="dashboard_favorite_shelves">Favoriete planken</string>
 
     <!-- Global actions -->
     <string name="action_open_menu">Menu openen</string>
     <string name="action_refresh">Vernieuwen</string>
+    <string name="action_retry">Opnieuw</string>
     <string name="action_back">Terug</string>
     <string name="action_cancel">Annuleren</string>
     <string name="action_delete">Verwijderen</string>
@@ -110,6 +112,7 @@
     <string name="products_pane_filter_mandatory">Verplicht</string>
     <string name="products_pane_filter_out_of_stock">Niet op voorraad</string>
     <string name="products_pane_no_match">Geen producten komen overeen met je filter.</string>
+    <string name="products_pane_swipe_hint">← Veeg een product naar links om te verwijderen</string>
 
     <!-- Sorteren (gedeeld: producten + zoeken) -->
     <string name="sort_label">Sorteren: %s</string>
@@ -156,6 +159,12 @@
     <string name="add_storage_type_label">Type</string>
     <string name="add_storage_name_field">Naam</string>
 
+    <!-- Storage location types (display only; the raw enum stays on the wire) -->
+    <string name="storage_type_freezer">Vriezer</string>
+    <string name="storage_type_fridge">Koelkast</string>
+    <string name="storage_type_pantry">Voorraadkast</string>
+    <string name="storage_type_other">Overig</string>
+
     <!-- Drawer -->
     <string name="drawer_all_storage">Alle opslag</string>
     <string name="drawer_dashboard">Dashboard</string>
@@ -164,6 +173,7 @@
     <string name="drawer_missing_items">Ontbrekende artikelen</string>
     <string name="drawer_missing_items_count">Ontbrekende artikelen · %d</string>
     <string name="drawer_settings">Instellingen</string>
+    <string name="drawer_no_households_hint">Nog geen huishoudens. Ga naar Instellingen om er een aan te maken of deel te nemen met een uitnodigingscode.</string>
 
     <!-- Invite -->
     <string name="invite_title">Uitnodigen voor huishouden</string>

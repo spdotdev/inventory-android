@@ -2,9 +2,12 @@
 
 Android client for the **Inventory** product.
 
-> Status: **project skeleton** — single-activity Jetpack Compose app (Gradle 8.9, AGP 8.5.2,
-> Kotlin 2.0.20) with the Frost theme and a unit test. DI (Hilt), networking (Retrofit), and
-> the auth/inventory screens land next — see [`ROADMAP.md`](ROADMAP.md).
+> Status: **functionally-complete MVP, CI-green** — single-activity Jetpack Compose app
+> (Gradle 8.9, AGP 8.5.2, Kotlin 2.0.20) on the Frost theme, with Hilt DI and Retrofit
+> networking. Auth (email/password + Google), storage/shelves/products (add/remove/move,
+> detail, image), search, invite (QR/join), settings, dashboard, and missing-items are all
+> built, in EN + NL, covered by unit tests + nightly instrumented flow tests. See
+> [`ROADMAP.md`](ROADMAP.md) for what's next and [`BACKLOG.md`](BACKLOG.md) for shipped history.
 
 ## Build
 

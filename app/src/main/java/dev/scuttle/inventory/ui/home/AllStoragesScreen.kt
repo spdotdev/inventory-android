@@ -53,6 +53,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
+import dev.scuttle.inventory.ui.common.storageTypeLabel
 import dev.scuttle.inventory.data.dto.LocationDto
 import dev.scuttle.inventory.ui.app.DrawerViewModel
 import dev.scuttle.inventory.data.HouseholdWithLocations
@@ -94,7 +95,7 @@ fun AllStoragesScreen(
         },
     ) { padding ->
         PullToRefreshBox(
-            isRefreshing = state.loading,
+            isRefreshing = state.refreshing,
             onRefresh = { viewModel.refresh() },
             modifier = Modifier
                 .fillMaxSize()
@@ -178,7 +179,7 @@ fun AllStoragesScreen(
                                             Text(location.name, style = MaterialTheme.typography.bodyLarge)
                                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                                 Text(
-                                                    location.type,
+                                                    storageTypeLabel(location.type),
                                                     style = MaterialTheme.typography.bodySmall,
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                 )

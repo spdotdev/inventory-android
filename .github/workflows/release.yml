@@ -32,6 +32,18 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      # No signing secret → fail loudly with a clear message rather than a cryptic
+      # keystore error. A release genuinely needs the keystore, so this is fatal
+      # (unlike the CI APK step, which is optional and skipped on fork PRs).
+      - name: Require signing secret
+        env:
+          DEBUG_KEYSTORE_B64: ${{ secrets.DEBUG_KEYSTORE_B64 }}
+        run: |
+          if [ -z "$DEBUG_KEYSTORE_B64" ]; then
+            echo "::error::DEBUG_KEYSTORE_B64 is not set — a release build needs the signing keystore."
+            exit 1
+          fi
+
       - name: Restore debug keystore
         env:
           DEBUG_KEYSTORE_B64: ${{ secrets.DEBUG_KEYSTORE_B64 }}
@@ -46,8 +58,15 @@ jobs:
           DEBUG_KEY_ALIAS: ${{ secrets.DEBUG_KEY_ALIAS }}
           DEBUG_KEY_PASSWORD: ${{ secrets.DEBUG_KEY_PASSWORD }}
 
-      - name: Create GitHub Release
+      # This attaches a DEBUG-signed APK, not a Play-ready release. Mark it a
+      # prerelease and say so in the notes, so nobody mistakes it for a production
+      # build. Real release signing + AAB is tracked in ROADMAP.
+      - name: Create GitHub Release (preview)
         uses: softprops/action-gh-release@v2
         with:
           files: app/build/outputs/apk/debug/app-debug.apk
           generate_release_notes: true
+          prerelease: true
+          body: |
+            ⚠️ **Preview build** — this is a **debug-signed** `app-debug.apk` for testing,
+            not a Play-ready release. Production release signing + AAB is tracked in `ROADMAP.md`.

@@ -98,8 +98,12 @@ dependencies {
     // Secure token storage
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
-    // Google Sign-In
-    implementation("com.google.android.gms:play-services-auth:21.2.0")
+    // Google Sign-In via Jetpack Credential Manager (replaces the deprecated
+    // com.google.android.gms:play-services-auth GoogleSignIn API). credentials-play-services-auth
+    // provides the Play Services backend; googleid supplies GetGoogleIdOption + GoogleIdTokenCredential.
+    implementation("androidx.credentials:credentials:1.3.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
 
     // QR generation for household invites (pure-Java, no Android deps)
     implementation("com.google.zxing:core:3.5.3")

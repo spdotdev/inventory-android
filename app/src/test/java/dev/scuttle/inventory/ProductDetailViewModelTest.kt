@@ -157,4 +157,18 @@ class ProductDetailViewModelTest {
         assertFalse(vm.state.value.deleted)
         assertNotNull(vm.state.value.error)
     }
+
+    @Test
+    fun consumeError_clears_the_one_shot_error_after_it_is_shown() = runTest {
+        val product = ProductDto(id = 1, name = "Milk", quantity = 2, shelf_id = 1)
+        val repo = FakeProductRepository(listOf(product)).apply { failUpdate = true }
+        val vm = ProductDetailViewModel(savedState(), repo)
+
+        vm.save("Oat Milk", null, null, false)
+        assertNotNull(vm.state.value.error)
+
+        // After the Snackbar has shown it, the error is consumed so it doesn't re-fire.
+        vm.consumeError()
+        assertNull(vm.state.value.error)
+    }
 }

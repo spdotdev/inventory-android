@@ -59,9 +59,11 @@ Detailed build order: [`CLAUDE.md`](CLAUDE.md) and [`docs/android-plan.md`](docs
   Space Mono (shipped 2026-06-24, CI-green).
 
 ### DEFERRED (need a decision or external dependency)
-- [ ] **Native Google Sign-In** — wire Credential Manager → Google ID token →
-  `AuthRepository.loginWithGoogle` (the API path + button are in place). Needs a real Google
-  OAuth client ID configured.
+- [ ] **Google Sign-In device smoke-test (release gate)** — the Credential Manager migration
+  (gap T19) is implemented and compiles in CI, but the live Google handshake (account picker →
+  ID token → `loginWithGoogle`) can't be exercised by CI or JVM tests. Before any release,
+  manually verify sign-in on a device/emulator **with Play Services** and a configured Google
+  OAuth client ID.
 - [ ] **ktlint/detekt** style gating in CI — its own pass (kept out of the auth pass to
   avoid blind style churn while the codebase is moving fast).
 

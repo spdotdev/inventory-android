@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import dev.scuttle.inventory.data.error.toUserMessage
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -45,6 +46,10 @@ data class MissingItem(
 
 data class HierarchyState(
     val loading: Boolean = false,
+    // Distinct from `loading`: true only during a user-initiated pull-to-refresh /
+    // refresh-button reload, so the pull indicator doesn't spin on a post-mutation
+    // silent reload. Drives PullToRefreshBox.isRefreshing (D-008).
+    val refreshing: Boolean = false,
     val error: String? = null,
     val entries: List<HouseholdWithLocations> = emptyList(),
     val missingItems: List<MissingItem> = emptyList(),
@@ -109,17 +114,24 @@ class HierarchyStore @Inject constructor(
         }
     }
 
-    fun refresh() {
+    /**
+     * @param userInitiated true when the user pulled to refresh or tapped refresh —
+     *   flips `refreshing` so the pull indicator spins. A post-mutation reload passes
+     *   false: the list still reloads (`loading`), but the pull indicator stays put.
+     */
+    fun refresh(userInitiated: Boolean = false) {
         activeJob?.cancel()
-        _state.update { it.copy(loading = true, error = null) }
+        _state.update { it.copy(loading = true, refreshing = userInitiated, error = null) }
         loadFromCache()
         activeJob = scope.launch {
             runCatching {
                 val households = householdRepository.list()
                 buildFromNetwork(households)
             }.fold(
+                // buildFromNetwork returns a fresh state with loading/refreshing at their
+                // false defaults, so both indicators clear on success.
                 onSuccess = { update -> _state.update { s -> update.copy(locationWarnings = s.locationWarnings) } },
-                onFailure = { e -> _state.update { it.copy(loading = false, error = e.message ?: "Failed to load.") } },
+                onFailure = { e -> _state.update { it.copy(loading = false, refreshing = false, error = e.toUserMessage("Failed to load.")) } },
             )
         }
     }

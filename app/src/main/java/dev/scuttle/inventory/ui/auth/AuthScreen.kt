@@ -1,7 +1,5 @@
 package dev.scuttle.inventory.ui.auth
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -24,8 +22,13 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import android.util.Log
@@ -36,11 +39,17 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.google.android.gms.common.api.ApiException
+import androidx.credentials.CredentialManager
+import androidx.credentials.CustomCredential
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialCancellationException
+import androidx.credentials.exceptions.GetCredentialException
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import dev.scuttle.inventory.BuildConfig
 import dev.scuttle.inventory.R
+import kotlinx.coroutines.launch
 
 @Composable
 fun AuthScreen(
@@ -53,36 +62,46 @@ fun AuthScreen(
     val keyboardController = LocalSoftwareKeyboardController.current
     val context = LocalContext.current
 
-    val googleSignInLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-        try {
-            val account = task.getResult(ApiException::class.java)
-            val idToken = account?.idToken
-            if (idToken != null) {
-                viewModel.loginWithGoogle(idToken)
-            } else {
-                viewModel.onGoogleError("No ID token returned from Google.")
-            }
-        } catch (e: ApiException) {
-            Log.e("GoogleSignIn", "ApiException statusCode=${e.statusCode} message=${e.message}", e)
-            if (e.statusCode != 12501) { // 12501 = user cancelled
-                viewModel.onGoogleError("Google sign-in failed (${e.statusCode}).")
-            } else {
-                viewModel.onGoogleError(null)
-            }
-        }
-    }
+    // Google sign-in via Jetpack Credential Manager (per CLAUDE.md) — replaces the
+    // deprecated GMS GoogleSignIn API. Credential Manager renders its own account
+    // picker; on success we pull the same Google **ID token** and hand it to the
+    // unchanged loginWithGoogle path (server verifies it via GoogleIdTokenVerifier).
+    val scope = rememberCoroutineScope()
+    val credentialManager = remember(context) { CredentialManager.create(context) }
 
     fun launchGoogleSignIn() {
-        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(BuildConfig.GOOGLE_CLIENT_ID)
-            .requestEmail()
+        viewModel.onGoogleLoading()
+        val googleIdOption = GetGoogleIdOption.Builder()
+            .setServerClientId(BuildConfig.GOOGLE_CLIENT_ID)
+            // Show all accounts, not just previously-authorized ones, so first-time
+            // sign-in works without a prior grant.
+            .setFilterByAuthorizedAccounts(false)
             .build()
-        val client = GoogleSignIn.getClient(context, gso)
-        client.signOut().addOnCompleteListener {
-            googleSignInLauncher.launch(client.signInIntent)
+        val request = GetCredentialRequest.Builder()
+            .addCredentialOption(googleIdOption)
+            .build()
+
+        scope.launch {
+            try {
+                val response = credentialManager.getCredential(context, request)
+                val credential = response.credential
+                if (credential is CustomCredential &&
+                    credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
+                ) {
+                    val googleCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                    viewModel.loginWithGoogle(googleCredential.idToken)
+                } else {
+                    viewModel.onGoogleError("Unexpected credential type from Google.")
+                }
+            } catch (e: GetCredentialCancellationException) {
+                viewModel.onGoogleError(null) // user dismissed the picker — not an error
+            } catch (e: GoogleIdTokenParsingException) {
+                Log.e("GoogleSignIn", "Failed to parse Google ID token", e)
+                viewModel.onGoogleError("Google sign-in failed. Please try again.")
+            } catch (e: GetCredentialException) {
+                Log.e("GoogleSignIn", "getCredential failed", e)
+                viewModel.onGoogleError("Google sign-in failed. Please try again.")
+            }
         }
     }
 
@@ -140,7 +159,11 @@ fun AuthScreen(
         )
 
         state.error?.let {
-            Text(text = it, color = MaterialTheme.colorScheme.error)
+            Text(
+                text = it,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Assertive },
+            )
         }
 
         Button(

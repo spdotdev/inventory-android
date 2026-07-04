@@ -56,7 +56,27 @@ jobs:
       - name: Unit tests
         run: ./gradlew testDebugUnitTest
 
+      - name: Android lint
+        run: ./gradlew lint
+
+      # The debug build signs with a keystore restored from a secret. Fork PRs run
+      # without secrets, so the APK steps below are gated on the secret being present
+      # — a fork PR still gets unit tests + lint (the real gates) and goes green,
+      # instead of red-failing on missing signing infra it can never have.
+      - name: Check for signing secret
+        id: signing
+        env:
+          DEBUG_KEYSTORE_B64: ${{ secrets.DEBUG_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$DEBUG_KEYSTORE_B64" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false — skipping APK build (fork PR / no secret)"
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Restore debug keystore
+        if: steps.signing.outputs.available == 'true'
         env:
           DEBUG_KEYSTORE_B64: ${{ secrets.DEBUG_KEYSTORE_B64 }}
         run: |
@@ -64,18 +84,17 @@ jobs:
           echo "$DEBUG_KEYSTORE_B64" | base64 -d > ~/.android/inventory-debug.jks
 
       - name: Build debug APK
+        if: steps.signing.outputs.available == 'true'
         run: ./gradlew assembleDebug
         env:
           DEBUG_KEYSTORE_PASSWORD: ${{ secrets.DEBUG_KEYSTORE_PASSWORD }}
           DEBUG_KEY_ALIAS: ${{ secrets.DEBUG_KEY_ALIAS }}
           DEBUG_KEY_PASSWORD: ${{ secrets.DEBUG_KEY_PASSWORD }}
 
-      - name: Upload debug APK
+      - name: Upload debug APK (preview)
+        if: steps.signing.outputs.available == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug
+          name: app-debug-preview
           path: app/build/outputs/apk/debug/app-debug.apk
           retention-days: 7
-
-      - name: Android lint
-        run: ./gradlew lint

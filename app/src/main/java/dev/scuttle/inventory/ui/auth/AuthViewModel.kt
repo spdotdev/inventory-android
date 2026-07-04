@@ -8,9 +8,11 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
+import java.io.IOException
 import javax.inject.Inject
 
 enum class AuthMode { LOGIN, REGISTER }
@@ -34,6 +36,17 @@ class AuthViewModel @Inject constructor(
 
     private val _state = MutableStateFlow(AuthUiState(authenticated = repository.isAuthenticated()))
     val state: StateFlow<AuthUiState> = _state.asStateFlow()
+
+    init {
+        // React to a mid-session token loss (a 401 clears the token off the UI
+        // thread): flip authenticated=false so MainActivity redirects to login,
+        // instead of leaving the user on authed screens where every call 401s.
+        viewModelScope.launch {
+            repository.sessionActive.collect { active ->
+                if (!active) _state.update { it.copy(authenticated = false) }
+            }
+        }
+    }
 
     fun onNameChange(value: String) = _state.update { it.copy(name = value, error = null) }
 
@@ -86,6 +99,7 @@ class AuthViewModel @Inject constructor(
     }
 
     private fun Throwable.toAuthErrorMessage(mode: AuthMode): String = when {
+        this is IOException -> "Can't reach the server. Check your connection and try again."
         this is HttpException -> when (code()) {
             401 -> "Incorrect email or password."
             409 -> "An account with this email already exists."
@@ -97,6 +111,7 @@ class AuthViewModel @Inject constructor(
     }
 
     private fun Throwable.toGoogleAuthErrorMessage(): String = when {
+        this is IOException -> "Can't reach the server. Check your connection and try again."
         this is HttpException -> when (code()) {
             401 -> "Google sign-in failed. Please try again."
             in 500..599 -> "Server error. Please try again later."

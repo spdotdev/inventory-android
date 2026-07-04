@@ -15,6 +15,8 @@ class AuthRepositoryImpl @Inject constructor(
 
     override fun isAuthenticated(): Boolean = tokenStore.get() != null
 
+    override val sessionActive = tokenStore.authState
+
     override suspend fun register(name: String, email: String, password: String) {
         val response = api.register(RegisterRequest(name = name, email = email, password = password))
         tokenStore.set(response.token)
