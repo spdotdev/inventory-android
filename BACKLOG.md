@@ -45,6 +45,17 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-07-04` — **Config-change / process-death polish** (gap analysis T13). Two fixes. (1) Dialog &
+  sheet visibility flags were bare `remember{}`, so an open add-sheet / delete-confirm / sign-out dialog
+  vanished on rotation — converted to `rememberSaveable` (StorageOverview, LocationDetail ×2, Households,
+  ProductDetail, Settings); left the transient clipboard-`copied` toast and the `SortMenu` dropdown as
+  bare `remember` (persisting those would be wrong). (2) The `MainActivity` auth redirect ran its
+  stack-clearing `popUpTo(graph){inclusive}` on any `authenticated == true` composition, so on
+  process-death restore it bounced the user from wherever they were back to the dashboard. It now fires
+  only on a real login/logout **transition**, decided by a pure `authRedirectFor(previous, current)` +
+  a `rememberSaveable` last-auth marker: on restore `previous == current` → no-op, so the NavController's
+  restored back stack survives. `AuthRedirectTest` covers cold-start / login / logout / restore / no-change.
+  Local Gradle unrunnable here; CI verifies compile + tests.
 - ✅ `2026-07-04` — **Completed the Dutch translation** (gap analysis T12). `values-nl` was missing 3
   keys (`dashboard_favorite_shelves`, `drawer_no_households_hint`, `products_pane_swipe_hint`), so those
   strings fell back to English mid-UI on a Dutch device. Added all three (Favoriete planken / "Nog geen

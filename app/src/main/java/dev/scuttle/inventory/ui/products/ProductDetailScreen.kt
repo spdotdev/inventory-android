@@ -84,7 +84,7 @@ fun ProductDetailScreen(
     var code by rememberSaveable(product?.id) { mutableStateOf(product?.code ?: "") }
     var isMandatory by rememberSaveable(product?.id) { mutableStateOf(product?.is_mandatory ?: false) }
     var localImageUri by remember { mutableStateOf<Uri?>(null) }
-    var showDeleteConfirm by remember { mutableStateOf(false) }
+    var showDeleteConfirm by rememberSaveable { mutableStateOf(false) }
 
     // Re-seed fields once the product loads
     LaunchedEffect(product?.id) {

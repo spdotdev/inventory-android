@@ -18,6 +18,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
@@ -98,6 +100,24 @@ private object Routes {
     fun productDetail(householdId: Long, shelfId: Long, productId: Long) = "product-detail/$householdId/$shelfId/$productId"
 }
 
+/** Where an auth-state change should send the user. */
+enum class AuthRedirect { TO_DASHBOARD, TO_AUTH }
+
+/**
+ * Decides the post-auth redirect from the previous and current authenticated flags.
+ * Returns null when there is **no real transition** — process-death restore
+ * (`previous == current`) or a cold start that's still unauthenticated
+ * (`previous == null && !current`, where AUTH is already the start destination) —
+ * so the restored/initial back stack is left intact. `previous == null` marks the
+ * first composition. Pure + framework-free so it's unit-testable.
+ */
+fun authRedirectFor(previous: Boolean?, current: Boolean): AuthRedirect? = when {
+    previous == current -> null
+    previous == null && !current -> null
+    current -> AuthRedirect.TO_DASHBOARD
+    else -> AuthRedirect.TO_AUTH
+}
+
 @Composable
 private fun InventoryNavHost(
     themeViewModel: ThemeViewModel,
@@ -112,18 +132,29 @@ private fun InventoryNavHost(
     val openDrawer: () -> Unit = { scope.launch { drawerState.open() } }
     val closeDrawer: () -> Unit = { scope.launch { drawerState.close() } }
 
+    // Redirect only on an actual auth *transition* (login / logout), never on a bare
+    // `authenticated == true`. On process-death restore the NavController rehydrates its
+    // own back stack; re-running the stack-clearing navigate() here would throw the user
+    // back to the dashboard from wherever they were. `lastAuth` is saved across death, so
+    // on restore it already equals the current value and authRedirectFor() returns null.
+    // The decision is a pure function (authRedirectFor) so it's unit-testable.
+    var lastAuth by rememberSaveable { mutableStateOf<Boolean?>(null) }
     LaunchedEffect(authState.authenticated) {
-        if (authState.authenticated) {
-            drawerViewModel.refresh()
-            navController.navigate(Routes.DASHBOARD) {
+        val current = authState.authenticated
+        val redirect = authRedirectFor(previous = lastAuth, current = current)
+        lastAuth = current
+
+        if (current) drawerViewModel.refresh()
+        when (redirect) {
+            AuthRedirect.TO_DASHBOARD -> navController.navigate(Routes.DASHBOARD) {
                 popUpTo(navController.graph.id) { inclusive = true }
                 launchSingleTop = true
             }
-        } else {
-            navController.navigate(Routes.AUTH) {
+            AuthRedirect.TO_AUTH -> navController.navigate(Routes.AUTH) {
                 popUpTo(navController.graph.id) { inclusive = true }
                 launchSingleTop = true
             }
+            null -> Unit // no transition — leave the restored back stack intact
         }
     }
 

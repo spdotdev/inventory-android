@@ -53,6 +53,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -88,8 +89,8 @@ fun LocationDetailScreen(
     val currentPage = pagerState.currentPage.coerceAtMost((state.shelves.size - 1).coerceAtLeast(0))
     val currentShelfId = state.shelves.getOrNull(currentPage)?.id
 
-    var showAddShelfSheet by remember { mutableStateOf(false) }
-    var showAddProductSheet by remember { mutableStateOf(false) }
+    var showAddShelfSheet by rememberSaveable { mutableStateOf(false) }
+    var showAddProductSheet by rememberSaveable { mutableStateOf(false) }
     var productsRefreshKey by remember { mutableIntStateOf(0) }
     val keyboardController = LocalSoftwareKeyboardController.current
 
