@@ -1,0 +1,28 @@
+# Dependabot keeps dependencies current and — together with Dependabot alerts +
+# security updates (enabled in repo Settings → Security) — is the real
+# dependency-CVE gate for this Gradle project. GitHub does not populate the
+# Dependency Graph from Gradle build files automatically (unlike Composer's
+# lockfile), so the CI `dependency-review-action` was a fail-open no-op and was
+# removed; Dependabot parses Gradle directly and surfaces vulnerable artifacts.
+version: 2
+updates:
+  # Gradle/Maven artifacts declared in app/build.gradle.kts.
+  - package-ecosystem: gradle
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      # Batch routine version bumps into one PR to keep the queue quiet;
+      # security updates still open on their own for visibility.
+      gradle-minor-and-patch:
+        update-types:
+          - minor
+          - patch
+
+  # Pinned action versions in .github/workflows/*.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
