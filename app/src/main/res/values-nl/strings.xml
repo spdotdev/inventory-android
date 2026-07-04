@@ -157,6 +157,12 @@
     <string name="add_storage_type_label">Type</string>
     <string name="add_storage_name_field">Naam</string>
 
+    <!-- Storage location types (display only; the raw enum stays on the wire) -->
+    <string name="storage_type_freezer">Vriezer</string>
+    <string name="storage_type_fridge">Koelkast</string>
+    <string name="storage_type_pantry">Voorraadkast</string>
+    <string name="storage_type_other">Overig</string>
+
     <!-- Drawer -->
     <string name="drawer_all_storage">Alle opslag</string>
     <string name="drawer_dashboard">Dashboard</string>

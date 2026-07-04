@@ -45,6 +45,14 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-07-04` — **Localized storage-type labels** (gap analysis T11). `location.type` labels and the
+  add-sheet type chips rendered the raw server enum ("freezer"…), English-only even on a Dutch device.
+  Added `storage_type_{freezer,fridge,pantry,other}` to `values/` and `values-nl/` (Vriezer/Koelkast/
+  Voorraadkast/Overig) and a reusable `storageTypeLabel(type)` composable — backed by a pure,
+  JVM-testable `storageTypeLabelRes` — that maps the transport enum to a localized label, with a
+  capitalized-raw fallback so an unknown/future server value never renders blank. Applied at all three
+  render sites; the raw enum still travels on the wire (server-authoritative). Unit test asserts the
+  mapping and that it stays in lockstep with `STORAGE_TYPES`. Local Gradle unrunnable here; CI verifies.
 - ✅ `2026-07-04` — **Accessible error announcements + one-shot Snackbar** (gap analysis T10). Two fixes.
   a11y: error messages were silent to TalkBack — the shared `ErrorRetry` (used across ~9 read screens)
   and the two auth screens' inline error `Text` now carry `semantics { liveRegion = Assertive }`, so a

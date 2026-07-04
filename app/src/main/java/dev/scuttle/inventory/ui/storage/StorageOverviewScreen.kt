@@ -67,6 +67,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.dto.LocationDto
 import dev.scuttle.inventory.ui.common.ErrorRetry
+import dev.scuttle.inventory.ui.common.storageTypeLabel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -191,7 +192,7 @@ fun StorageOverviewScreen(
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
                                 Text(text = location.name, style = MaterialTheme.typography.bodyLarge)
-                                Text(text = location.type, style = MaterialTheme.typography.bodySmall)
+                                Text(text = storageTypeLabel(location.type), style = MaterialTheme.typography.bodySmall)
                             }
                         }
                     }
@@ -243,7 +244,7 @@ fun StorageOverviewScreen(
                         FilterChip(
                             selected = state.newType == type,
                             onClick = { viewModel.onTypeSelect(type) },
-                            label = { Text(type) },
+                            label = { Text(storageTypeLabel(type)) },
                         )
                     }
                 }
