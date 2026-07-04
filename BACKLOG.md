@@ -29,12 +29,25 @@ fast enough in real use, don't build it.
 
 ## Ideas — parking lot
 - 💡 Widget / quick-tile for "what's low" (depends on a low-stock concept — not in MVP).
-- 💡 Per-household color/icon theming on top of Frost.
 - 💡 Q-3: live updates (WebSockets) if pull-to-refresh proves insufficient.
+- 💡 User-chosen per-household color/icon (needs a `theme` field on the household resource —
+  Phase-2 backend change; the deterministic id-derived version already ships, see Done).
 
 ---
 
 ## Done
+- ✅ `2026-07-04` — **Per-household color + icon theming on top of Frost.** Each household gets a
+  stable, distinguishable identity in the UI, derived deterministically from its id — purely
+  visual and client-side, nothing persisted or sent to the API (keeps the server-authoritative
+  rule intact). `ui/theme/HouseholdTheme.kt`: `householdTheme(id)` → an ice-toned accent (8-hue
+  palette that harmonises with Frost light/dark) + a place/storage icon, plus a reusable
+  `HouseholdAvatar` composable (round accent-tinted badge, icon tinted `onSurface` so it stays
+  legible on either theme). The accent and icon use different strides so they don't move in
+  lockstep for small sequential ids. Index math split into a Compose-free `HouseholdThemeIndex.kt`
+  so it's unit-testable on a plain JVM: `HouseholdThemeIndexTest` (bounds, determinism,
+  decorrelation). Wired into the households list cards and the drawer's per-household headers.
+  User-chosen colors/icons deferred (needs a household `theme` field — see parking lot). Local
+  Gradle build isn't runnable here (pre-existing) — relying on CI for compile/test-green.
 - ✅ `2026-07-04` — **Filter + sort for products and search results (Phase 2).** Shared,
   server-agnostic view controls (transient — nothing persisted; never sent to the API).
   New `ui/common/SortOrder.kt` (enum NAME_ASC/NAME_DESC/QUANTITY_DESC/QUANTITY_ASC + a generic

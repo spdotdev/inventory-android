@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.ui.theme.FrostCard
+import dev.scuttle.inventory.ui.theme.HouseholdAvatar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -127,8 +128,9 @@ fun HouseholdsScreen(
                             .padding(horizontal = 16.dp, vertical = 8.dp)
                             .fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
+                        HouseholdAvatar(householdId = household.id)
                         Text(
                             text = household.name,
                             style = MaterialTheme.typography.bodyLarge,
