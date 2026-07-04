@@ -8,6 +8,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
@@ -34,6 +35,17 @@ class AuthViewModel @Inject constructor(
 
     private val _state = MutableStateFlow(AuthUiState(authenticated = repository.isAuthenticated()))
     val state: StateFlow<AuthUiState> = _state.asStateFlow()
+
+    init {
+        // React to a mid-session token loss (a 401 clears the token off the UI
+        // thread): flip authenticated=false so MainActivity redirects to login,
+        // instead of leaving the user on authed screens where every call 401s.
+        viewModelScope.launch {
+            repository.sessionActive.collect { active ->
+                if (!active) _state.update { it.copy(authenticated = false) }
+            }
+        }
+    }
 
     fun onNameChange(value: String) = _state.update { it.copy(name = value, error = null) }
 

@@ -45,6 +45,14 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-07-04` — **Reactive session/401 handling** (gap analysis T4). `AuthInterceptor` cleared the
+  token on a mid-session 401, but `AuthViewModel.authenticated` was read once at init and nothing
+  observed the token — so an expired session left the user on authed screens, every call silently
+  401ing until a cold restart. `TokenStore` now exposes `authState: StateFlow<Boolean>` (emits on
+  set/clear); `AuthRepository.sessionActive` surfaces it; `AuthViewModel` collects it in `init` and
+  flips `authenticated=false` on loss, so `MainActivity` redirects to login immediately.
+  `AuthViewModelTest` gains a mid-session-token-loss case (fake exposes a controllable `session` flow).
+  Local Gradle build isn't runnable here — relying on CI for compile/test.
 - ✅ `2026-07-04` — **Per-household color + icon theming on top of Frost.** Each household gets a
   stable, distinguishable identity in the UI, derived deterministically from its id — purely
   visual and client-side, nothing persisted or sent to the API (keeps the server-authoritative
