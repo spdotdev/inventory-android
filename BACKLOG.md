@@ -45,6 +45,15 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-07-04` — **Per-location "⚠ needs attention" indicator now lights up on load** (wave-3 X2, HIGH/MED).
+  Home (`AllStoragesScreen`) and the drawer rendered the warning purely from `state.locationWarnings`, which
+  was populated *only* by a composed `ProductsPane` via `reportLocationWarning` — so a location whose
+  out-of-stock mandatory item sat on a non-visible shelf showed no ⚠ until the user opened it and swiped to
+  that shelf, making the at-a-glance rollup silently show "all good". `HierarchyStore` now computes
+  `locationWarnings` authoritatively in both `loadFromCache` and `buildFromNetwork` by grouping the
+  `missingItems` it already builds by `locationId`, and `refresh` onSuccess takes the server-computed map as
+  truth (dropping the old partial-map preservation — the API is server-authoritative and mutations refresh
+  after the server confirms). Tests cover the warning appearing from a non-visible shelf and clearing when stocked.
 - ✅ `2026-07-04` — **Logout/login no longer leaks the previous user's data** (wave-3 X1, HIGH). `logout()`
   cleared only the bearer token, but every repository + `HierarchyStore` + the favorites/default-household
   prefs are `@Singleton`, so an account switch on the same process rendered User A's households/locations/
