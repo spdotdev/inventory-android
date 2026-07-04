@@ -36,6 +36,16 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-07-04` — **Google Sign-In `GOOGLE_CLIENT_ID` wired (verification).** Confirmed the
+  Web OAuth 2.0 client ID is set in `app/build.gradle.kts` (`buildConfigField` →
+  `BuildConfig.GOOGLE_CLIENT_ID = 758637503304-…apps.googleusercontent.com`) and consumed by
+  `AuthScreen.launchGoogleSignIn()` via `GoogleSignInOptions.Builder(...).requestIdToken(BuildConfig.GOOGLE_CLIENT_ID)`,
+  whose ID token feeds `AuthViewModel.loginWithGoogle` → backend verifier. No code change needed —
+  the RMMBR "set GOOGLE_CLIENT_ID" task was stale. (If the tenant's Web client ID ever rotates,
+  update the single `buildConfigField` line.)
+- ✅ `2026-07-04` — **Q-3 (realtime) resolved → pull-to-refresh** (see `inventory-docs/ROADMAP.md`).
+  WebSockets/Reverb deferred to Phase 2; the live-updates idea stays in this file's parking lot as
+  the re-open trigger.
 - ✅ `2026-07-04` — **Frosted-glass card treatment (Frost D-021, ralph-loop r17).** New
   `FrostCard` composable (`ui/theme/FrostCard.kt`): translucent tinted container + hairline
   border + 22dp corners, matching `docs/design/frost-app.html` `.card`/`.rcard`/`.fcard`
