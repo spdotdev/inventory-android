@@ -45,6 +45,15 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-07-04` — **Release + fork-PR pipeline hardening** (gap analysis T17). Two problems. (1) `ci.yml`
+  unconditionally decoded `DEBUG_KEYSTORE_B64` and ran `assembleDebug`, so a fork PR (no secrets) red-failed
+  on signing infra it can never have — even though its code was fine. Reordered so unit-tests + lint (the
+  real gates, keystore-free) run first, then gated the keystore-restore / APK-build / upload steps behind a
+  `Check for signing secret` step; a fork PR now goes green. (2) `release.yml` published a debug-signed
+  `app-debug.apk` as a normal GitHub Release, which reads as production. It now fails loudly if the signing
+  secret is missing (a real release needs it) and marks the output a **prerelease** with a "⚠️ Preview build
+  — debug-signed, not Play-ready" note; real release signing + AAB stays tracked in ROADMAP. CI-uploaded APK
+  renamed `app-debug-preview`. Both YAMLs validated; CI verifies the runs (Gradle unrunnable locally).
 - ✅ `2026-07-04` — **Instrumented-test CI job** (gap analysis T16). 27 `androidTest` E2E flow tests
   (real navigation + Compose UI over MockWebServer) existed but CI only ran `testDebugUnitTest`, so
   navigation/UI regressions went uncaught. Added `.github/workflows/instrumented.yml`: a KVM-accelerated
