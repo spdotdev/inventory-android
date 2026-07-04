@@ -45,6 +45,10 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-07-04` — **Invite QR generated off the composition thread** (wave-2 W22). `InviteScreen` built the
+  512×512 QR with a ~262k-pixel `setPixel` loop inside `remember(link)` — on the composition thread, so the
+  invite load visibly hitched. Moved it to `produceState(null, link){ withContext(Dispatchers.Default){ … } }`
+  with a `CircularProgressIndicator` in the QR's 220dp footprint until it's ready.
 - ✅ `2026-07-04` — **Error-path unit tests for the hierarchy layer** (wave-2 W16). There were no error-path
   tests for `HierarchyStore`/`DrawerViewModel`/`MissingItemsViewModel`. Added a new `HierarchyStoreTest`
   (refresh success populates + clears indicators; refresh failure sets `error` and clears loading/refreshing),

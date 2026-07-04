@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.Color as AndroidColor
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -22,6 +24,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -38,7 +41,9 @@ import com.google.zxing.qrcode.QRCodeWriter
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.ui.common.LiveStatusText
 import dev.scuttle.inventory.ui.theme.SpaceMono
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 
 @Composable
 fun InviteScreen(
@@ -109,13 +114,23 @@ fun InviteScreen(
                     textAlign = TextAlign.Center,
                 )
 
-                val qr = remember(state.link) { qrBitmap(state.link) }
-                if (qr != null) {
-                    Image(
-                        bitmap = qr.asImageBitmap(),
+                // Generate the 512×512 QR off the composition thread — the setPixel
+                // loop (~262k pixels) otherwise hitches the frame when the invite
+                // loads (W22). Show a spinner in the QR's footprint until it's ready.
+                val qr by produceState<Bitmap?>(null, state.link) {
+                    value = withContext(Dispatchers.Default) { qrBitmap(state.link) }
+                }
+                val currentQr = qr
+                when {
+                    currentQr != null -> Image(
+                        bitmap = currentQr.asImageBitmap(),
                         contentDescription = stringResource(R.string.invite_qr_cd),
                         modifier = Modifier.size(220.dp),
                     )
+                    state.link.isNotEmpty() -> Box(
+                        modifier = Modifier.size(220.dp),
+                        contentAlignment = Alignment.Center,
+                    ) { CircularProgressIndicator() }
                 }
 
                 Button(
