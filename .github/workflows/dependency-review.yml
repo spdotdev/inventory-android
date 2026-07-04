@@ -21,14 +21,14 @@ jobs:
   dependency-review:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       # Dependency Review needs the repo's Dependency Graph (GitHub Advanced
       # Security on private repos) enabled; without it the action hard-errors
       # "not supported on this repository" and red-fails every PR on infra, not
       # code (same class as the fork-PR signing red fixed in T17). Tolerate that
       # so the check doesn't block PRs; once a maintainer enables the Dependency
       # Graph in Settings → Security, real high-severity findings surface here.
-      - uses: actions/dependency-review-action@v4
+      - uses: actions/dependency-review-action@v5
         continue-on-error: true
         with:
           fail-on-severity: high
