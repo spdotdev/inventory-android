@@ -1,0 +1,102 @@
+name: Instrumented tests
+
+# End-to-end instrumented flow tests (app/src/androidTest) on an emulator. They
+# drive real navigation + Compose UI against a MockWebServer backend, catching
+# regressions the JVM unit tests can't. Emulator boot is slow (several minutes),
+# so this runs nightly + on demand rather than on every PR — the fast per-PR CI
+# stays in ci.yml.
+
+on:
+  schedule:
+    # 03:30 UTC nightly.
+    - cron: '30 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  instrumented:
+    runs-on: ubuntu-latest
+    # Debug signing needs the keystore file to exist; skip cleanly on a fork or
+    # any run where the secret isn't available (aligns with T17's secret-gating).
+    if: ${{ github.repository == 'spdotdev/inventory-android' }}
+    strategy:
+      matrix:
+        api-level: [34]
+    env:
+      DEBUG_KEYSTORE_PASSWORD: ${{ secrets.DEBUG_KEYSTORE_PASSWORD }}
+      DEBUG_KEY_ALIAS: ${{ secrets.DEBUG_KEY_ALIAS }}
+      DEBUG_KEY_PASSWORD: ${{ secrets.DEBUG_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # KVM enables hardware acceleration so the emulator boots in reasonable time.
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Restore debug keystore
+        env:
+          DEBUG_KEYSTORE_B64: ${{ secrets.DEBUG_KEYSTORE_B64 }}
+        run: |
+          mkdir -p ~/.android
+          echo "$DEBUG_KEYSTORE_B64" | base64 -d > ~/.android/inventory-debug.jks
+
+      # Cache the AVD system image + snapshot so subsequent nightly runs skip the
+      # slow cold create/boot.
+      - name: AVD cache
+        uses: actions/cache@v4
+        id: avd-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-${{ matrix.api-level }}
+
+      - name: Create AVD + snapshot (cache miss only)
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          arch: x86_64
+          target: google_apis
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot-save
+          disable-animations: true
+          script: echo "AVD snapshot generated."
+
+      - name: Run instrumented tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          arch: x86_64
+          target: google_apis
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          disable-animations: true
+          script: ./gradlew connectedDebugAndroidTest
+
+      - name: Upload instrumented test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: instrumented-test-report
+          path: |
+            app/build/reports/androidTests/connected/**
+            app/build/outputs/androidTest-results/connected/**
+          retention-days: 14

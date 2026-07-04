@@ -45,6 +45,15 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-07-04` — **Instrumented-test CI job** (gap analysis T16). 27 `androidTest` E2E flow tests
+  (real navigation + Compose UI over MockWebServer) existed but CI only ran `testDebugUnitTest`, so
+  navigation/UI regressions went uncaught. Added `.github/workflows/instrumented.yml`: a KVM-accelerated
+  emulator job (API 34 `google_apis` x86_64 via `reactivecircus/android-emulator-runner`, with AVD
+  caching for speed) running `connectedDebugAndroidTest` on a **nightly** cron + `workflow_dispatch` —
+  deliberately off per-PR CI since emulator boot costs several minutes. Restores the debug keystore from
+  the secret, guards on the canonical repo so secret-less forks skip, and always uploads the connected
+  test report. Emulator run is CI-only (unrunnable in this env); YAML validated. The nightly may surface
+  historically-flaky flows (e.g. SearchFlowTest nav) to triage — that's the intended catch.
 - ✅ `2026-07-04` — **Config-change / process-death polish** (gap analysis T13). Two fixes. (1) Dialog &
   sheet visibility flags were bare `remember{}`, so an open add-sheet / delete-confirm / sign-out dialog
   vanished on rotation — converted to `rememberSaveable` (StorageOverview, LocationDetail ×2, Households,
