@@ -8,6 +8,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import dev.scuttle.inventory.R
 
@@ -23,7 +26,13 @@ fun ErrorRetry(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(text = message, color = MaterialTheme.colorScheme.error)
+        // liveRegion = Assertive so TalkBack announces the failure the moment it
+        // appears, rather than leaving the message silent until focused.
+        Text(
+            text = message,
+            color = MaterialTheme.colorScheme.error,
+            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Assertive },
+        )
         TextButton(onClick = onRetry) { Text(stringResource(R.string.action_retry)) }
     }
 }

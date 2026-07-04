@@ -45,6 +45,16 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-07-04` — **Accessible error announcements + one-shot Snackbar** (gap analysis T10). Two fixes.
+  a11y: error messages were silent to TalkBack — the shared `ErrorRetry` (used across ~9 read screens)
+  and the two auth screens' inline error `Text` now carry `semantics { liveRegion = Assertive }`, so a
+  failure is announced the moment it appears. One-shot action errors: added a reusable `SnackbarErrorEffect`
+  (+`SnackbarHost`) in `ui/common` and wired it into `ProductDetail` — the canonical action-error surface
+  (save/upload/delete have no sensible inline retry); `ProductDetailViewModel.consumeError()` clears the
+  error after it's shown so it can't re-announce on recomposition. Design split (recorded in GAP-ANALYSIS):
+  load-failure screens keep the inline `ErrorRetry` (a retry affordance a transient snackbar can't give,
+  now announced), pure-action results use the snackbar; Material3 Snackbar is itself a live region.
+  Unit test covers `consumeError()`. Local Gradle unrunnable here; CI verifies compile + tests.
 - ✅ `2026-07-04` — **Pull-to-refresh spinner no longer fires on mutations** (gap analysis T9). Every
   `PullToRefreshBox` bound `isRefreshing = state.loading`, but `loading` is also set by create/delete/
   save/upload/+/- — so any mutation spun the pull indicator. Split a dedicated `refreshing` flag from

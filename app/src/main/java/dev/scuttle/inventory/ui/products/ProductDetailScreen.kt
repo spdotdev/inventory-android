@@ -35,6 +35,8 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -57,6 +59,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import dev.scuttle.inventory.R
+import dev.scuttle.inventory.ui.common.SnackbarErrorEffect
 import java.io.File
 import java.util.UUID
 
@@ -112,10 +115,17 @@ fun ProductDetailScreen(
         }
     }
 
+    // One-shot action errors (save/upload/delete) surface as a transient Snackbar,
+    // then are consumed so they don't re-announce; load errors still let the user
+    // pull-to-refresh to retry.
+    val snackbarHostState = remember { SnackbarHostState() }
+    SnackbarErrorEffect(state.error, snackbarHostState, onConsumed = viewModel::consumeError)
+
     val statusBarInsets = WindowInsets.statusBars
     Scaffold(
         contentWindowInsets = WindowInsets(0),
         modifier = modifier.testTag("product_detail_screen"),
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 windowInsets = statusBarInsets,
@@ -158,9 +168,7 @@ fun ProductDetailScreen(
         ) {
             if (state.loading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
 
-            state.error?.let {
-                Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-            }
+            // Errors are shown via the Scaffold's Snackbar (SnackbarErrorEffect above).
 
             // Image section
             Box(

@@ -104,4 +104,7 @@ class ProductDetailViewModel @Inject constructor(
                 .onFailure { e -> _state.update { it.copy(loading = false, error = e.toUserMessage("Failed to delete.")) } }
         }
     }
+
+    /** Clears the error after it's been shown once (e.g. surfaced as a Snackbar). */
+    fun consumeError() = _state.update { it.copy(error = null) }
 }
