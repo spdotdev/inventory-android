@@ -53,6 +53,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
+import dev.scuttle.inventory.ui.common.ErrorRetry
 import dev.scuttle.inventory.ui.common.storageTypeLabel
 import dev.scuttle.inventory.data.dto.LocationDto
 import dev.scuttle.inventory.ui.app.DrawerViewModel
@@ -111,7 +112,12 @@ fun AllStoragesScreen(
             ) {
                 Spacer(Modifier.height(4.dp))
 
-                if (state.entries.isEmpty()) {
+                val error = state.error
+                if (error != null && state.entries.isEmpty()) {
+                    // A load failure must not masquerade as an empty account — show
+                    // the error with a retry, not "No storages yet" (W3).
+                    ErrorRetry(message = error, onRetry = { viewModel.refresh() })
+                } else if (state.entries.isEmpty()) {
                     Text(stringResource(R.string.all_storage_empty))
                 }
 

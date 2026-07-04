@@ -20,6 +20,10 @@ data class DrawerUiState(
     val missingItemCount: Int = 0,
     val loading: Boolean = false,
     val refreshing: Boolean = false,
+    // Surfaced from HierarchyStore so AllStorages can tell a real network failure
+    // apart from a genuinely empty account (W3) — without this a failed load
+    // rendered the "No storages yet" empty state.
+    val error: String? = null,
 )
 
 @HiltViewModel
@@ -35,6 +39,7 @@ class DrawerViewModel @Inject constructor(
             missingItemCount = s.missingItemCount,
             loading = s.loading,
             refreshing = s.refreshing,
+            error = s.error,
         )
     }.stateIn(viewModelScope, SharingStarted.Eagerly, DrawerUiState())
 

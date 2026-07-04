@@ -45,6 +45,12 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-07-04` — **AllStorages shows load errors instead of a false empty state** (wave-2 W3).
+  `DrawerViewModel` mapped `HierarchyStore.state` but dropped the store's `error` (it wasn't even a field
+  on `DrawerUiState`), so a network failure rendered "No storages yet" — indistinguishable from a real
+  empty account, and pull-to-refresh failures vanished silently. Added `error` to `DrawerUiState`, mapped
+  it, and gated the empty text on `error == null`, rendering a failure through the existing `ErrorRetry`
+  (Assertive live region + retry). Added a `DrawerViewModel` error-path unit test.
 - ✅ `2026-07-04` — **ForgotPasswordViewModel unit test** (gap analysis T21, found in the final
   completeness scan). A coverage sweep showed it was the only one of 16 ViewModels without a unit test,
   despite real `submit()` loading→sent/error logic on a security-adjacent flow. Added
