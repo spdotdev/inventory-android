@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import dev.scuttle.inventory.data.error.toUserMessage
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -119,7 +120,7 @@ class HierarchyStore @Inject constructor(
                 buildFromNetwork(households)
             }.fold(
                 onSuccess = { update -> _state.update { s -> update.copy(locationWarnings = s.locationWarnings) } },
-                onFailure = { e -> _state.update { it.copy(loading = false, error = e.message ?: "Failed to load.") } },
+                onFailure = { e -> _state.update { it.copy(loading = false, error = e.toUserMessage("Failed to load.")) } },
             )
         }
     }

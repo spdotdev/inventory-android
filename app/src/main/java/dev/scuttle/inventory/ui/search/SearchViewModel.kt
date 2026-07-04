@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import dev.scuttle.inventory.data.error.toUserMessage
 import javax.inject.Inject
 
 data class SearchUiState(
@@ -76,7 +77,7 @@ class SearchViewModel @Inject constructor(
         _state.update { state ->
             result.fold(
                 onSuccess = { results -> state.copy(loading = false, results = results) },
-                onFailure = { error -> state.copy(loading = false, error = error.message ?: "Search failed.") },
+                onFailure = { error -> state.copy(loading = false, error = error.toUserMessage("Search failed.")) },
             )
         }
     }

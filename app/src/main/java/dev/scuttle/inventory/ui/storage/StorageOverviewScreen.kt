@@ -66,6 +66,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.dto.LocationDto
+import dev.scuttle.inventory.ui.common.ErrorRetry
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -137,7 +138,7 @@ fun StorageOverviewScreen(
             }
 
             state.error?.let {
-                Text(text = it, color = MaterialTheme.colorScheme.error)
+                ErrorRetry(message = it, onRetry = viewModel::refresh)
             }
 
             if (state.locations.isEmpty() && !state.loading) {

@@ -31,6 +31,7 @@
     <!-- Global actions -->
     <string name="action_open_menu">Menu openen</string>
     <string name="action_refresh">Vernieuwen</string>
+    <string name="action_retry">Opnieuw</string>
     <string name="action_back">Terug</string>
     <string name="action_cancel">Annuleren</string>
     <string name="action_delete">Verwijderen</string>

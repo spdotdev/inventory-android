@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
+import java.io.IOException
 import javax.inject.Inject
 
 enum class AuthMode { LOGIN, REGISTER }
@@ -98,6 +99,7 @@ class AuthViewModel @Inject constructor(
     }
 
     private fun Throwable.toAuthErrorMessage(mode: AuthMode): String = when {
+        this is IOException -> "Can't reach the server. Check your connection and try again."
         this is HttpException -> when (code()) {
             401 -> "Incorrect email or password."
             409 -> "An account with this email already exists."
@@ -109,6 +111,7 @@ class AuthViewModel @Inject constructor(
     }
 
     private fun Throwable.toGoogleAuthErrorMessage(): String = when {
+        this is IOException -> "Can't reach the server. Check your connection and try again."
         this is HttpException -> when (code()) {
             401 -> "Google sign-in failed. Please try again."
             in 500..599 -> "Server error. Please try again later."

@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import dev.scuttle.inventory.data.error.toUserMessage
 import javax.inject.Inject
 
 data class InviteUiState(
@@ -37,7 +38,7 @@ class InviteViewModel @Inject constructor(
             _state.update { state ->
                 result.fold(
                     onSuccess = { invite -> state.copy(loading = false, code = invite.code, link = invite.link) },
-                    onFailure = { error -> state.copy(loading = false, error = error.message ?: "Couldn't load the invite.") },
+                    onFailure = { error -> state.copy(loading = false, error = error.toUserMessage("Couldn't load the invite.")) },
                 )
             }
         }

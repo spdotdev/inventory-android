@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import dev.scuttle.inventory.data.error.toUserMessage
 import javax.inject.Inject
 
 val STORAGE_TYPES = listOf("freezer", "fridge", "pantry", "other")
@@ -100,7 +101,7 @@ class StorageOverviewViewModel @Inject constructor(
             _state.update { state ->
                 result.fold(
                     onSuccess = { state.copy(loading = false) },
-                    onFailure = { error -> state.copy(loading = false, error = error.message ?: "Something went wrong.") },
+                    onFailure = { error -> state.copy(loading = false, error = error.toUserMessage("Something went wrong.")) },
                 )
             }
         }

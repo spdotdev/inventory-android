@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import dev.scuttle.inventory.data.error.toUserMessage
 import javax.inject.Inject
 
 data class ProductDetailUiState(
@@ -61,7 +62,7 @@ class ProductDetailViewModel @Inject constructor(
                     _state.update { it.copy(loading = false, product = products.find { p -> p.id == productId }) }
                 }
                 .onFailure { e ->
-                    _state.update { it.copy(loading = false, error = e.message ?: "Failed to load product.") }
+                    _state.update { it.copy(loading = false, error = e.toUserMessage("Failed to load product.")) }
                 }
         }
     }
@@ -74,7 +75,7 @@ class ProductDetailViewModel @Inject constructor(
             }.onSuccess { updated ->
                 _state.update { it.copy(loading = false, product = updated, saved = true) }
             }.onFailure { e ->
-                _state.update { it.copy(loading = false, error = e.message ?: "Failed to save.") }
+                _state.update { it.copy(loading = false, error = e.toUserMessage("Failed to save.")) }
             }
         }
     }
@@ -87,7 +88,7 @@ class ProductDetailViewModel @Inject constructor(
             }.onSuccess { updated ->
                 _state.update { it.copy(loading = false, product = updated) }
             }.onFailure { e ->
-                _state.update { it.copy(loading = false, error = e.message ?: "Failed to upload image.") }
+                _state.update { it.copy(loading = false, error = e.toUserMessage("Failed to upload image.")) }
             }
         }
     }
@@ -97,7 +98,7 @@ class ProductDetailViewModel @Inject constructor(
             _state.update { it.copy(loading = true, error = null) }
             runCatching { repository.delete(householdId, shelfId, productId) }
                 .onSuccess { _state.update { it.copy(loading = false, deleted = true) } }
-                .onFailure { e -> _state.update { it.copy(loading = false, error = e.message ?: "Failed to delete.") } }
+                .onFailure { e -> _state.update { it.copy(loading = false, error = e.toUserMessage("Failed to delete.")) } }
         }
     }
 }

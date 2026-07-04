@@ -32,6 +32,7 @@
     <!-- Global actions -->
     <string name="action_open_menu">Open menu</string>
     <string name="action_refresh">Refresh</string>
+    <string name="action_retry">Retry</string>
     <string name="action_back">Back</string>
     <string name="action_cancel">Cancel</string>
     <string name="action_delete">Delete</string>

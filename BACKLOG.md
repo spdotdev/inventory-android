@@ -45,6 +45,16 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-07-04` — **Friendly network-error mapping + Retry** (gap analysis T5). VMs surfaced raw
+  `error.message` (e.g. "Unable to resolve host…") as sticky red text. New shared
+  `data/error/toUserMessage(fallback)` maps any `IOException` → "Can't reach the server…" and known
+  HTTP codes (401/403/404/422/429/5xx) → friendly copy, else the caller's contextual fallback. Applied
+  across all 9 error-surfacing VMs (Products, ProductDetail, StorageOverview, Shelves, Search,
+  Households, Join, Invite, HierarchyStore) and added an `IOException` branch to the two bespoke
+  `AuthViewModel` mappers. New reusable `ui/common/ErrorRetry` (message + Retry) wired into the
+  StorageOverview error state; other list screens already have pull-to-refresh as the retry path.
+  `ErrorMappingTest` (4) covers network/HTTP/unknown/generic. Strings `action_retry` (EN+NL). Local
+  Gradle unrunnable here — CI verifies compile/tests.
 - ✅ `2026-07-04` — **Reactive session/401 handling** (gap analysis T4). `AuthInterceptor` cleared the
   token on a mid-session 401, but `AuthViewModel.authenticated` was read once at init and nothing
   observed the token — so an expired session left the user on authed screens, every call silently

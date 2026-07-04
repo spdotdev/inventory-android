@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import dev.scuttle.inventory.data.error.toUserMessage
 import javax.inject.Inject
 
 data class ShelvesUiState(
@@ -111,7 +112,7 @@ class ShelvesViewModel @Inject constructor(
             _state.update { state ->
                 result.fold(
                     onSuccess = { state.copy(loading = false) },
-                    onFailure = { error -> state.copy(loading = false, error = error.message ?: "Something went wrong.") },
+                    onFailure = { error -> state.copy(loading = false, error = error.toUserMessage("Something went wrong.")) },
                 )
             }
         }
