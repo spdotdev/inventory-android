@@ -1,0 +1,104 @@
+package dev.scuttle.inventory
+
+import android.net.Uri
+import dev.scuttle.inventory.data.HierarchyStore
+import dev.scuttle.inventory.data.dto.HouseholdDto
+import dev.scuttle.inventory.data.dto.LocationDto
+import dev.scuttle.inventory.data.dto.ProductDto
+import dev.scuttle.inventory.data.dto.ShelfDto
+import dev.scuttle.inventory.data.household.HouseholdRepository
+import dev.scuttle.inventory.data.location.LocationRepository
+import dev.scuttle.inventory.data.product.ProductRepository
+import dev.scuttle.inventory.data.shelf.ShelfRepository
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Rule
+import org.junit.Test
+import java.io.IOException
+
+class HierarchyStoreTest {
+
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
+    private class FakeHouseholdRepository(
+        private val households: List<HouseholdDto>,
+        private val throwOnList: Boolean = false,
+    ) : HouseholdRepository {
+        override fun getCached(): List<HouseholdDto>? = null
+        override suspend fun list(): List<HouseholdDto> {
+            if (throwOnList) throw IOException("network down")
+            return households
+        }
+        override suspend fun create(name: String) = households.first()
+        override suspend fun join(code: String) = households.first()
+        override suspend fun leave(householdId: Long) {}
+    }
+
+    private class FakeLocationRepository(private val byHousehold: Map<Long, List<LocationDto>> = emptyMap()) : LocationRepository {
+        override fun getCached(householdId: Long) = byHousehold[householdId]
+        override suspend fun list(householdId: Long) = byHousehold[householdId].orEmpty()
+        override suspend fun create(householdId: Long, name: String, type: String) = LocationDto(99, name, type)
+        override suspend fun delete(householdId: Long, locationId: Long) {}
+    }
+
+    private class FakeShelfRepository(private val byLocation: Map<Long, List<ShelfDto>> = emptyMap()) : ShelfRepository {
+        override fun getCached(householdId: Long, locationId: Long) = byLocation[locationId]
+        override suspend fun list(householdId: Long, locationId: Long) = byLocation[locationId].orEmpty()
+        override suspend fun create(householdId: Long, locationId: Long, name: String) = ShelfDto(99, name, 0, locationId)
+        override suspend fun delete(householdId: Long, locationId: Long, shelfId: Long) {}
+    }
+
+    private class FakeProductRepository(private val byShelf: Map<Long, List<ProductDto>> = emptyMap()) : ProductRepository {
+        override fun getCached(householdId: Long, shelfId: Long) = byShelf[shelfId]
+        override suspend fun list(householdId: Long, shelfId: Long) = byShelf[shelfId].orEmpty()
+        override suspend fun create(householdId: Long, shelfId: Long, name: String, quantity: Int) = ProductDto(99, name, quantity, shelfId)
+        override suspend fun update(householdId: Long, shelfId: Long, productId: Long, name: String, description: String?, code: String?, isMandatory: Boolean) = ProductDto(productId, name, 0, shelfId)
+        override suspend fun add(householdId: Long, shelfId: Long, productId: Long, amount: Int) = byShelf[shelfId]!!.first { it.id == productId }
+        override suspend fun remove(householdId: Long, shelfId: Long, productId: Long, amount: Int) = byShelf[shelfId]!!.first { it.id == productId }
+        override suspend fun move(householdId: Long, shelfId: Long, productId: Long, targetShelfId: Long) = byShelf[shelfId]!!.first { it.id == productId }
+        override suspend fun delete(householdId: Long, shelfId: Long, productId: Long) {}
+        override suspend fun uploadImage(householdId: Long, shelfId: Long, productId: Long, imageUri: Uri, mimeType: String) = byShelf[shelfId]!!.first { it.id == productId }
+    }
+
+    @Test
+    fun refresh_success_populates_state_and_clears_indicators() = runTest {
+        val store = HierarchyStore(
+            FakeHouseholdRepository(listOf(HouseholdDto(1, "Home", "AAAA"))),
+            FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge")))),
+            FakeShelfRepository(mapOf(10L to listOf(ShelfDto(100, "Top", 0, 10)))),
+            FakeProductRepository(mapOf(100L to listOf(ProductDto(1, "Milk", 0, 100, is_mandatory = true)))),
+        )
+
+        store.refresh(userInitiated = true)
+
+        val loaded = store.state.first { !it.loading }
+        assertNull(loaded.error)
+        assertFalse(loaded.refreshing)
+        assertEquals(1, loaded.entries.size)
+        assertEquals(1, loaded.missingItemCount)
+    }
+
+    @Test
+    fun refresh_failure_sets_error_and_clears_indicators() = runTest {
+        // W16: a failed network refresh must set error and clear both loading and
+        // refreshing so the UI can leave the spinner and show the failure.
+        val store = HierarchyStore(
+            FakeHouseholdRepository(emptyList(), throwOnList = true),
+            FakeLocationRepository(),
+            FakeShelfRepository(),
+            FakeProductRepository(),
+        )
+
+        store.refresh(userInitiated = true)
+
+        val failed = store.state.first { it.error != null }
+        assertNotNull(failed.error)
+        assertFalse(failed.loading)
+        assertFalse(failed.refreshing)
+    }
+}

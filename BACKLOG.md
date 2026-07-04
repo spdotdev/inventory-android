@@ -45,6 +45,11 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-07-04` — **Error-path unit tests for the hierarchy layer** (wave-2 W16). There were no error-path
+  tests for `HierarchyStore`/`DrawerViewModel`/`MissingItemsViewModel`. Added a new `HierarchyStoreTest`
+  (refresh success populates + clears indicators; refresh failure sets `error` and clears loading/refreshing),
+  plus the `DrawerUiState.error` mapping (W3), `DrawerViewModel.deleteLocation` failure (W10), and
+  `MissingItemsViewModel` error (W4) tests added alongside those fixes — all pure-JVM, no emulator.
 - ✅ `2026-07-04` — **Drawer/home location-delete failure is surfaced, not swallowed** (wave-2 W10).
   `DrawerViewModel.deleteLocation` had `runCatching{…}.onSuccess{ refresh() }` with no `onFailure`, so a
   failed swipe-to-delete on AllStorages left the location in place with no feedback. Added a one-shot
