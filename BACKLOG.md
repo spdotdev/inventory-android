@@ -45,6 +45,14 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-07-04` — **ProductsPane errors → Snackbar + a11y** (gap analysis T20, found in the Tier-3
+  milestone re-scan). The products list surfaced add/remove/move/delete/load failures as a persistent
+  inline `Text` with no `liveRegion` — sticky and silent to TalkBack, the exact issue T10 fixed on the
+  other screens. Routed them through the shared `SnackbarErrorEffect`: added `consumeError()` to
+  `ProductsViewModel`, hung a `SnackbarHost` on `LocationDetailScreen`'s Scaffold and threaded its state
+  into each `ProductsPane` in the pager, and dropped the inline error text. Material3's Snackbar is a live
+  region, so failures are now announced. Unit test covers `consumeError()`; the pane UI is exercised by the
+  nightly instrumented flows. Local Gradle unrunnable here; CI verifies.
 - ✅ `2026-07-04` — **Google Sign-In → Credential Manager** (gap analysis T19). The auth screen used the
   deprecated `com.google.android.gms:play-services-auth` `GoogleSignIn` API — a direct `CLAUDE.md`
   violation ("Native Google Sign-In (Credential Manager)") and a live breakage risk as Google retires

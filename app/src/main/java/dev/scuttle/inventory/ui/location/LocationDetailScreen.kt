@@ -39,6 +39,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -101,10 +103,14 @@ fun LocationDetailScreen(
         shelvesViewModel.load(householdId, locationId)
     }
 
+    // Hosts one-shot action errors from the ProductsPane(s) below.
+    val snackbarHostState = remember { SnackbarHostState() }
+
     val statusBarInsets = WindowInsets.statusBars
     Scaffold(
         contentWindowInsets = WindowInsets(0),
         modifier = modifier,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 windowInsets = statusBarInsets,
@@ -252,6 +258,7 @@ fun LocationDetailScreen(
                     ProductsPane(
                         householdId = householdId,
                         shelfId = shelf.id,
+                        snackbarHostState = snackbarHostState,
                         onOpenProduct = { product -> onOpenProduct(householdId, product.shelf_id, product.id) },
                         onWarningChange = { hasWarning ->
                             shelfWarnings = shelfWarnings + (shelf.id to hasWarning)

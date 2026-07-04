@@ -16,6 +16,7 @@ import dev.scuttle.inventory.ui.products.ProductsViewModel
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -224,5 +225,17 @@ class ProductsViewModelTest {
 
         assertEquals("offline", vm.state.value.error)
         assertFalse(vm.state.value.loading)
+    }
+
+    @Test
+    fun consumeError_clears_the_error_after_it_is_shown() = runTest {
+        val repo = FakeProductRepository().apply { failList = true }
+        val vm = viewModel(products = repo)
+        vm.load(householdId = 1, shelfId = 1)
+        assertEquals("offline", vm.state.value.error)
+
+        // After the Snackbar has surfaced it, the error is consumed so it doesn't re-fire.
+        vm.consumeError()
+        assertNull(vm.state.value.error)
     }
 }

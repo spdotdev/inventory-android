@@ -111,6 +111,9 @@ class ProductsViewModel @Inject constructor(
 
     // --- Local view controls (filter + sort) ---
 
+    /** Clears the error after it's been shown once (e.g. surfaced as a Snackbar). */
+    fun consumeError() = _state.update { it.copy(error = null) }
+
     fun onFilterQueryChange(value: String) = _state.update { it.copy(filterQuery = value.take(50)) }
 
     fun toggleMandatoryOnly() = _state.update { it.copy(mandatoryOnly = !it.mandatoryOnly) }
