@@ -67,6 +67,10 @@ class ProductRepositoryImpl @Inject constructor(
         cache[householdId to shelfId] = cache[householdId to shelfId]?.filter { it.id != productId } ?: emptyList()
     }
 
+    override fun clear() {
+        cache.clear()
+    }
+
     private fun MutableMap<Pair<Long, Long>, List<ProductDto>>.replaceProduct(householdId: Long, shelfId: Long, updated: ProductDto) {
         val key = householdId to shelfId
         this[key] = this[key]?.map { if (it.id == updated.id) updated else it } ?: listOf(updated)

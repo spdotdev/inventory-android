@@ -28,4 +28,8 @@ class ShelfRepositoryImpl @Inject constructor(
         val key = householdId to locationId
         cache[key] = cache[key]?.filter { it.id != shelfId } ?: emptyList()
     }
+
+    override fun clear() {
+        cache.clear()
+    }
 }

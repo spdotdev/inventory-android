@@ -3,6 +3,7 @@ package dev.scuttle.inventory
 import dev.scuttle.inventory.data.dto.HouseholdDto
 import dev.scuttle.inventory.data.household.HouseholdRepository
 import dev.scuttle.inventory.ui.households.HouseholdsViewModel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -39,7 +40,7 @@ class HouseholdsViewModelTest {
 
     @Test
     fun loads_households_on_init() = runTest {
-        val viewModel = HouseholdsViewModel(FakeHouseholdRepository())
+        val viewModel = HouseholdsViewModel(FakeHouseholdRepository(), TestHierarchy.store(FakeHouseholdRepository()))
 
         val state = viewModel.state.value
         assertEquals(1, state.households.size)
@@ -49,7 +50,7 @@ class HouseholdsViewModelTest {
 
     @Test
     fun create_adds_a_household_and_clears_the_field() = runTest {
-        val viewModel = HouseholdsViewModel(FakeHouseholdRepository())
+        val viewModel = HouseholdsViewModel(FakeHouseholdRepository(), TestHierarchy.store(FakeHouseholdRepository()))
         viewModel.onNewNameChange("Pantry")
 
         viewModel.create()
@@ -61,9 +62,24 @@ class HouseholdsViewModelTest {
     }
 
     @Test
+    fun create_refreshes_the_hierarchy_store() = runTest {
+        // X4: a newly-created household must reach the drawer/home hierarchy without
+        // a manual pull-to-refresh.
+        val repo = FakeHouseholdRepository()
+        val store = TestHierarchy.store(repo)
+        val viewModel = HouseholdsViewModel(repo, store)
+        viewModel.onNewNameChange("Pantry")
+
+        viewModel.create()
+
+        val loaded = store.state.first { s -> s.entries.any { it.name == "Pantry" } }
+        assertTrue(loaded.entries.any { it.name == "Pantry" })
+    }
+
+    @Test
     fun list_failure_surfaces_an_error() = runTest {
         val repo = FakeHouseholdRepository().apply { failList = true }
-        val viewModel = HouseholdsViewModel(repo)
+        val viewModel = HouseholdsViewModel(repo, TestHierarchy.store(repo))
 
         assertEquals("offline", viewModel.state.value.error)
     }
@@ -73,7 +89,7 @@ class HouseholdsViewModelTest {
         val repo = FakeHouseholdRepository().apply {
             items.add(HouseholdDto(id = 2, name = "Office", join_code = "BBBB-2222"))
         }
-        val viewModel = HouseholdsViewModel(repo)
+        val viewModel = HouseholdsViewModel(repo, TestHierarchy.store(repo))
         assertEquals(2, viewModel.state.value.households.size)
 
         viewModel.leave(householdId = 1)

@@ -16,6 +16,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import java.io.IOException
@@ -100,5 +101,59 @@ class HierarchyStoreTest {
         assertNotNull(failed.error)
         assertFalse(failed.loading)
         assertFalse(failed.refreshing)
+    }
+
+    @Test
+    fun refresh_computes_location_warnings_without_any_pane_report() = runTest {
+        // X2: the "⚠ needs attention" indicator must light up from server data on
+        // load — a missing mandatory item on any shelf, not only the visible one.
+        val store = HierarchyStore(
+            FakeHouseholdRepository(listOf(HouseholdDto(1, "Home", "AAAA"))),
+            FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge")))),
+            FakeShelfRepository(mapOf(10L to listOf(ShelfDto(100, "Top", 0, 10), ShelfDto(101, "Bottom", 1, 10)))),
+            // The missing mandatory item sits on the SECOND (non-visible) shelf.
+            FakeProductRepository(mapOf(101L to listOf(ProductDto(1, "Milk", 0, 101, is_mandatory = true)))),
+        )
+
+        store.refresh(userInitiated = true)
+
+        val loaded = store.state.first { !it.loading }
+        assertEquals(true, loaded.locationWarnings[10])
+    }
+
+    @Test
+    fun refresh_leaves_no_warning_when_all_mandatory_items_are_stocked() = runTest {
+        val store = HierarchyStore(
+            FakeHouseholdRepository(listOf(HouseholdDto(1, "Home", "AAAA"))),
+            FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge")))),
+            FakeShelfRepository(mapOf(10L to listOf(ShelfDto(100, "Top", 0, 10)))),
+            FakeProductRepository(mapOf(100L to listOf(ProductDto(1, "Milk", 3, 100, is_mandatory = true)))),
+        )
+
+        store.refresh(userInitiated = true)
+
+        val loaded = store.state.first { !it.loading }
+        assertNull(loaded.locationWarnings[10])
+    }
+
+    @Test
+    fun clear_resets_to_the_empty_state() = runTest {
+        // X1: on session end the store must reset so one account's hierarchy never
+        // renders to the next (loadFromCache would otherwise repopulate it).
+        val store = HierarchyStore(
+            FakeHouseholdRepository(listOf(HouseholdDto(1, "Home", "AAAA"))),
+            FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge")))),
+            FakeShelfRepository(mapOf(10L to listOf(ShelfDto(100, "Top", 0, 10)))),
+            FakeProductRepository(mapOf(100L to listOf(ProductDto(1, "Milk", 0, 100, is_mandatory = true)))),
+        )
+        store.refresh(userInitiated = true)
+        assertEquals(1, store.state.first { !it.loading }.entries.size)
+
+        store.clear()
+
+        val cleared = store.state.value
+        assertTrue(cleared.entries.isEmpty())
+        assertEquals(0, cleared.missingItemCount)
+        assertNull(cleared.error)
     }
 }

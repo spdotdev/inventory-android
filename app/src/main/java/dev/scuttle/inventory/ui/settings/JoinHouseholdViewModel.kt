@@ -2,6 +2,7 @@ package dev.scuttle.inventory.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.scuttle.inventory.data.HierarchyStore
 import dev.scuttle.inventory.data.household.HouseholdRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,6 +23,7 @@ data class JoinUiState(
 @HiltViewModel
 class JoinHouseholdViewModel @Inject constructor(
     private val repository: HouseholdRepository,
+    private val hierarchyStore: HierarchyStore,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(JoinUiState())
@@ -35,6 +37,9 @@ class JoinHouseholdViewModel @Inject constructor(
         viewModelScope.launch {
             _state.update { it.copy(loading = true, error = null, success = false) }
             val result = runCatching { repository.join(code) }
+            // Refresh the drawer/home/dashboard so the joined household appears there
+            // immediately, not just on the next manual pull-to-refresh (X4).
+            if (result.isSuccess) hierarchyStore.refresh()
             _state.update { state ->
                 result.fold(
                     onSuccess = { state.copy(loading = false, code = "", success = true) },

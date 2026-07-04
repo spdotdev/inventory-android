@@ -2,6 +2,7 @@ package dev.scuttle.inventory.ui.households
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.scuttle.inventory.data.HierarchyStore
 import dev.scuttle.inventory.data.dto.HouseholdDto
 import dev.scuttle.inventory.data.household.HouseholdRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,6 +28,7 @@ data class HouseholdsUiState(
 @HiltViewModel
 class HouseholdsViewModel @Inject constructor(
     private val repository: HouseholdRepository,
+    private val hierarchyStore: HierarchyStore,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HouseholdsUiState())
@@ -62,12 +64,17 @@ class HouseholdsViewModel @Inject constructor(
             repository.create(name)
             _state.update { it.copy(newName = "") }
             _state.update { it.copy(households = repository.list()) }
+            // Keep the drawer/home/dashboard (driven by HierarchyStore) in sync — a
+            // new household would otherwise stay invisible there until a manual
+            // pull-to-refresh or relaunch (X4).
+            hierarchyStore.refresh()
         }
     }
 
     fun leave(householdId: Long) = launchLoading {
         repository.leave(householdId)
         _state.update { it.copy(households = repository.list()) }
+        hierarchyStore.refresh()
     }
 
     private fun launchLoading(refreshing: Boolean = false, block: suspend () -> Unit) {

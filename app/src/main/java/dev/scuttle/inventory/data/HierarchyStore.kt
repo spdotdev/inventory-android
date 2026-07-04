@@ -109,10 +109,20 @@ class HierarchyStore @Inject constructor(
                 entries = entries, missingItems = missingItems, missingItemCount = mandatoryWarnings,
                 totalShelves = totalShelves, totalProducts = totalProducts,
                 mandatoryWarnings = mandatoryWarnings, locationStats = locationStats,
-                allShelves = allShelves,
+                allShelves = allShelves, locationWarnings = warningsByLocation(missingItems),
             )
         }
     }
+
+    /**
+     * Which locations have at least one missing mandatory item, derived from the
+     * full product set (X2). The home/drawer "⚠ needs attention" indicator reads
+     * this — before, it was only ever populated by a composed ProductsPane, so a
+     * missing item on a non-visible shelf showed no warning until the user opened
+     * that location and swiped to the shelf.
+     */
+    private fun warningsByLocation(missingItems: List<MissingItem>): Map<Long, Boolean> =
+        missingItems.map { it.locationId }.associateWith { true }
 
     /**
      * @param userInitiated true when the user pulled to refresh or tapped refresh —
@@ -129,11 +139,25 @@ class HierarchyStore @Inject constructor(
                 buildFromNetwork(households)
             }.fold(
                 // buildFromNetwork returns a fresh state with loading/refreshing at their
-                // false defaults, so both indicators clear on success.
-                onSuccess = { update -> _state.update { s -> update.copy(locationWarnings = s.locationWarnings) } },
+                // false defaults, so both indicators clear on success. Its locationWarnings
+                // are now computed authoritatively from the full server product set (X2),
+                // so we take them as-is rather than preserving the old partial map that only
+                // the visible ProductsPane could populate — the API is server-authoritative,
+                // and a mutation refreshes after the server confirms, so this is the truth.
+                onSuccess = { update -> _state.value = update },
                 onFailure = { e -> _state.update { it.copy(loading = false, refreshing = false, error = e.toUserMessage("Failed to load.")) } },
             )
         }
+    }
+
+    /**
+     * Reset to the empty state and drop any in-flight load. Called on session end
+     * (logout / new login) so one account's hierarchy never renders to the next —
+     * loadFromCache() would otherwise repopulate it from the singleton repo caches.
+     */
+    fun clear() {
+        activeJob?.cancel()
+        _state.value = HierarchyState()
     }
 
     fun reportLocationWarning(locationId: Long, hasWarning: Boolean) {
@@ -196,6 +220,7 @@ class HierarchyStore @Inject constructor(
             mandatoryWarnings = mandatoryWarnings,
             locationStats = locationStats,
             allShelves = allShelves,
+            locationWarnings = warningsByLocation(missingItems),
         )
     }
 
