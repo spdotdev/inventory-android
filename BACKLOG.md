@@ -45,6 +45,10 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-07-04` — **Empty vs error no longer conflated on StorageOverview + LocationDetail** (wave-2 W7).
+  Both screens rendered their error line *and* the empty text on a failed load ("Something went wrong" +
+  "No storages yet" / "no shelves yet") — the empty text reads as a false "your account is empty". Gated
+  the empty text on `state.error == null` in both.
 - ✅ `2026-07-04` — **Missing-items screen surfaces load errors instead of a false "all stocked"** (wave-2 W4).
   `MissingItemsViewModel` exposed `error` but `MissingItemsScreen` never rendered it — a failed load fell
   through to `missing_items_empty`, i.e. a screen whose whole job is surfacing warnings would silently

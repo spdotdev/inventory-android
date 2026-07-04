@@ -195,7 +195,9 @@ fun LocationDetailScreen(
             }
 
             if (state.shelves.isEmpty()) {
-                if (!state.loading) {
+                // Suppress "no shelves yet" on a failed load — the error line above
+                // already explains it; showing both reads as a false empty (W7).
+                if (!state.loading && state.error == null) {
                     Text(
                         text = stringResource(R.string.location_no_shelves),
                         modifier = Modifier.padding(16.dp),
