@@ -1,6 +1,7 @@
 package dev.scuttle.inventory
 
 import dev.scuttle.inventory.data.auth.AuthRepository
+import dev.scuttle.inventory.data.error.ErrorLogger
 import dev.scuttle.inventory.ui.auth.AuthViewModel
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -28,6 +29,8 @@ class AuthViewModelTest {
 
         override suspend fun loginWithGoogleCode(code: String, codeVerifier: String, redirectUri: String) = maybeFail()
 
+        override suspend fun forgotPassword(email: String) = maybeFail()
+
         override suspend fun logout() {
             authed = false
         }
@@ -38,9 +41,13 @@ class AuthViewModelTest {
         }
     }
 
+    private class FakeErrorLogger : ErrorLogger {
+        override fun log(code: String, message: String?) = Unit
+    }
+
     @Test
     fun login_success_marks_authenticated() = runTest {
-        val viewModel = AuthViewModel(FakeAuthRepository(succeed = true))
+        val viewModel = AuthViewModel(FakeAuthRepository(succeed = true), FakeErrorLogger())
         viewModel.onEmailChange("stan@example.test")
         viewModel.onPasswordChange("secret-password")
 
@@ -54,7 +61,7 @@ class AuthViewModelTest {
 
     @Test
     fun login_failure_surfaces_an_error() = runTest {
-        val viewModel = AuthViewModel(FakeAuthRepository(succeed = false))
+        val viewModel = AuthViewModel(FakeAuthRepository(succeed = false), FakeErrorLogger())
         viewModel.onEmailChange("stan@example.test")
         viewModel.onPasswordChange("wrong")
 
@@ -67,7 +74,7 @@ class AuthViewModelTest {
 
     @Test
     fun sign_out_clears_authentication() = runTest {
-        val viewModel = AuthViewModel(FakeAuthRepository(succeed = true))
+        val viewModel = AuthViewModel(FakeAuthRepository(succeed = true), FakeErrorLogger())
         viewModel.onEmailChange("stan@example.test")
         viewModel.onPasswordChange("secret-password")
         viewModel.submit()

@@ -2,6 +2,8 @@ package dev.scuttle.inventory.di
 
 import dev.scuttle.inventory.data.auth.AuthRepository
 import dev.scuttle.inventory.data.auth.AuthRepositoryImpl
+import dev.scuttle.inventory.data.error.ErrorLogger
+import dev.scuttle.inventory.data.error.ErrorLoggerImpl
 import dev.scuttle.inventory.data.household.HouseholdRepository
 import dev.scuttle.inventory.data.household.HouseholdRepositoryImpl
 import dev.scuttle.inventory.data.invite.InviteRepository
@@ -51,4 +53,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindInviteRepository(impl: InviteRepositoryImpl): InviteRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindErrorLogger(impl: ErrorLoggerImpl): ErrorLogger
 }
