@@ -154,6 +154,25 @@ class DrawerViewModelTest {
     }
 
     @Test
+    fun delete_location_failure_surfaces_action_error() = runTest {
+        // W10: a failed swipe-to-delete must not be swallowed — it surfaces as a
+        // one-shot actionError the screen shows as a snackbar.
+        val throwingLocRepo = object : LocationRepository {
+            override fun getCached(householdId: Long): List<LocationDto>? = null
+            override suspend fun list(householdId: Long) = emptyList<LocationDto>()
+            override suspend fun create(householdId: Long, name: String, type: String) = throw NotImplementedError()
+            override suspend fun delete(householdId: Long, locationId: Long) = throw IOException("delete failed")
+        }
+        val (store, _) = makeStore(households = emptyList())
+        val vm = DrawerViewModel(store, throwingLocRepo)
+
+        vm.deleteLocation(householdId = 1, locationId = 10)
+
+        val message = vm.actionError.first { it != null }
+        assertNotNull(message)
+    }
+
+    @Test
     fun delete_location_removes_it_from_entries() = runTest {
         val fakeLocRepo = FakeLocationRepository(
             mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge"), LocationDto(11, "Pantry", "pantry"))),

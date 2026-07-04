@@ -45,6 +45,12 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-07-04` — **Drawer/home location-delete failure is surfaced, not swallowed** (wave-2 W10).
+  `DrawerViewModel.deleteLocation` had `runCatching{…}.onSuccess{ refresh() }` with no `onFailure`, so a
+  failed swipe-to-delete on AllStorages left the location in place with no feedback. Added a one-shot
+  `actionError` flow (separate from the store-derived load `error`, since a delete fails while the list is
+  populated and the inline empty-state ErrorRetry would never show it), rendered via the existing
+  `SnackbarErrorEffect` + a new `SnackbarHost` on the screen. Added a VM delete-failure unit test.
 - ✅ `2026-07-04` — **Shelf tabs announce missing-stock instead of signalling by color alone** (wave-2 W9).
   `LocationDetailScreen` marked an out-of-stock-mandatory shelf with red tab text + a decorative 6dp dot
   and no semantics — color-only (WCAG 1.4.1) and silent to TalkBack. Added a `location_shelf_missing_cd`

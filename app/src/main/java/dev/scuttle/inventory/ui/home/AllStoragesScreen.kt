@@ -32,6 +32,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
@@ -54,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.ui.common.ErrorRetry
+import dev.scuttle.inventory.ui.common.SnackbarErrorEffect
 import dev.scuttle.inventory.ui.common.storageTypeLabel
 import dev.scuttle.inventory.data.dto.LocationDto
 import dev.scuttle.inventory.ui.app.DrawerViewModel
@@ -72,12 +75,18 @@ fun AllStoragesScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val localState by localViewModel.state.collectAsState()
+    val actionError by viewModel.actionError.collectAsState()
     var pendingDelete by remember { mutableStateOf<Pair<HouseholdWithLocations, LocationDto>?>(null) }
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    // Surface a failed swipe-to-delete as a transient snackbar so it isn't silent (W10).
+    SnackbarErrorEffect(actionError, snackbarHostState, onConsumed = viewModel::consumeActionError)
 
     val statusBarInsets = WindowInsets.statusBars
     Scaffold(
         contentWindowInsets = WindowInsets(0),
         modifier = modifier,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 windowInsets = statusBarInsets,
