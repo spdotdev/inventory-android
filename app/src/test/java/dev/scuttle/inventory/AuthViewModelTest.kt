@@ -5,19 +5,25 @@ import dev.scuttle.inventory.data.error.ErrorLogger
 import dev.scuttle.inventory.ui.auth.AuthViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import retrofit2.HttpException
+import retrofit2.Response
 
 class AuthViewModelTest {
 
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
-    private class FakeAuthRepository(private val succeed: Boolean) : AuthRepository {
+    private class FakeAuthRepository(
+        private val succeed: Boolean,
+        private val error: Throwable = RuntimeException("Invalid credentials."),
+    ) : AuthRepository {
         private var authed = false
         val session = MutableStateFlow(false)
 
@@ -42,7 +48,7 @@ class AuthViewModelTest {
         }
 
         private fun maybeFail() {
-            if (!succeed) throw RuntimeException("Invalid credentials.")
+            if (!succeed) throw error
             authed = true
             session.value = true
         }
@@ -90,6 +96,24 @@ class AuthViewModelTest {
         viewModel.signOut()
 
         assertFalse(viewModel.state.value.authenticated)
+    }
+
+    @Test
+    fun a_google_401_shows_the_google_specific_copy_not_the_password_copy() = runTest {
+        // X12: a rejected Google ID token comes back as a 401, the same status the
+        // email/password path uses for "Incorrect email or password." That wrong copy
+        // would be nonsensical on the Google button — the Google 401 must map to its
+        // own message. Guards toGoogleAuthErrorMessage() against a future regression to
+        // the shared password mapper.
+        val http401 = HttpException(Response.error<Any>(401, "".toResponseBody(null)))
+        val viewModel = AuthViewModel(FakeAuthRepository(succeed = false, error = http401), FakeErrorLogger())
+
+        viewModel.loginWithGoogle("bad-id-token")
+
+        val state = viewModel.state.value
+        assertFalse(state.authenticated)
+        assertFalse(state.googleLoading)
+        assertEquals("Google sign-in failed. Please try again.", state.error)
     }
 
     @Test

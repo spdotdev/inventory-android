@@ -45,6 +45,23 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-07-04` — **Android CI runs when its own workflow file changes** (wave-3 X7). `ci.yml`'s `paths:`
+  filters caught `**/*.kts` but not `.github/workflows/ci.yml` itself, so a PR editing only the CI workflow
+  skipped the build/test job (the Laravel repo already had this via W20). Added the workflow path to both the
+  `push` and `pull_request` `paths:` lists.
+- ✅ `2026-07-04` — **`AuthInterceptor` 401 session-expiry path is unit-tested** (wave-3 X8). The reactive
+  logout (a 401 on any call clears the token and flips `sessionActive` → the app returns to login) is named a
+  critical path in `CLAUDE.md` but had no unit coverage. Added `AuthInterceptorTest`: 401 clears the token +
+  flips auth state; 200 leaves it; the `Authorization: Bearer` header is attached only when a token exists.
+  MockWebServer is `androidTestImplementation`-only, so it uses a fake `Interceptor.Chain` + fake
+  `TokenStore` — pure JVM, no emulator.
+- ✅ `2026-07-04` — **Google sign-in 401 shows Google-specific copy (regression test)** (wave-3 X12). A
+  rejected Google ID token comes back as a 401 — the same status the email/password flow maps to "Incorrect
+  email or password." The audit suspected the Google button would show that wrong copy, but on re-check
+  `AuthViewModel.toGoogleAuthErrorMessage()` already maps a Google 401 → "Google sign-in failed. Please try
+  again." No behaviour change was needed; added a regression test pinning that copy so a future refactor
+  can't route the Google path through the shared password mapper (`FakeAuthRepository`'s failure `Throwable`
+  is now injectable).
 - ✅ `2026-07-04` — **Household create/join/leave now refreshes the shared hierarchy** (wave-3 X4). `HouseholdsViewModel.create()/leave()`
   and `JoinHouseholdViewModel.join()` updated only the `HouseholdRepository` cache + their own UI state, so
   the drawer/home/dashboard (driven by the `@Singleton HierarchyStore`) stayed stale until a manual

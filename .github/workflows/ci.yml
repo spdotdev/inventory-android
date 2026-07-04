@@ -25,6 +25,8 @@ on:
       - 'gradle/**'
       - 'gradlew'
       - 'gradle.properties'
+      # Run the suite when the workflow itself changes, so CI edits are validated.
+      - '.github/workflows/ci.yml'
   pull_request:
     paths:
       - 'app/**'
@@ -35,6 +37,8 @@ on:
       - 'gradle/**'
       - 'gradlew'
       - 'gradle.properties'
+      # Run the suite when the workflow itself changes, so CI edits are validated.
+      - '.github/workflows/ci.yml'
   workflow_dispatch:
 
 permissions:
