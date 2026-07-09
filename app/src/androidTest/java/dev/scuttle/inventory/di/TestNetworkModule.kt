@@ -5,6 +5,7 @@ import dagger.Provides
 import dagger.hilt.components.SingletonComponent
 import dagger.hilt.testing.TestInstallIn
 import dev.scuttle.inventory.data.api.AuthApi
+import dev.scuttle.inventory.data.api.ErrorApi
 import dev.scuttle.inventory.data.api.HouseholdApi
 import dev.scuttle.inventory.data.api.InviteApi
 import dev.scuttle.inventory.data.api.LocationApi
@@ -67,4 +68,5 @@ object TestNetworkModule {
     @Provides @Singleton fun provideProductApi(r: Retrofit): ProductApi = r.create(ProductApi::class.java)
     @Provides @Singleton fun provideSearchApi(r: Retrofit): SearchApi = r.create(SearchApi::class.java)
     @Provides @Singleton fun provideInviteApi(r: Retrofit): InviteApi = r.create(InviteApi::class.java)
+    @Provides @Singleton fun provideErrorApi(r: Retrofit): ErrorApi = r.create(ErrorApi::class.java)
 }
