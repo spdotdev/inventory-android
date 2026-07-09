@@ -4,6 +4,7 @@ package dev.scuttle.inventory.flow
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.filterToOne
 import androidx.compose.ui.test.onAllNodesWithText
@@ -12,6 +13,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.waitUntilAtLeastOneExists
+import dev.scuttle.inventory.ui.dashboard.DASHBOARD_TITLE_TEST_TAG
 import dagger.hilt.android.testing.HiltAndroidTest
 import dev.scuttle.inventory.FlowTestBase
 import org.junit.Test
@@ -34,7 +36,7 @@ class DashboardRefreshFlowTest : FlowTestBase() {
             onAllNodesWithText("Sign in").filterToOne(hasClickAction()).performClick()
 
             Thread.sleep(3_000)
-            waitUntilAtLeastOneExists(hasText("Dashboard"), timeoutMillis = 5_000)
+            waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 5_000)
             // Wait for stat cards to appear (initial load complete)
             waitUntilAtLeastOneExists(hasText("Locations"), timeoutMillis = 5_000)
 
@@ -74,7 +76,7 @@ class DashboardRefreshFlowTest : FlowTestBase() {
             onAllNodesWithText("Sign in").filterToOne(hasClickAction()).performClick()
 
             Thread.sleep(3_000)
-            waitUntilAtLeastOneExists(hasText("Dashboard"), timeoutMillis = 5_000)
+            waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 5_000)
 
             // Tap Refresh — no mock registered for /households → server returns 500
             // DashboardViewModel.refresh() onFailure sets state.error = e.message

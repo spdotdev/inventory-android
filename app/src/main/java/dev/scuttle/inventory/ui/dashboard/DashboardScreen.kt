@@ -39,6 +39,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -46,6 +47,14 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.ui.common.LiveStatusText
 import dev.scuttle.inventory.ui.theme.FrostCard
+
+/**
+ * Distinct from the plain text "Dashboard", which also appears as the
+ * always-composed drawer nav item label (ModalNavigationDrawer keeps drawer
+ * content in the tree even when closed) — tests must target this tag, not
+ * the text, to avoid matching the closed drawer instead of this screen.
+ */
+const val DASHBOARD_TITLE_TEST_TAG = "dashboard_top_bar_title"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -81,7 +90,12 @@ fun DashboardScreen(
         topBar = {
             TopAppBar(
                 windowInsets = statusBarInsets,
-                title = { Text(stringResource(R.string.dashboard_title)) },
+                title = {
+                    Text(
+                        stringResource(R.string.dashboard_title),
+                        modifier = Modifier.testTag(DASHBOARD_TITLE_TEST_TAG),
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onOpenDrawer) {
                         Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.action_open_menu))

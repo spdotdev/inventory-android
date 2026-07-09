@@ -4,6 +4,7 @@ package dev.scuttle.inventory.flow
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.filterToOne
 import androidx.compose.ui.test.onAllNodesWithText
@@ -12,6 +13,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.waitUntilAtLeastOneExists
+import dev.scuttle.inventory.ui.dashboard.DASHBOARD_TITLE_TEST_TAG
 import dagger.hilt.android.testing.HiltAndroidTest
 import dev.scuttle.inventory.FlowTestBase
 import org.junit.Test
@@ -33,7 +35,7 @@ class EmptyShelfFlowTest : FlowTestBase() {
             onAllNodesWithText("Sign in").filterToOne(hasClickAction()).performClick()
 
             Thread.sleep(3_000)
-            waitUntilAtLeastOneExists(hasText("Dashboard"), timeoutMillis = 5_000)
+            waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 5_000)
 
             // Drawer → Fridge
             onNodeWithContentDescription("Open menu").performClick()

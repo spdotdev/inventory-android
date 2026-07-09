@@ -4,6 +4,8 @@ package dev.scuttle.inventory.flow
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.hasClickAction
@@ -11,6 +13,7 @@ import androidx.compose.ui.test.filterToOne
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.waitUntilAtLeastOneExists
+import dev.scuttle.inventory.ui.dashboard.DASHBOARD_TITLE_TEST_TAG
 import dagger.hilt.android.testing.HiltAndroidTest
 import dev.scuttle.inventory.FlowTestBase
 import org.junit.Test
@@ -32,8 +35,8 @@ class AuthFlowTest : FlowTestBase() {
             onNodeWithText("Password").performTextInput("password123")
             onAllNodesWithText("Sign in").filterToOne(hasClickAction()).performClick()
 
-            waitUntilAtLeastOneExists(hasText("Dashboard"), timeoutMillis = 5_000)
-            onAllNodesWithText("Dashboard")[0].assertIsDisplayed()
+            waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 5_000)
+            onNodeWithTag(DASHBOARD_TITLE_TEST_TAG).assertIsDisplayed()
         }
     }
 
