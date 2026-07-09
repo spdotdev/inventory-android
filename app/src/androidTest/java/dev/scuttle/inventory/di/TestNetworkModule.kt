@@ -17,6 +17,7 @@ import dev.scuttle.inventory.MockWebServerHolder
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import javax.inject.Singleton
@@ -46,6 +47,10 @@ object TestNetworkModule {
                 } else chain.request()
                 chain.proceed(req)
             }
+            // TEMP: diagnosing why login never appears to navigate to Dashboard
+            // in CI instrumented runs. Logs request/response line + body to logcat
+            // (tag "OkHttp") so we can see whether the app even reaches MockWebServer.
+            .addInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY })
             .build()
 
     @Provides
