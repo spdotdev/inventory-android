@@ -3,6 +3,7 @@
 package dev.scuttle.inventory.flow
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.hasClickAction
@@ -15,6 +16,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.waitUntilAtLeastOneExists
 import dev.scuttle.inventory.ui.dashboard.DASHBOARD_TITLE_TEST_TAG
+import dev.scuttle.inventory.ui.products.PRODUCT_DETAIL_TITLE_TEST_TAG
 import dagger.hilt.android.testing.HiltAndroidTest
 import dev.scuttle.inventory.FlowTestBase
 import org.junit.Test
@@ -53,9 +55,13 @@ class SearchFlowTest : FlowTestBase() {
             // Click the result card — navigates to product detail
             onNodeWithText("Fridge › Top shelf").performClick()
 
-            // Product detail screen shows the product name in the top bar
-            waitUntilAtLeastOneExists(hasText("Milk"), timeoutMillis = 5_000)
-            onNodeWithText("Milk").assertIsDisplayed()
+            // Product detail screen shows the product name in the top bar. Not
+            // hasText("Milk"): the search result card showing the same name can
+            // still be composed in the previous back-stack destination during
+            // the navigation transition (see search_returns_matching_product's
+            // note below) — the title's distinct testTag avoids that collision.
+            waitUntilAtLeastOneExists(hasTestTag(PRODUCT_DETAIL_TITLE_TEST_TAG), timeoutMillis = 5_000)
+            onNodeWithTag(PRODUCT_DETAIL_TITLE_TEST_TAG).assertTextEquals("Milk")
         }
     }
 

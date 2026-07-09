@@ -63,6 +63,13 @@ import dev.scuttle.inventory.ui.common.SnackbarErrorEffect
 import java.io.File
 import java.util.UUID
 
+/**
+ * Distinct from the plain product-name text, which can still be composed in
+ * a previous back-stack destination during a navigation transition (e.g. a
+ * search result card showing the same name) — tests must target this tag.
+ */
+const val PRODUCT_DETAIL_TITLE_TEST_TAG = "product_detail_title"
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductDetailScreen(
@@ -129,7 +136,12 @@ fun ProductDetailScreen(
         topBar = {
             TopAppBar(
                 windowInsets = statusBarInsets,
-                title = { Text(product?.name ?: stringResource(R.string.product_detail_title_fallback)) },
+                title = {
+                    Text(
+                        product?.name ?: stringResource(R.string.product_detail_title_fallback),
+                        modifier = Modifier.testTag(PRODUCT_DETAIL_TITLE_TEST_TAG),
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))

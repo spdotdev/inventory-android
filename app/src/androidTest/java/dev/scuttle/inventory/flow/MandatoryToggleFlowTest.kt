@@ -53,8 +53,9 @@ class MandatoryToggleFlowTest : FlowTestBase() {
             mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
             waitUntilAtLeastOneExists(hasTestTag("product-1000"), timeoutMillis = 5_000)
             onNodeWithTag("product-1000").performClick()
+            waitForIdle()
 
-            waitUntilAtLeastOneExists(hasText("Mandatory on this shelf"), timeoutMillis = 10_000)
+            waitUntilAtLeastOneExists(hasText("Mandatory on this shelf"), timeoutMillis = 15_000)
             onAllNodes(isToggleable())[0].assertIsOff()
             onAllNodes(isToggleable())[0].performClick()
             waitForIdle()

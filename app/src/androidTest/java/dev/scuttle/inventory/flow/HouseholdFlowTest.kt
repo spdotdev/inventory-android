@@ -50,7 +50,10 @@ class HouseholdFlowTest : FlowTestBase() {
             Thread.sleep(2_000)
             waitForIdle()
 
-            onNodeWithText("Office").assertIsDisplayed()
+            // Not onNodeWithText: the drawer (always composed even while closed)
+            // also echoes every household name as plain text, so "Office" matches
+            // twice. The household card's contentDescription is unique to this screen.
+            onNodeWithContentDescription("Office").assertIsDisplayed()
         }
     }
 }

@@ -60,6 +60,8 @@ class EditProductDetailFlowTest : FlowTestBase() {
             mockServer.enqueue(fixture("product_renamed.json"))
             onAllNodes(hasSetTextAction())[0].performTextClearance()
             onAllNodes(hasSetTextAction())[0].performTextInput("Oat Milk")
+            waitForIdle()
+            waitUntilAtLeastOneExists(hasText("Save"), timeoutMillis = 5_000)
             onNodeWithText("Save").performClick()
             Thread.sleep(2_000)
             waitForIdle()
