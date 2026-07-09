@@ -19,7 +19,7 @@ active shelf, instead of typing the name.
 action in the app is naming products. Pairs with the Phase 2 `barcode` product attribute.
 
 **Where it touches.** New camera permission + scanner screen; product add flow; depends on
-the backend gaining a `barcode` attribute (Phase 2, see `inventory-docs`).
+the backend gaining a `barcode` attribute (Phase 2, see `inventory-laravel/docs/`).
 
 **Risks.** Camera permission friction; offline barcode→name lookup needs a data source
 (out of scope while always-online). Effort ~3–4 days. **Kill criterion:** if manual add is
@@ -282,7 +282,7 @@ fast enough in real use, don't build it.
   whose ID token feeds `AuthViewModel.loginWithGoogle` → backend verifier. No code change needed —
   the RMMBR "set GOOGLE_CLIENT_ID" task was stale. (If the tenant's Web client ID ever rotates,
   update the single `buildConfigField` line.)
-- ✅ `2026-07-04` — **Q-3 (realtime) resolved → pull-to-refresh** (see `inventory-docs/ROADMAP.md`).
+- ✅ `2026-07-04` — **Q-3 (realtime) resolved → pull-to-refresh** (see `inventory-laravel/docs/archive/` for the original discussion).
   WebSockets/Reverb deferred to Phase 2; the live-updates idea stays in this file's parking lot as
   the re-open trigger.
 - ✅ `2026-07-04` — **Frosted-glass card treatment (Frost D-021, ralph-loop r17).** New

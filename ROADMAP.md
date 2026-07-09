@@ -6,7 +6,7 @@
 > wishes apart stops commitments from looking negotiable and ideas from looking promised.
 
 The **Inventory** Android client (Kotlin/Compose). Authoritative spec lives in
-[`inventory-docs`](https://github.com/spdotdev/inventory-docs); this file tracks build work.
+[`inventory-laravel/docs/specs/`](https://github.com/spdotdev/inventory-laravel/tree/main/docs/specs); this file tracks build work.
 
 Markers: 🟡 TBD · 🔲 TODO · 🛠 in progress · ✅ done (shipped work moves to `BACKLOG.md`).
 

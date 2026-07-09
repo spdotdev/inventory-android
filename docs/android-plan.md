@@ -1,8 +1,9 @@
 # inventory-android — client planning slice
 
 > Android-specific planning. The shared, authoritative spec lives in
-> [`inventory-docs`](https://github.com/spdotdev/inventory-docs):
-> `planning/project-brief.md`, `specs/data-model.md`, `specs/api-contract.md`.
+> [`inventory-laravel`](https://github.com/spdotdev/inventory-laravel)'s `docs/`:
+> `docs/planning/project-brief.md`, `docs/specs/data-model.md`, `docs/specs/api-contract.md`.
+> (The former `inventory-docs` repo has been retired and merged in.)
 
 ## Architecture
 - Single-activity Compose app, **MVVM/MVI**, unidirectional state.

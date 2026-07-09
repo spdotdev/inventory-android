@@ -23,12 +23,11 @@ tests + lint on every push/PR.
 ## Documentation
 
 - App-specific planning: [`docs/`](./docs)
-- Shared specs (product vision, data model, API contract): [`inventory-docs`](https://github.com/spdotdev/inventory-docs)
+- Shared specs (product vision, data model, API contract): [`inventory-laravel/docs/`](https://github.com/spdotdev/inventory-laravel/tree/main/docs)
 
 ## Related repositories
 
-- [`inventory-laravel`](https://github.com/spdotdev/inventory-laravel) — backend / API
-- [`inventory-docs`](https://github.com/spdotdev/inventory-docs) — shared planning & specs
+- [`inventory-laravel`](https://github.com/spdotdev/inventory-laravel) — backend / API, and the canonical home for shared specs/planning
 
 ## License
 

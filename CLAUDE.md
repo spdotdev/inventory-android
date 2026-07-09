@@ -1,8 +1,10 @@
 # CLAUDE.md — Inventory (Android client)
 
-Working agreement for Claude Code. Read before any task. Shared spec lives in the
-[`inventory-docs`](https://github.com/spdotdev/inventory-docs) repo
-(`planning/project-brief.md`, `specs/data-model.md`, `specs/api-contract.md`).
+Working agreement for Claude Code. Read before any task. Canonical spec lives in
+[`inventory-laravel`](https://github.com/spdotdev/inventory-laravel)'s `docs/`
+(`docs/planning/project-brief.md`, `docs/specs/data-model.md`, `docs/specs/api-contract.md`)
+— the former `inventory-docs` repo has been retired and its contents merged there and
+into this repo's own `docs/`.
 
 ## What this is
 The **sole client** for the Inventory product — a native **Android (Kotlin/Compose)**
