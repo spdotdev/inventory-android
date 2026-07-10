@@ -43,6 +43,12 @@ android {
             "GOOGLE_CLIENT_ID",
             "\"758637503304-np301l9sc7saepermpm2so9kcghet5k6.apps.googleusercontent.com\"",
         ) // Web OAuth client ID — used with Google Sign-In SDK
+
+        // Live updates (Q-3): Reverb websocket endpoint. The app key is a public
+        // identifier (channel security lives in the Sanctum-gated auth endpoint);
+        // it must match REVERB_APP_KEY in the server's .env.
+        buildConfigField("String", "REVERB_HOST", "\"inventory.scuttle.dev\"")
+        buildConfigField("String", "REVERB_APP_KEY", "\"inventory-live\"")
     }
 
     signingConfigs {
@@ -130,6 +136,10 @@ dependencies {
     implementation("androidx.camera:camera-lifecycle:1.6.1")
     implementation("androidx.camera:camera-view:1.6.1")
     implementation("com.google.mlkit:barcode-scanning:17.3.0")
+
+    // Live updates (Q-3): Reverb speaks the Pusher protocol, so the stock
+    // Pusher client subscribes to the private household channels.
+    implementation("com.pusher:pusher-java-client:2.4.4")
 
     // QR generation for household invites (pure-Java, no Android deps)
     implementation("com.google.zxing:core:3.5.4")

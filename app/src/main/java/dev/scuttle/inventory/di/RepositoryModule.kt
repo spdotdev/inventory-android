@@ -16,6 +16,8 @@ import dev.scuttle.inventory.data.location.LocationRepository
 import dev.scuttle.inventory.data.location.LocationRepositoryImpl
 import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.data.product.ProductRepositoryImpl
+import dev.scuttle.inventory.data.realtime.PusherRealtimeGateway
+import dev.scuttle.inventory.data.realtime.RealtimeGateway
 import dev.scuttle.inventory.data.search.SearchRepository
 import dev.scuttle.inventory.data.search.SearchRepositoryImpl
 import dev.scuttle.inventory.data.shelf.ShelfRepository
@@ -56,4 +58,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindErrorLogger(impl: ErrorLoggerImpl): ErrorLogger
+
+    @Binds
+    @Singleton
+    abstract fun bindRealtimeGateway(impl: PusherRealtimeGateway): RealtimeGateway
 }

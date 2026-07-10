@@ -43,6 +43,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import dagger.hilt.android.AndroidEntryPoint
+import dev.scuttle.inventory.data.realtime.LiveUpdates
 import dev.scuttle.inventory.data.settings.SharedPrefsLanguageStore
 import dev.scuttle.inventory.ui.app.AppDrawer
 import dev.scuttle.inventory.ui.app.DrawerViewModel
@@ -64,9 +65,25 @@ import dev.scuttle.inventory.ui.storage.StorageOverviewScreen
 import dev.scuttle.inventory.ui.theme.InventoryTheme
 import dev.scuttle.inventory.ui.theme.ThemeMode
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    // Live updates (Q-3): connected while this (single) activity is started —
+    // i.e. exactly while the app is in the foreground.
+    @Inject
+    lateinit var liveUpdates: LiveUpdates
+
+    override fun onStart() {
+        super.onStart()
+        liveUpdates.setForeground(true)
+    }
+
+    override fun onStop() {
+        liveUpdates.setForeground(false)
+        super.onStop()
+    }
+
     override fun attachBaseContext(newBase: Context) {
         val lang = SharedPrefsLanguageStore(newBase).get()
         val locale = java.util.Locale(lang.tag)
@@ -78,6 +95,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        liveUpdates.start()
         setContent {
             val themeViewModel: ThemeViewModel = hiltViewModel()
             val mode by themeViewModel.mode.collectAsState()

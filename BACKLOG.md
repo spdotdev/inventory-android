@@ -36,13 +36,21 @@ fast enough in real use, don't build it.
   Phase 2, with a `low_stock_threshold` field landing on the backend. A real OS
   home-screen widget stays deferred — it fights the always-online + bearer-token model
   (no background auth).
-- 💡 Q-3: live updates (WebSockets) if pull-to-refresh proves insufficient.
+- ~~💡 Q-3: live updates (WebSockets)~~ — **unlocked + built 2026-07-10** (user decision:
+  full Reverb over cheap polling); see Done.
 - 💡 User-chosen per-household color/icon (needs a `theme` field on the household resource —
   Phase-2 backend change; the deterministic id-derived version already ships, see Done).
 
 ---
 
 ## Done
+- ✅ `2026-07-10` — **Live updates client (Q-3, user decision: full Reverb)**. Foreground-only
+  websocket (pusher-java-client → Reverb, Pusher protocol) subscribed to every household's
+  private channel; a `household.changed` ping debounce-triggers a silent HierarchyStore
+  refresh — machine-initiated pull-to-refresh, no client-side state (server-authoritative).
+  Auth via the Sanctum-gated /api/v1/broadcasting/auth. Gateway abstracted for JVM tests.
+  END-TO-END PENDING server steps: REVERB_* env keys on d051 + host proxy websocket
+  pass-through (tracked in inventory-laravel ROADMAP).
 - ✅ `2026-07-10` — **Bottom navigation bar** (UX wave 2, user-approved, c368b96). Material3
   `NavigationBar` with Dashboard / Storage / Search / Settings tabs, shown only on top-level
   routes — detail screens (shelves, product detail, scanner) stay full-screen. Tabs use
