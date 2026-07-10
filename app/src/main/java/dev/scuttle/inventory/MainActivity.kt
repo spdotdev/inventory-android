@@ -255,6 +255,12 @@ private fun InventoryNavHost(
                     onOpenLocation = { hhId, locId ->
                         navController.navigate(Routes.location(hhId, locId))
                     },
+                    onOpenAllStorage = {
+                        navController.navigate(Routes.HOME) { launchSingleTop = true }
+                    },
+                    onOpenSearch = { hhId ->
+                        navController.navigate(Routes.search(hhId)) { launchSingleTop = true }
+                    },
                     onOpenHouseholds = { navController.navigate(Routes.HOUSEHOLDS) },
                     onOpenMissingItems = { navController.navigate(Routes.MISSING_ITEMS) { launchSingleTop = true } },
                 )

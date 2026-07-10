@@ -34,6 +34,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.scuttle.inventory.R
@@ -205,11 +207,15 @@ fun AppDrawer(
                                         } else {
                                             MaterialTheme.colorScheme.onSurface
                                         },
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
                                 )
                             },
                             selected = false,
                             onClick = { onNavigateLocation(entry.id, location.id) },
-                            modifier = Modifier.padding(horizontal = 12.dp),
+                            // Tag for tests: text-based selection is ambiguous now that
+                            // dashboard rows behind the open drawer are also clickable.
+                            modifier = Modifier.padding(horizontal = 12.dp).testTag("drawer-location-${location.name}"),
                         )
                     }
                 }

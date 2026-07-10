@@ -66,11 +66,11 @@ class MissingItemsFlowTest : FlowTestBase() {
             waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 5_000)
 
             onNodeWithContentDescription("Open menu").performClick()
-            waitUntilAtLeastOneExists(hasText("Fridge").and(hasClickAction()), timeoutMillis = 8_000)
+            waitUntilAtLeastOneExists(hasTestTag("drawer-location-Fridge"), timeoutMillis = 8_000)
 
             mockServer.route("/households/1/locations/10/shelves", fixture("shelves_one.json"))
             mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
-            onAllNodesWithText("Fridge").filterToOne(hasClickAction()).performClick()
+            onNodeWithTag("drawer-location-Fridge").performClick()
             waitForIdle()
 
             // Register response for ProductDetailViewModel's list call, then tap "Milk"

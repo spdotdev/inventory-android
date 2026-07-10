@@ -16,6 +16,9 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Refresh
@@ -66,6 +69,8 @@ fun DashboardScreen(
     onOpenLocation: (householdId: Long, locationId: Long) -> Unit = { _, _ -> },
     onOpenHouseholds: () -> Unit = {},
     onOpenMissingItems: () -> Unit = {},
+    onOpenAllStorage: () -> Unit = {},
+    onOpenSearch: (householdId: Long) -> Unit = {},
     viewModel: DashboardViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -139,16 +144,19 @@ fun DashboardScreen(
                         label = stringResource(R.string.dashboard_stat_locations),
                         value = state.totalLocations.toString(),
                         modifier = Modifier.weight(1f),
+                        onClick = onOpenAllStorage,
                     )
                     StatCard(
                         label = stringResource(R.string.dashboard_stat_shelves),
                         value = state.totalShelves.toString(),
                         modifier = Modifier.weight(1f),
+                        onClick = onOpenAllStorage,
                     )
                     StatCard(
                         label = stringResource(R.string.dashboard_stat_products),
                         value = state.totalProducts.toString(),
                         modifier = Modifier.weight(1f),
+                        onClick = { state.firstHouseholdId?.let(onOpenSearch) },
                     )
                 }
 
@@ -160,7 +168,7 @@ fun DashboardScreen(
                 // excluded — they're already in the red card above).
                 if (state.lowStockItems.isNotEmpty()) {
                     Text(stringResource(R.string.dashboard_running_low), style = MaterialTheme.typography.titleMedium)
-                    RunningLowCard(state.lowStockItems)
+                    RunningLowCard(state.lowStockItems, onOpenLocation = onOpenLocation)
                 }
 
                 // Bar chart
@@ -176,13 +184,32 @@ fun DashboardScreen(
                         ) {
                             val maxVal = state.locationStats.maxOfOrNull { it.productCount } ?: 1
                             state.locationStats.forEach { stat ->
-                                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    Text(
-                                        stat.location.name,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        maxLines = 1,
-                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                                    )
+                                Column(
+                                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .clickable { onOpenLocation(stat.householdId, stat.location.id) }
+                                            .padding(vertical = 2.dp),
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        Text(
+                                            stat.location.name,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            maxLines = 1,
+                                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                            modifier = Modifier.weight(1f),
+                                        )
+                                        Icon(
+                                            Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.size(16.dp),
+                                        )
+                                    }
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         verticalAlignment = Alignment.CenterVertically,
@@ -292,8 +319,9 @@ private fun StatCard(
     label: String,
     value: String,
     modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
 ) {
-    FrostCard(modifier = modifier) {
+    FrostCard(modifier = modifier, onClick = onClick) {
         Column(
             modifier = Modifier.padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -305,7 +333,10 @@ private fun StatCard(
 }
 
 @Composable
-private fun RunningLowCard(items: List<LowStockItem>) {
+private fun RunningLowCard(
+    items: List<LowStockItem>,
+    onOpenLocation: (householdId: Long, locationId: Long) -> Unit,
+) {
     FrostCard(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -313,7 +344,10 @@ private fun RunningLowCard(items: List<LowStockItem>) {
         ) {
             items.forEach { item ->
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable { onOpenLocation(item.householdId, item.locationId) },
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {

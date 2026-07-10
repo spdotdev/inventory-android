@@ -10,6 +10,7 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -39,11 +40,11 @@ class AddProductFlowTest : FlowTestBase() {
 
             // Drawer → Fridge → LocationDetailScreen
             onNodeWithContentDescription("Open menu").performClick()
-            waitUntilAtLeastOneExists(hasText("Fridge").and(hasClickAction()), timeoutMillis = 8_000)
+            waitUntilAtLeastOneExists(hasTestTag("drawer-location-Fridge"), timeoutMillis = 8_000)
 
             mockServer.route("/households/1/locations/10/shelves", fixture("shelves_one.json"))
             mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
-            onAllNodesWithText("Fridge").filterToOne(hasClickAction()).performClick()
+            onNodeWithTag("drawer-location-Fridge").performClick()
             waitForIdle()
 
             // Tap FAB "Add product" → sheet opens
