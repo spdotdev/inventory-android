@@ -2,9 +2,8 @@
 
 Working agreement for Claude Code. Read before any task. Canonical spec lives in
 [`inventory-laravel`](https://github.com/spdotdev/inventory-laravel)'s `docs/`
-(`docs/planning/project-brief.md`, `docs/specs/data-model.md`, `docs/specs/api-contract.md`)
-— the former `inventory-docs` repo has been retired and its contents merged there and
-into this repo's own `docs/`.
+(`docs/planning/project-brief.md`, `docs/specs/data-model.md`,
+`docs/specs/api-contract.md`); Android-specific planning in this repo's own `docs/`.
 
 ## What this is
 The **sole client** for the Inventory product — a native **Android (Kotlin/Compose)**
@@ -23,8 +22,9 @@ multi-user, multi-household inventory. General-purpose; freezer/fridge/pantry ar
 ## Hard rules — LOCKED, do not relitigate
 - **Always-online.** NO offline cache/store, NO sync, NO conflict resolution. If the
   network is down, surface it — don't fake local state.
-- **Server-authoritative.** The API owns truth; the app uses optimistic UI +
-  pull-to-refresh (D-008), not a local source of truth.
+- **Server-authoritative.** The API owns truth; the app uses optimistic UI + live
+  updates over the `inventory.household.{id}` websocket channel (D-034), with
+  pull-to-refresh as fallback — never a local source of truth.
 - **Talk only to `/api/v1`** and treat it as a stable contract (see `specs/api-contract.md`).
   Base URL is configurable (build config), never hardcoded per-screen.
 - **Auth = Sanctum bearer token.** Store securely (EncryptedSharedPreferences / DataStore +
@@ -60,9 +60,9 @@ the drawer remains for household switching and location quick-jumps.
 
 ## Scope guardrails — refuse to add
 No expiry/reminders, recipes, shopping list, offline mode, roles/permissions.
-**Phase 2 unlocked 2026-07-10** (user decision): barcode scanning and the low-stock
-concept (threshold + "running low" view) are now committed work — see `ROADMAP.md`.
-Filter/sort remains uncommitted.
+**Phase 2 unlocked 2026-07-10** (user decision) and since shipped: barcode scanning,
+the low-stock "running low" view, filter/sort, household color/icon theming, and the
+live-updates client — see `ROADMAP.md` / `BACKLOG.md`.
 
 ## Conventions
 - Explicit over magic; SRP; document the *why*.
@@ -71,10 +71,13 @@ Filter/sort remains uncommitted.
   error/empty/offline states. No trivial UI tests.
 
 ## Status
-Functionally-complete MVP, CI-green. The single-activity Compose + Hilt + Retrofit app is
-built and wired to the API contract: auth (email/password + Google), storage overview,
-shelves (tabs/pager), products (add/remove/move, detail, image), search, invite (QR/join),
-settings, dashboard, and missing-items — with EN + NL localization and the Frost theme.
-Covered by JVM unit tests + instrumented flow tests (the latter run nightly on an emulator
-in CI). Forward-looking work lives in [`ROADMAP.md`](ROADMAP.md); shipped history in
-[`BACKLOG.md`](BACKLOG.md).
+Functionally-complete (MVP + Phase 2), CI-green, running against the **production
+backend at `https://inventory.scuttle.dev/api/v1`**. The single-activity Compose +
+Hilt + Retrofit app covers auth (email/password + Google, device-smoke-tested),
+storage overview, shelves (tabs/pager), products (add/remove/move, detail, image),
+search, invite (QR/join), settings, dashboard, missing-items, barcode scanning,
+low-stock, and live updates — with EN + NL localization and the Frost theme. Covered by
+JVM unit tests + instrumented flow tests (the latter run nightly on an emulator in CI).
+Distribution is **debug builds only** (tag-driven GitHub prerelease APKs) — no store
+presence yet. Forward-looking work lives in [`ROADMAP.md`](ROADMAP.md); shipped history
+in [`BACKLOG.md`](BACKLOG.md).

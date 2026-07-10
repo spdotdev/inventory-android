@@ -3,7 +3,6 @@
 > Android-specific planning. The shared, authoritative spec lives in
 > [`inventory-laravel`](https://github.com/spdotdev/inventory-laravel)'s `docs/`:
 > `docs/planning/project-brief.md`, `docs/specs/data-model.md`, `docs/specs/api-contract.md`.
-> (The former `inventory-docs` repo has been retired and merged in.)
 
 ## Architecture
 - Single-activity Compose app, **MVVM/MVI**, unidirectional state.
@@ -16,7 +15,8 @@
 - Base URL = `https://inventory.{domain}/api/v1` (build-config / flavor driven; dev vs prod).
 - OkHttp auth interceptor injects `Authorization: Bearer <token>`.
 - 401 → clear token, route to Auth. 403 → not a member. 404 → gone/out-of-tenant.
-- Pull-to-refresh + optimistic UI (no realtime; D-008).
+- Live updates over the `inventory.household.{id}` websocket channel (D-034);
+  pull-to-refresh + optimistic UI as fallback.
 
 ## Auth
 - Token stored in EncryptedSharedPreferences / DataStore (Keystore-backed).
@@ -52,4 +52,5 @@ Critical paths: token handling + 401 recovery, household scoping, stock actions,
 error/empty/offline states. No trivial UI tests.
 
 ## Open items
-- Q-3 realtime (currently pull-to-refresh — no WebSockets).
+_None._ (Q-3 realtime resolved 2026-07-10: Reverb live updates shipped, D-034;
+pull-to-refresh retained as fallback.)

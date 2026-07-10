@@ -16,12 +16,12 @@ Markers: 🟡 TBD · 🔲 TODO · 🛠 in progress · ✅ done (shipped work mov
 
 | Phase | Status | Scope |
 |---|---|---|
-| 0 — Project skeleton | 🔲 TODO | Single-activity Compose app + Hilt + Retrofit + Frost theme (palette in `docs/design/`). |
-| 1 — Auth | 🔲 TODO | Email/password + native Google Sign-In; secure token storage; auth interceptor + 401 recovery. |
-| 2 — Households | 🔲 TODO | List / switcher / create / join-by-code / leave; invite (copy link + QR). |
-| 3 — Inventory | 🔲 TODO | Storage overview → shelves (tab strip + swipe) → products; add/remove/move; global search. |
-| 4 — Settings + polish | 🔲 TODO | Theme (System/Light/Dark), household mgmt, account/sign out; empty/error/offline states. |
-| 5 — Phase 2 | ✅ shipped 2026-07-10 | **Unlocked 2026-07-10** (user decision): barcode scanning ✅, low-stock tile ✅, filter/sort ✅ (backlog sweep), household color/icon theme ✅, live-updates client ✅ (pending server Reverb config). |
+| 0 — Project skeleton | ✅ shipped 2026-06-23 | Single-activity Compose app + Hilt + Retrofit + Frost theme (palette in `docs/design/`). |
+| 1 — Auth | ✅ shipped 2026-06-23 | Email/password + native Google Sign-In; secure token storage; auth interceptor + 401 recovery. |
+| 2 — Households | ✅ shipped 2026-06-23 | List / switcher / create / join-by-code / leave; invite (copy link + QR). |
+| 3 — Inventory | ✅ shipped 2026-06-23 | Storage overview → shelves (tab strip + swipe) → products; add/remove/move; global search. |
+| 4 — Settings + polish | ✅ shipped 2026-06-24 | Theme (System/Light/Dark), household mgmt, account/sign out; empty/error/offline states. |
+| 5 — Phase 2 | ✅ shipped 2026-07-10 | **Unlocked 2026-07-10** (user decision): barcode scanning ✅, low-stock tile ✅, filter/sort ✅ (backlog sweep), household color/icon theme ✅, live-updates client ✅ (server Reverb config completed + verified 2026-07-10). |
 
 Detailed build order: [`CLAUDE.md`](CLAUDE.md) and [`docs/android-plan.md`](docs/android-plan.md).
 
@@ -29,8 +29,9 @@ Detailed build order: [`CLAUDE.md`](CLAUDE.md) and [`docs/android-plan.md`](docs
 
 ## Active TODOs
 
-> Skeleton + Frost theme + DI/networking + email/password auth all shipped and CI-green
-> 2026-06-23 — see [`BACKLOG.md`](BACKLOG.md) → Done. Next: the inventory screens.
+> **App complete (MVP + Phase 2), CI-green**, running against the production backend —
+> see [`BACKLOG.md`](BACKLOG.md) → Done for history. Nothing further committed; the
+> checked items below are the shipped record.
 
 ### SCREENS (next)
 - [x] **Households screen** — list / create / join (shipped 2026-06-23, CI-green).
