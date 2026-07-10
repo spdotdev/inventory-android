@@ -67,7 +67,7 @@ Detailed build order: [`CLAUDE.md`](CLAUDE.md) and [`docs/android-plan.md`](docs
 ### QUALITY
 - [x] **CI live and green** — wrapper validation + `testDebugUnitTest` + lint pass.
 - [x] **ktlint/detekt style gating in CI** (wave-2 W19) — shipped 2026-07-10. detekt 1.23.8 +
-  ktlint-gradle 14.2.0, baselines generated against the real codebase and committed
+  ktlint-gradle 12.1.2, baselines generated against the real codebase and committed
   (`app/detekt-baseline.xml`, `app/ktlint-baseline.xml`), gating `ktlintCheck detekt` step in
   `ci.yml`. Fails only on NEW violations; regenerate baselines only after an intentional
   cleanup (`./gradlew detektBaseline ktlintGenerateBaseline`), never to paper over findings.
