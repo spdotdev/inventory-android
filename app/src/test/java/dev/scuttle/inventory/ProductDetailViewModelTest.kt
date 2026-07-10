@@ -53,6 +53,7 @@ class ProductDetailViewModelTest {
             shelfId: Long,
             name: String,
             quantity: Int,
+            code: String?,
         ): ProductDto = ProductDto(99, name, quantity, shelfId).also { items.add(it) }
 
         override suspend fun update(

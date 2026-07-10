@@ -28,6 +28,7 @@ interface ProductRepository {
         shelfId: Long,
         name: String,
         quantity: Int,
+        code: String? = null,
     ): ProductDto
 
     suspend fun update(

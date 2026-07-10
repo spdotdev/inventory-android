@@ -93,6 +93,7 @@ class DashboardViewModelTest {
             shelfId: Long,
             name: String,
             quantity: Int,
+            code: String?,
         ) = ProductDto(99, name, quantity, shelfId)
 
         override suspend fun update(

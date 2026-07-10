@@ -41,6 +41,7 @@ import dev.scuttle.inventory.ui.invite.InviteScreen
 import dev.scuttle.inventory.ui.location.LocationDetailScreen
 import dev.scuttle.inventory.ui.missing.MissingItemsScreen
 import dev.scuttle.inventory.ui.products.ProductDetailScreen
+import dev.scuttle.inventory.ui.scanner.ScannerScreen
 import dev.scuttle.inventory.ui.search.SearchScreen
 import dev.scuttle.inventory.ui.settings.SettingsScreen
 import dev.scuttle.inventory.ui.settings.ThemeViewModel
@@ -85,6 +86,7 @@ private object Routes {
     const val AUTH = "auth"
     const val FORGOT_PASSWORD = "forgot-password"
     const val HOME = "home"
+    const val SCANNER = "scanner"
     const val DASHBOARD = "dashboard"
     const val HOUSEHOLDS = "households"
     const val SETTINGS = "settings"
@@ -329,6 +331,9 @@ private fun InventoryNavHost(
             ) { entry ->
                 val householdId = entry.arguments?.getLong("householdId") ?: return@composable
                 val locationId = entry.arguments?.getLong("locationId") ?: return@composable
+                val scannedCode by entry.savedStateHandle
+                    .getStateFlow<String?>("scanned_code", null)
+                    .collectAsState()
                 LocationDetailScreen(
                     householdId = householdId,
                     locationId = locationId,
@@ -338,6 +343,9 @@ private fun InventoryNavHost(
                     onOpenProduct = { hhId, shelfId, productId ->
                         navController.navigate(Routes.productDetail(hhId, shelfId, productId))
                     },
+                    onOpenScanner = { navController.navigate(Routes.SCANNER) },
+                    scannedCode = scannedCode,
+                    onScannedCodeConsumed = { entry.savedStateHandle["scanned_code"] = null },
                 )
             }
 
@@ -347,6 +355,16 @@ private fun InventoryNavHost(
                     onOpenLocation = { hhId, locId ->
                         navController.navigate(Routes.location(hhId, locId))
                     },
+                )
+            }
+
+            composable(Routes.SCANNER) {
+                ScannerScreen(
+                    onScanned = { code ->
+                        navController.previousBackStackEntry?.savedStateHandle?.set("scanned_code", code)
+                        navController.popBackStack()
+                    },
+                    onBack = { navController.popBackStack() },
                 )
             }
 

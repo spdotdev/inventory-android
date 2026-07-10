@@ -27,6 +27,14 @@ data class MoveTarget(
     val label: String,
 )
 
+sealed interface ScanResult {
+    /** The scanned code matched [productName]; its quantity was incremented. */
+    data class Incremented(val productName: String) : ScanResult
+
+    /** No product on this shelf carries [code]; it will be attached to the next create. */
+    data class Unknown(val code: String) : ScanResult
+}
+
 data class ProductsUiState(
     val loading: Boolean = false,
     val products: List<ProductDto> = emptyList(),
@@ -35,6 +43,10 @@ data class ProductsUiState(
     val error: String? = null,
     val movingProductId: Long? = null,
     val moveTargets: List<MoveTarget> = emptyList(),
+    // Outcome of the last barcode scan, consumed by the UI as a one-shot snackbar.
+    val scanResult: ScanResult? = null,
+    // A scanned code with no matching product — attached to the next create().
+    val pendingCode: String? = null,
     // Local view controls (not persisted; never sent to the server).
     val filterQuery: String = "",
     val mandatoryOnly: Boolean = false,
@@ -153,11 +165,12 @@ class ProductsViewModel
             if (name.isEmpty()) return
             searchJob?.cancel()
             launch {
-                productRepository.create(h, s, name, 0)
+                productRepository.create(h, s, name, 0, _state.value.pendingCode)
                 _state.update {
                     it.copy(
                         newName = "",
                         suggestions = emptyList(),
+                        pendingCode = null,
                         products = productRepository.list(h, s),
                     )
                 }
@@ -194,6 +207,24 @@ class ProductsViewModel
         }
 
         fun increment(productId: Long) = mutateOne { h, s -> productRepository.add(h, s, productId, 1) }
+
+        /**
+         * Barcode scan outcome (Phase 2): a code matching a product on this shelf
+         * increments it by one; an unknown code is kept as [ProductsUiState.pendingCode]
+         * so the next create() attaches it to the new product.
+         */
+        fun onBarcodeScanned(code: String) {
+            val match = _state.value.products.firstOrNull { it.code?.equals(code, ignoreCase = true) == true }
+            if (match != null) {
+                increment(match.id)
+                _state.update { it.copy(scanResult = ScanResult.Incremented(match.name)) }
+            } else {
+                _state.update { it.copy(scanResult = ScanResult.Unknown(code), pendingCode = code) }
+            }
+        }
+
+        /** Clears the one-shot scan result after the UI has shown it. */
+        fun consumeScanResult() = _state.update { it.copy(scanResult = null) }
 
         fun decrement(productId: Long) {
             if (_state.value.products.find { it.id == productId }?.quantity ?: 0 <= 0) return

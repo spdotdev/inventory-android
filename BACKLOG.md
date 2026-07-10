@@ -25,8 +25,8 @@ the backend gaining a `barcode` attribute (Phase 2, see `inventory-laravel/docs/
 (out of scope while always-online). Effort ~3–4 days. **Kill criterion:** if manual add is
 fast enough in real use, don't build it.
 
-> **Deferred 2026-07-04** (backlog-sweep decision), then **unlocked 2026-07-10** (user
-> decision) — now a commitment tracked in [`ROADMAP.md`](ROADMAP.md) → Phase 2.
+> **Deferred 2026-07-04** (backlog-sweep decision), **unlocked 2026-07-10** (user
+> decision), **shipped 2026-07-10** — see [`ROADMAP.md`](ROADMAP.md) → Phase 2.
 
 ---
 

@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -39,6 +40,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScrollableTabRow
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Tab
@@ -85,6 +87,9 @@ fun LocationDetailScreen(
     onBack: () -> Unit = {},
     onOpenDrawer: () -> Unit = {},
     onOpenProduct: (householdId: Long, shelfId: Long, productId: Long) -> Unit = { _, _, _ -> },
+    onOpenScanner: () -> Unit = {},
+    scannedCode: String? = null,
+    onScannedCodeConsumed: () -> Unit = {},
     shelvesViewModel: ShelvesViewModel = hiltViewModel(),
 ) {
     val state by shelvesViewModel.state.collectAsState()
@@ -174,11 +179,19 @@ fun LocationDetailScreen(
         },
         floatingActionButton = {
             if (!state.deleteMode && currentShelfId != null) {
-                FloatingActionButton(
-                    modifier = Modifier.navigationBarsPadding(),
-                    onClick = { showAddProductSheet = true },
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.location_add_product_cd))
+                Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    SmallFloatingActionButton(onClick = onOpenScanner) {
+                        Icon(
+                            Icons.Default.QrCodeScanner,
+                            contentDescription = stringResource(R.string.location_scan_cd),
+                        )
+                    }
+                    FloatingActionButton(
+                        modifier = Modifier.navigationBarsPadding(),
+                        onClick = { showAddProductSheet = true },
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.location_add_product_cd))
+                    }
                 }
             }
         },
@@ -369,6 +382,14 @@ fun LocationDetailScreen(
                 }
                 Spacer(Modifier.height(0.dp))
             }
+        }
+    }
+
+    if (scannedCode != null && currentShelfId != null) {
+        val activePaneViewModel: ProductsViewModel = hiltViewModel(key = "products-$currentShelfId")
+        LaunchedEffect(scannedCode) {
+            activePaneViewModel.onBarcodeScanned(scannedCode)
+            onScannedCodeConsumed()
         }
     }
 

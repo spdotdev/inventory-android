@@ -77,6 +77,22 @@ fun ProductsPane(
     // or re-announce. Material3's Snackbar is itself a live region (a11y).
     SnackbarErrorEffect(state.error, snackbarHostState, onConsumed = viewModel::consumeError)
 
+    // One-shot scan outcome -> localized transient snackbar, then consumed.
+    val scanResult = state.scanResult
+    val incrementedText = stringResource(R.string.scan_incremented)
+    val unknownText = stringResource(R.string.scan_unknown_code)
+    LaunchedEffect(scanResult) {
+        if (scanResult != null) {
+            val message =
+                when (scanResult) {
+                    is ScanResult.Incremented -> incrementedText.format(scanResult.productName)
+                    is ScanResult.Unknown -> unknownText.format(scanResult.code)
+                }
+            viewModel.consumeScanResult()
+            snackbarHostState.showSnackbar(message)
+        }
+    }
+
     val lifecycleOwner = LocalLifecycleOwner.current
     LaunchedEffect(lifecycleOwner, householdId, shelfId, refreshKey) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {

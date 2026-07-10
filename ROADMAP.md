@@ -21,7 +21,7 @@ Markers: 🟡 TBD · 🔲 TODO · 🛠 in progress · ✅ done (shipped work mov
 | 2 — Households | 🔲 TODO | List / switcher / create / join-by-code / leave; invite (copy link + QR). |
 | 3 — Inventory | 🔲 TODO | Storage overview → shelves (tab strip + swipe) → products; add/remove/move; global search. |
 | 4 — Settings + polish | 🔲 TODO | Theme (System/Light/Dark), household mgmt, account/sign out; empty/error/offline states. |
-| 5 — Phase 2 | 🛠 in progress | **Unlocked 2026-07-10** (user decision): barcode scanning, low-stock tile. Filter/sort stays 🟡 TBD. |
+| 5 — Phase 2 | ✅ shipped 2026-07-10 | **Unlocked 2026-07-10** (user decision): barcode scanning ✅, low-stock tile ✅. Filter/sort stays 🟡 TBD. |
 
 Detailed build order: [`CLAUDE.md`](CLAUDE.md) and [`docs/android-plan.md`](docs/android-plan.md).
 
@@ -59,10 +59,12 @@ Detailed build order: [`CLAUDE.md`](CLAUDE.md) and [`docs/android-plan.md`](docs
   Space Mono (shipped 2026-06-24, CI-green).
 
 ### PHASE 2 (unlocked 2026-07-10 — user decision; was deferred 2026-07-04)
-- [ ] **Barcode scanning** — CameraX + ML Kit scanner screen; scan → match product by
-  `code` on the active shelf → increment, else prefill the add-product form with the
-  code. Camera permission flow; degrade gracefully without camera. Detailed proposal
-  in [`BACKLOG.md`](BACKLOG.md) → Ideas.
+- [x] **Barcode scanning** — shipped 2026-07-10. Scan FAB on the location detail screen
+  opens a CameraX + ML Kit scanner; a code matching a product on the active shelf
+  increments it by one, an unknown code is attached to the next product created on
+  that shelf (create now sends `code`). Camera permission degrades gracefully (the
+  camera is an accelerator, never a requirement). Result travels back via the nav
+  back-stack savedStateHandle; matching logic unit-tested.
 - [x] **Low-stock "running low" tile** — shipped 2026-07-10. Dashboard card listing
   products at/below their `low_stock_threshold` (backend field shipped the same day),
   with a numeric threshold field on the product detail screen (empty = off). Missing

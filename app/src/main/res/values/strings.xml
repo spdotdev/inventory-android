@@ -27,6 +27,11 @@
     <string name="dashboard_tap_to_restock">Tap to see what needs restocking</string>
     <string name="dashboard_products_by_location">Products by location</string>
     <string name="dashboard_running_low">Running low</string>
+    <string name="scanner_title">Scan barcode</string>
+    <string name="scanner_permission_denied">Camera permission is needed to scan barcodes. You can still add and edit products manually.</string>
+    <string name="location_scan_cd">Scan a barcode</string>
+    <string name="scan_incremented">%s +1</string>
+    <string name="scan_unknown_code">No product with code %s — it will be attached to the next product you add</string>
     <string name="dashboard_low_stock_qty">%1$d of %2$d left</string>
     <string name="dashboard_favorite_locations">Favorite locations</string>
     <string name="dashboard_favorite_shelves">Favorite shelves</string>

@@ -27,6 +27,11 @@
     <string name="dashboard_tap_to_restock">Tik om te zien wat aangevuld moet worden</string>
     <string name="dashboard_products_by_location">Producten per locatie</string>
     <string name="dashboard_running_low">Bijna op</string>
+    <string name="scanner_title">Barcode scannen</string>
+    <string name="scanner_permission_denied">Cameratoegang is nodig om barcodes te scannen. Je kunt producten nog steeds handmatig toevoegen en bewerken.</string>
+    <string name="location_scan_cd">Scan een barcode</string>
+    <string name="scan_incremented">%s +1</string>
+    <string name="scan_unknown_code">Geen product met code %s — deze wordt gekoppeld aan het volgende product dat je toevoegt</string>
     <string name="dashboard_low_stock_qty">%1$d van %2$d over</string>
     <string name="dashboard_favorite_locations">Favoriete locaties</string>
     <string name="dashboard_favorite_shelves">Favoriete planken</string>

@@ -120,6 +120,7 @@ class StorageOverviewViewModelTest {
                     shelfId: Long,
                     name: String,
                     quantity: Int,
+                    code: String?,
                 ) = ProductDto(
                     1,
                     name,

@@ -1,5 +1,14 @@
 # Project overrides on top of detekt's defaults (buildUponDefaultConfig=true).
+# Compose exemptions follow the official detekt-for-Compose guidance: composables
+# are declarative UI trees, so PascalCase naming and method-size/parameter-count
+# metrics don't apply to them.
 naming:
   FunctionNaming:
-    # Compose composables are PascalCase by convention.
+    ignoreAnnotated: ['Composable']
+complexity:
+  LongParameterList:
+    ignoreAnnotated: ['Composable']
+  LongMethod:
+    ignoreAnnotated: ['Composable']
+  CyclomaticComplexMethod:
     ignoreAnnotated: ['Composable']

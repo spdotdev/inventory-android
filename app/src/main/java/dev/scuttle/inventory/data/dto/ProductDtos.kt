@@ -33,6 +33,8 @@ data class ProductResponse(
 data class CreateProductRequest(
     val name: String,
     val quantity: Int,
+    // Scanned/entered product code; omitted when null (create-without-code).
+    val code: String? = null,
 )
 
 // No property defaults on purpose: the app's Json has encodeDefaults=false, so a

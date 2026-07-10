@@ -36,8 +36,9 @@ class ProductRepositoryImpl
             shelfId: Long,
             name: String,
             quantity: Int,
+            code: String?,
         ): ProductDto =
-            api.create(householdId, shelfId, CreateProductRequest(name = name, quantity = quantity)).data
+            api.create(householdId, shelfId, CreateProductRequest(name = name, quantity = quantity, code = code)).data
                 .also { created ->
                     val key = householdId to shelfId
                     cache[key] = (cache[key] ?: emptyList()) + created

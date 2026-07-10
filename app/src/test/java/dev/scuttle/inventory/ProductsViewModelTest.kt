@@ -14,6 +14,7 @@ import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.data.search.SearchRepository
 import dev.scuttle.inventory.data.shelf.ShelfRepository
 import dev.scuttle.inventory.ui.products.ProductsViewModel
+import dev.scuttle.inventory.ui.products.ScanResult
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -49,8 +50,16 @@ class ProductsViewModelTest {
             shelfId: Long,
             name: String,
             quantity: Int,
+            code: String?,
         ): ProductDto {
-            val dto = ProductDto(id = (items.size + 1).toLong(), name = name, quantity = quantity, shelf_id = shelfId)
+            val dto =
+                ProductDto(
+                    id = (items.size + 1).toLong(),
+                    name = name,
+                    quantity = quantity,
+                    shelf_id = shelfId,
+                    code = code,
+                )
             items.add(dto)
             return dto
         }
@@ -231,6 +240,37 @@ class ProductsViewModelTest {
 
             assertTrue(vm.state.value.products.any { it.name == "Bread" && it.quantity == 0 })
             assertEquals("", vm.state.value.newName)
+        }
+
+    @Test
+    fun scanning_a_known_code_increments_that_product() =
+        runTest {
+            val repo = FakeProductRepository().apply { items.add(ProductDto(1, "Milk", 2, 1, code = "871234")) }
+            val vm = viewModel(products = repo)
+            vm.load(householdId = 1, shelfId = 1)
+
+            vm.onBarcodeScanned("871234")
+
+            assertEquals(3, vm.state.value.products.first().quantity)
+            assertEquals(ScanResult.Incremented("Milk"), vm.state.value.scanResult)
+            assertEquals(null, vm.state.value.pendingCode)
+        }
+
+    @Test
+    fun scanning_an_unknown_code_attaches_it_to_the_next_create() =
+        runTest {
+            val repo = FakeProductRepository()
+            val vm = viewModel(products = repo)
+            vm.load(householdId = 1, shelfId = 1)
+
+            vm.onBarcodeScanned("999888")
+            assertEquals(ScanResult.Unknown("999888"), vm.state.value.scanResult)
+
+            vm.onNewNameChange("Oat milk")
+            vm.create()
+
+            assertEquals("999888", repo.items.first { it.name == "Oat milk" }.code)
+            assertEquals(null, vm.state.value.pendingCode)
         }
 
     @Test

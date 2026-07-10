@@ -74,6 +74,7 @@ object TestHierarchy {
             shelfId: Long,
             name: String,
             quantity: Int,
+            code: String?,
         ) = throw NotImplementedError()
 
         override suspend fun update(
