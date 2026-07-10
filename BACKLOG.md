@@ -43,6 +43,30 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-07-10` — **Bottom navigation bar** (UX wave 2, user-approved, c368b96). Material3
+  `NavigationBar` with Dashboard / Storage / Search / Settings tabs, shown only on top-level
+  routes — detail screens (shelves, product detail, scanner) stay full-screen. Tabs use
+  `popUpTo(dashboard)` + `saveState`/`restoreState` + `launchSingleTop` so per-tab state
+  survives switching. The drawer stays for household switching and location quick-jumps.
+- ✅ `2026-07-10` — **Dashboard navigates** (UX wave 1, tester feedback: "numbers are shown
+  but not clickable", bf4b335). Stat cards, per-location bars (with chevron), running-low
+  rows, and missing-items entries now navigate to the storage overview / location / search.
+  Drawer entries gained testTags because the newly-clickable dashboard rows made bare-text
+  matchers ambiguous in the flow tests.
+- ✅ `2026-07-10` — **Long product names ellipsize instead of squashing** (tester report on a
+  narrow device, 7923d03). Product-row names cap at 2 lines with `Ellipsis` (full name lives
+  on the detail screen); the code chip moved under the name. Chosen over the suggested
+  name-on-own-line layout: rows stay compact and degrade gracefully at any width.
+- ✅ `2026-07-10` — **Scanner viewfinder overlay** (4 iterations with the user, 1bba555 →
+  cc01b65). Final look: four rounded corner brackets, centered pulsing translucent red laser,
+  even-odd scrim with radial falloff focusing the eye on the frame (magnific.com reference).
+- ✅ `2026-07-10` — **Delete affordance no longer bleeds through frosted cards at rest**
+  (tester report: bin icon and Move button overlapped, 06a989b). Swipe background renders
+  only while a dismiss is actually in progress.
+- ✅ `2026-07-10` — **2026 toolchain migration** (09648ec + follow-ups). Gradle 9.6.1,
+  AGP 9.2.1 (built-in Kotlin — classic KGP removed), KSP 2.3.10, compiler plugins 2.4.0,
+  compileSdk 37, Retrofit 3, OkHttp 5, Compose BOM 2026.06; ktlint-gradle 12.1.2 + detekt
+  1.23.8 baselines regenerated. Verified with repeated 35/35 green instrumented device runs.
 - ✅ `2026-07-04` — **Android CI runs when its own workflow file changes** (wave-3 X7). `ci.yml`'s `paths:`
   filters caught `**/*.kts` but not `.github/workflows/ci.yml` itself, so a PR editing only the CI workflow
   skipped the build/test job (the Laravel repo already had this via W20). Added the workflow path to both the
