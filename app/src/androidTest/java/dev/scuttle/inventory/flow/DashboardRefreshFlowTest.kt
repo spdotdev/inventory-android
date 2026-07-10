@@ -79,14 +79,15 @@ class DashboardRefreshFlowTest : FlowTestBase() {
             waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 5_000)
 
             // Tap Refresh — no mock registered for /households → server returns 500
-            // DashboardViewModel.refresh() onFailure sets state.error = e.message
+            // DashboardViewModel.refresh() onFailure maps the HttpException through
+            // toUserMessage(): any 5xx becomes the friendly copy below, so the raw
+            // status code never reaches the UI (that's the point of the mapping).
             onNodeWithContentDescription("Refresh").performClick()
             Thread.sleep(2_000)
             waitForIdle()
 
-            // Error message contains HTTP 500 status
-            waitUntilAtLeastOneExists(hasText("500", substring = true), timeoutMillis = 5_000)
-            onAllNodesWithText("500", substring = true)[0].assertIsDisplayed()
+            waitUntilAtLeastOneExists(hasText("Server error", substring = true), timeoutMillis = 5_000)
+            onAllNodesWithText("Server error", substring = true)[0].assertIsDisplayed()
         }
     }
 }

@@ -1,5 +1,6 @@
 package dev.scuttle.inventory
 
+import android.util.Log
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -35,13 +36,24 @@ class MockWebServerRule : ExternalResource() {
             if (key != null) {
                 val responses = routes[key]!!
                 if (responses.isNotEmpty()) {
+                    Log.i(TAG, "${request.method} $path -> route '$key' (${responses.size - 1} left)")
                     return responses.removeFirst()
                 }
             }
             // Fall back to FIFO queue
-            if (queue.isNotEmpty()) return queue.removeFirst()
+            if (queue.isNotEmpty()) {
+                Log.i(TAG, "${request.method} $path -> queue (${queue.size - 1} left)")
+                return queue.removeFirst()
+            }
+            // Every timed-out wait in a flow test starts here: some earlier request
+            // consumed the route this one needed. The log line is the evidence trail.
+            Log.w(TAG, "${request.method} $path -> FALLBACK 500 (no route/queue left)")
             return MockResponse().setResponseCode(500).setBody("""{"error":"No mock response for $path"}""")
         }
+    }
+
+    private companion object {
+        const val TAG = "MockWebServerRule"
     }
 
     override fun before() {

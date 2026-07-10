@@ -30,6 +30,11 @@ class SearchFlowTest : FlowTestBase() {
         mockServer.route("/households", fixture("households_one.json"))
         mockServer.route("/households/1/locations", fixture("locations_one.json"))
         mockServer.route("/households/1/locations/10/shelves", fixture("shelves_one.json"))
+        // Twice: the dashboard prefetch (locations → shelves → products) eats the
+        // first response right after login; ProductDetailViewModel.load() re-fetches
+        // the same endpoint after the click and needs the second (routes are
+        // consume-once queues — see MockWebServerRule).
+        mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
         mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
 
         composeRule.apply {
@@ -60,7 +65,9 @@ class SearchFlowTest : FlowTestBase() {
             // still be composed in the previous back-stack destination during
             // the navigation transition (see search_returns_matching_product's
             // note below) — the title's distinct testTag avoids that collision.
-            waitUntilAtLeastOneExists(hasTestTag(PRODUCT_DETAIL_TITLE_TEST_TAG), timeoutMillis = 5_000)
+            // Wait for the loaded name, not just the tag — the tag composes
+            // immediately with the "[Product]" placeholder while load() is in flight.
+            waitUntilAtLeastOneExists(hasTestTag(PRODUCT_DETAIL_TITLE_TEST_TAG).and(hasText("Milk")), timeoutMillis = 5_000)
             onNodeWithTag(PRODUCT_DETAIL_TITLE_TEST_TAG).assertTextEquals("Milk")
         }
     }
