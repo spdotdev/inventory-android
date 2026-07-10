@@ -6,6 +6,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.filterToOne
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -38,8 +39,8 @@ class JoinHouseholdFlowTest : FlowTestBase() {
 
             // Open drawer → Settings
             onNodeWithContentDescription("Open menu").performClick()
-            waitUntilAtLeastOneExists(hasText("Settings").and(hasClickAction()), timeoutMillis = 5_000)
-            onAllNodesWithText("Settings").filterToOne(hasClickAction()).performClick()
+            waitUntilAtLeastOneExists(hasTestTag("drawer-nav-settings"), timeoutMillis = 5_000)
+            onNodeWithTag("drawer-nav-settings").performClick()
             waitForIdle()
 
             // Enter join code and submit — POST /households/join

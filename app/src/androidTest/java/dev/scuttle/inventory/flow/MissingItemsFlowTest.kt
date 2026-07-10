@@ -76,7 +76,7 @@ class MissingItemsFlowTest : FlowTestBase() {
             // Register response for ProductDetailViewModel's list call, then tap "Milk"
             mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
             waitUntilAtLeastOneExists(hasTestTag("product-1000"), timeoutMillis = 5_000)
-            onNodeWithTag("product-1000").performClick()
+            onNodeWithTag("product-1000").clickNameArea()
             waitForIdle()
 
             // Product detail screen shows the product name and the mandatory toggle label

@@ -234,7 +234,9 @@ fun AppDrawer(
                 label = { Text(stringResource(R.string.drawer_settings)) },
                 selected = false,
                 onClick = onNavigateSettings,
-                modifier = Modifier.padding(horizontal = 12.dp),
+                // Tagged because bare-text "Settings" is ambiguous since the
+                // bottom nav gained a Settings tab (same as drawer-nav-search).
+                modifier = Modifier.padding(horizontal = 12.dp).testTag("drawer-nav-settings"),
             )
         }
     }

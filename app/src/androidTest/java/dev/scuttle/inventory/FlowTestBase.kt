@@ -3,8 +3,10 @@
 package dev.scuttle.inventory
 
 import android.content.Context
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.platform.app.InstrumentationRegistry
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -59,4 +61,15 @@ abstract class FlowTestBase {
         testContext.assets.open(
             "fixtures/$name",
         ).bufferedReader().readText().trim()
+
+    /**
+     * Open a product row by tapping its NAME area (left side), not the node
+     * center: performClick's center tap lands on the quantity stepper cluster —
+     * a DISABLED "−" (qty 0) silently swallows the click and the card's
+     * navigation onClick never fires. Humans naturally tap the name, which is
+     * why manual testing never reproduced it (found via the 06a989b layout
+     * shift; nightly-emulator + phone both failed the same way).
+     */
+    protected fun androidx.compose.ui.test.SemanticsNodeInteraction.clickNameArea() =
+        performTouchInput { click(percentOffset(0.15f, 0.5f)) }
 }

@@ -44,6 +44,16 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-07-10` — **3 "device-state" instrumented failures were a real bug — geometry, not
+  state.** EditProductDetail/MandatoryToggle/MissingItems::product_detail all performClick'd
+  the product card, which injects at the node CENTER — and since the bin/Move overlap fix
+  (06a989b) shifted the stepper cluster, the center lands on the DISABLED "−" button (qty 0),
+  which silently swallows the tap; the card's navigate-onClick never fires. Humans tap the
+  name, so manual testing always worked; the earlier device-state conclusion was wrong (the
+  nightly emulator reproduced all 3 exactly). Fix: FlowTestBase.clickNameArea() taps at
+  percentOffset(0.15, 0.5). Same sweep: the bottom nav's Settings tab made bare-text
+  "Settings" ambiguous — drawer entry now has drawer-nav-settings (as drawer-nav-search).
+  Full suite 35/35 on a local emulator.
 - ✅ `2026-07-10` — **Live updates client (Q-3, user decision: full Reverb)**. Foreground-only
   websocket (pusher-java-client → Reverb, Pusher protocol) subscribed to every household's
   private channel; a `household.changed` ping debounce-triggers a silent HierarchyStore

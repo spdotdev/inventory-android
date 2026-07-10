@@ -51,7 +51,7 @@ class MandatoryToggleFlowTest : FlowTestBase() {
             // Tap Milk → ProductDetailScreen
             mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
             waitUntilAtLeastOneExists(hasTestTag("product-1000"), timeoutMillis = 5_000)
-            onNodeWithTag("product-1000").performClick()
+            onNodeWithTag("product-1000").clickNameArea()
             waitForIdle()
 
             waitUntilAtLeastOneExists(hasText("Mandatory on this shelf"), timeoutMillis = 15_000)
