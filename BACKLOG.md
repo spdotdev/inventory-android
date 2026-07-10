@@ -60,8 +60,13 @@ fast enough in real use, don't build it.
   private channel; a `household.changed` ping debounce-triggers a silent HierarchyStore
   refresh — machine-initiated pull-to-refresh, no client-side state (server-authoritative).
   Auth via the Sanctum-gated /api/v1/broadcasting/auth. Gateway abstracted for JVM tests.
-  END-TO-END PENDING server steps: REVERB_* env keys on d051 + host proxy websocket
-  pass-through (tracked in inventory-laravel ROADMAP).
+  ~~END-TO-END PENDING server steps: REVERB_* env keys on d051 + host proxy websocket
+  pass-through (tracked in inventory-laravel ROADMAP).~~ Server steps completed the same
+  day, and the loop was **smoke-verified end-to-end against prod 2026-07-10**: an
+  external Pusher-protocol client on the exact wss://{REVERB_HOST}/app/{key} path this
+  gateway uses (connect → channel auth → subscribe → API mutation) received
+  `household.changed` ~1.6 s after the mutation. The client's reaction to the ping
+  stays covered by JVM unit tests.
 - ✅ `2026-07-10` — **Bottom navigation bar** (UX wave 2, user-approved, c368b96). Material3
   `NavigationBar` with Dashboard / Storage / Search / Settings tabs, shown only on top-level
   routes — detail screens (shelves, product detail, scanner) stay full-screen. Tabs use
