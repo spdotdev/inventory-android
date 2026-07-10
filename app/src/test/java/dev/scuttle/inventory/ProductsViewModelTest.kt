@@ -9,6 +9,7 @@ import dev.scuttle.inventory.data.dto.SearchResultDto
 import dev.scuttle.inventory.data.dto.ShelfDto
 import dev.scuttle.inventory.data.household.HouseholdRepository
 import dev.scuttle.inventory.data.location.LocationRepository
+import dev.scuttle.inventory.data.product.ProductEdit
 import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.data.search.SearchRepository
 import dev.scuttle.inventory.data.shelf.ShelfRepository
@@ -44,7 +45,7 @@ class ProductsViewModelTest {
             return dto
         }
 
-        override suspend fun update(householdId: Long, shelfId: Long, productId: Long, name: String, description: String?, code: String?, isMandatory: Boolean): ProductDto {
+        override suspend fun update(householdId: Long, shelfId: Long, productId: Long, edit: ProductEdit): ProductDto {
             val index = items.indexOfFirst { it.id == productId }
             val updated = items[index].copy(name = name, description = description, code = code, is_mandatory = isMandatory)
             items[index] = updated
@@ -177,7 +178,10 @@ class ProductsViewModelTest {
         val vm = viewModel(products = repo)
         vm.load(householdId = 1, shelfId = 1)
 
-        vm.update(productId = 1, name = "Oat Milk", description = "lactose free", code = null, isMandatory = true)
+        vm.update(
+            productId = 1,
+            edit = ProductEdit("Oat Milk", "lactose free", null, isMandatory = true, lowStockThreshold = null),
+        )
 
         val product = vm.state.value.products.first { it.id == 1L }
         assertEquals("Oat Milk", product.name)

@@ -8,6 +8,7 @@ import dev.scuttle.inventory.data.dto.ProductDto
 import dev.scuttle.inventory.data.dto.ShelfDto
 import dev.scuttle.inventory.data.household.HouseholdRepository
 import dev.scuttle.inventory.data.location.LocationRepository
+import dev.scuttle.inventory.data.product.ProductEdit
 import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.data.shelf.ShelfRepository
 import kotlinx.coroutines.flow.first
@@ -58,7 +59,8 @@ class HierarchyStoreTest {
         override fun getCached(householdId: Long, shelfId: Long) = byShelf[shelfId]
         override suspend fun list(householdId: Long, shelfId: Long) = byShelf[shelfId].orEmpty()
         override suspend fun create(householdId: Long, shelfId: Long, name: String, quantity: Int) = ProductDto(99, name, quantity, shelfId)
-        override suspend fun update(householdId: Long, shelfId: Long, productId: Long, name: String, description: String?, code: String?, isMandatory: Boolean) = ProductDto(productId, name, 0, shelfId)
+        override suspend fun update(householdId: Long, shelfId: Long, productId: Long, edit: ProductEdit) =
+        ProductDto(productId, edit.name, 0, shelfId)
         override suspend fun add(householdId: Long, shelfId: Long, productId: Long, amount: Int) = byShelf[shelfId]!!.first { it.id == productId }
         override suspend fun remove(householdId: Long, shelfId: Long, productId: Long, amount: Int) = byShelf[shelfId]!!.first { it.id == productId }
         override suspend fun move(householdId: Long, shelfId: Long, productId: Long, targetShelfId: Long) = byShelf[shelfId]!!.first { it.id == productId }
@@ -155,5 +157,35 @@ class HierarchyStoreTest {
         assertTrue(cleared.entries.isEmpty())
         assertEquals(0, cleared.missingItemCount)
         assertNull(cleared.error)
+    }
+    @Test
+    fun refresh_computes_low_stock_items_excluding_missing_ones() = runTest {
+        val store = HierarchyStore(
+            FakeHouseholdRepository(listOf(HouseholdDto(1, "Home", "AAAA"))),
+            FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge")))),
+            FakeShelfRepository(mapOf(10L to listOf(ShelfDto(100, "Top", 0, 10)))),
+            FakeProductRepository(
+                mapOf(
+                    100L to listOf(
+                        // At/below threshold -> running low
+                        ProductDto(1, "Milk", 1, 100, low_stock_threshold = 2),
+                        // Above threshold -> fine
+                        ProductDto(2, "Eggs", 5, 100, low_stock_threshold = 2),
+                        // No threshold -> feature off
+                        ProductDto(3, "Peas", 0, 100),
+                        // Mandatory at 0 -> missing, NOT running low (one warning per item)
+                        ProductDto(4, "Butter", 0, 100, is_mandatory = true, low_stock_threshold = 3),
+                    ),
+                ),
+            ),
+        )
+
+        store.refresh(userInitiated = true)
+
+        val loaded = store.state.first { !it.loading }
+        assertEquals(listOf("Milk"), loaded.lowStockItems.map { it.productName })
+        assertEquals(1, loaded.lowStockItems.single().quantity)
+        assertEquals(2, loaded.lowStockItems.single().threshold)
+        assertEquals(1, loaded.missingItemCount)
     }
 }

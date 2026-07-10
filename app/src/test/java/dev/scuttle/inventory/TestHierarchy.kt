@@ -7,6 +7,7 @@ import dev.scuttle.inventory.data.dto.ProductDto
 import dev.scuttle.inventory.data.dto.ShelfDto
 import dev.scuttle.inventory.data.household.HouseholdRepository
 import dev.scuttle.inventory.data.location.LocationRepository
+import dev.scuttle.inventory.data.product.ProductEdit
 import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.data.shelf.ShelfRepository
 
@@ -34,7 +35,8 @@ object TestHierarchy {
         override fun getCached(householdId: Long, shelfId: Long): List<ProductDto>? = null
         override suspend fun list(householdId: Long, shelfId: Long) = emptyList<ProductDto>()
         override suspend fun create(householdId: Long, shelfId: Long, name: String, quantity: Int) = throw NotImplementedError()
-        override suspend fun update(householdId: Long, shelfId: Long, productId: Long, name: String, description: String?, code: String?, isMandatory: Boolean) = throw NotImplementedError()
+        override suspend fun update(householdId: Long, shelfId: Long, productId: Long, edit: ProductEdit) =
+        throw NotImplementedError()
         override suspend fun add(householdId: Long, shelfId: Long, productId: Long, amount: Int) = throw NotImplementedError()
         override suspend fun remove(householdId: Long, shelfId: Long, productId: Long, amount: Int) = throw NotImplementedError()
         override suspend fun move(householdId: Long, shelfId: Long, productId: Long, targetShelfId: Long) = throw NotImplementedError()

@@ -26,6 +26,8 @@
     <string name="dashboard_missing_many">%d artikelen ontbreken</string>
     <string name="dashboard_tap_to_restock">Tik om te zien wat aangevuld moet worden</string>
     <string name="dashboard_products_by_location">Producten per locatie</string>
+    <string name="dashboard_running_low">Bijna op</string>
+    <string name="dashboard_low_stock_qty">%1$d van %2$d over</string>
     <string name="dashboard_favorite_locations">Favoriete locaties</string>
     <string name="dashboard_favorite_shelves">Favoriete planken</string>
 
@@ -98,6 +100,8 @@
     <string name="product_detail_field_code">Productcode / barcode</string>
     <string name="product_detail_mandatory_label">Verplicht op deze plank</string>
     <string name="product_detail_mandatory_hint">Toont een waarschuwing als de hoeveelheid 0 bereikt</string>
+    <string name="product_detail_field_low_stock">Voorraadwaarschuwing bij</string>
+    <string name="product_detail_low_stock_hint">Waarschuw wanneer de voorraad op of onder dit aantal komt. Leeg laten om uit te schakelen.</string>
     <string name="product_detail_delete_button">Product verwijderen</string>
 
     <!-- Products pane -->

@@ -45,6 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
+import dev.scuttle.inventory.data.LowStockItem
 import dev.scuttle.inventory.ui.common.LiveStatusText
 import dev.scuttle.inventory.ui.theme.FrostCard
 
@@ -137,32 +138,14 @@ fun DashboardScreen(
             }
 
             if (state.mandatoryWarnings > 0) {
-                Card(
-                    onClick = onOpenMissingItems,
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error)
-                        Column {
-                            Text(
-                                if (state.mandatoryWarnings == 1) stringResource(R.string.dashboard_missing_one)
-                                else stringResource(R.string.dashboard_missing_many, state.mandatoryWarnings),
-                                color = MaterialTheme.colorScheme.onErrorContainer,
-                                fontWeight = FontWeight.Medium,
-                            )
-                            Text(
-                                stringResource(R.string.dashboard_tap_to_restock),
-                                color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.7f),
-                                style = MaterialTheme.typography.bodySmall,
-                            )
-                        }
-                    }
-                }
+                MissingItemsCard(count = state.mandatoryWarnings, onClick = onOpenMissingItems)
+            }
+
+            // Phase 2: products at/below their low-stock threshold (missing items
+            // excluded — they're already in the red card above).
+            if (state.lowStockItems.isNotEmpty()) {
+                Text(stringResource(R.string.dashboard_running_low), style = MaterialTheme.typography.titleMedium)
+                RunningLowCard(state.lowStockItems)
             }
 
             // Bar chart
@@ -274,6 +257,69 @@ private fun StatCard(label: String, value: String, modifier: Modifier = Modifier
         ) {
             Text(value, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
             Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
+private fun RunningLowCard(items: List<LowStockItem>) {
+    FrostCard(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            items.forEach { item ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(item.productName, style = MaterialTheme.typography.bodyLarge)
+                        Text(
+                            "${item.locationName} › ${item.shelfName}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Text(
+                        stringResource(R.string.dashboard_low_stock_qty, item.quantity, item.threshold),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.tertiary,
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MissingItemsCard(count: Int, onClick: () -> Unit) {
+    Card(
+        onClick = onClick,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+            Column {
+                Text(
+                    if (count == 1) stringResource(R.string.dashboard_missing_one)
+                    else stringResource(R.string.dashboard_missing_many, count),
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    fontWeight = FontWeight.Medium,
+                )
+                Text(
+                    stringResource(R.string.dashboard_tap_to_restock),
+                    color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.7f),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
         }
     }
 }

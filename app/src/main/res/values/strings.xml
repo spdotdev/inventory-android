@@ -26,6 +26,8 @@
     <string name="dashboard_missing_many">%d items are missing</string>
     <string name="dashboard_tap_to_restock">Tap to see what needs restocking</string>
     <string name="dashboard_products_by_location">Products by location</string>
+    <string name="dashboard_running_low">Running low</string>
+    <string name="dashboard_low_stock_qty">%1$d of %2$d left</string>
     <string name="dashboard_favorite_locations">Favorite locations</string>
     <string name="dashboard_favorite_shelves">Favorite shelves</string>
 
@@ -98,6 +100,8 @@
     <string name="product_detail_field_code">Product code / barcode</string>
     <string name="product_detail_mandatory_label">Mandatory on this shelf</string>
     <string name="product_detail_mandatory_hint">Shows a warning when quantity reaches 0</string>
+    <string name="product_detail_field_low_stock">Low-stock warning at</string>
+    <string name="product_detail_low_stock_hint">Warn when quantity drops to this number or below. Leave empty to disable.</string>
     <string name="product_detail_delete_button">Delete product</string>
 
     <!-- Products pane -->

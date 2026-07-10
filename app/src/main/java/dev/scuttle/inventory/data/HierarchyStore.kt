@@ -44,6 +44,16 @@ data class MissingItem(
     val locationId: Long,
 )
 
+data class LowStockItem(
+    val productName: String,
+    val quantity: Int,
+    val threshold: Int,
+    val shelfName: String,
+    val locationName: String,
+    val householdId: Long,
+    val locationId: Long,
+)
+
 data class HierarchyState(
     val loading: Boolean = false,
     // Distinct from `loading`: true only during a user-initiated pull-to-refresh /
@@ -54,6 +64,9 @@ data class HierarchyState(
     val entries: List<HouseholdWithLocations> = emptyList(),
     val missingItems: List<MissingItem> = emptyList(),
     val missingItemCount: Int = 0,
+    // Phase 2 "running low": quantity <= low_stock_threshold, threshold set. Items
+    // already counted missing (mandatory + qty 0) are excluded — one warning per item.
+    val lowStockItems: List<LowStockItem> = emptyList(),
     val totalShelves: Int = 0,
     val totalProducts: Int = 0,
     val mandatoryWarnings: Int = 0,
@@ -81,6 +94,7 @@ class HierarchyStore @Inject constructor(
         val entries = mutableListOf<HouseholdWithLocations>()
         val locationStats = mutableListOf<LocationStats>()
         val missingItems = mutableListOf<MissingItem>()
+        val lowStockItems = mutableListOf<LowStockItem>()
         val allShelves = mutableListOf<ShelfEntry>()
         for (hh in households) {
             val locations = locationRepository.getCached(hh.id) ?: emptyList()
@@ -92,11 +106,9 @@ class HierarchyStore @Inject constructor(
                     allShelves += ShelfEntry(hh.id, shelf)
                     val products = productRepository.getCached(hh.id, shelf.id) ?: emptyList()
                     totalProducts += products.size; count += products.size
+                    val place = ProductPlace(shelf, location, hh.id)
                     for (p in products) {
-                        if (p.is_mandatory == true && p.quantity == 0) {
-                            mandatoryWarnings++
-                            missingItems += MissingItem(p.name, shelf.name, location.name, hh.id, location.id)
-                        }
+                        mandatoryWarnings += accumulate(classify(p, place), missingItems, lowStockItems)
                     }
                 }
                 locationStats += LocationStats(location, hh.id, count)
@@ -104,9 +116,11 @@ class HierarchyStore @Inject constructor(
             entries += HouseholdWithLocations(hh.id, hh.name, locations)
         }
         missingItems.sortWith(compareBy({ it.locationName }, { it.shelfName }, { it.productName }))
+        lowStockItems.sortWith(compareBy({ it.locationName }, { it.shelfName }, { it.productName }))
         _state.update { s ->
             s.copy(
                 entries = entries, missingItems = missingItems, missingItemCount = mandatoryWarnings,
+                lowStockItems = lowStockItems,
                 totalShelves = totalShelves, totalProducts = totalProducts,
                 mandatoryWarnings = mandatoryWarnings, locationStats = locationStats,
                 allShelves = allShelves, locationWarnings = warningsByLocation(missingItems),
@@ -123,6 +137,51 @@ class HierarchyStore @Inject constructor(
      */
     private fun warningsByLocation(missingItems: List<MissingItem>): Map<Long, Boolean> =
         missingItems.map { it.locationId }.associateWith { true }
+
+    /** Where a product lives — shared context for building warning items. */
+    private data class ProductPlace(val shelf: ShelfDto, val location: LocationDto, val householdId: Long)
+
+    private sealed interface Warning {
+        data class Missing(val item: MissingItem) : Warning
+        data class Low(val item: LowStockItem) : Warning
+    }
+
+    /**
+     * Classify one product into the warning bucket shared by the cache and network
+     * paths: mandatory-at-zero -> missing; else at/below its low-stock threshold ->
+     * running low. Mutually exclusive so an item never carries two warnings.
+     */
+    private fun classify(product: dev.scuttle.inventory.data.dto.ProductDto, place: ProductPlace): Warning? {
+        val threshold = product.low_stock_threshold
+        return when {
+            product.is_mandatory == true && product.quantity == 0 -> Warning.Missing(
+                MissingItem(product.name, place.shelf.name, place.location.name, place.householdId, place.location.id),
+            )
+            threshold != null && product.quantity <= threshold -> Warning.Low(
+                LowStockItem(
+                    productName = product.name,
+                    quantity = product.quantity,
+                    threshold = threshold,
+                    shelfName = place.shelf.name,
+                    locationName = place.location.name,
+                    householdId = place.householdId,
+                    locationId = place.location.id,
+                ),
+            )
+            else -> null
+        }
+    }
+
+    /** Apply one product's warning to the accumulators; returns the missing increment. */
+    private fun accumulate(
+        warning: Warning?,
+        missing: MutableList<MissingItem>,
+        lowStock: MutableList<LowStockItem>,
+    ): Int = when (warning) {
+        is Warning.Missing -> { missing += warning.item; 1 }
+        is Warning.Low -> { lowStock += warning.item; 0 }
+        null -> 0
+    }
 
     /**
      * @param userInitiated true when the user pulled to refresh or tapped refresh —
@@ -176,6 +235,7 @@ class HierarchyStore @Inject constructor(
         val entries = mutableListOf<HouseholdWithLocations>()
         val locationStats = mutableListOf<LocationStats>()
         val missingItems = mutableListOf<MissingItem>()
+        val lowStockItems = mutableListOf<LowStockItem>()
         val allShelves = mutableListOf<ShelfEntry>()
 
         for (hh in households) {
@@ -189,17 +249,9 @@ class HierarchyStore @Inject constructor(
                     val products = productRepository.list(hh.id, shelf.id)
                     totalProducts += products.size
                     locationProductCount += products.size
+                    val place = ProductPlace(shelf, location, hh.id)
                     for (product in products) {
-                        if (product.is_mandatory == true && product.quantity == 0) {
-                            mandatoryWarnings++
-                            missingItems += MissingItem(
-                                productName = product.name,
-                                shelfName = shelf.name,
-                                locationName = location.name,
-                                householdId = hh.id,
-                                locationId = location.id,
-                            )
-                        }
+                        mandatoryWarnings += accumulate(classify(product, place), missingItems, lowStockItems)
                     }
                 }
                 locationStats += LocationStats(location, hh.id, locationProductCount)
@@ -208,6 +260,7 @@ class HierarchyStore @Inject constructor(
         }
 
         missingItems.sortWith(compareBy({ it.locationName }, { it.shelfName }, { it.productName }))
+        lowStockItems.sortWith(compareBy({ it.locationName }, { it.shelfName }, { it.productName }))
 
         return HierarchyState(
             loading = loading,
@@ -215,6 +268,7 @@ class HierarchyStore @Inject constructor(
             entries = entries,
             missingItems = missingItems,
             missingItemCount = mandatoryWarnings,
+            lowStockItems = lowStockItems,
             totalShelves = totalShelves,
             totalProducts = totalProducts,
             mandatoryWarnings = mandatoryWarnings,

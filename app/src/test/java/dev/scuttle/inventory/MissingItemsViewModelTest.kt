@@ -8,6 +8,7 @@ import dev.scuttle.inventory.data.dto.ProductDto
 import dev.scuttle.inventory.data.dto.ShelfDto
 import dev.scuttle.inventory.data.household.HouseholdRepository
 import dev.scuttle.inventory.data.location.LocationRepository
+import dev.scuttle.inventory.data.product.ProductEdit
 import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.data.shelf.ShelfRepository
 import dev.scuttle.inventory.ui.missing.MissingItemsViewModel
@@ -52,7 +53,8 @@ class MissingItemsViewModelTest {
         override fun getCached(householdId: Long, shelfId: Long) = byShelf[shelfId]
         override suspend fun list(householdId: Long, shelfId: Long) = byShelf[shelfId].orEmpty()
         override suspend fun create(householdId: Long, shelfId: Long, name: String, quantity: Int) = ProductDto(99, name, quantity, shelfId)
-        override suspend fun update(householdId: Long, shelfId: Long, productId: Long, name: String, description: String?, code: String?, isMandatory: Boolean) = ProductDto(productId, name, 0, shelfId)
+        override suspend fun update(householdId: Long, shelfId: Long, productId: Long, edit: ProductEdit) =
+        ProductDto(productId, edit.name, 0, shelfId)
         override suspend fun add(householdId: Long, shelfId: Long, productId: Long, amount: Int) = byShelf[shelfId]!!.first { it.id == productId }
         override suspend fun remove(householdId: Long, shelfId: Long, productId: Long, amount: Int) = byShelf[shelfId]!!.first { it.id == productId }
         override suspend fun move(householdId: Long, shelfId: Long, productId: Long, targetShelfId: Long) = byShelf[shelfId]!!.first { it.id == productId }

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dev.scuttle.inventory.data.HierarchyStore
 import dev.scuttle.inventory.data.dto.ProductDto
 import dev.scuttle.inventory.data.location.LocationRepository
+import dev.scuttle.inventory.data.product.ProductEdit
 import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.data.search.SearchRepository
 import dev.scuttle.inventory.data.shelf.ShelfRepository
@@ -153,11 +154,11 @@ class ProductsViewModel @Inject constructor(
         }
     }
 
-    fun update(productId: Long, name: String, description: String?, code: String?, isMandatory: Boolean) {
+    fun update(productId: Long, edit: ProductEdit) {
         val h = householdId ?: return
         val s = shelfId ?: return
         launch {
-            val updated = productRepository.update(h, s, productId, name, description, code, isMandatory)
+            val updated = productRepository.update(h, s, productId, edit)
             _state.update { state ->
                 state.copy(products = state.products.map { if (it.id == updated.id) updated else it })
             }

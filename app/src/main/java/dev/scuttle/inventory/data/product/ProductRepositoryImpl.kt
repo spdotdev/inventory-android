@@ -32,8 +32,13 @@ class ProductRepositoryImpl @Inject constructor(
             cache[key] = (cache[key] ?: emptyList()) + created
         }
 
-    override suspend fun update(householdId: Long, shelfId: Long, productId: Long, name: String, description: String?, code: String?, isMandatory: Boolean): ProductDto =
-        api.update(householdId, shelfId, productId, UpdateProductRequest(name, description, code, isMandatory)).data.also { updated ->
+    override suspend fun update(householdId: Long, shelfId: Long, productId: Long, edit: ProductEdit): ProductDto =
+        api.update(
+            householdId,
+            shelfId,
+            productId,
+            UpdateProductRequest(edit.name, edit.description, edit.code, edit.isMandatory, edit.lowStockThreshold),
+        ).data.also { updated ->
             cache.replaceProduct(householdId, shelfId, updated)
         }
 

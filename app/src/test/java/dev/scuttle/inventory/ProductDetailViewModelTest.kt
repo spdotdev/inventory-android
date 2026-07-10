@@ -3,6 +3,7 @@ package dev.scuttle.inventory
 import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import dev.scuttle.inventory.data.dto.ProductDto
+import dev.scuttle.inventory.data.product.ProductEdit
 import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.ui.products.ProductDetailViewModel
 import kotlinx.coroutines.test.runTest
@@ -45,7 +46,7 @@ class ProductDetailViewModelTest {
         override suspend fun create(householdId: Long, shelfId: Long, name: String, quantity: Int): ProductDto =
             ProductDto(99, name, quantity, shelfId).also { items.add(it) }
 
-        override suspend fun update(householdId: Long, shelfId: Long, productId: Long, name: String, description: String?, code: String?, isMandatory: Boolean): ProductDto {
+        override suspend fun update(householdId: Long, shelfId: Long, productId: Long, edit: ProductEdit): ProductDto {
             if (failUpdate) throw RuntimeException("save failed")
             val updated = ProductDto(productId, name, 0, shelfId, description, code, isMandatory)
             val idx = items.indexOfFirst { it.id == productId }
@@ -102,7 +103,7 @@ class ProductDetailViewModelTest {
         val product = ProductDto(id = 1, name = "Milk", quantity = 2, shelf_id = 1)
         val vm = ProductDetailViewModel(savedState(), FakeProductRepository(listOf(product)))
 
-        vm.save("Oat Milk", "lactose free", null, isMandatory = true)
+        vm.save(ProductEdit("Oat Milk", "lactose free", null, isMandatory = true, lowStockThreshold = null))
 
         assertTrue(vm.state.value.saved)
         assertEquals("Oat Milk", vm.state.value.product?.name)
@@ -116,7 +117,7 @@ class ProductDetailViewModelTest {
         val repo = FakeProductRepository(listOf(product)).apply { failUpdate = true }
         val vm = ProductDetailViewModel(savedState(), repo)
 
-        vm.save("Oat Milk", null, null, false)
+        vm.save(ProductEdit("Oat Milk", null, null, false, null))
 
         assertFalse(vm.state.value.saved)
         assertNotNull(vm.state.value.error)
@@ -128,7 +129,7 @@ class ProductDetailViewModelTest {
         val repo = FakeProductRepository(listOf(product))
         val vm = ProductDetailViewModel(savedState(), repo)
 
-        vm.save("Eggs", null, null, isMandatory = true)
+        vm.save(ProductEdit("Eggs", null, null, isMandatory = true, lowStockThreshold = null))
 
         assertTrue(repo.items.first().is_mandatory == true)
     }
@@ -164,7 +165,7 @@ class ProductDetailViewModelTest {
         val repo = FakeProductRepository(listOf(product)).apply { failUpdate = true }
         val vm = ProductDetailViewModel(savedState(), repo)
 
-        vm.save("Oat Milk", null, null, false)
+        vm.save(ProductEdit("Oat Milk", null, null, false, null))
         assertNotNull(vm.state.value.error)
 
         // After the Snackbar has shown it, the error is consumed so it doesn't re-fire.

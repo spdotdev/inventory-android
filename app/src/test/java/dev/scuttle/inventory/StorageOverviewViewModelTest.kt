@@ -8,6 +8,7 @@ import dev.scuttle.inventory.data.dto.ProductDto
 import dev.scuttle.inventory.data.dto.ShelfDto
 import dev.scuttle.inventory.data.household.HouseholdRepository
 import dev.scuttle.inventory.data.location.LocationRepository
+import dev.scuttle.inventory.data.product.ProductEdit
 import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.data.shelf.ShelfRepository
 import dev.scuttle.inventory.ui.storage.StorageOverviewViewModel
@@ -69,7 +70,8 @@ class StorageOverviewViewModelTest {
             override fun getCached(householdId: Long, shelfId: Long) = emptyList<ProductDto>()
             override suspend fun list(householdId: Long, shelfId: Long) = emptyList<ProductDto>()
             override suspend fun create(householdId: Long, shelfId: Long, name: String, quantity: Int) = ProductDto(1, name, quantity, shelfId)
-            override suspend fun update(householdId: Long, shelfId: Long, productId: Long, name: String, description: String?, code: String?, isMandatory: Boolean) = ProductDto(productId, name, 0, shelfId)
+            override suspend fun update(householdId: Long, shelfId: Long, productId: Long, edit: ProductEdit) =
+        ProductDto(productId, edit.name, 0, shelfId)
             override suspend fun add(householdId: Long, shelfId: Long, productId: Long, amount: Int) = ProductDto(productId, "", 0, shelfId)
             override suspend fun remove(householdId: Long, shelfId: Long, productId: Long, amount: Int) = ProductDto(productId, "", 0, shelfId)
             override suspend fun move(householdId: Long, shelfId: Long, productId: Long, targetShelfId: Long) = ProductDto(productId, "", 0, targetShelfId)

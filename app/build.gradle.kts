@@ -14,6 +14,7 @@ plugins {
 // intentional cleanup, never to paper over new findings).
 detekt {
     buildUponDefaultConfig = true
+    config.setFrom(files("detekt.yml"))
     baseline = file("detekt-baseline.xml")
 }
 

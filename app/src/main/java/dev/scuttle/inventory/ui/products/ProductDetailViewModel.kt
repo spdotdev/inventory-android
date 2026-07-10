@@ -5,6 +5,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.scuttle.inventory.data.dto.ProductDto
+import dev.scuttle.inventory.data.product.ProductEdit
 import dev.scuttle.inventory.data.product.ProductRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -70,11 +71,11 @@ class ProductDetailViewModel @Inject constructor(
         }
     }
 
-    fun save(name: String, description: String?, code: String?, isMandatory: Boolean) {
+    fun save(edit: ProductEdit) {
         viewModelScope.launch {
             _state.update { it.copy(loading = true, error = null) }
             runCatching {
-                repository.update(householdId, shelfId, productId, name, description, code, isMandatory)
+                repository.update(householdId, shelfId, productId, edit)
             }.onSuccess { updated ->
                 _state.update { it.copy(loading = false, product = updated, saved = true) }
             }.onFailure { e ->

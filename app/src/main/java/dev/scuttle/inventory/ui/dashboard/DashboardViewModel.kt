@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.scuttle.inventory.data.HierarchyStore
 import dev.scuttle.inventory.data.LocationStats
+import dev.scuttle.inventory.data.LowStockItem
 import dev.scuttle.inventory.data.ShelfEntry
 import dev.scuttle.inventory.data.settings.FavoritesStore
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -23,6 +24,7 @@ data class DashboardUiState(
     val totalShelves: Int = 0,
     val totalProducts: Int = 0,
     val mandatoryWarnings: Int = 0,
+    val lowStockItems: List<LowStockItem> = emptyList(),
     val locationStats: List<LocationStats> = emptyList(),
     val favoriteLocationIds: Set<Long> = emptySet(),
     val favoriteShelfIds: Set<Long> = emptySet(),
@@ -49,6 +51,7 @@ class DashboardViewModel @Inject constructor(
             totalShelves = s.totalShelves,
             totalProducts = s.totalProducts,
             mandatoryWarnings = s.mandatoryWarnings,
+            lowStockItems = s.lowStockItems,
             locationStats = s.locationStats,
             favoriteLocationIds = favLocs,
             favoriteShelfIds = favShelves,

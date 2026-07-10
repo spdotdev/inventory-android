@@ -6,6 +6,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.FileProvider
 import androidx.compose.foundation.border
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
@@ -55,10 +56,12 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import dev.scuttle.inventory.R
+import dev.scuttle.inventory.data.product.ProductEdit
 import dev.scuttle.inventory.ui.common.SnackbarErrorEffect
 import java.io.File
 import java.util.UUID
@@ -69,6 +72,9 @@ import java.util.UUID
  * search result card showing the same name) — tests must target this tag.
  */
 const val PRODUCT_DETAIL_TITLE_TEST_TAG = "product_detail_title"
+
+// Bounds typed low-stock thresholds well under the API cap (1,000,000).
+private const val MAX_THRESHOLD_DIGITS = 7
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,6 +96,10 @@ fun ProductDetailScreen(
     var description by rememberSaveable(product?.id) { mutableStateOf(product?.description ?: "") }
     var code by rememberSaveable(product?.id) { mutableStateOf(product?.code ?: "") }
     var isMandatory by rememberSaveable(product?.id) { mutableStateOf(product?.is_mandatory ?: false) }
+    // Kept as text so the field can be empty (= threshold off); parsed on save.
+    var lowStockThreshold by rememberSaveable(product?.id) {
+        mutableStateOf(product?.low_stock_threshold?.toString() ?: "")
+    }
     var localImageUri by remember { mutableStateOf<Uri?>(null) }
     var showDeleteConfirm by rememberSaveable { mutableStateOf(false) }
 
@@ -100,6 +110,7 @@ fun ProductDetailScreen(
             description = it.description ?: ""
             code = it.code ?: ""
             isMandatory = it.is_mandatory ?: false
+            lowStockThreshold = it.low_stock_threshold?.toString() ?: ""
         }
     }
 
@@ -151,10 +162,13 @@ fun ProductDetailScreen(
                     TextButton(
                         onClick = {
                             viewModel.save(
-                                name.trim(),
-                                description.takeIf { it.isNotBlank() },
-                                code.takeIf { it.isNotBlank() },
-                                isMandatory,
+                                ProductEdit(
+                                    name = name.trim(),
+                                    description = description.takeIf { it.isNotBlank() },
+                                    code = code.takeIf { it.isNotBlank() },
+                                    isMandatory = isMandatory,
+                                    lowStockThreshold = lowStockThreshold.toIntOrNull()?.takeIf { it > 0 },
+                                ),
                             )
                         },
                         enabled = name.isNotBlank() && !state.loading,
@@ -264,6 +278,16 @@ fun ProductDetailScreen(
                 }
                 Switch(checked = isMandatory, onCheckedChange = { isMandatory = it })
             }
+
+            OutlinedTextField(
+                value = lowStockThreshold,
+                onValueChange = { lowStockThreshold = it.filter(Char::isDigit).take(MAX_THRESHOLD_DIGITS) },
+                label = { Text(stringResource(R.string.product_detail_field_low_stock)) },
+                supportingText = { Text(stringResource(R.string.product_detail_low_stock_hint)) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
 
             Spacer(Modifier.height(16.dp))
 
