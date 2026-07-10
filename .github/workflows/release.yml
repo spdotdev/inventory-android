@@ -36,7 +36,7 @@ jobs:
           java-version: '17'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
 
       # No signing secret → fail loudly with a clear message rather than a cryptic
       # keystore error. A release genuinely needs the keystore, so this is fatal
