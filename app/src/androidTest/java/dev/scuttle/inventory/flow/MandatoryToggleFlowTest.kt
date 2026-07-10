@@ -14,6 +14,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.waitUntilAtLeastOneExists
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -55,6 +56,9 @@ class MandatoryToggleFlowTest : FlowTestBase() {
             waitForIdle()
 
             waitUntilAtLeastOneExists(hasText("Mandatory on this shelf"), timeoutMillis = 15_000)
+            // Scroll the toggle into view first: on small CI-emulator screens it
+            // sits below the fold, and a click on a clipped node misses.
+            onAllNodes(isToggleable())[0].performScrollTo()
             onAllNodes(isToggleable())[0].assertIsOff()
             onAllNodes(isToggleable())[0].performClick()
             waitForIdle()

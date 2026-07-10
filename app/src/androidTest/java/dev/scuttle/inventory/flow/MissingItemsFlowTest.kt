@@ -12,6 +12,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.waitUntilAtLeastOneExists
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -82,7 +83,8 @@ class MissingItemsFlowTest : FlowTestBase() {
             // Product detail screen shows the product name and the mandatory toggle label
             waitUntilAtLeastOneExists(hasText("Mandatory on this shelf"), timeoutMillis = 15_000)
             onAllNodesWithText("Milk")[0].assertIsDisplayed()
-            onNodeWithText("Mandatory on this shelf").assertIsDisplayed()
+            // Below the fold on small CI-emulator screens — bring it into view.
+            onNodeWithText("Mandatory on this shelf").performScrollTo().assertIsDisplayed()
         }
     }
 }

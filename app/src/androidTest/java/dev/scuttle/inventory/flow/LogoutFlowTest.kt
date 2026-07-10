@@ -12,6 +12,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.waitUntilAtLeastOneExists
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -43,8 +44,10 @@ class LogoutFlowTest : FlowTestBase() {
             onNodeWithTag("drawer-nav-settings").performClick()
             waitForIdle()
 
-            // Tap "Sign out" to open the confirm dialog
-            onNodeWithText("Sign out").performClick()
+            // Tap "Sign out" to open the confirm dialog. Scroll first: the bottom
+            // nav costs the settings screen height, pushing the button below the
+            // fold on small CI-emulator screens (clipped clicks miss).
+            onNodeWithText("Sign out").performScrollTo().performClick()
             waitForIdle()
             // Dialog appears — now 2 "Sign out" nodes exist (button + dialog confirm); pick the dialog one [1]
             mockServer.enqueueEmpty(code = 204) // POST /auth/logout
