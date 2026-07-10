@@ -7,6 +7,10 @@ data class HouseholdDto(
     val id: Long,
     val name: String,
     val join_code: String,
+    // Phase-2 theme keys; null (or an older server omitting them) = the client
+    // derives a stable default from the id (HouseholdTheme.kt).
+    val color: String? = null,
+    val icon: String? = null,
 )
 
 // Laravel API Resources wrap payloads in a `data` envelope.
@@ -28,4 +32,14 @@ data class CreateHouseholdRequest(
 @Serializable
 data class JoinHouseholdRequest(
     val code: String,
+)
+
+// No property defaults on purpose: the app's Json has encodeDefaults=false, so a
+// defaulted field would be OMITTED from the body and the server would keep the old
+// value instead of clearing it (same pitfall as UpdateProductRequest). Explicit
+// null = clear back to the derived default.
+@Serializable
+data class UpdateHouseholdThemeRequest(
+    val color: String?,
+    val icon: String?,
 )

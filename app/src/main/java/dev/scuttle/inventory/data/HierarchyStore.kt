@@ -23,6 +23,10 @@ data class HouseholdWithLocations(
     val id: Long,
     val name: String,
     val locations: List<LocationDto>,
+    // Theme keys (null = derived default) — carried so the drawer avatar
+    // reflects a user-chosen theme without a second repository lookup.
+    val color: String? = null,
+    val icon: String? = null,
 )
 
 data class LocationStats(
@@ -118,7 +122,7 @@ class HierarchyStore
                     }
                     locationStats += LocationStats(location, hh.id, count)
                 }
-                entries += HouseholdWithLocations(hh.id, hh.name, locations)
+                entries += HouseholdWithLocations(hh.id, hh.name, locations, hh.color, hh.icon)
             }
             missingItems.sortWith(compareBy({ it.locationName }, { it.shelfName }, { it.productName }))
             lowStockItems.sortWith(compareBy({ it.locationName }, { it.shelfName }, { it.productName }))
@@ -305,7 +309,7 @@ class HierarchyStore
                     }
                     locationStats += LocationStats(location, hh.id, locationProductCount)
                 }
-                entries += HouseholdWithLocations(hh.id, hh.name, locations)
+                entries += HouseholdWithLocations(hh.id, hh.name, locations, hh.color, hh.icon)
             }
 
             missingItems.sortWith(compareBy({ it.locationName }, { it.shelfName }, { it.productName }))

@@ -171,7 +171,12 @@ fun AppDrawer(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.padding(horizontal = 28.dp, vertical = 4.dp),
                     ) {
-                        HouseholdAvatar(householdId = entry.id, size = 24.dp)
+                        HouseholdAvatar(
+                            householdId = entry.id,
+                            size = 24.dp,
+                            colorKey = entry.color,
+                            iconKey = entry.icon,
+                        )
                         Text(
                             text = entry.name,
                             style = MaterialTheme.typography.labelMedium,

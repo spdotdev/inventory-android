@@ -18,6 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -44,6 +45,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -51,6 +53,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
+import dev.scuttle.inventory.data.dto.HouseholdDto
 import dev.scuttle.inventory.ui.common.LiveStatusText
 import dev.scuttle.inventory.ui.theme.FrostCard
 import dev.scuttle.inventory.ui.theme.HouseholdAvatar
@@ -65,6 +68,7 @@ fun HouseholdsScreen(
 ) {
     val state by viewModel.state.collectAsState()
     var confirmLeaveId by remember { mutableStateOf<Long?>(null) }
+    var themePickerFor by remember { mutableStateOf<HouseholdDto?>(null) }
     var showCreateSheet by rememberSaveable { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -138,12 +142,25 @@ fun HouseholdsScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
-                            HouseholdAvatar(householdId = household.id)
+                            HouseholdAvatar(
+                                householdId = household.id,
+                                colorKey = household.color,
+                                iconKey = household.icon,
+                            )
                             Text(
                                 text = household.name,
                                 style = MaterialTheme.typography.bodyLarge,
                                 modifier = Modifier.weight(1f),
                             )
+                            IconButton(
+                                onClick = { themePickerFor = household },
+                                modifier = Modifier.testTag("household-theme-${household.id}"),
+                            ) {
+                                Icon(
+                                    Icons.Default.Palette,
+                                    contentDescription = stringResource(R.string.households_theme_cd, household.name),
+                                )
+                            }
                             IconButton(onClick = { onOpenInvite(household.id, household.name) }) {
                                 Icon(
                                     Icons.Default.Share,
@@ -206,6 +223,17 @@ fun HouseholdsScreen(
                 }
             }
         }
+    }
+
+    themePickerFor?.let { household ->
+        HouseholdThemeDialog(
+            household = household,
+            onDismiss = { themePickerFor = null },
+            onSave = { color, icon ->
+                viewModel.updateTheme(household.id, color, icon)
+                themePickerFor = null
+            },
+        )
     }
 
     confirmLeaveId?.let { id ->

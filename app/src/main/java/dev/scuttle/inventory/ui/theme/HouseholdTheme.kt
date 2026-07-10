@@ -39,33 +39,52 @@ data class HouseholdTheme(
     val icon: ImageVector,
 )
 
-private val householdAccents =
-    listOf(
-        Color(0xFF7DD3FC), // sky (Frost accent)
-        Color(0xFF5EEAD4), // teal
-        Color(0xFFA5B4FC), // indigo
-        Color(0xFFF9A8D4), // pink
-        Color(0xFFFCD34D), // amber
-        Color(0xFF86EFAC), // green
-        Color(0xFFC4B5FD), // violet
-        Color(0xFFFDBA74), // orange
+/**
+ * Keyed palette shared with the server (HouseholdColor/HouseholdIcon enums in
+ * inventory-laravel): the API stores KEYS, each client renders them. Order
+ * doubles as the derived-fallback palette, so don't reorder.
+ */
+val householdAccentsByKey =
+    linkedMapOf(
+        "sky" to Color(0xFF7DD3FC), // Frost accent
+        "teal" to Color(0xFF5EEAD4),
+        "indigo" to Color(0xFFA5B4FC),
+        "pink" to Color(0xFFF9A8D4),
+        "amber" to Color(0xFFFCD34D),
+        "green" to Color(0xFF86EFAC),
+        "violet" to Color(0xFFC4B5FD),
+        "orange" to Color(0xFFFDBA74),
     )
 
-private val householdIcons =
-    listOf(
-        Icons.Filled.Home,
-        Icons.Filled.Kitchen,
-        Icons.Filled.House,
-        Icons.Filled.Apartment,
-        Icons.Filled.Cottage,
-        Icons.Filled.Warehouse,
-        Icons.Filled.Storefront,
-        Icons.Filled.Inventory2,
+val householdIconsByKey =
+    linkedMapOf(
+        "home" to Icons.Filled.Home,
+        "kitchen" to Icons.Filled.Kitchen,
+        "house" to Icons.Filled.House,
+        "apartment" to Icons.Filled.Apartment,
+        "cottage" to Icons.Filled.Cottage,
+        "warehouse" to Icons.Filled.Warehouse,
+        "storefront" to Icons.Filled.Storefront,
+        "box" to Icons.Filled.Inventory2,
     )
 
-/** Stable theme for a household id. Index math lives in HouseholdThemeIndex.kt. */
-fun householdTheme(id: Long): HouseholdTheme =
-    HouseholdTheme(householdAccents[householdAccentIndex(id)], householdIcons[householdIconIndex(id)])
+private val householdAccents = householdAccentsByKey.values.toList()
+private val householdIcons = householdIconsByKey.values.toList()
+
+/**
+ * Theme for a household: user-chosen keys win; a null (or unknown, e.g. a key
+ * added server-side after this build shipped) key falls back to the stable
+ * id-derived default. Index math lives in HouseholdThemeIndex.kt.
+ */
+fun householdTheme(
+    id: Long,
+    colorKey: String? = null,
+    iconKey: String? = null,
+): HouseholdTheme =
+    HouseholdTheme(
+        accent = householdAccentsByKey[colorKey] ?: householdAccents[householdAccentIndex(id)],
+        icon = householdIconsByKey[iconKey] ?: householdIcons[householdIconIndex(id)],
+    )
 
 /**
  * Round, accent-tinted badge with the household's icon. The hue distinguishes
@@ -77,8 +96,10 @@ fun HouseholdAvatar(
     householdId: Long,
     modifier: Modifier = Modifier,
     size: Dp = 36.dp,
+    colorKey: String? = null,
+    iconKey: String? = null,
 ) {
-    val theme = householdTheme(householdId)
+    val theme = householdTheme(householdId, colorKey, iconKey)
     Box(
         modifier =
             modifier

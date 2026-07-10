@@ -80,6 +80,20 @@ class HouseholdsViewModel
                 hierarchyStore.refresh()
             }
 
+        /** Persist the chosen theme keys (null = back to the derived default). */
+        fun updateTheme(
+            householdId: Long,
+            color: String?,
+            icon: String?,
+        ) = launchLoading {
+            val updated = repository.updateTheme(householdId, color, icon)
+            _state.update { s ->
+                s.copy(households = s.households.map { if (it.id == updated.id) updated else it })
+            }
+            // Drawer avatars read HierarchyStore, not this VM's list (X4).
+            hierarchyStore.refresh()
+        }
+
         private fun launchLoading(
             refreshing: Boolean = false,
             block: suspend () -> Unit,

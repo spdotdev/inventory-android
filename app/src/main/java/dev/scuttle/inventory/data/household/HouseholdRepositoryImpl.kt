@@ -4,6 +4,7 @@ import dev.scuttle.inventory.data.api.HouseholdApi
 import dev.scuttle.inventory.data.dto.CreateHouseholdRequest
 import dev.scuttle.inventory.data.dto.HouseholdDto
 import dev.scuttle.inventory.data.dto.JoinHouseholdRequest
+import dev.scuttle.inventory.data.dto.UpdateHouseholdThemeRequest
 import javax.inject.Inject
 
 class HouseholdRepositoryImpl
@@ -20,6 +21,16 @@ class HouseholdRepositoryImpl
         override suspend fun create(name: String): HouseholdDto = api.create(CreateHouseholdRequest(name)).data
 
         override suspend fun join(code: String): HouseholdDto = api.join(JoinHouseholdRequest(code)).data
+
+        override suspend fun updateTheme(
+            householdId: Long,
+            color: String?,
+            icon: String?,
+        ): HouseholdDto {
+            val updated = api.updateTheme(householdId, UpdateHouseholdThemeRequest(color = color, icon = icon)).data
+            cache = cache?.map { if (it.id == updated.id) updated else it }
+            return updated
+        }
 
         override suspend fun leave(householdId: Long) {
             api.leave(householdId)

@@ -72,6 +72,12 @@
     <string name="households_leave_dialog_text">You\'ll need a new invite to rejoin.</string>
     <string name="households_create_fab_cd">Create household</string>
     <string name="households_field_name">Household name</string>
+    <string name="households_theme_cd">Change look of %s</string>
+    <string name="household_theme_title">Look of %s</string>
+    <string name="household_theme_color_label">Colour</string>
+    <string name="household_theme_icon_label">Icon</string>
+    <string name="household_theme_default">Default</string>
+    <string name="action_save">Save</string>
     <string name="households_create_button">Create</string>
 
     <!-- Location detail / Shelves -->

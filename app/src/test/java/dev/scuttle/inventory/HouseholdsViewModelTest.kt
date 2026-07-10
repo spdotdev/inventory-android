@@ -37,6 +37,16 @@ class HouseholdsViewModelTest {
         override suspend fun leave(householdId: Long) {
             items.removeIf { it.id == householdId }
         }
+
+        override suspend fun updateTheme(
+            householdId: Long,
+            color: String?,
+            icon: String?,
+        ): HouseholdDto {
+            val index = items.indexOfFirst { it.id == householdId }
+            items[index] = items[index].copy(color = color, icon = icon)
+            return items[index]
+        }
     }
 
     @Test
@@ -80,6 +90,28 @@ class HouseholdsViewModelTest {
 
             val loaded = store.state.first { s -> s.entries.any { it.name == "Pantry" } }
             assertTrue(loaded.entries.any { it.name == "Pantry" })
+        }
+
+    @Test
+    fun update_theme_updates_the_list_and_the_hierarchy() =
+        runTest {
+            val repo = FakeHouseholdRepository()
+            val store = TestHierarchy.store(repo)
+            val viewModel = HouseholdsViewModel(repo, store)
+
+            viewModel.updateTheme(householdId = 1, color = "teal", icon = "cottage")
+
+            val household = viewModel.state.value.households.first()
+            assertEquals("teal", household.color)
+            assertEquals("cottage", household.icon)
+            // The drawer reads HierarchyStore — the theme must reach it too.
+            val entry = store.state.first { s -> s.entries.isNotEmpty() }.entries.first()
+            assertEquals("teal", entry.color)
+            assertEquals("cottage", entry.icon)
+
+            // Clearing goes back to null (derived default).
+            viewModel.updateTheme(householdId = 1, color = null, icon = null)
+            assertEquals(null, viewModel.state.value.households.first().color)
         }
 
     @Test
