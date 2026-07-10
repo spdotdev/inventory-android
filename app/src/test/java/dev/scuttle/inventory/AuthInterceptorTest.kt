@@ -62,6 +62,57 @@ class AuthInterceptorTest {
 
         override fun connection(): Connection? = null
 
+        // OkHttp 5 additions — the interceptor under test never touches these;
+        // values delegate to a default client, with* variants return this chain.
+        private val defaults = okhttp3.OkHttpClient()
+
+        override val authenticator: okhttp3.Authenticator get() = defaults.authenticator
+        override val cache: okhttp3.Cache? get() = defaults.cache
+        override val certificatePinner: okhttp3.CertificatePinner get() = defaults.certificatePinner
+        override val connectionPool: okhttp3.ConnectionPool get() = defaults.connectionPool
+        override val cookieJar: okhttp3.CookieJar get() = defaults.cookieJar
+        override val dns: okhttp3.Dns get() = defaults.dns
+        override val eventListener: okhttp3.EventListener get() = okhttp3.EventListener.NONE
+        override val followRedirects: Boolean get() = defaults.followRedirects
+        override val followSslRedirects: Boolean get() = defaults.followSslRedirects
+        override val hostnameVerifier: javax.net.ssl.HostnameVerifier get() = defaults.hostnameVerifier
+        override val proxy: java.net.Proxy? get() = defaults.proxy
+        override val proxyAuthenticator: okhttp3.Authenticator get() = defaults.proxyAuthenticator
+        override val proxySelector: java.net.ProxySelector get() = defaults.proxySelector
+        override val retryOnConnectionFailure: Boolean get() = defaults.retryOnConnectionFailure
+        override val socketFactory: javax.net.SocketFactory get() = defaults.socketFactory
+        override val sslSocketFactoryOrNull: javax.net.ssl.SSLSocketFactory? get() = null
+        override val x509TrustManagerOrNull: javax.net.ssl.X509TrustManager? get() = null
+
+        override fun withDns(dns: okhttp3.Dns): Interceptor.Chain = this
+
+        override fun withSocketFactory(socketFactory: javax.net.SocketFactory): Interceptor.Chain = this
+
+        override fun withRetryOnConnectionFailure(retryOnConnectionFailure: Boolean): Interceptor.Chain = this
+
+        override fun withAuthenticator(authenticator: okhttp3.Authenticator): Interceptor.Chain = this
+
+        override fun withCookieJar(cookieJar: okhttp3.CookieJar): Interceptor.Chain = this
+
+        override fun withCache(cache: okhttp3.Cache?): Interceptor.Chain = this
+
+        override fun withProxy(proxy: java.net.Proxy?): Interceptor.Chain = this
+
+        override fun withProxySelector(proxySelector: java.net.ProxySelector): Interceptor.Chain = this
+
+        override fun withProxyAuthenticator(proxyAuthenticator: okhttp3.Authenticator): Interceptor.Chain = this
+
+        override fun withSslSocketFactory(
+            sslSocketFactory: javax.net.ssl.SSLSocketFactory?,
+            x509TrustManager: javax.net.ssl.X509TrustManager?,
+        ): Interceptor.Chain = this
+
+        override fun withHostnameVerifier(hostnameVerifier: javax.net.ssl.HostnameVerifier): Interceptor.Chain = this
+
+        override fun withCertificatePinner(certificatePinner: okhttp3.CertificatePinner): Interceptor.Chain = this
+
+        override fun withConnectionPool(connectionPool: okhttp3.ConnectionPool): Interceptor.Chain = this
+
         override fun call(): Call = throw NotImplementedError()
 
         override fun connectTimeoutMillis(): Int = 0
