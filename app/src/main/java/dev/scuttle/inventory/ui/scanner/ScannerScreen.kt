@@ -214,8 +214,8 @@ private val LaserRed = Color(0xFFE53935)
 private const val BRACKET_ARM_FRACTION = 0.18f
 
 // Soft-focus scrim: flat base dim plus a radial falloff toward the edges.
-private const val SCRIM_BASE_ALPHA = 0.35f
-private const val SCRIM_EDGE_ALPHA = 0.6f
+private const val SCRIM_BASE_ALPHA = 0.65f
+private const val SCRIM_EDGE_ALPHA = 0.95f
 
 /**
  * Viewfinder overlay in the classic scan-frame style (four rounded corner
@@ -227,9 +227,10 @@ private const val SCRIM_EDGE_ALPHA = 0.6f
 @Composable
 private fun ScannerOverlay() {
     val transition = rememberInfiniteTransition(label = "laser")
+    // Kept translucent on purpose — the line guides without hiding the barcode.
     val laserAlpha by transition.animateFloat(
-        initialValue = 0.45f,
-        targetValue = 1f,
+        initialValue = 0.25f,
+        targetValue = 0.55f,
         animationSpec =
             infiniteRepeatable(
                 animation = tween(durationMillis = 600, easing = LinearEasing),
@@ -274,7 +275,7 @@ private fun ScannerOverlay() {
                             Color.Black.copy(alpha = SCRIM_EDGE_ALPHA),
                         ),
                     center = frame.center,
-                    radius = size.maxDimension * 0.75f,
+                    radius = size.maxDimension * 0.5f,
                 ),
         )
 
