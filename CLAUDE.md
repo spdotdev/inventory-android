@@ -57,8 +57,10 @@ Navigation: Household → Storage overview → Shelves (tabs) → Products.
   Compose theme to match these.
 
 ## Scope guardrails — refuse to add
-No expiry/reminders, recipes, shopping list, offline mode, roles/permissions. Barcode
-scanning + filter/sort are Phase 2, not MVP.
+No expiry/reminders, recipes, shopping list, offline mode, roles/permissions.
+**Phase 2 unlocked 2026-07-10** (user decision): barcode scanning and the low-stock
+concept (threshold + "running low" view) are now committed work — see `ROADMAP.md`.
+Filter/sort remains uncommitted.
 
 ## Conventions
 - Explicit over magic; SRP; document the *why*.

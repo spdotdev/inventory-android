@@ -25,19 +25,17 @@ the backend gaining a `barcode` attribute (Phase 2, see `inventory-laravel/docs/
 (out of scope while always-online). Effort ~3–4 days. **Kill criterion:** if manual add is
 fast enough in real use, don't build it.
 
-> **Deferred 2026-07-04** (backlog-sweep decision). Kept as a Phase-2 idea: manual code entry
-> already works via the product edit form (`code` field), and the CameraX + ML Kit deps +
-> camera permission are a large add for marginal MVP value. Revisit if shelf-side add speed
-> becomes a real pain point.
+> **Deferred 2026-07-04** (backlog-sweep decision), then **unlocked 2026-07-10** (user
+> decision) — now a commitment tracked in [`ROADMAP.md`](ROADMAP.md) → Phase 2.
 
 ---
 
 ## Ideas — parking lot
-- 💡 Widget / quick-tile for "what's low" (depends on a low-stock concept — not in MVP).
-  *Deferred 2026-07-04 (backlog-sweep decision):* a real OS home-screen widget fights the
-  always-online + bearer-token model (no background auth), and a low-stock **threshold** concept
-  isn't agreed yet. Revisit as an **in-app** "running low" tile once a threshold is defined
-  (the `is_mandatory` + qty-0 "missing items" view already covers the hard-stop case).
+- 💡 Widget / quick-tile for "what's low": the **in-app** "running low" tile version was
+  **unlocked 2026-07-10** (user decision) and is tracked in [`ROADMAP.md`](ROADMAP.md) →
+  Phase 2, with a `low_stock_threshold` field landing on the backend. A real OS
+  home-screen widget stays deferred — it fights the always-online + bearer-token model
+  (no background auth).
 - 💡 Q-3: live updates (WebSockets) if pull-to-refresh proves insufficient.
 - 💡 User-chosen per-household color/icon (needs a `theme` field on the household resource —
   Phase-2 backend change; the deterministic id-derived version already ships, see Done).

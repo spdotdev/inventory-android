@@ -21,7 +21,7 @@ Markers: 🟡 TBD · 🔲 TODO · 🛠 in progress · ✅ done (shipped work mov
 | 2 — Households | 🔲 TODO | List / switcher / create / join-by-code / leave; invite (copy link + QR). |
 | 3 — Inventory | 🔲 TODO | Storage overview → shelves (tab strip + swipe) → products; add/remove/move; global search. |
 | 4 — Settings + polish | 🔲 TODO | Theme (System/Light/Dark), household mgmt, account/sign out; empty/error/offline states. |
-| 5 — Phase 2 | 🟡 TBD | Barcode scanning, filter/sort, product attributes. |
+| 5 — Phase 2 | 🛠 in progress | **Unlocked 2026-07-10** (user decision): barcode scanning, low-stock tile. Filter/sort stays 🟡 TBD. |
 
 Detailed build order: [`CLAUDE.md`](CLAUDE.md) and [`docs/android-plan.md`](docs/android-plan.md).
 
@@ -58,14 +58,23 @@ Detailed build order: [`CLAUDE.md`](CLAUDE.md) and [`docs/android-plan.md`](docs
 - [x] **Plus Jakarta Sans / Space Mono** fonts — bundled TTFs, applied app-wide; join codes in
   Space Mono (shipped 2026-06-24, CI-green).
 
-### DEFERRED (need a decision or external dependency)
-- [ ] **Google Sign-In device smoke-test (release gate)** — the Credential Manager migration
-  (gap T19) is implemented and compiles in CI, but the live Google handshake (account picker →
-  ID token → `loginWithGoogle`) can't be exercised by CI or JVM tests. Before any release,
-  manually verify sign-in on a device/emulator **with Play Services** and a configured Google
-  OAuth client ID.
+### PHASE 2 (unlocked 2026-07-10 — user decision; was deferred 2026-07-04)
+- [ ] **Barcode scanning** — CameraX + ML Kit scanner screen; scan → match product by
+  `code` on the active shelf → increment, else prefill the add-product form with the
+  code. Camera permission flow; degrade gracefully without camera. Detailed proposal
+  in [`BACKLOG.md`](BACKLOG.md) → Ideas.
+- [ ] **Low-stock "running low" tile** — dashboard tile listing products at/below their
+  `low_stock_threshold` (new nullable backend field; null = feature off for that
+  product). Complements the `is_mandatory` + qty-0 missing-items view. Blocked on the
+  backend field (inventory-laravel ROADMAP → Phase 2).
+
 ### QUALITY
 - [x] **CI live and green** — wrapper validation + `testDebugUnitTest` + lint pass.
+- [x] **Google Sign-In device smoke-test (release gate)** — passed 2026-07-10 on a
+  Pixel 7 Pro (Android 16, Play Services) against the deployed backend: Credential
+  Manager account picker → consent → Google ID token → `POST /auth/google` → Sanctum
+  token → authenticated dashboard with real household data. Re-verify on device after
+  any change to the Google OAuth client config or the Credential Manager integration.
 - [x] **ktlint/detekt style gating in CI** (wave-2 W19) — shipped 2026-07-10. detekt 1.23.8 +
   ktlint-gradle 12.1.2, baselines generated against the real codebase and committed
   (`app/detekt-baseline.xml`, `app/ktlint-baseline.xml`), gating `ktlintCheck detekt` step in
