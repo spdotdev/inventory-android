@@ -179,22 +179,27 @@ fun ProductsPane(
                     state = swipeState,
                     enableDismissFromStartToEnd = false,
                     backgroundContent = {
-                        Box(
-                            modifier =
-                                Modifier
-                                    .fillMaxSize()
-                                    .background(
-                                        color = MaterialTheme.colorScheme.errorContainer,
-                                        shape = MaterialTheme.shapes.medium,
-                                    ),
-                            contentAlignment = Alignment.CenterEnd,
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = stringResource(R.string.action_delete),
-                                tint = MaterialTheme.colorScheme.onErrorContainer,
-                                modifier = Modifier.padding(horizontal = 20.dp),
-                            )
+                        // Only draw the delete affordance mid-swipe: the frosted (translucent)
+                        // cards otherwise let the red container + bin icon bleed through at
+                        // rest, overlapping the row's own trailing controls.
+                        if (swipeState.dismissDirection == SwipeToDismissBoxValue.EndToStart) {
+                            Box(
+                                modifier =
+                                    Modifier
+                                        .fillMaxSize()
+                                        .background(
+                                            color = MaterialTheme.colorScheme.errorContainer,
+                                            shape = MaterialTheme.shapes.medium,
+                                        ),
+                                contentAlignment = Alignment.CenterEnd,
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = stringResource(R.string.action_delete),
+                                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                                    modifier = Modifier.padding(horizontal = 20.dp),
+                                )
+                            }
                         }
                     },
                 ) {
