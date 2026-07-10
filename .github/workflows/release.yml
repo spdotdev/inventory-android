@@ -68,7 +68,7 @@ jobs:
       # prerelease and say so in the notes, so nobody mistakes it for a production
       # build. Real release signing + AAB is tracked in ROADMAP.
       - name: Create GitHub Release (preview)
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: app/build/outputs/apk/debug/app-debug.apk
           generate_release_notes: true
