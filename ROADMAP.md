@@ -63,10 +63,12 @@ Detailed build order: [`CLAUDE.md`](CLAUDE.md) and [`docs/android-plan.md`](docs
   `code` on the active shelf → increment, else prefill the add-product form with the
   code. Camera permission flow; degrade gracefully without camera. Detailed proposal
   in [`BACKLOG.md`](BACKLOG.md) → Ideas.
-- [ ] **Low-stock "running low" tile** — dashboard tile listing products at/below their
-  `low_stock_threshold` (new nullable backend field; null = feature off for that
-  product). Complements the `is_mandatory` + qty-0 missing-items view. Blocked on the
-  backend field (inventory-laravel ROADMAP → Phase 2).
+- [x] **Low-stock "running low" tile** — shipped 2026-07-10. Dashboard card listing
+  products at/below their `low_stock_threshold` (backend field shipped the same day),
+  with a numeric threshold field on the product detail screen (empty = off). Missing
+  items (mandatory + qty 0) are excluded — one warning per item. Also fixed a latent
+  PATCH bug: cleared fields were omitted from the body and silently kept their old
+  server value (UpdateProductRequest now always encodes every field).
 
 ### QUALITY
 - [x] **CI live and green** — wrapper validation + `testDebugUnitTest` + lint pass.
