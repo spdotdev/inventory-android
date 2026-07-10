@@ -27,6 +27,10 @@
     <string name="dashboard_tap_to_restock">Tik om te zien wat aangevuld moet worden</string>
     <string name="dashboard_products_by_location">Producten per locatie</string>
     <string name="dashboard_running_low">Bijna op</string>
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="nav_storage">Opslag</string>
+    <string name="nav_search">Zoeken</string>
+    <string name="nav_settings">Instellingen</string>
     <string name="scanner_title">Barcode scannen</string>
     <string name="scanner_permission_denied">Cameratoegang is nodig om barcodes te scannen. Je kunt producten nog steeds handmatig toevoegen en bewerken.</string>
     <string name="location_scan_cd">Scan een barcode</string>

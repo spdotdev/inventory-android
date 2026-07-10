@@ -45,10 +45,10 @@ class SearchFlowTest : FlowTestBase() {
             waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 5_000)
 
             onNodeWithContentDescription("Open menu").performClick()
-            waitUntilAtLeastOneExists(hasText("Search").and(hasClickAction()), timeoutMillis = 5_000)
+            waitUntilAtLeastOneExists(hasTestTag("drawer-nav-search"), timeoutMillis = 5_000)
 
             mockServer.route("/households/1/search", fixture("search_results.json"))
-            onAllNodesWithText("Search").filterToOne(hasClickAction()).performClick()
+            onNodeWithTag("drawer-nav-search").performClick()
             waitUntilAtLeastOneExists(hasTestTag("search_field"), timeoutMillis = 5_000)
 
             onNodeWithTag("search_field").performTextInput("Milk")
@@ -92,10 +92,10 @@ class SearchFlowTest : FlowTestBase() {
 
             // Open drawer → Search
             onNodeWithContentDescription("Open menu").performClick()
-            waitUntilAtLeastOneExists(hasText("Search").and(hasClickAction()), timeoutMillis = 5_000)
+            waitUntilAtLeastOneExists(hasTestTag("drawer-nav-search"), timeoutMillis = 5_000)
 
             mockServer.route("/households/1/search", fixture("search_results.json"))
-            onAllNodesWithText("Search").filterToOne(hasClickAction()).performClick()
+            onNodeWithTag("drawer-nav-search").performClick()
             waitForIdle()
 
             // Type query in the search field

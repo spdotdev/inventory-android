@@ -9,6 +9,21 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.DrawerValue
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.SpaceDashboard
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Surface
 import androidx.compose.material3.rememberDrawerState
@@ -81,6 +96,12 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+private data class BottomTab(
+    val route: String,
+    val labelRes: Int,
+    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+)
 
 private object Routes {
     const val AUTH = "auth"
@@ -224,7 +245,57 @@ private fun InventoryNavHost(
         },
         gesturesEnabled = authState.authenticated,
     ) {
-        NavHost(navController = navController, startDestination = Routes.AUTH) {
+        // Bottom navigation (UX wave 2): the app's four top-level destinations are
+        // permanently visible instead of hidden behind the hamburger drawer. The
+        // drawer stays for household/location quick-jumps. Detail screens (location,
+        // product, scanner, invite, ...) keep the full-screen layout — the bar only
+        // shows on the tabs themselves.
+        val backStackEntry by navController.currentBackStackEntryAsState()
+        val currentRoute = backStackEntry?.destination?.route
+        val drawerUi by drawerViewModel.state.collectAsState()
+        val firstHouseholdId = drawerUi.entries.firstOrNull()?.id
+        val bottomTabs =
+            listOf(
+                BottomTab(Routes.DASHBOARD, R.string.nav_dashboard, Icons.Filled.SpaceDashboard),
+                BottomTab(Routes.HOME, R.string.nav_storage, Icons.Filled.Home),
+                BottomTab(Routes.SEARCH, R.string.nav_search, Icons.Filled.Search),
+                BottomTab(Routes.SETTINGS, R.string.nav_settings, Icons.Filled.Settings),
+            )
+        Scaffold(
+            contentWindowInsets = WindowInsets(0),
+            bottomBar = {
+                if (bottomTabs.any { it.route == currentRoute }) {
+                    NavigationBar {
+                        bottomTabs.forEach { tab ->
+                            NavigationBarItem(
+                                selected = currentRoute == tab.route,
+                                onClick = {
+                                    val target =
+                                        if (tab.route == Routes.SEARCH) {
+                                            firstHouseholdId?.let(Routes::search) ?: return@NavigationBarItem
+                                        } else {
+                                            tab.route
+                                        }
+                                    navController.navigate(target) {
+                                        popUpTo(Routes.DASHBOARD) { saveState = true }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                },
+                                icon = { Icon(tab.icon, contentDescription = null) },
+                                label = { Text(stringResource(tab.labelRes)) },
+                                modifier = Modifier.testTag("bottom-nav-${tab.route}"),
+                            )
+                        }
+                    }
+                }
+            },
+        ) { scaffoldPadding ->
+        NavHost(
+            navController = navController,
+            startDestination = Routes.AUTH,
+            modifier = Modifier.padding(scaffoldPadding),
+        ) {
             composable(Routes.AUTH) {
                 AuthScreen(
                     viewModel = authViewModel,
@@ -385,6 +456,7 @@ private fun InventoryNavHost(
             ) {
                 ProductDetailScreen(onBack = { navController.popBackStack() })
             }
+        }
         }
     }
 }

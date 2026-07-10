@@ -100,7 +100,7 @@ fun AppDrawer(
                     label = { Text(stringResource(R.string.drawer_search)) },
                     selected = false,
                     onClick = { onNavigateSearch(soleHousehold.id) },
-                    modifier = Modifier.padding(horizontal = 12.dp),
+                    modifier = Modifier.padding(horizontal = 12.dp).testTag("drawer-nav-search"),
                 )
             }
 

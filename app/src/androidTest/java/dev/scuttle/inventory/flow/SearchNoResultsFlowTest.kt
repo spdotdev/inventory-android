@@ -39,9 +39,9 @@ class SearchNoResultsFlowTest : FlowTestBase() {
 
             // Drawer → Search
             onNodeWithContentDescription("Open menu").performClick()
-            waitUntilAtLeastOneExists(hasText("Search").and(hasClickAction()), timeoutMillis = 5_000)
+            waitUntilAtLeastOneExists(hasTestTag("drawer-nav-search"), timeoutMillis = 5_000)
             mockServer.route("/households", fixture("households_one.json"))
-            onAllNodesWithText("Search").filterToOne(hasClickAction()).performClick()
+            onNodeWithTag("drawer-nav-search").performClick()
             waitForIdle()
 
             // Type a query that returns no results
