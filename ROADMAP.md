@@ -21,7 +21,7 @@ Markers: 🟡 TBD · 🔲 TODO · 🛠 in progress · ✅ done (shipped work mov
 | 2 — Households | 🔲 TODO | List / switcher / create / join-by-code / leave; invite (copy link + QR). |
 | 3 — Inventory | 🔲 TODO | Storage overview → shelves (tab strip + swipe) → products; add/remove/move; global search. |
 | 4 — Settings + polish | 🔲 TODO | Theme (System/Light/Dark), household mgmt, account/sign out; empty/error/offline states. |
-| 5 — Phase 2 | ✅ shipped 2026-07-10 | **Unlocked 2026-07-10** (user decision): barcode scanning ✅, low-stock tile ✅. Filter/sort stays 🟡 TBD. |
+| 5 — Phase 2 | ✅ shipped 2026-07-10 | **Unlocked 2026-07-10** (user decision): barcode scanning ✅, low-stock tile ✅, filter/sort ✅ (backlog sweep), household color/icon theme ✅, live-updates client ✅ (pending server Reverb config). |
 
 Detailed build order: [`CLAUDE.md`](CLAUDE.md) and [`docs/android-plan.md`](docs/android-plan.md).
 

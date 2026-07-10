@@ -38,8 +38,9 @@ fast enough in real use, don't build it.
   (no background auth).
 - ~~💡 Q-3: live updates (WebSockets)~~ — **unlocked + built 2026-07-10** (user decision:
   full Reverb over cheap polling); see Done.
-- 💡 User-chosen per-household color/icon (needs a `theme` field on the household resource —
-  Phase-2 backend change; the deterministic id-derived version already ships, see Done).
+- ~~💡 User-chosen per-household color/icon~~ — **shipped 2026-07-10** (backend `color`/`icon`
+  keys + picker dialog on My Households, drawer/list avatars honor them; null = the
+  id-derived default). See Done.
 
 ---
 
