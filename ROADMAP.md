@@ -64,14 +64,12 @@ Detailed build order: [`CLAUDE.md`](CLAUDE.md) and [`docs/android-plan.md`](docs
   ID token → `loginWithGoogle`) can't be exercised by CI or JVM tests. Before any release,
   manually verify sign-in on a device/emulator **with Play Services** and a configured Google
   OAuth client ID.
-- [ ] **ktlint/detekt** style gating in CI (wave-2 W19) — its own pass. Blocked on toolchain:
-  gating needs a baseline generated against the real codebase, and gating blind risks reddening
-  the whole Android pipeline (plugin resolution affects the compile/test job; unknown violation
-  count). Follow-up on a machine with a JDK compatible with the project's Gradle: apply the
-  detekt + ktlint Gradle plugins, run `./gradlew detektBaseline ktlintCheck`, commit the baseline
-  file(s), then add a gating CI step mirroring Laravel's Pint+Larastan quality job.
-
 ### QUALITY
 - [x] **CI live and green** — wrapper validation + `testDebugUnitTest` + lint pass.
+- [x] **ktlint/detekt style gating in CI** (wave-2 W19) — shipped 2026-07-10. detekt 1.23.8 +
+  ktlint-gradle 14.2.0, baselines generated against the real codebase and committed
+  (`app/detekt-baseline.xml`, `app/ktlint-baseline.xml`), gating `ktlintCheck detekt` step in
+  `ci.yml`. Fails only on NEW violations; regenerate baselines only after an intentional
+  cleanup (`./gradlew detektBaseline ktlintGenerateBaseline`), never to paper over findings.
 - [ ] **Tag-driven release build** — confirm `release.yml` builds APK + AAB on `v*` tags;
   add the signing keystore as a repo secret before any Play Store upload.

@@ -5,6 +5,21 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization")
     id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
+    id("io.gitlab.arturbosch.detekt")
+    id("org.jlleitschuh.gradle.ktlint")
+}
+
+// Gate on NEW violations only: both tools check against a committed baseline
+// (regenerate with `./gradlew detektBaseline ktlintGenerateBaseline` after an
+// intentional cleanup, never to paper over new findings).
+detekt {
+    buildUponDefaultConfig = true
+    baseline = file("detekt-baseline.xml")
+}
+
+ktlint {
+    android.set(true)
+    baseline.set(file("ktlint-baseline.xml"))
 }
 
 android {

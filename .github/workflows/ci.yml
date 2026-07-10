@@ -7,11 +7,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# Compile + lint + unit tests for the Android client.
+# Compile + style + lint + unit tests for the Android client.
 #
-# Activated now that the Gradle project exists. ktlint/detekt style gating will
-# be added in a later pass; for now CI gates on a clean compile + unit tests,
-# with Android lint reported but non-fatal (see app/build.gradle.kts).
+# Style gating (ktlint + detekt) runs against committed baselines in app/ —
+# it fails only on NEW violations. Android lint stays reported but non-fatal
+# (see app/build.gradle.kts).
 
 on:
   push:
@@ -63,6 +63,9 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v5
+
+      - name: Style gate (ktlint + detekt, baseline-aware)
+        run: ./gradlew ktlintCheck detekt
 
       - name: Unit tests
         run: ./gradlew testDebugUnitTest

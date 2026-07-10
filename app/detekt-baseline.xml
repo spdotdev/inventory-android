@@ -1,0 +1,302 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ConstructorParameterNaming:AuthDtos.kt$GoogleRequest$val id_token: String</ID>
+    <ID>ConstructorParameterNaming:AuthDtos.kt$UserDto$val avatar_url: String? = null</ID>
+    <ID>ConstructorParameterNaming:ErrorDtos.kt$ClientErrorRequest$val app_version: String? = null</ID>
+    <ID>ConstructorParameterNaming:ErrorDtos.kt$ClientErrorRequest$val device_id: String</ID>
+    <ID>ConstructorParameterNaming:ErrorDtos.kt$ClientErrorRequest$val error_code: String</ID>
+    <ID>ConstructorParameterNaming:HouseholdDtos.kt$HouseholdDto$val join_code: String</ID>
+    <ID>ConstructorParameterNaming:ProductDtos.kt$MoveProductRequest$val shelf_id: Long</ID>
+    <ID>ConstructorParameterNaming:ProductDtos.kt$ProductDto$val image_url: String? = null</ID>
+    <ID>ConstructorParameterNaming:ProductDtos.kt$ProductDto$val is_mandatory: Boolean? = false</ID>
+    <ID>ConstructorParameterNaming:ProductDtos.kt$ProductDto$val shelf_id: Long</ID>
+    <ID>ConstructorParameterNaming:ProductDtos.kt$UpdateProductRequest$val is_mandatory: Boolean = false</ID>
+    <ID>ConstructorParameterNaming:SearchDtos.kt$SearchResultDto$val household_id: Long? = null</ID>
+    <ID>ConstructorParameterNaming:SearchDtos.kt$SearchResultDto$val location_id: Long? = null</ID>
+    <ID>ConstructorParameterNaming:SearchDtos.kt$SearchResultDto$val shelf_id: Long? = null</ID>
+    <ID>ConstructorParameterNaming:ShelfDtos.kt$ShelfDto$val location_id: Long</ID>
+    <ID>CyclomaticComplexMethod:AuthScreen.kt$@Composable fun AuthScreen( onForgotPassword: () -&gt; Unit = {}, modifier: Modifier = Modifier, viewModel: AuthViewModel = hiltViewModel(), )</ID>
+    <ID>CyclomaticComplexMethod:LocationDetailScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun LocationDetailScreen( householdId: Long, locationId: Long, drawerViewModel: DrawerViewModel, modifier: Modifier = Modifier, onBack: () -&gt; Unit = {}, onOpenDrawer: () -&gt; Unit = {}, onOpenProduct: (householdId: Long, shelfId: Long, productId: Long) -&gt; Unit = { _, _, _ -&gt; }, shelvesViewModel: ShelvesViewModel = hiltViewModel(), )</ID>
+    <ID>CyclomaticComplexMethod:ProductDetailScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun ProductDetailScreen( modifier: Modifier = Modifier, onBack: () -&gt; Unit = {}, viewModel: ProductDetailViewModel = hiltViewModel(), )</ID>
+    <ID>CyclomaticComplexMethod:ProductsPane.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun ProductsPane( householdId: Long, shelfId: Long, snackbarHostState: SnackbarHostState, modifier: Modifier = Modifier, refreshKey: Int = 0, onOpenProduct: (ProductDto) -&gt; Unit = {}, onWarningChange: (Boolean) -&gt; Unit = {}, viewModel: ProductsViewModel = hiltViewModel(key = "products-$shelfId"), )</ID>
+    <ID>EmptyFunctionBlock:DashboardViewModelTest.kt$DashboardViewModelTest.FakeHouseholdRepository${}</ID>
+    <ID>EmptyFunctionBlock:DashboardViewModelTest.kt$DashboardViewModelTest.FakeLocationRepository${}</ID>
+    <ID>EmptyFunctionBlock:DashboardViewModelTest.kt$DashboardViewModelTest.FakeProductRepository${}</ID>
+    <ID>EmptyFunctionBlock:DashboardViewModelTest.kt$DashboardViewModelTest.FakeShelfRepository${}</ID>
+    <ID>EmptyFunctionBlock:DrawerViewModelTest.kt$DrawerViewModelTest.FakeHouseholdRepository${}</ID>
+    <ID>EmptyFunctionBlock:DrawerViewModelTest.kt$DrawerViewModelTest.FakeProductRepository${}</ID>
+    <ID>EmptyFunctionBlock:DrawerViewModelTest.kt$DrawerViewModelTest.FakeShelfRepository${}</ID>
+    <ID>EmptyFunctionBlock:DrawerViewModelTest.kt$DrawerViewModelTest.ThrowingHouseholdRepository${}</ID>
+    <ID>EmptyFunctionBlock:HierarchyStoreTest.kt$HierarchyStoreTest.FakeHouseholdRepository${}</ID>
+    <ID>EmptyFunctionBlock:HierarchyStoreTest.kt$HierarchyStoreTest.FakeLocationRepository${}</ID>
+    <ID>EmptyFunctionBlock:HierarchyStoreTest.kt$HierarchyStoreTest.FakeProductRepository${}</ID>
+    <ID>EmptyFunctionBlock:HierarchyStoreTest.kt$HierarchyStoreTest.FakeShelfRepository${}</ID>
+    <ID>EmptyFunctionBlock:JoinHouseholdViewModelTest.kt$JoinHouseholdViewModelTest.&lt;no name provided&gt;${}</ID>
+    <ID>EmptyFunctionBlock:JoinHouseholdViewModelTest.kt$JoinHouseholdViewModelTest.FakeHouseholdRepository${}</ID>
+    <ID>EmptyFunctionBlock:MissingItemsViewModelTest.kt$MissingItemsViewModelTest.FakeHouseholdRepository${}</ID>
+    <ID>EmptyFunctionBlock:MissingItemsViewModelTest.kt$MissingItemsViewModelTest.FakeLocationRepository${}</ID>
+    <ID>EmptyFunctionBlock:MissingItemsViewModelTest.kt$MissingItemsViewModelTest.FakeProductRepository${}</ID>
+    <ID>EmptyFunctionBlock:MissingItemsViewModelTest.kt$MissingItemsViewModelTest.FakeShelfRepository${}</ID>
+    <ID>EmptyFunctionBlock:MissingItemsViewModelTest.kt$MissingItemsViewModelTest.ThrowingHouseholdRepository${}</ID>
+    <ID>EmptyFunctionBlock:ProductsViewModelTest.kt$ProductsViewModelTest.FakeHouseholdRepository${}</ID>
+    <ID>EmptyFunctionBlock:ProductsViewModelTest.kt$ProductsViewModelTest.FakeLocationRepository${}</ID>
+    <ID>EmptyFunctionBlock:ProductsViewModelTest.kt$ProductsViewModelTest.FakeShelfRepository${}</ID>
+    <ID>EmptyFunctionBlock:SessionCleanerTest.kt$SessionCleanerTest.RecordingDefaultHouseholdStore${}</ID>
+    <ID>EmptyFunctionBlock:SessionCleanerTest.kt$SessionCleanerTest.RecordingFavoritesStore${}</ID>
+    <ID>EmptyFunctionBlock:SessionCleanerTest.kt$SessionCleanerTest.RecordingHouseholdRepo${}</ID>
+    <ID>EmptyFunctionBlock:SessionCleanerTest.kt$SessionCleanerTest.RecordingLocationRepo${}</ID>
+    <ID>EmptyFunctionBlock:SessionCleanerTest.kt$SessionCleanerTest.RecordingProductRepo${}</ID>
+    <ID>EmptyFunctionBlock:SessionCleanerTest.kt$SessionCleanerTest.RecordingShelfRepo${}</ID>
+    <ID>EmptyFunctionBlock:StorageOverviewViewModelTest.kt$StorageOverviewViewModelTest.&lt;no name provided&gt;${}</ID>
+    <ID>EmptyFunctionBlock:TestHierarchy.kt$TestHierarchy.EmptyLocations${}</ID>
+    <ID>EmptyFunctionBlock:TestHierarchy.kt$TestHierarchy.EmptyProducts${}</ID>
+    <ID>EmptyFunctionBlock:TestHierarchy.kt$TestHierarchy.EmptyShelves${}</ID>
+    <ID>FunctionNaming:AllStoragesScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun AllStoragesScreen( modifier: Modifier = Modifier, viewModel: DrawerViewModel, onOpenDrawer: () -&gt; Unit = {}, onOpenLocation: (householdId: Long, locationId: Long) -&gt; Unit = { _, _ -&gt; }, onOpenStorage: (householdId: Long) -&gt; Unit = {}, localViewModel: AllStoragesViewModel = hiltViewModel(), )</ID>
+    <ID>FunctionNaming:AppDrawer.kt$@Composable fun AppDrawer( viewModel: DrawerViewModel, onNavigateHome: () -&gt; Unit, onNavigateDashboard: () -&gt; Unit, onNavigateSearch: (householdId: Long) -&gt; Unit, onNavigateHouseholds: () -&gt; Unit, onNavigateMissingItems: () -&gt; Unit, onNavigateLocation: (householdId: Long, locationId: Long) -&gt; Unit, onNavigateSettings: () -&gt; Unit, )</ID>
+    <ID>FunctionNaming:AuthScreen.kt$@Composable fun AuthScreen( onForgotPassword: () -&gt; Unit = {}, modifier: Modifier = Modifier, viewModel: AuthViewModel = hiltViewModel(), )</ID>
+    <ID>FunctionNaming:DashboardScreen.kt$@Composable private fun StatCard(label: String, value: String, modifier: Modifier = Modifier)</ID>
+    <ID>FunctionNaming:DashboardScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun DashboardScreen( modifier: Modifier = Modifier, onOpenDrawer: () -&gt; Unit = {}, onOpenLocation: (householdId: Long, locationId: Long) -&gt; Unit = { _, _ -&gt; }, onOpenHouseholds: () -&gt; Unit = {}, onOpenMissingItems: () -&gt; Unit = {}, viewModel: DashboardViewModel = hiltViewModel(), )</ID>
+    <ID>FunctionNaming:ErrorRetry.kt$@Composable fun ErrorRetry( message: String, onRetry: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>FunctionNaming:ErrorSnackbar.kt$@Composable fun SnackbarErrorEffect( error: String?, snackbarHostState: SnackbarHostState, onConsumed: () -&gt; Unit, )</ID>
+    <ID>FunctionNaming:ForgotPasswordScreen.kt$@Composable fun ForgotPasswordScreen( onBack: () -&gt; Unit, modifier: Modifier = Modifier, viewModel: ForgotPasswordViewModel = hiltViewModel(), )</ID>
+    <ID>FunctionNaming:FrostCard.kt$@Composable fun FrostCard( modifier: Modifier = Modifier, onClick: (() -&gt; Unit)? = null, content: @Composable ColumnScope.() -&gt; Unit, )</ID>
+    <ID>FunctionNaming:HouseholdTheme.kt$@Composable fun HouseholdAvatar( householdId: Long, modifier: Modifier = Modifier, size: Dp = 36.dp, )</ID>
+    <ID>FunctionNaming:HouseholdsScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun HouseholdsScreen( modifier: Modifier = Modifier, onBack: () -&gt; Unit = {}, onOpenInvite: (householdId: Long, householdName: String) -&gt; Unit = { _, _ -&gt; }, viewModel: HouseholdsViewModel = hiltViewModel(), )</ID>
+    <ID>FunctionNaming:InviteScreen.kt$@Composable fun InviteScreen( householdId: Long, storageName: String = "", modifier: Modifier = Modifier, onBack: () -&gt; Unit = {}, viewModel: InviteViewModel = hiltViewModel(), )</ID>
+    <ID>FunctionNaming:LiveStatusText.kt$@Composable fun LiveStatusText( message: String, modifier: Modifier = Modifier, color: Color = MaterialTheme.colorScheme.error, )</ID>
+    <ID>FunctionNaming:LocationDetailScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun LocationDetailScreen( householdId: Long, locationId: Long, drawerViewModel: DrawerViewModel, modifier: Modifier = Modifier, onBack: () -&gt; Unit = {}, onOpenDrawer: () -&gt; Unit = {}, onOpenProduct: (householdId: Long, shelfId: Long, productId: Long) -&gt; Unit = { _, _, _ -&gt; }, shelvesViewModel: ShelvesViewModel = hiltViewModel(), )</ID>
+    <ID>FunctionNaming:LocationDetailScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable private fun AddProductSheet( householdId: Long, shelfId: Long, onDismiss: () -&gt; Unit, viewModel: ProductsViewModel = hiltViewModel(key = "products-$shelfId"), )</ID>
+    <ID>FunctionNaming:MainActivity.kt$@Composable private fun InventoryNavHost( themeViewModel: ThemeViewModel, authViewModel: AuthViewModel = hiltViewModel(), drawerViewModel: DrawerViewModel = hiltViewModel(), )</ID>
+    <ID>FunctionNaming:MissingItemsScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun MissingItemsScreen( onBack: () -&gt; Unit, onOpenLocation: (householdId: Long, locationId: Long) -&gt; Unit, viewModel: MissingItemsViewModel = hiltViewModel(), )</ID>
+    <ID>FunctionNaming:ProductDetailScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun ProductDetailScreen( modifier: Modifier = Modifier, onBack: () -&gt; Unit = {}, viewModel: ProductDetailViewModel = hiltViewModel(), )</ID>
+    <ID>FunctionNaming:ProductsPane.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun ProductsPane( householdId: Long, shelfId: Long, snackbarHostState: SnackbarHostState, modifier: Modifier = Modifier, refreshKey: Int = 0, onOpenProduct: (ProductDto) -&gt; Unit = {}, onWarningChange: (Boolean) -&gt; Unit = {}, viewModel: ProductsViewModel = hiltViewModel(key = "products-$shelfId"), )</ID>
+    <ID>FunctionNaming:SearchScreen.kt$@Composable fun SearchScreen( householdId: Long, modifier: Modifier = Modifier, onBack: () -&gt; Unit = {}, onOpenProduct: (householdId: Long, shelfId: Long, productId: Long) -&gt; Unit = { _, _, _ -&gt; }, viewModel: SearchViewModel = hiltViewModel(), )</ID>
+    <ID>FunctionNaming:SettingsScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun SettingsScreen( modifier: Modifier = Modifier, onOpenDrawer: () -&gt; Unit = {}, onSignOut: () -&gt; Unit = {}, onOpenHouseholds: () -&gt; Unit = {}, themeViewModel: ThemeViewModel = hiltViewModel(), languageViewModel: LanguageViewModel = hiltViewModel(), joinViewModel: JoinHouseholdViewModel = hiltViewModel(), )</ID>
+    <ID>FunctionNaming:SortMenu.kt$@Composable fun SortMenu( current: SortOrder, onSelect: (SortOrder) -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>FunctionNaming:StorageOverviewScreen.kt$@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class) @Composable fun StorageOverviewScreen( householdId: Long, modifier: Modifier = Modifier, onBack: () -&gt; Unit = {}, onOpenDrawer: () -&gt; Unit = {}, onOpenLocation: (Long) -&gt; Unit = {}, onOpenSearch: () -&gt; Unit = {}, viewModel: StorageOverviewViewModel = hiltViewModel(), )</ID>
+    <ID>FunctionNaming:Theme.kt$@Composable fun InventoryTheme( darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -&gt; Unit, )</ID>
+    <ID>LongMethod:AllStoragesScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun AllStoragesScreen( modifier: Modifier = Modifier, viewModel: DrawerViewModel, onOpenDrawer: () -&gt; Unit = {}, onOpenLocation: (householdId: Long, locationId: Long) -&gt; Unit = { _, _ -&gt; }, onOpenStorage: (householdId: Long) -&gt; Unit = {}, localViewModel: AllStoragesViewModel = hiltViewModel(), )</ID>
+    <ID>LongMethod:AppDrawer.kt$@Composable fun AppDrawer( viewModel: DrawerViewModel, onNavigateHome: () -&gt; Unit, onNavigateDashboard: () -&gt; Unit, onNavigateSearch: (householdId: Long) -&gt; Unit, onNavigateHouseholds: () -&gt; Unit, onNavigateMissingItems: () -&gt; Unit, onNavigateLocation: (householdId: Long, locationId: Long) -&gt; Unit, onNavigateSettings: () -&gt; Unit, )</ID>
+    <ID>LongMethod:AuthScreen.kt$@Composable fun AuthScreen( onForgotPassword: () -&gt; Unit = {}, modifier: Modifier = Modifier, viewModel: AuthViewModel = hiltViewModel(), )</ID>
+    <ID>LongMethod:DashboardScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun DashboardScreen( modifier: Modifier = Modifier, onOpenDrawer: () -&gt; Unit = {}, onOpenLocation: (householdId: Long, locationId: Long) -&gt; Unit = { _, _ -&gt; }, onOpenHouseholds: () -&gt; Unit = {}, onOpenMissingItems: () -&gt; Unit = {}, viewModel: DashboardViewModel = hiltViewModel(), )</ID>
+    <ID>LongMethod:ForgotPasswordScreen.kt$@Composable fun ForgotPasswordScreen( onBack: () -&gt; Unit, modifier: Modifier = Modifier, viewModel: ForgotPasswordViewModel = hiltViewModel(), )</ID>
+    <ID>LongMethod:HouseholdsScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun HouseholdsScreen( modifier: Modifier = Modifier, onBack: () -&gt; Unit = {}, onOpenInvite: (householdId: Long, householdName: String) -&gt; Unit = { _, _ -&gt; }, viewModel: HouseholdsViewModel = hiltViewModel(), )</ID>
+    <ID>LongMethod:InviteScreen.kt$@Composable fun InviteScreen( householdId: Long, storageName: String = "", modifier: Modifier = Modifier, onBack: () -&gt; Unit = {}, viewModel: InviteViewModel = hiltViewModel(), )</ID>
+    <ID>LongMethod:LocationDetailScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun LocationDetailScreen( householdId: Long, locationId: Long, drawerViewModel: DrawerViewModel, modifier: Modifier = Modifier, onBack: () -&gt; Unit = {}, onOpenDrawer: () -&gt; Unit = {}, onOpenProduct: (householdId: Long, shelfId: Long, productId: Long) -&gt; Unit = { _, _, _ -&gt; }, shelvesViewModel: ShelvesViewModel = hiltViewModel(), )</ID>
+    <ID>LongMethod:LocationDetailScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable private fun AddProductSheet( householdId: Long, shelfId: Long, onDismiss: () -&gt; Unit, viewModel: ProductsViewModel = hiltViewModel(key = "products-$shelfId"), )</ID>
+    <ID>LongMethod:MainActivity.kt$@Composable private fun InventoryNavHost( themeViewModel: ThemeViewModel, authViewModel: AuthViewModel = hiltViewModel(), drawerViewModel: DrawerViewModel = hiltViewModel(), )</ID>
+    <ID>LongMethod:MissingItemsScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun MissingItemsScreen( onBack: () -&gt; Unit, onOpenLocation: (householdId: Long, locationId: Long) -&gt; Unit, viewModel: MissingItemsViewModel = hiltViewModel(), )</ID>
+    <ID>LongMethod:ProductDetailScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun ProductDetailScreen( modifier: Modifier = Modifier, onBack: () -&gt; Unit = {}, viewModel: ProductDetailViewModel = hiltViewModel(), )</ID>
+    <ID>LongMethod:ProductsPane.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun ProductsPane( householdId: Long, shelfId: Long, snackbarHostState: SnackbarHostState, modifier: Modifier = Modifier, refreshKey: Int = 0, onOpenProduct: (ProductDto) -&gt; Unit = {}, onWarningChange: (Boolean) -&gt; Unit = {}, viewModel: ProductsViewModel = hiltViewModel(key = "products-$shelfId"), )</ID>
+    <ID>LongMethod:SearchScreen.kt$@Composable fun SearchScreen( householdId: Long, modifier: Modifier = Modifier, onBack: () -&gt; Unit = {}, onOpenProduct: (householdId: Long, shelfId: Long, productId: Long) -&gt; Unit = { _, _, _ -&gt; }, viewModel: SearchViewModel = hiltViewModel(), )</ID>
+    <ID>LongMethod:SettingsScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun SettingsScreen( modifier: Modifier = Modifier, onOpenDrawer: () -&gt; Unit = {}, onSignOut: () -&gt; Unit = {}, onOpenHouseholds: () -&gt; Unit = {}, themeViewModel: ThemeViewModel = hiltViewModel(), languageViewModel: LanguageViewModel = hiltViewModel(), joinViewModel: JoinHouseholdViewModel = hiltViewModel(), )</ID>
+    <ID>LongMethod:StorageOverviewScreen.kt$@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class) @Composable fun StorageOverviewScreen( householdId: Long, modifier: Modifier = Modifier, onBack: () -&gt; Unit = {}, onOpenDrawer: () -&gt; Unit = {}, onOpenLocation: (Long) -&gt; Unit = {}, onOpenSearch: () -&gt; Unit = {}, viewModel: StorageOverviewViewModel = hiltViewModel(), )</ID>
+    <ID>LongParameterList:AllStoragesScreen.kt$( modifier: Modifier = Modifier, viewModel: DrawerViewModel, onOpenDrawer: () -&gt; Unit = {}, onOpenLocation: (householdId: Long, locationId: Long) -&gt; Unit = { _, _ -&gt; }, onOpenStorage: (householdId: Long) -&gt; Unit = {}, localViewModel: AllStoragesViewModel = hiltViewModel(), )</ID>
+    <ID>LongParameterList:AppDrawer.kt$( viewModel: DrawerViewModel, onNavigateHome: () -&gt; Unit, onNavigateDashboard: () -&gt; Unit, onNavigateSearch: (householdId: Long) -&gt; Unit, onNavigateHouseholds: () -&gt; Unit, onNavigateMissingItems: () -&gt; Unit, onNavigateLocation: (householdId: Long, locationId: Long) -&gt; Unit, onNavigateSettings: () -&gt; Unit, )</ID>
+    <ID>LongParameterList:DashboardScreen.kt$( modifier: Modifier = Modifier, onOpenDrawer: () -&gt; Unit = {}, onOpenLocation: (householdId: Long, locationId: Long) -&gt; Unit = { _, _ -&gt; }, onOpenHouseholds: () -&gt; Unit = {}, onOpenMissingItems: () -&gt; Unit = {}, viewModel: DashboardViewModel = hiltViewModel(), )</ID>
+    <ID>LongParameterList:LocationDetailScreen.kt$( householdId: Long, locationId: Long, drawerViewModel: DrawerViewModel, modifier: Modifier = Modifier, onBack: () -&gt; Unit = {}, onOpenDrawer: () -&gt; Unit = {}, onOpenProduct: (householdId: Long, shelfId: Long, productId: Long) -&gt; Unit = { _, _, _ -&gt; }, shelvesViewModel: ShelvesViewModel = hiltViewModel(), )</ID>
+    <ID>LongParameterList:ProductRepository.kt$ProductRepository$(householdId: Long, shelfId: Long, productId: Long, name: String, description: String?, code: String?, isMandatory: Boolean)</ID>
+    <ID>LongParameterList:ProductsPane.kt$( householdId: Long, shelfId: Long, snackbarHostState: SnackbarHostState, modifier: Modifier = Modifier, refreshKey: Int = 0, onOpenProduct: (ProductDto) -&gt; Unit = {}, onWarningChange: (Boolean) -&gt; Unit = {}, viewModel: ProductsViewModel = hiltViewModel(key = "products-$shelfId"), )</ID>
+    <ID>LongParameterList:SessionCleaner.kt$SessionCleaner$( private val householdRepository: HouseholdRepository, private val locationRepository: LocationRepository, private val shelfRepository: ShelfRepository, private val productRepository: ProductRepository, private val hierarchyStore: HierarchyStore, private val favoritesStore: FavoritesStore, private val defaultHouseholdStore: DefaultHouseholdStore, )</ID>
+    <ID>LongParameterList:SettingsScreen.kt$( modifier: Modifier = Modifier, onOpenDrawer: () -&gt; Unit = {}, onSignOut: () -&gt; Unit = {}, onOpenHouseholds: () -&gt; Unit = {}, themeViewModel: ThemeViewModel = hiltViewModel(), languageViewModel: LanguageViewModel = hiltViewModel(), joinViewModel: JoinHouseholdViewModel = hiltViewModel(), )</ID>
+    <ID>LongParameterList:StorageOverviewScreen.kt$( householdId: Long, modifier: Modifier = Modifier, onBack: () -&gt; Unit = {}, onOpenDrawer: () -&gt; Unit = {}, onOpenLocation: (Long) -&gt; Unit = {}, onOpenSearch: () -&gt; Unit = {}, viewModel: StorageOverviewViewModel = hiltViewModel(), )</ID>
+    <ID>MagicNumber:AuthInterceptor.kt$AuthInterceptor$401</ID>
+    <ID>MagicNumber:AuthViewModel.kt$AuthViewModel$401</ID>
+    <ID>MagicNumber:AuthViewModel.kt$AuthViewModel$409</ID>
+    <ID>MagicNumber:AuthViewModel.kt$AuthViewModel$422</ID>
+    <ID>MagicNumber:AuthViewModel.kt$AuthViewModel$500</ID>
+    <ID>MagicNumber:AuthViewModel.kt$AuthViewModel$599</ID>
+    <ID>MagicNumber:Color.kt$0xFF06283B</ID>
+    <ID>MagicNumber:Color.kt$0xFF0C1822</ID>
+    <ID>MagicNumber:Color.kt$0xFF0D2436</ID>
+    <ID>MagicNumber:Color.kt$0xFF10212E</ID>
+    <ID>MagicNumber:Color.kt$0xFF182C3A</ID>
+    <ID>MagicNumber:Color.kt$0xFF2298BA</ID>
+    <ID>MagicNumber:Color.kt$0xFF3D5A6E</ID>
+    <ID>MagicNumber:Color.kt$0xFF7DD3FC</ID>
+    <ID>MagicNumber:Color.kt$0xFFB0CCE0</ID>
+    <ID>MagicNumber:Color.kt$0xFFC2D5E3</ID>
+    <ID>MagicNumber:Color.kt$0xFFDCECF6</ID>
+    <ID>MagicNumber:Color.kt$0xFFEAF6FF</ID>
+    <ID>MagicNumber:Color.kt$0xFFF5FAFD</ID>
+    <ID>MagicNumber:Color.kt$0xFFFFFFFF</ID>
+    <ID>MagicNumber:ErrorMapping.kt$401</ID>
+    <ID>MagicNumber:ErrorMapping.kt$403</ID>
+    <ID>MagicNumber:ErrorMapping.kt$404</ID>
+    <ID>MagicNumber:ErrorMapping.kt$422</ID>
+    <ID>MagicNumber:ErrorMapping.kt$429</ID>
+    <ID>MagicNumber:ErrorMapping.kt$500</ID>
+    <ID>MagicNumber:ErrorMapping.kt$599</ID>
+    <ID>MagicNumber:HouseholdTheme.kt$0.55f</ID>
+    <ID>MagicNumber:HouseholdTheme.kt$0xFF5EEAD4</ID>
+    <ID>MagicNumber:HouseholdTheme.kt$0xFF7DD3FC</ID>
+    <ID>MagicNumber:HouseholdTheme.kt$0xFF86EFAC</ID>
+    <ID>MagicNumber:HouseholdTheme.kt$0xFFA5B4FC</ID>
+    <ID>MagicNumber:HouseholdTheme.kt$0xFFC4B5FD</ID>
+    <ID>MagicNumber:HouseholdTheme.kt$0xFFF9A8D4</ID>
+    <ID>MagicNumber:HouseholdTheme.kt$0xFFFCD34D</ID>
+    <ID>MagicNumber:HouseholdTheme.kt$0xFFFDBA74</ID>
+    <ID>MagicNumber:HouseholdThemeIndex.kt$3</ID>
+    <ID>MagicNumber:HouseholdsViewModel.kt$HouseholdsViewModel$50</ID>
+    <ID>MagicNumber:InviteScreen.kt$2000</ID>
+    <ID>MagicNumber:ProductDetailScreen.kt$50</ID>
+    <ID>MagicNumber:ProductsViewModel.kt$ProductsViewModel$300</ID>
+    <ID>MagicNumber:ProductsViewModel.kt$ProductsViewModel$5</ID>
+    <ID>MagicNumber:ProductsViewModel.kt$ProductsViewModel$50</ID>
+    <ID>MagicNumber:SearchViewModel.kt$SearchViewModel$300</ID>
+    <ID>MagicNumber:ShelvesViewModel.kt$ShelvesViewModel$50</ID>
+    <ID>MagicNumber:StorageOverviewViewModel.kt$StorageOverviewViewModel$50</ID>
+    <ID>MagicNumber:Type.kt$400</ID>
+    <ID>MagicNumber:Type.kt$500</ID>
+    <ID>MagicNumber:Type.kt$600</ID>
+    <ID>MagicNumber:Type.kt$700</ID>
+    <ID>MagicNumber:Type.kt$800</ID>
+    <ID>MatchingDeclarationName:ErrorDtos.kt$ClientErrorRequest</ID>
+    <ID>MatchingDeclarationName:FrostCard.kt$FrostCardColors</ID>
+    <ID>MatchingDeclarationName:InviteDtos.kt$InviteResponse</ID>
+    <ID>MaxLineLength:AllStoragesScreen.kt$Icon(Icons.Default.Add, contentDescription = stringResource(R.string.all_storage_add_location_cd))</ID>
+    <ID>MaxLineLength:AllStoragesScreen.kt$colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f))</ID>
+    <ID>MaxLineLength:AllStoragesScreen.kt$contentDescription = if (isFavorite) stringResource(R.string.all_storage_favorite_remove_cd) else stringResource(R.string.all_storage_favorite_add_cd)</ID>
+    <ID>MaxLineLength:AllStoragesScreen.kt$tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant</ID>
+    <ID>MaxLineLength:AppDrawer.kt$contentDescription = stringResource(R.string.drawer_search_household_cd, entry.name)</ID>
+    <ID>MaxLineLength:AuthScreen.kt$Text(text = if (isRegister) stringResource(R.string.auth_create_account) else stringResource(R.string.auth_sign_in))</ID>
+    <ID>MaxLineLength:AuthScreen.kt$Text(text = if (isRegister) stringResource(R.string.auth_toggle_to_login) else stringResource(R.string.auth_toggle_to_register))</ID>
+    <ID>MaxLineLength:AuthScreen.kt$Text(text = stringResource(R.string.auth_divider_or), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)</ID>
+    <ID>MaxLineLength:AuthViewModel.kt$AuthViewModel$AuthMode.REGISTER -&gt; repository.register(current.name.trim(), current.email.trim(), current.password)</ID>
+    <ID>MaxLineLength:AuthViewModel.kt$AuthViewModel$onFailure = { error -&gt; state.copy(googleLoading = false, error = error.toGoogleAuthErrorMessage()) }</ID>
+    <ID>MaxLineLength:DashboardScreen.kt$.</ID>
+    <ID>MaxLineLength:DashboardScreen.kt$Icon(Icons.Default.Star, contentDescription = null, tint = MaterialTheme.colorScheme.primary)</ID>
+    <ID>MaxLineLength:DashboardScreen.kt$StatCard(label = stringResource(R.string.dashboard_stat_locations), value = state.totalLocations.toString(), modifier = Modifier.weight(1f))</ID>
+    <ID>MaxLineLength:DashboardScreen.kt$StatCard(label = stringResource(R.string.dashboard_stat_products), value = state.totalProducts.toString(), modifier = Modifier.weight(1f))</ID>
+    <ID>MaxLineLength:DashboardScreen.kt$StatCard(label = stringResource(R.string.dashboard_stat_shelves), value = state.totalShelves.toString(), modifier = Modifier.weight(1f))</ID>
+    <ID>MaxLineLength:DashboardScreen.kt$Text(stringResource(R.string.dashboard_favorite_locations), style = MaterialTheme.typography.titleMedium)</ID>
+    <ID>MaxLineLength:DashboardScreen.kt$Text(stringResource(R.string.dashboard_products_by_location), style = MaterialTheme.typography.titleMedium)</ID>
+    <ID>MaxLineLength:DashboardViewModelTest.kt$DashboardViewModelTest.FakeProductRepository$override suspend fun add(householdId: Long, shelfId: Long, productId: Long, amount: Int)</ID>
+    <ID>MaxLineLength:DashboardViewModelTest.kt$DashboardViewModelTest.FakeProductRepository$override suspend fun create(householdId: Long, shelfId: Long, name: String, quantity: Int)</ID>
+    <ID>MaxLineLength:DashboardViewModelTest.kt$DashboardViewModelTest.FakeProductRepository$override suspend fun move(householdId: Long, shelfId: Long, productId: Long, targetShelfId: Long)</ID>
+    <ID>MaxLineLength:DashboardViewModelTest.kt$DashboardViewModelTest.FakeProductRepository$override suspend fun remove(householdId: Long, shelfId: Long, productId: Long, amount: Int)</ID>
+    <ID>MaxLineLength:DashboardViewModelTest.kt$DashboardViewModelTest.FakeProductRepository$override suspend fun update(householdId: Long, shelfId: Long, productId: Long, name: String, description: String?, code: String?, isMandatory: Boolean)</ID>
+    <ID>MaxLineLength:DashboardViewModelTest.kt$DashboardViewModelTest.FakeProductRepository$override suspend fun uploadImage(householdId: Long, shelfId: Long, productId: Long, imageUri: Uri, mimeType: String)</ID>
+    <ID>MaxLineLength:DashboardViewModelTest.kt$DashboardViewModelTest.FakeShelfRepository$override suspend fun create(householdId: Long, locationId: Long, name: String)</ID>
+    <ID>MaxLineLength:DrawerViewModelTest.kt$DrawerViewModelTest.FakeProductRepository$override suspend fun add(householdId: Long, shelfId: Long, productId: Long, amount: Int)</ID>
+    <ID>MaxLineLength:DrawerViewModelTest.kt$DrawerViewModelTest.FakeProductRepository$override suspend fun create(householdId: Long, shelfId: Long, name: String, quantity: Int)</ID>
+    <ID>MaxLineLength:DrawerViewModelTest.kt$DrawerViewModelTest.FakeProductRepository$override suspend fun move(householdId: Long, shelfId: Long, productId: Long, targetShelfId: Long)</ID>
+    <ID>MaxLineLength:DrawerViewModelTest.kt$DrawerViewModelTest.FakeProductRepository$override suspend fun remove(householdId: Long, shelfId: Long, productId: Long, amount: Int)</ID>
+    <ID>MaxLineLength:DrawerViewModelTest.kt$DrawerViewModelTest.FakeProductRepository$override suspend fun update(householdId: Long, shelfId: Long, productId: Long, name: String, description: String?, code: String?, isMandatory: Boolean)</ID>
+    <ID>MaxLineLength:DrawerViewModelTest.kt$DrawerViewModelTest.FakeProductRepository$override suspend fun uploadImage(householdId: Long, shelfId: Long, productId: Long, imageUri: Uri, mimeType: String)</ID>
+    <ID>MaxLineLength:DrawerViewModelTest.kt$DrawerViewModelTest.FakeShelfRepository$override suspend fun create(householdId: Long, locationId: Long, name: String)</ID>
+    <ID>MaxLineLength:HierarchyStore.kt$HierarchyStore$onFailure = { e -&gt; _state.update { it.copy(loading = false, refreshing = false, error = e.toUserMessage("Failed to load.")) } }</ID>
+    <ID>MaxLineLength:HierarchyStoreTest.kt$HierarchyStoreTest.FakeLocationRepository$private</ID>
+    <ID>MaxLineLength:HierarchyStoreTest.kt$HierarchyStoreTest.FakeProductRepository$override suspend fun add(householdId: Long, shelfId: Long, productId: Long, amount: Int)</ID>
+    <ID>MaxLineLength:HierarchyStoreTest.kt$HierarchyStoreTest.FakeProductRepository$override suspend fun create(householdId: Long, shelfId: Long, name: String, quantity: Int)</ID>
+    <ID>MaxLineLength:HierarchyStoreTest.kt$HierarchyStoreTest.FakeProductRepository$override suspend fun move(householdId: Long, shelfId: Long, productId: Long, targetShelfId: Long)</ID>
+    <ID>MaxLineLength:HierarchyStoreTest.kt$HierarchyStoreTest.FakeProductRepository$override suspend fun remove(householdId: Long, shelfId: Long, productId: Long, amount: Int)</ID>
+    <ID>MaxLineLength:HierarchyStoreTest.kt$HierarchyStoreTest.FakeProductRepository$override suspend fun update(householdId: Long, shelfId: Long, productId: Long, name: String, description: String?, code: String?, isMandatory: Boolean)</ID>
+    <ID>MaxLineLength:HierarchyStoreTest.kt$HierarchyStoreTest.FakeProductRepository$override suspend fun uploadImage(householdId: Long, shelfId: Long, productId: Long, imageUri: Uri, mimeType: String)</ID>
+    <ID>MaxLineLength:HierarchyStoreTest.kt$HierarchyStoreTest.FakeProductRepository$private</ID>
+    <ID>MaxLineLength:HierarchyStoreTest.kt$HierarchyStoreTest.FakeShelfRepository$override suspend fun create(householdId: Long, locationId: Long, name: String)</ID>
+    <ID>MaxLineLength:HierarchyStoreTest.kt$HierarchyStoreTest.FakeShelfRepository$private</ID>
+    <ID>MaxLineLength:HouseholdsScreen.kt$Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))</ID>
+    <ID>MaxLineLength:HouseholdsScreen.kt$Icon(Icons.Default.Share, contentDescription = stringResource(R.string.households_invite_cd, household.name))</ID>
+    <ID>MaxLineLength:HouseholdsScreen.kt$Text(text = stringResource(R.string.dashboard_create_household), style = MaterialTheme.typography.titleLarge)</ID>
+    <ID>MaxLineLength:HouseholdsViewModel.kt$HouseholdsViewModel$onFailure = { e -&gt; state.copy(loading = false, refreshing = false, error = e.toUserMessage("Something went wrong.")) }</ID>
+    <ID>MaxLineLength:InviteScreen.kt$Text(if (copied) stringResource(R.string.invite_copied) else stringResource(R.string.invite_copy_link))</ID>
+    <ID>MaxLineLength:InviteViewModel.kt$InviteViewModel$onFailure = { error -&gt; state.copy(loading = false, error = error.toUserMessage("Couldn't load the invite.")) }</ID>
+    <ID>MaxLineLength:JoinHouseholdViewModelTest.kt$JoinHouseholdViewModelTest$val vm = JoinHouseholdViewModel(FakeHouseholdRepository(failJoin = true), TestHierarchy.store(FakeHouseholdRepository()))</ID>
+    <ID>MaxLineLength:LocationDetailScreen.kt$FloatingActionButton</ID>
+    <ID>MaxLineLength:LocationDetailScreen.kt$Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))</ID>
+    <ID>MaxLineLength:LocationDetailScreen.kt$Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.location_delete_shelves_cd))</ID>
+    <ID>MaxLineLength:LocationDetailScreen.kt$Text(text = stringResource(R.string.add_product_sheet_title), style = MaterialTheme.typography.titleLarge)</ID>
+    <ID>MaxLineLength:LocationDetailScreen.kt$TextButton(onClick = shelvesViewModel::exitDeleteMode) { Text(stringResource(R.string.action_cancel)) }</ID>
+    <ID>MaxLineLength:LocationDetailScreen.kt$color = if (tabHasWarning &amp;&amp; !state.deleteMode) MaterialTheme.colorScheme.error else Color.Unspecified</ID>
+    <ID>MaxLineLength:LocationDetailScreen.kt${ Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(16.dp)) }</ID>
+    <ID>MaxLineLength:MainActivity.kt$InviteScreen(householdId = householdId, storageName = householdName, onBack = { navController.popBackStack() })</ID>
+    <ID>MaxLineLength:MainActivity.kt$Routes$fun invite(householdId: Long, householdName: String)</ID>
+    <ID>MaxLineLength:MainActivity.kt$Routes$fun productDetail(householdId: Long, shelfId: Long, productId: Long)</ID>
+    <ID>MaxLineLength:MissingItemsScreen.kt$Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))</ID>
+    <ID>MaxLineLength:MissingItemsViewModelTest.kt$MissingItemsViewModelTest.FakeLocationRepository$private</ID>
+    <ID>MaxLineLength:MissingItemsViewModelTest.kt$MissingItemsViewModelTest.FakeProductRepository$override suspend fun add(householdId: Long, shelfId: Long, productId: Long, amount: Int)</ID>
+    <ID>MaxLineLength:MissingItemsViewModelTest.kt$MissingItemsViewModelTest.FakeProductRepository$override suspend fun create(householdId: Long, shelfId: Long, name: String, quantity: Int)</ID>
+    <ID>MaxLineLength:MissingItemsViewModelTest.kt$MissingItemsViewModelTest.FakeProductRepository$override suspend fun move(householdId: Long, shelfId: Long, productId: Long, targetShelfId: Long)</ID>
+    <ID>MaxLineLength:MissingItemsViewModelTest.kt$MissingItemsViewModelTest.FakeProductRepository$override suspend fun remove(householdId: Long, shelfId: Long, productId: Long, amount: Int)</ID>
+    <ID>MaxLineLength:MissingItemsViewModelTest.kt$MissingItemsViewModelTest.FakeProductRepository$override suspend fun update(householdId: Long, shelfId: Long, productId: Long, name: String, description: String?, code: String?, isMandatory: Boolean)</ID>
+    <ID>MaxLineLength:MissingItemsViewModelTest.kt$MissingItemsViewModelTest.FakeProductRepository$override suspend fun uploadImage(householdId: Long, shelfId: Long, productId: Long, imageUri: Uri, mimeType: String)</ID>
+    <ID>MaxLineLength:MissingItemsViewModelTest.kt$MissingItemsViewModelTest.FakeShelfRepository$override suspend fun create(householdId: Long, locationId: Long, name: String)</ID>
+    <ID>MaxLineLength:ProductDetailScreen.kt$Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))</ID>
+    <ID>MaxLineLength:ProductDetailScreen.kt$Text(stringResource(R.string.product_detail_mandatory_label), style = MaterialTheme.typography.bodyLarge)</ID>
+    <ID>MaxLineLength:ProductDetailViewModel.kt$ProductDetailViewModel$.</ID>
+    <ID>MaxLineLength:ProductDetailViewModel.kt$ProductDetailViewModel$_state.update { it.copy(loading = false, refreshing = false, error = e.toUserMessage("Failed to load product.")) }</ID>
+    <ID>MaxLineLength:ProductDetailViewModel.kt$ProductDetailViewModel$_state.update { it.copy(loading = false, refreshing = false, product = products.find { p -&gt; p.id == productId }) }</ID>
+    <ID>MaxLineLength:ProductDetailViewModelTest.kt$ProductDetailViewModelTest.FakeProductRepository$override suspend</ID>
+    <ID>MaxLineLength:ProductRepository.kt$ProductRepository$suspend fun update(householdId: Long, shelfId: Long, productId: Long, name: String, description: String?, code: String?, isMandatory: Boolean): ProductDto</ID>
+    <ID>MaxLineLength:ProductRepository.kt$ProductRepository$suspend fun uploadImage(householdId: Long, shelfId: Long, productId: Long, imageUri: Uri, mimeType: String): ProductDto</ID>
+    <ID>MaxLineLength:ProductRepositoryImpl.kt$ProductRepositoryImpl$api.update(householdId, shelfId, productId, UpdateProductRequest(name, description, code, isMandatory)).data</ID>
+    <ID>MaxLineLength:ProductRepositoryImpl.kt$ProductRepositoryImpl$cache[householdId to shelfId] = cache[householdId to shelfId]?.filter { p -&gt; p.id != productId } ?: emptyList()</ID>
+    <ID>MaxLineLength:ProductRepositoryImpl.kt$ProductRepositoryImpl$override suspend</ID>
+    <ID>MaxLineLength:ProductRepositoryImpl.kt$ProductRepositoryImpl$private</ID>
+    <ID>MaxLineLength:ProductView.kt$(q.isEmpty() || p.name.contains(q, ignoreCase = true) || (p.code?.contains(q, ignoreCase = true) == true))</ID>
+    <ID>MaxLineLength:ProductViewTest.kt$ProductViewTest$products.applyView("", mandatoryOnly = false, outOfStockOnly = true, SortOrder.NAME_ASC).map { it.id }.toSet()</ID>
+    <ID>MaxLineLength:ProductViewTest.kt$ProductViewTest$products.applyView("", mandatoryOnly = true, outOfStockOnly = false, SortOrder.NAME_ASC).map { it.id }.toSet()</ID>
+    <ID>MaxLineLength:ProductsViewModel.kt$ProductsViewModel$onFailure = { e -&gt; state.copy(loading = false, error = e.toUserMessage("Couldn't load shelves."), movingProductId = null, moveTargets = emptyList()) }</ID>
+    <ID>MaxLineLength:ProductsViewModel.kt$ProductsViewModel$onFailure = { error -&gt; state.copy(loading = false, error = error.toUserMessage("Something went wrong.")) }</ID>
+    <ID>MaxLineLength:ProductsViewModelTest.kt$ProductsViewModelTest$val shelves = FakeShelfRepository(mapOf(10L to listOf(ShelfDto(1, "Top", 0, 10L), ShelfDto(2, "Bottom", 1, 10L))))</ID>
+    <ID>MaxLineLength:ProductsViewModelTest.kt$ProductsViewModelTest.FakeProductRepository$override suspend</ID>
+    <ID>MaxLineLength:ProductsViewModelTest.kt$ProductsViewModelTest.FakeProductRepository$val updated = items[index].copy(name = name, description = description, code = code, is_mandatory = isMandatory)</ID>
+    <ID>MaxLineLength:ProductsViewModelTest.kt$ProductsViewModelTest.FakeShelfRepository$override suspend fun list(householdId: Long, locationId: Long): List&lt;ShelfDto&gt;</ID>
+    <ID>MaxLineLength:SessionCleanerTest.kt$SessionCleanerTest.RecordingProductRepo$override suspend fun add(householdId: Long, shelfId: Long, productId: Long, amount: Int)</ID>
+    <ID>MaxLineLength:SessionCleanerTest.kt$SessionCleanerTest.RecordingProductRepo$override suspend fun create(householdId: Long, shelfId: Long, name: String, quantity: Int)</ID>
+    <ID>MaxLineLength:SessionCleanerTest.kt$SessionCleanerTest.RecordingProductRepo$override suspend fun move(householdId: Long, shelfId: Long, productId: Long, targetShelfId: Long)</ID>
+    <ID>MaxLineLength:SessionCleanerTest.kt$SessionCleanerTest.RecordingProductRepo$override suspend fun remove(householdId: Long, shelfId: Long, productId: Long, amount: Int)</ID>
+    <ID>MaxLineLength:SessionCleanerTest.kt$SessionCleanerTest.RecordingProductRepo$override suspend fun update(householdId: Long, shelfId: Long, productId: Long, name: String, description: String?, code: String?, isMandatory: Boolean)</ID>
+    <ID>MaxLineLength:SessionCleanerTest.kt$SessionCleanerTest.RecordingProductRepo$override suspend fun uploadImage(householdId: Long, shelfId: Long, productId: Long, imageUri: Uri, mimeType: String)</ID>
+    <ID>MaxLineLength:SettingsScreen.kt$Text(text = stringResource(R.string.settings_households_section), style = MaterialTheme.typography.titleMedium)</ID>
+    <ID>MaxLineLength:SettingsScreen.kt$Text(text = stringResource(R.string.settings_language_section), style = MaterialTheme.typography.titleMedium)</ID>
+    <ID>MaxLineLength:ShelvesViewModel.kt$ShelvesViewModel$_state.update { it.copy(deleteMode = false, selectedShelves = emptySet(), shelves = it.shelves.filter { s -&gt; s.id !in ids }) }</ID>
+    <ID>MaxLineLength:ShelvesViewModel.kt$ShelvesViewModel$onFailure = { error -&gt; state.copy(loading = false, refreshing = false, error = error.toUserMessage("Something went wrong.")) }</ID>
+    <ID>MaxLineLength:ShelvesViewModelTest.kt$ShelvesViewModelTest.FakeShelfRepository$val dto = ShelfDto(id = (items.size + 1).toLong(), name = name, position = items.size, location_id = locationId)</ID>
+    <ID>MaxLineLength:StorageOverviewScreen.kt$Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))</ID>
+    <ID>MaxLineLength:StorageOverviewScreen.kt$Icon(Icons.Default.Search, contentDescription = stringResource(R.string.storage_overview_search_cd))</ID>
+    <ID>MaxLineLength:StorageOverviewScreen.kt$Text(text = stringResource(R.string.add_storage_sheet_title), style = MaterialTheme.typography.titleLarge)</ID>
+    <ID>MaxLineLength:StorageOverviewViewModel.kt$StorageOverviewViewModel$onFailure = { error -&gt; state.copy(loading = false, refreshing = false, error = error.toUserMessage("Something went wrong.")) }</ID>
+    <ID>MaxLineLength:StorageOverviewViewModelTest.kt$StorageOverviewViewModelTest.&lt;no name provided&gt;$override suspend fun add(householdId: Long, shelfId: Long, productId: Long, amount: Int)</ID>
+    <ID>MaxLineLength:StorageOverviewViewModelTest.kt$StorageOverviewViewModelTest.&lt;no name provided&gt;$override suspend fun create(householdId: Long, locationId: Long, name: String)</ID>
+    <ID>MaxLineLength:StorageOverviewViewModelTest.kt$StorageOverviewViewModelTest.&lt;no name provided&gt;$override suspend fun create(householdId: Long, shelfId: Long, name: String, quantity: Int)</ID>
+    <ID>MaxLineLength:StorageOverviewViewModelTest.kt$StorageOverviewViewModelTest.&lt;no name provided&gt;$override suspend fun move(householdId: Long, shelfId: Long, productId: Long, targetShelfId: Long)</ID>
+    <ID>MaxLineLength:StorageOverviewViewModelTest.kt$StorageOverviewViewModelTest.&lt;no name provided&gt;$override suspend fun remove(householdId: Long, shelfId: Long, productId: Long, amount: Int)</ID>
+    <ID>MaxLineLength:StorageOverviewViewModelTest.kt$StorageOverviewViewModelTest.&lt;no name provided&gt;$override suspend fun update(householdId: Long, shelfId: Long, productId: Long, name: String, description: String?, code: String?, isMandatory: Boolean)</ID>
+    <ID>MaxLineLength:StorageOverviewViewModelTest.kt$StorageOverviewViewModelTest.&lt;no name provided&gt;$override suspend fun uploadImage(householdId: Long, shelfId: Long, productId: Long, imageUri: Uri, mimeType: String)</ID>
+    <ID>MaxLineLength:TestHierarchy.kt$TestHierarchy.EmptyProducts$override suspend fun add(householdId: Long, shelfId: Long, productId: Long, amount: Int)</ID>
+    <ID>MaxLineLength:TestHierarchy.kt$TestHierarchy.EmptyProducts$override suspend fun create(householdId: Long, shelfId: Long, name: String, quantity: Int)</ID>
+    <ID>MaxLineLength:TestHierarchy.kt$TestHierarchy.EmptyProducts$override suspend fun move(householdId: Long, shelfId: Long, productId: Long, targetShelfId: Long)</ID>
+    <ID>MaxLineLength:TestHierarchy.kt$TestHierarchy.EmptyProducts$override suspend fun remove(householdId: Long, shelfId: Long, productId: Long, amount: Int)</ID>
+    <ID>MaxLineLength:TestHierarchy.kt$TestHierarchy.EmptyProducts$override suspend fun update(householdId: Long, shelfId: Long, productId: Long, name: String, description: String?, code: String?, isMandatory: Boolean)</ID>
+    <ID>MaxLineLength:TestHierarchy.kt$TestHierarchy.EmptyProducts$override suspend fun uploadImage(householdId: Long, shelfId: Long, productId: Long, imageUri: Uri, mimeType: String)</ID>
+    <ID>NestedBlockDepth:HierarchyStore.kt$HierarchyStore$fun loadFromCache()</ID>
+    <ID>NestedBlockDepth:HierarchyStore.kt$HierarchyStore$private suspend fun buildFromNetwork( households: List&lt;dev.scuttle.inventory.data.dto.HouseholdDto&gt;, ): HierarchyState</ID>
+    <ID>ReturnCount:InviteScreen.kt$private fun qrBitmap(content: String, size: Int = 512): Bitmap?</ID>
+    <ID>ReturnCount:ProductsViewModel.kt$ProductsViewModel$fun confirmMove(targetShelfId: Long)</ID>
+    <ID>ReturnCount:ProductsViewModel.kt$ProductsViewModel$fun create()</ID>
+    <ID>ReturnCount:ShelvesViewModel.kt$ShelvesViewModel$fun create()</ID>
+    <ID>ReturnCount:ShelvesViewModel.kt$ShelvesViewModel$fun deleteSelected()</ID>
+    <ID>SwallowedException:AuthScreen.kt$e: GetCredentialCancellationException</ID>
+    <ID>TooGenericExceptionThrown:ForgotPasswordViewModelTest.kt$ForgotPasswordViewModelTest.FakeAuthRepository$throw RuntimeException("Unable to resolve host \"inventory.test\"")</ID>
+    <ID>TooGenericExceptionThrown:HouseholdsViewModelTest.kt$HouseholdsViewModelTest.FakeHouseholdRepository$throw RuntimeException("offline")</ID>
+    <ID>TooGenericExceptionThrown:InviteViewModelTest.kt$InviteViewModelTest.FakeInviteRepository$throw RuntimeException("offline")</ID>
+    <ID>TooGenericExceptionThrown:JoinHouseholdViewModelTest.kt$JoinHouseholdViewModelTest.FakeHouseholdRepository$throw RuntimeException("Invalid code.")</ID>
+    <ID>TooGenericExceptionThrown:ProductDetailViewModelTest.kt$ProductDetailViewModelTest.FakeProductRepository$throw RuntimeException("delete failed")</ID>
+    <ID>TooGenericExceptionThrown:ProductDetailViewModelTest.kt$ProductDetailViewModelTest.FakeProductRepository$throw RuntimeException("network error")</ID>
+    <ID>TooGenericExceptionThrown:ProductDetailViewModelTest.kt$ProductDetailViewModelTest.FakeProductRepository$throw RuntimeException("save failed")</ID>
+    <ID>TooGenericExceptionThrown:ProductsViewModelTest.kt$ProductsViewModelTest.FakeProductRepository$throw RuntimeException("offline")</ID>
+    <ID>TooGenericExceptionThrown:SearchViewModelTest.kt$SearchViewModelTest.FakeSearchRepository$throw RuntimeException("offline")</ID>
+    <ID>TooGenericExceptionThrown:ShelvesViewModelTest.kt$ShelvesViewModelTest.FakeShelfRepository$throw RuntimeException("offline")</ID>
+    <ID>TooGenericExceptionThrown:StorageOverviewViewModelTest.kt$StorageOverviewViewModelTest.FakeLocationRepository$throw RuntimeException("offline")</ID>
+    <ID>TooManyFunctions:AuthViewModel.kt$AuthViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:NetworkModule.kt$NetworkModule</ID>
+    <ID>TooManyFunctions:ProductRepositoryImpl.kt$ProductRepositoryImpl : ProductRepository</ID>
+    <ID>TooManyFunctions:ProductsViewModel.kt$ProductsViewModel : ViewModel</ID>
+    <ID>UnusedParameter:AuthViewModel.kt$AuthViewModel$mode: AuthMode</ID>
+    <ID>UnusedParameter:LocationDetailScreen.kt$householdId: Long</ID>
+  </CurrentIssues>
+</SmellBaseline>
