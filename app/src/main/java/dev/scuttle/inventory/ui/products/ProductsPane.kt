@@ -44,6 +44,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -224,18 +225,24 @@ fun ProductsPane(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Row(
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    Text(text = product.name, style = MaterialTheme.typography.bodyLarge)
-                                    if (!product.code.isNullOrBlank()) {
-                                        Text(
-                                            text = product.code,
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        )
-                                    }
+                                // Long names wrap to at most two lines and then
+                                // ellipsize — never the one-char-per-line squash
+                                // reported on narrow devices. Full name lives on
+                                // the detail screen, one tap away.
+                                Text(
+                                    text = product.name,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                                if (!product.code.isNullOrBlank()) {
+                                    Text(
+                                        text = product.code,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
                                 }
                                 if (product.is_mandatory == true) {
                                     Text(
@@ -303,7 +310,8 @@ fun ProductsPane(
             )
         }
 
-        Spacer(Modifier.height(80.dp))
+        // Tall enough that the stacked scan + add FABs never cover the last row.
+        Spacer(Modifier.height(150.dp))
     }
 
     pendingDeleteId?.let { id ->

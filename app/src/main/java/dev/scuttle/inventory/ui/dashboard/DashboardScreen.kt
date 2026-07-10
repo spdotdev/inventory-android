@@ -42,6 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
@@ -317,7 +318,12 @@ private fun RunningLowCard(items: List<LowStockItem>) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(item.productName, style = MaterialTheme.typography.bodyLarge)
+                        Text(
+                            item.productName,
+                            style = MaterialTheme.typography.bodyLarge,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
                         Text(
                             "${item.locationName} › ${item.shelfName}",
                             style = MaterialTheme.typography.bodySmall,

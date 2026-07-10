@@ -56,6 +56,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -153,6 +154,8 @@ fun ProductDetailScreen(
                     Text(
                         product?.name ?: stringResource(R.string.product_detail_title_fallback),
                         modifier = Modifier.testTag(PRODUCT_DETAIL_TITLE_TEST_TAG),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 },
                 navigationIcon = {

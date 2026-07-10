@@ -18,6 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.scuttle.inventory.R
 
@@ -37,6 +38,8 @@ fun SortMenu(
             Icon(imageVector = Icons.AutoMirrored.Filled.Sort, contentDescription = null)
             Text(
                 text = stringResource(R.string.sort_label, stringResource(current.labelRes)),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(start = 4.dp),
             )
         }

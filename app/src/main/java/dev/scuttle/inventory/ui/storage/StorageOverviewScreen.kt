@@ -59,6 +59,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
@@ -211,7 +212,12 @@ fun StorageOverviewScreen(
                                         .semantics { contentDescription = openDesc },
                             ) {
                                 Column(modifier = Modifier.padding(16.dp)) {
-                                    Text(text = location.name, style = MaterialTheme.typography.bodyLarge)
+                                    Text(
+                                        text = location.name,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
                                     Text(
                                         text = storageTypeLabel(location.type),
                                         style = MaterialTheme.typography.bodySmall,

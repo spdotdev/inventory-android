@@ -51,6 +51,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
@@ -203,7 +204,12 @@ fun AllStoragesScreen(
                                         verticalAlignment = Alignment.CenterVertically,
                                     ) {
                                         Column(modifier = Modifier.weight(1f)) {
-                                            Text(location.name, style = MaterialTheme.typography.bodyLarge)
+                                            Text(
+                                                location.name,
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                maxLines = 2,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
                                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                                 Text(
                                                     storageTypeLabel(location.type),
