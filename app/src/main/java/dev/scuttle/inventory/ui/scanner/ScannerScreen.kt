@@ -10,6 +10,22 @@ import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathFillType
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -97,7 +113,10 @@ fun ScannerScreen(
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             when {
-                hasPermission -> CameraPreview(onScanned = onScanned)
+                hasPermission -> {
+                    CameraPreview(onScanned = onScanned)
+                    ScannerOverlay()
+                }
                 permissionDenied ->
                     Column(
                         modifier = Modifier.fillMaxSize().padding(24.dp),
@@ -178,4 +197,74 @@ private fun processFrame(
             barcodes.firstOrNull { !it.rawValue.isNullOrBlank() }?.rawValue?.let(onValue)
         }
         .addOnCompleteListener { imageProxy.close() }
+}
+
+// Viewfinder proportions: frame side relative to the preview's short edge, and
+// its vertical placement (fraction of the leftover height above the frame).
+private const val FRAME_SIDE_FRACTION = 0.68f
+private const val FRAME_VERTICAL_BIAS = 0.4f
+
+/**
+ * Classic viewfinder overlay: everything outside a centered rounded square is
+ * dimmed, the square is stroked in the Frost accent, and a horizontal scan
+ * line sweeps up and down inside it. Purely decorative — ML Kit analyzes the
+ * full frame — but it tells the user where to point.
+ */
+@Composable
+private fun ScannerOverlay() {
+    val accent = MaterialTheme.colorScheme.primary
+    val transition = rememberInfiniteTransition(label = "scan-line")
+    val lineProgress by transition.animateFloat(
+        initialValue = 0.08f,
+        targetValue = 0.92f,
+        animationSpec =
+            infiniteRepeatable(
+                animation = tween(durationMillis = 1800, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse,
+            ),
+        label = "scan-line-y",
+    )
+
+    Canvas(modifier = Modifier.fillMaxSize()) {
+        val side = size.minDimension * FRAME_SIDE_FRACTION
+        val corner = CornerRadius(24.dp.toPx())
+        val frame =
+            Rect(
+                offset =
+                    Offset(
+                        x = (size.width - side) / 2f,
+                        // Slightly above center — thumbs and the top bar both stay clear.
+                        y = (size.height - side) * FRAME_VERTICAL_BIAS,
+                    ),
+                size = Size(side, side),
+            )
+
+        // Dim everything outside the frame (even-odd punch-out).
+        val scrim =
+            Path().apply {
+                fillType = PathFillType.EvenOdd
+                addRect(Rect(Offset.Zero, size))
+                addRoundRect(RoundRect(frame, corner))
+            }
+        drawPath(scrim, color = Color.Black.copy(alpha = 0.55f))
+
+        // Frame stroke.
+        drawRoundRect(
+            color = accent,
+            topLeft = frame.topLeft,
+            size = frame.size,
+            cornerRadius = corner,
+            style = Stroke(width = 3.dp.toPx()),
+        )
+
+        // Sweeping scan line, inset so it never touches the rounded corners.
+        val inset = 18.dp.toPx()
+        val lineY = frame.top + frame.height * lineProgress
+        drawLine(
+            color = accent.copy(alpha = 0.9f),
+            start = Offset(frame.left + inset, lineY),
+            end = Offset(frame.right - inset, lineY),
+            strokeWidth = 2.dp.toPx(),
+        )
+    }
 }
