@@ -84,5 +84,7 @@ Detailed build order: [`CLAUDE.md`](CLAUDE.md) and [`docs/android-plan.md`](docs
   (`app/detekt-baseline.xml`, `app/ktlint-baseline.xml`), gating `ktlintCheck detekt` step in
   `ci.yml`. Fails only on NEW violations; regenerate baselines only after an intentional
   cleanup (`./gradlew detektBaseline ktlintGenerateBaseline`), never to paper over findings.
-- [ ] **Tag-driven release build** — confirm `release.yml` builds APK + AAB on `v*` tags;
-  add the signing keystore as a repo secret before any Play Store upload.
+- [x] **Tag-driven release build** — confirmed 2026-07-10: pushing `v0.1.5` built and
+  attached a debug-signed `app-debug.apk` to a GitHub prerelease (the workflow's
+  intended preview behavior; the DEBUG_KEYSTORE_* secrets are in place). Still ahead
+  of any Play Store upload: a real release signingConfig + AAB output.
