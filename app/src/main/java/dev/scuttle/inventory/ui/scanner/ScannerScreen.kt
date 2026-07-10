@@ -22,9 +22,12 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathFillType
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -207,12 +210,19 @@ private const val FRAME_VERTICAL_BIAS = 0.4f
 // ZXing-red laser (Material Red 600).
 private val LaserRed = Color(0xFFE53935)
 
+// Length of each corner bracket arm relative to the frame side.
+private const val BRACKET_ARM_FRACTION = 0.18f
+
+// Soft-focus scrim: flat base dim plus a radial falloff toward the edges.
+private const val SCRIM_BASE_ALPHA = 0.35f
+private const val SCRIM_EDGE_ALPHA = 0.6f
+
 /**
- * Classic viewfinder overlay, following the ZXing convention: everything
- * outside a centered rounded square is dimmed, the square is stroked in red,
- * and a red "laser" line sits fixed across the MIDDLE of the frame, pulsing
- * its opacity like the original ViewfinderView. Purely decorative — ML Kit
- * analyzes the full frame — but it tells the user where to point.
+ * Viewfinder overlay in the classic scan-frame style (four rounded corner
+ * brackets, no full square — the standard "scanner overlay" vector look),
+ * with a red laser line fixed across the middle of the frame, pulsing its
+ * opacity like ZXing's ViewfinderView. Purely decorative — ML Kit analyzes
+ * the full frame — but it tells the user where to point.
  */
 @Composable
 private fun ScannerOverlay() {
@@ -242,23 +252,65 @@ private fun ScannerOverlay() {
                 size = Size(side, side),
             )
 
-        // Dim everything outside the frame (even-odd punch-out).
+        // Soft-focus scrim outside the frame (even-odd punch-out): a base dim
+        // plus a radial falloff that is clear at the frame edge and darkens
+        // outward, so the surroundings read as defocused and the eye settles
+        // on the frame. (True camera blur would need a second GPU pass — the
+        // preview surface bypasses Compose's blur.)
         val scrim =
             Path().apply {
                 fillType = PathFillType.EvenOdd
                 addRect(Rect(Offset.Zero, size))
                 addRoundRect(RoundRect(frame, corner))
             }
-        drawPath(scrim, color = Color.Black.copy(alpha = 0.55f))
-
-        // Frame stroke (red, per the classic scanner look).
-        drawRoundRect(
-            color = LaserRed,
-            topLeft = frame.topLeft,
-            size = frame.size,
-            cornerRadius = corner,
-            style = Stroke(width = 3.dp.toPx()),
+        drawPath(scrim, color = Color.Black.copy(alpha = SCRIM_BASE_ALPHA))
+        drawPath(
+            scrim,
+            brush =
+                Brush.radialGradient(
+                    colors =
+                        listOf(
+                            Color.Transparent,
+                            Color.Black.copy(alpha = SCRIM_EDGE_ALPHA),
+                        ),
+                    center = frame.center,
+                    radius = size.maxDimension * 0.75f,
+                ),
         )
+
+        // Four rounded corner brackets instead of a full square.
+        val arm = frame.width * BRACKET_ARM_FRACTION
+        val r = corner.x
+        val stroke =
+            Stroke(
+                width = 4.dp.toPx(),
+                cap = StrokeCap.Round,
+                join = StrokeJoin.Round,
+            )
+        val brackets =
+            Path().apply {
+                // Top-left
+                moveTo(frame.left, frame.top + arm)
+                lineTo(frame.left, frame.top + r)
+                quadraticTo(frame.left, frame.top, frame.left + r, frame.top)
+                lineTo(frame.left + arm, frame.top)
+                // Top-right
+                moveTo(frame.right - arm, frame.top)
+                lineTo(frame.right - r, frame.top)
+                quadraticTo(frame.right, frame.top, frame.right, frame.top + r)
+                lineTo(frame.right, frame.top + arm)
+                // Bottom-right
+                moveTo(frame.right, frame.bottom - arm)
+                lineTo(frame.right, frame.bottom - r)
+                quadraticTo(frame.right, frame.bottom, frame.right - r, frame.bottom)
+                lineTo(frame.right - arm, frame.bottom)
+                // Bottom-left
+                moveTo(frame.left + arm, frame.bottom)
+                lineTo(frame.left + r, frame.bottom)
+                quadraticTo(frame.left, frame.bottom, frame.left, frame.bottom - r)
+                lineTo(frame.left, frame.bottom - arm)
+            }
+        drawPath(brackets, color = LaserRed, style = stroke)
 
         // Fixed center "laser" line with the traditional opacity pulse.
         val inset = 14.dp.toPx()
