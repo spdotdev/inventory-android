@@ -10,7 +10,6 @@ import org.junit.Test
  * NavController's restored back stack survives.
  */
 class AuthRedirectTest {
-
     @Test
     fun cold_start_authenticated_routes_to_dashboard() {
         assertEquals(AuthRedirect.TO_DASHBOARD, authRedirectFor(previous = null, current = true))

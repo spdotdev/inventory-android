@@ -8,38 +8,42 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 
-private val DarkColors = darkColorScheme(
-    primary = FrostAccent,
-    onPrimary = FrostOnAccent,
-    background = FrostDarkBackground,
-    surface = FrostDarkSurface,
-    surfaceVariant = FrostDarkSurfaceVariant,
-    onSurface = FrostDarkOnSurface,
-    onSurfaceVariant = FrostDarkOnSurfaceVariant,
-    onBackground = FrostDarkOnSurface,
-)
+private val DarkColors =
+    darkColorScheme(
+        primary = FrostAccent,
+        onPrimary = FrostOnAccent,
+        background = FrostDarkBackground,
+        surface = FrostDarkSurface,
+        surfaceVariant = FrostDarkSurfaceVariant,
+        onSurface = FrostDarkOnSurface,
+        onSurfaceVariant = FrostDarkOnSurfaceVariant,
+        onBackground = FrostDarkOnSurface,
+    )
 
-private val LightColors = lightColorScheme(
-    primary = FrostLightPrimary,
-    onPrimary = FrostLightOnPrimary,
-    background = FrostLightBackground,
-    surface = FrostLightSurface,
-    surfaceVariant = FrostLightSurfaceVariant,
-    onSurface = FrostLightOnSurface,
-    onSurfaceVariant = FrostLightOnSurfaceVariant,
-    onBackground = FrostLightOnSurface,
-)
+private val LightColors =
+    lightColorScheme(
+        primary = FrostLightPrimary,
+        onPrimary = FrostLightOnPrimary,
+        background = FrostLightBackground,
+        surface = FrostLightSurface,
+        surfaceVariant = FrostLightSurfaceVariant,
+        onSurface = FrostLightOnSurface,
+        onSurfaceVariant = FrostLightOnSurfaceVariant,
+        onBackground = FrostLightOnSurface,
+    )
 
 // frost-app.html `.card`: tinted-primary wash on dark, near-white translucent wash on light.
-private val DarkFrostCardColors = FrostCardColors(
-    container = FrostAccent.copy(alpha = 0.10f),
-    border = FrostAccent.copy(alpha = 0.20f),
-)
+private val DarkFrostCardColors =
+    FrostCardColors(
+        container = FrostAccent.copy(alpha = 0.10f),
+        border = FrostAccent.copy(alpha = 0.20f),
+    )
 
-private val LightFrostCardColors = FrostCardColors(
-    container = Color.White.copy(alpha = 0.72f),
-    border = FrostLightPrimary.copy(alpha = 0.18f),
-)
+private val LightFrostCardColors =
+    FrostCardColors(
+        container = Color.White.copy(alpha = 0.72f),
+        border = FrostLightPrimary.copy(alpha = 0.18f),
+    )
 
 @Composable
 fun InventoryTheme(

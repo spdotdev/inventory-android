@@ -1,12 +1,10 @@
 package dev.scuttle.inventory.ui.invite
 
 import android.graphics.Bitmap
-import android.graphics.Color as AndroidColor
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -44,6 +42,7 @@ import dev.scuttle.inventory.ui.theme.SpaceMono
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import android.graphics.Color as AndroidColor
 
 @Composable
 fun InviteScreen(
@@ -69,11 +68,12 @@ fun InviteScreen(
     }
 
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .padding(24.dp),
+        modifier =
+            modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .navigationBarsPadding()
+                .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         TextButton(onClick = onBack) {
@@ -122,15 +122,17 @@ fun InviteScreen(
                 }
                 val currentQr = qr
                 when {
-                    currentQr != null -> Image(
-                        bitmap = currentQr.asImageBitmap(),
-                        contentDescription = stringResource(R.string.invite_qr_cd),
-                        modifier = Modifier.size(220.dp),
-                    )
-                    state.link.isNotEmpty() -> Box(
-                        modifier = Modifier.size(220.dp),
-                        contentAlignment = Alignment.Center,
-                    ) { CircularProgressIndicator() }
+                    currentQr != null ->
+                        Image(
+                            bitmap = currentQr.asImageBitmap(),
+                            contentDescription = stringResource(R.string.invite_qr_cd),
+                            modifier = Modifier.size(220.dp),
+                        )
+                    state.link.isNotEmpty() ->
+                        Box(
+                            modifier = Modifier.size(220.dp),
+                            contentAlignment = Alignment.Center,
+                        ) { CircularProgressIndicator() }
                 }
 
                 Button(
@@ -140,14 +142,25 @@ fun InviteScreen(
                     },
                     enabled = state.link.isNotEmpty(),
                 ) {
-                    Text(if (copied) stringResource(R.string.invite_copied) else stringResource(R.string.invite_copy_link))
+                    Text(
+                        if (copied) {
+                            stringResource(
+                                R.string.invite_copied,
+                            )
+                        } else {
+                            stringResource(R.string.invite_copy_link)
+                        },
+                    )
                 }
             }
         }
     }
 }
 
-private fun qrBitmap(content: String, size: Int = 512): Bitmap? {
+private fun qrBitmap(
+    content: String,
+    size: Int = 512,
+): Bitmap? {
     if (content.isEmpty()) return null
     if (!android.util.Patterns.WEB_URL.matcher(content).matches()) return null
     return runCatching {

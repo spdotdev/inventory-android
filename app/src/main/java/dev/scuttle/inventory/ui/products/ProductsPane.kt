@@ -39,18 +39,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.dto.ProductDto
 import dev.scuttle.inventory.ui.common.SnackbarErrorEffect
@@ -95,10 +95,11 @@ fun ProductsPane(
     }
 
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
+        modifier =
+            modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         if (state.loading) {
@@ -149,25 +150,27 @@ fun ProductsPane(
                 val increaseDesc = stringResource(R.string.products_pane_increase_cd, product.name)
                 val moveDesc = stringResource(R.string.products_pane_move_cd, product.name)
 
-                val swipeState = rememberSwipeToDismissBoxState(
-                    confirmValueChange = { value ->
-                        if (value == SwipeToDismissBoxValue.EndToStart) {
-                            pendingDeleteId = product.id
-                        }
-                        false
-                    },
-                )
+                val swipeState =
+                    rememberSwipeToDismissBoxState(
+                        confirmValueChange = { value ->
+                            if (value == SwipeToDismissBoxValue.EndToStart) {
+                                pendingDeleteId = product.id
+                            }
+                            false
+                        },
+                    )
                 SwipeToDismissBox(
                     state = swipeState,
                     enableDismissFromStartToEnd = false,
                     backgroundContent = {
                         Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(
-                                    color = MaterialTheme.colorScheme.errorContainer,
-                                    shape = MaterialTheme.shapes.medium,
-                                ),
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .background(
+                                        color = MaterialTheme.colorScheme.errorContainer,
+                                        shape = MaterialTheme.shapes.medium,
+                                    ),
                             contentAlignment = Alignment.CenterEnd,
                         ) {
                             Icon(
@@ -185,13 +188,17 @@ fun ProductsPane(
                         modifier = Modifier.fillMaxWidth().testTag("product-${product.id}"),
                     ) {
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(
-                                    if (isMandatoryWarning) MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
-                                    else Color.Transparent
-                                )
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .background(
+                                        if (isMandatoryWarning) {
+                                            MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+                                        } else {
+                                            Color.Transparent
+                                        },
+                                    )
+                                    .padding(horizontal = 16.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
@@ -213,40 +220,51 @@ fun ProductsPane(
                                     Text(
                                         text = stringResource(R.string.products_pane_mandatory_label),
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = if (isMandatoryWarning) MaterialTheme.colorScheme.error
-                                                else MaterialTheme.colorScheme.primary,
+                                        color =
+                                            if (isMandatoryWarning) {
+                                                MaterialTheme.colorScheme.error
+                                            } else {
+                                                MaterialTheme.colorScheme.primary
+                                            },
                                     )
                                 }
                             }
                             OutlinedButton(
                                 onClick = { viewModel.decrement(product.id) },
                                 enabled = !state.loading && product.quantity > 0,
-                                modifier = Modifier.semantics {
-                                    contentDescription = decreaseDesc
-                                },
+                                modifier =
+                                    Modifier.semantics {
+                                        contentDescription = decreaseDesc
+                                    },
                             ) {
                                 Text("−")
                             }
                             Text(
                                 text = product.quantity.toString(),
-                                color = if (isMandatoryWarning) MaterialTheme.colorScheme.error
-                                        else MaterialTheme.colorScheme.onSurface,
+                                color =
+                                    if (isMandatoryWarning) {
+                                        MaterialTheme.colorScheme.error
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurface
+                                    },
                             )
                             OutlinedButton(
                                 onClick = { viewModel.increment(product.id) },
                                 enabled = !state.loading,
-                                modifier = Modifier.semantics {
-                                    contentDescription = increaseDesc
-                                },
+                                modifier =
+                                    Modifier.semantics {
+                                        contentDescription = increaseDesc
+                                    },
                             ) {
                                 Text("+")
                             }
                             TextButton(
                                 onClick = { viewModel.startMove(product.id) },
                                 enabled = !state.loading,
-                                modifier = Modifier.semantics {
-                                    contentDescription = moveDesc
-                                },
+                                modifier =
+                                    Modifier.semantics {
+                                        contentDescription = moveDesc
+                                    },
                             ) {
                                 Text(stringResource(R.string.products_pane_move_button))
                             }
@@ -273,7 +291,10 @@ fun ProductsPane(
             onDismissRequest = { pendingDeleteId = null },
             title = { Text(stringResource(R.string.delete_dialog_product_title, name)) },
             confirmButton = {
-                TextButton(onClick = { viewModel.delete(id); pendingDeleteId = null }) {
+                TextButton(onClick = {
+                    viewModel.delete(id)
+                    pendingDeleteId = null
+                }) {
                     Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
                 }
             },
@@ -298,11 +319,12 @@ fun ProductsPane(
                             CircularProgressIndicator(modifier = Modifier.size(24.dp))
                         state.moveTargets.isEmpty() ->
                             Text(stringResource(R.string.products_pane_no_shelves_to_move))
-                        else -> state.moveTargets.forEach { target ->
-                            TextButton(onClick = { viewModel.confirmMove(target.shelfId) }) {
-                                Text(target.label)
+                        else ->
+                            state.moveTargets.forEach { target ->
+                                TextButton(onClick = { viewModel.confirmMove(target.shelfId) }) {
+                                    Text(target.label)
+                                }
                             }
-                        }
                     }
                 }
             },

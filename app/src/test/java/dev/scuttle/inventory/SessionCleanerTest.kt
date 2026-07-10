@@ -18,66 +18,174 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SessionCleanerTest {
-
     private class RecordingHouseholdRepo : HouseholdRepository {
         var cleared = false
+
         override fun getCached(): List<HouseholdDto>? = null
+
         override suspend fun list() = emptyList<HouseholdDto>()
+
         override suspend fun create(name: String) = throw NotImplementedError()
+
         override suspend fun join(code: String) = throw NotImplementedError()
+
         override suspend fun leave(householdId: Long) {}
-        override fun clear() { cleared = true }
+
+        override fun clear() {
+            cleared = true
+        }
     }
 
     private class RecordingLocationRepo : LocationRepository {
         var cleared = false
+
         override fun getCached(householdId: Long): List<LocationDto>? = null
+
         override suspend fun list(householdId: Long) = emptyList<LocationDto>()
-        override suspend fun create(householdId: Long, name: String, type: String) = throw NotImplementedError()
-        override suspend fun delete(householdId: Long, locationId: Long) {}
-        override fun clear() { cleared = true }
+
+        override suspend fun create(
+            householdId: Long,
+            name: String,
+            type: String,
+        ) = throw NotImplementedError()
+
+        override suspend fun delete(
+            householdId: Long,
+            locationId: Long,
+        ) {}
+
+        override fun clear() {
+            cleared = true
+        }
     }
 
     private class RecordingShelfRepo : ShelfRepository {
         var cleared = false
-        override fun getCached(householdId: Long, locationId: Long): List<ShelfDto>? = null
-        override suspend fun list(householdId: Long, locationId: Long) = emptyList<ShelfDto>()
-        override suspend fun create(householdId: Long, locationId: Long, name: String) = throw NotImplementedError()
-        override suspend fun delete(householdId: Long, locationId: Long, shelfId: Long) {}
-        override fun clear() { cleared = true }
+
+        override fun getCached(
+            householdId: Long,
+            locationId: Long,
+        ): List<ShelfDto>? = null
+
+        override suspend fun list(
+            householdId: Long,
+            locationId: Long,
+        ) = emptyList<ShelfDto>()
+
+        override suspend fun create(
+            householdId: Long,
+            locationId: Long,
+            name: String,
+        ) = throw NotImplementedError()
+
+        override suspend fun delete(
+            householdId: Long,
+            locationId: Long,
+            shelfId: Long,
+        ) {}
+
+        override fun clear() {
+            cleared = true
+        }
     }
 
     private class RecordingProductRepo : ProductRepository {
         var cleared = false
-        override fun getCached(householdId: Long, shelfId: Long): List<ProductDto>? = null
-        override suspend fun list(householdId: Long, shelfId: Long) = emptyList<ProductDto>()
-        override suspend fun create(householdId: Long, shelfId: Long, name: String, quantity: Int) = throw NotImplementedError()
-        override suspend fun update(householdId: Long, shelfId: Long, productId: Long, edit: ProductEdit) =
-        throw NotImplementedError()
-        override suspend fun add(householdId: Long, shelfId: Long, productId: Long, amount: Int) = throw NotImplementedError()
-        override suspend fun remove(householdId: Long, shelfId: Long, productId: Long, amount: Int) = throw NotImplementedError()
-        override suspend fun move(householdId: Long, shelfId: Long, productId: Long, targetShelfId: Long) = throw NotImplementedError()
-        override suspend fun uploadImage(householdId: Long, shelfId: Long, productId: Long, imageUri: Uri, mimeType: String) = throw NotImplementedError()
-        override suspend fun delete(householdId: Long, shelfId: Long, productId: Long) {}
-        override fun clear() { cleared = true }
+
+        override fun getCached(
+            householdId: Long,
+            shelfId: Long,
+        ): List<ProductDto>? = null
+
+        override suspend fun list(
+            householdId: Long,
+            shelfId: Long,
+        ) = emptyList<ProductDto>()
+
+        override suspend fun create(
+            householdId: Long,
+            shelfId: Long,
+            name: String,
+            quantity: Int,
+        ) = throw NotImplementedError()
+
+        override suspend fun update(
+            householdId: Long,
+            shelfId: Long,
+            productId: Long,
+            edit: ProductEdit,
+        ) = throw NotImplementedError()
+
+        override suspend fun add(
+            householdId: Long,
+            shelfId: Long,
+            productId: Long,
+            amount: Int,
+        ) = throw NotImplementedError()
+
+        override suspend fun remove(
+            householdId: Long,
+            shelfId: Long,
+            productId: Long,
+            amount: Int,
+        ) = throw NotImplementedError()
+
+        override suspend fun move(
+            householdId: Long,
+            shelfId: Long,
+            productId: Long,
+            targetShelfId: Long,
+        ) = throw NotImplementedError()
+
+        override suspend fun uploadImage(
+            householdId: Long,
+            shelfId: Long,
+            productId: Long,
+            imageUri: Uri,
+            mimeType: String,
+        ) = throw NotImplementedError()
+
+        override suspend fun delete(
+            householdId: Long,
+            shelfId: Long,
+            productId: Long,
+        ) {}
+
+        override fun clear() {
+            cleared = true
+        }
     }
 
     private class RecordingFavoritesStore : FavoritesStore {
         var cleared = false
+
         override fun getFavoriteLocations() = emptySet<Long>()
+
         override fun toggleFavoriteLocation(id: Long) {}
+
         override fun isFavoriteLocation(id: Long) = false
+
         override fun getFavoriteShelves() = emptySet<Long>()
+
         override fun toggleFavoriteShelf(id: Long) {}
+
         override fun isFavoriteShelf(id: Long) = false
-        override fun clear() { cleared = true }
+
+        override fun clear() {
+            cleared = true
+        }
     }
 
     private class RecordingDefaultHouseholdStore : DefaultHouseholdStore {
         var cleared = false
+
         override fun get(): Long? = null
+
         override fun set(householdId: Long) {}
-        override fun clear() { cleared = true }
+
+        override fun clear() {
+            cleared = true
+        }
     }
 
     @Test

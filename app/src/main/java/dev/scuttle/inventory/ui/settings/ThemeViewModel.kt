@@ -1,9 +1,9 @@
 package dev.scuttle.inventory.ui.settings
 
 import androidx.lifecycle.ViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.scuttle.inventory.data.settings.ThemeModeStore
 import dev.scuttle.inventory.ui.theme.ThemeMode
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,15 +14,16 @@ import javax.inject.Inject
  * theme) and SettingsScreen (which changes it) share the same instance.
  */
 @HiltViewModel
-class ThemeViewModel @Inject constructor(
-    private val store: ThemeModeStore,
-) : ViewModel() {
+class ThemeViewModel
+    @Inject
+    constructor(
+        private val store: ThemeModeStore,
+    ) : ViewModel() {
+        private val _mode = MutableStateFlow(store.get())
+        val mode: StateFlow<ThemeMode> = _mode.asStateFlow()
 
-    private val _mode = MutableStateFlow(store.get())
-    val mode: StateFlow<ThemeMode> = _mode.asStateFlow()
-
-    fun setMode(mode: ThemeMode) {
-        store.set(mode)
-        _mode.value = mode
+        fun setMode(mode: ThemeMode) {
+            store.set(mode)
+            _mode.value = mode
+        }
     }
-}

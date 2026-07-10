@@ -7,5 +7,6 @@ enum class AppLanguage(val tag: String, val label: String) {
 
 interface LanguageStore {
     fun get(): AppLanguage
+
     fun set(language: AppLanguage)
 }

@@ -10,7 +10,6 @@ import org.junit.Test
 
 /** Deterministic per-household accent/icon index math (Compose-free). */
 class HouseholdThemeIndexTest {
-
     @Test
     fun indices_are_always_within_the_table_bounds() {
         for (id in 0L..200L) {

@@ -10,20 +10,21 @@ import kotlinx.coroutines.flow.asStateFlow
 
 /** Token storage backed by EncryptedSharedPreferences (Keystore-wrapped key). */
 class EncryptedTokenStore(context: Context) : TokenStore {
+    private val prefs: SharedPreferences =
+        run {
+            val masterKey =
+                MasterKey.Builder(context)
+                    .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                    .build()
 
-    private val prefs: SharedPreferences = run {
-        val masterKey = MasterKey.Builder(context)
-            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-            .build()
-
-        EncryptedSharedPreferences.create(
-            context,
-            "inventory_secure_prefs",
-            masterKey,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
-        )
-    }
+            EncryptedSharedPreferences.create(
+                context,
+                "inventory_secure_prefs",
+                masterKey,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
+            )
+        }
 
     private val _authState = MutableStateFlow(prefs.getString(KEY_TOKEN, null) != null)
     override val authState: StateFlow<Boolean> = _authState.asStateFlow()

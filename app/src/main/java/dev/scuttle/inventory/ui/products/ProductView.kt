@@ -19,7 +19,8 @@ fun List<ProductDto>.applyView(
     val q = query.trim()
     return this
         .filter { p ->
-            (q.isEmpty() || p.name.contains(q, ignoreCase = true) || (p.code?.contains(q, ignoreCase = true) == true)) &&
+            val codeMatches = p.code?.contains(q, ignoreCase = true) == true
+            (q.isEmpty() || p.name.contains(q, ignoreCase = true) || codeMatches) &&
                 (!mandatoryOnly || p.is_mandatory == true) &&
                 (!outOfStockOnly || p.quantity == 0)
         }

@@ -7,7 +7,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class ThemeViewModelTest {
-
     private class FakeThemeModeStore(initial: ThemeMode = ThemeMode.SYSTEM) : ThemeModeStore {
         var stored: ThemeMode = initial
 

@@ -18,39 +18,41 @@ import org.junit.rules.ExternalResource
  * The server URL is written to [MockWebServerHolder] so TestNetworkModule picks it up.
  */
 class MockWebServerRule : ExternalResource() {
-
     val server = MockWebServer()
 
     // path prefix → ordered list of responses to serve
     private val routes = mutableMapOf<String, ArrayDeque<MockResponse>>()
+
     // fallback FIFO queue (used when no route matches or when using queue mode)
     private val queue = ArrayDeque<MockResponse>()
 
-    private val dispatcher = object : Dispatcher() {
-        override fun dispatch(request: RecordedRequest): MockResponse {
-            val path = request.path ?: "/"
-            // Find the longest matching route prefix
-            val key = routes.keys
-                .filter { path.startsWith(it) }
-                .maxByOrNull { it.length }
-            if (key != null) {
-                val responses = routes[key]!!
-                if (responses.isNotEmpty()) {
-                    Log.i(TAG, "${request.method} $path -> route '$key' (${responses.size - 1} left)")
-                    return responses.removeFirst()
+    private val dispatcher =
+        object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                val path = request.path ?: "/"
+                // Find the longest matching route prefix
+                val key =
+                    routes.keys
+                        .filter { path.startsWith(it) }
+                        .maxByOrNull { it.length }
+                if (key != null) {
+                    val responses = routes[key]!!
+                    if (responses.isNotEmpty()) {
+                        Log.i(TAG, "${request.method} $path -> route '$key' (${responses.size - 1} left)")
+                        return responses.removeFirst()
+                    }
                 }
+                // Fall back to FIFO queue
+                if (queue.isNotEmpty()) {
+                    Log.i(TAG, "${request.method} $path -> queue (${queue.size - 1} left)")
+                    return queue.removeFirst()
+                }
+                // Every timed-out wait in a flow test starts here: some earlier request
+                // consumed the route this one needed. The log line is the evidence trail.
+                Log.w(TAG, "${request.method} $path -> FALLBACK 500 (no route/queue left)")
+                return MockResponse().setResponseCode(500).setBody("""{"error":"No mock response for $path"}""")
             }
-            // Fall back to FIFO queue
-            if (queue.isNotEmpty()) {
-                Log.i(TAG, "${request.method} $path -> queue (${queue.size - 1} left)")
-                return queue.removeFirst()
-            }
-            // Every timed-out wait in a flow test starts here: some earlier request
-            // consumed the route this one needed. The log line is the evidence trail.
-            Log.w(TAG, "${request.method} $path -> FALLBACK 500 (no route/queue left)")
-            return MockResponse().setResponseCode(500).setBody("""{"error":"No mock response for $path"}""")
         }
-    }
 
     private companion object {
         const val TAG = "MockWebServerRule"
@@ -69,7 +71,11 @@ class MockWebServerRule : ExternalResource() {
     }
 
     /** Register a URL-path prefix → response mapping. Responses are served in order per path. */
-    fun route(path: String, body: String, code: Int = 200) {
+    fun route(
+        path: String,
+        body: String,
+        code: Int = 200,
+    ) {
         routes.getOrPut(path) { ArrayDeque() }.addLast(
             MockResponse()
                 .setResponseCode(code)
@@ -79,7 +85,10 @@ class MockWebServerRule : ExternalResource() {
     }
 
     /** Push a response to the FIFO queue (used when path routing is not needed). */
-    fun enqueue(body: String, code: Int = 200) {
+    fun enqueue(
+        body: String,
+        code: Int = 200,
+    ) {
         queue.addLast(
             MockResponse()
                 .setResponseCode(code)

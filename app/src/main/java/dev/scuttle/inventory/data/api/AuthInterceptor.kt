@@ -8,8 +8,9 @@ import okhttp3.Response
 class AuthInterceptor(private val tokenStore: TokenStore) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val token = tokenStore.get()
-        val builder = chain.request().newBuilder()
-            .header("Accept", "application/json")
+        val builder =
+            chain.request().newBuilder()
+                .header("Accept", "application/json")
         if (token != null) builder.header("Authorization", "Bearer $token")
 
         val response = chain.proceed(builder.build())

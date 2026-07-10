@@ -39,7 +39,11 @@ android {
         // Base URL of the inventory API. Override per build type / flavor as needed;
         // the trailing slash is required by Retrofit.
         buildConfigField("String", "BASE_URL", "\"https://inventory.scuttle.dev/api/v1/\"")
-        buildConfigField("String", "GOOGLE_CLIENT_ID", "\"758637503304-np301l9sc7saepermpm2so9kcghet5k6.apps.googleusercontent.com\"") // Web OAuth client ID — used with Google Sign-In SDK
+        buildConfigField(
+            "String",
+            "GOOGLE_CLIENT_ID",
+            "\"758637503304-np301l9sc7saepermpm2so9kcghet5k6.apps.googleusercontent.com\"",
+        ) // Web OAuth client ID — used with Google Sign-In SDK
     }
 
     signingConfigs {
@@ -83,7 +87,6 @@ android {
         abortOnError = false
     }
 }
-
 
 dependencies {
     val composeBom = platform("androidx.compose:compose-bom:2025.05.01")

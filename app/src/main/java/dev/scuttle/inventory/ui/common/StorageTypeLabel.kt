@@ -23,10 +23,11 @@ fun storageTypeLabel(type: String): String =
  * composable above so the transport→resource mapping is unit-testable on the JVM.
  */
 @StringRes
-fun storageTypeLabelRes(type: String): Int? = when (type) {
-    "freezer" -> R.string.storage_type_freezer
-    "fridge" -> R.string.storage_type_fridge
-    "pantry" -> R.string.storage_type_pantry
-    "other" -> R.string.storage_type_other
-    else -> null
-}
+fun storageTypeLabelRes(type: String): Int? =
+    when (type) {
+        "freezer" -> R.string.storage_type_freezer
+        "fridge" -> R.string.storage_type_fridge
+        "pantry" -> R.string.storage_type_pantry
+        "other" -> R.string.storage_type_other
+        else -> null
+    }

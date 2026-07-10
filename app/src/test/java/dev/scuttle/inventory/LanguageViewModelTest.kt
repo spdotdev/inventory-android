@@ -7,11 +7,14 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class LanguageViewModelTest {
-
     private class FakeLanguageStore(initial: AppLanguage = AppLanguage.EN) : LanguageStore {
         var stored = initial
+
         override fun get() = stored
-        override fun set(language: AppLanguage) { stored = language }
+
+        override fun set(language: AppLanguage) {
+            stored = language
+        }
     }
 
     @Test

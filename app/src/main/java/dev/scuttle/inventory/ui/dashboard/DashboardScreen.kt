@@ -4,15 +4,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -113,143 +113,185 @@ fun DashboardScreen(
         PullToRefreshBox(
             isRefreshing = state.refreshing,
             onRefresh = viewModel::refresh,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .navigationBarsPadding(),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .navigationBarsPadding(),
         ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            state.error?.let { LiveStatusText(it) }
-
-            // Stat cards
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                StatCard(label = stringResource(R.string.dashboard_stat_locations), value = state.totalLocations.toString(), modifier = Modifier.weight(1f))
-                StatCard(label = stringResource(R.string.dashboard_stat_shelves), value = state.totalShelves.toString(), modifier = Modifier.weight(1f))
-                StatCard(label = stringResource(R.string.dashboard_stat_products), value = state.totalProducts.toString(), modifier = Modifier.weight(1f))
-            }
+                state.error?.let { LiveStatusText(it) }
 
-            if (state.mandatoryWarnings > 0) {
-                MissingItemsCard(count = state.mandatoryWarnings, onClick = onOpenMissingItems)
-            }
+                // Stat cards
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    StatCard(
+                        label = stringResource(R.string.dashboard_stat_locations),
+                        value = state.totalLocations.toString(),
+                        modifier = Modifier.weight(1f),
+                    )
+                    StatCard(
+                        label = stringResource(R.string.dashboard_stat_shelves),
+                        value = state.totalShelves.toString(),
+                        modifier = Modifier.weight(1f),
+                    )
+                    StatCard(
+                        label = stringResource(R.string.dashboard_stat_products),
+                        value = state.totalProducts.toString(),
+                        modifier = Modifier.weight(1f),
+                    )
+                }
 
-            // Phase 2: products at/below their low-stock threshold (missing items
-            // excluded — they're already in the red card above).
-            if (state.lowStockItems.isNotEmpty()) {
-                Text(stringResource(R.string.dashboard_running_low), style = MaterialTheme.typography.titleMedium)
-                RunningLowCard(state.lowStockItems)
-            }
+                if (state.mandatoryWarnings > 0) {
+                    MissingItemsCard(count = state.mandatoryWarnings, onClick = onOpenMissingItems)
+                }
 
-            // Bar chart
-            if (state.locationStats.isNotEmpty()) {
-                Text(stringResource(R.string.dashboard_products_by_location), style = MaterialTheme.typography.titleMedium)
-                FrostCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        val maxVal = state.locationStats.maxOfOrNull { it.productCount } ?: 1
-                        state.locationStats.forEach { stat ->
-                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text(
-                                    stat.location.name,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    maxLines = 1,
-                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                                )
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .height(12.dp)
-                                            .background(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.shapes.extraSmall),
+                // Phase 2: products at/below their low-stock threshold (missing items
+                // excluded — they're already in the red card above).
+                if (state.lowStockItems.isNotEmpty()) {
+                    Text(stringResource(R.string.dashboard_running_low), style = MaterialTheme.typography.titleMedium)
+                    RunningLowCard(state.lowStockItems)
+                }
+
+                // Bar chart
+                if (state.locationStats.isNotEmpty()) {
+                    Text(
+                        stringResource(R.string.dashboard_products_by_location),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                    FrostCard(modifier = Modifier.fillMaxWidth()) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            val maxVal = state.locationStats.maxOfOrNull { it.productCount } ?: 1
+                            state.locationStats.forEach { stat ->
+                                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Text(
+                                        stat.location.name,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        maxLines = 1,
+                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                    )
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                                     ) {
-                                        val fraction = if (maxVal > 0) stat.productCount.toFloat() / maxVal else 0f
                                         Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth(fraction.coerceIn(0f, 1f))
-                                                .height(12.dp)
-                                                .background(primaryColor, MaterialTheme.shapes.extraSmall),
+                                            modifier =
+                                                Modifier
+                                                    .weight(1f)
+                                                    .height(12.dp)
+                                                    .background(
+                                                        MaterialTheme.colorScheme.surfaceVariant,
+                                                        MaterialTheme.shapes.extraSmall,
+                                                    ),
+                                        ) {
+                                            val fraction = if (maxVal > 0) stat.productCount.toFloat() / maxVal else 0f
+                                            Box(
+                                                modifier =
+                                                    Modifier
+                                                        .fillMaxWidth(fraction.coerceIn(0f, 1f))
+                                                        .height(12.dp)
+                                                        .background(primaryColor, MaterialTheme.shapes.extraSmall),
+                                            )
+                                        }
+                                        Text(
+                                            stat.productCount.toString(),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            modifier = Modifier.width(24.dp),
                                         )
                                     }
-                                    Text(
-                                        stat.productCount.toString(),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        modifier = Modifier.width(24.dp),
-                                    )
                                 }
                             }
                         }
                     }
                 }
-            }
 
-            // Favorite locations
-            if (state.favoriteLocationIds.isNotEmpty()) {
-                Text(stringResource(R.string.dashboard_favorite_locations), style = MaterialTheme.typography.titleMedium)
-                state.locationStats
-                    .filter { it.location.id in state.favoriteLocationIds }
-                    .forEach { stat ->
+                // Favorite locations
+                if (state.favoriteLocationIds.isNotEmpty()) {
+                    Text(
+                        stringResource(R.string.dashboard_favorite_locations),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                    state.locationStats
+                        .filter { it.location.id in state.favoriteLocationIds }
+                        .forEach { stat ->
+                            FrostCard(
+                                onClick = { onOpenLocation(stat.householdId, stat.location.id) },
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                Row(
+                                    modifier =
+                                        Modifier
+                                            .padding(16.dp)
+                                            .fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text(stat.location.name, style = MaterialTheme.typography.bodyLarge)
+                                    Icon(
+                                        Icons.Default.Star,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                    )
+                                }
+                            }
+                        }
+                }
+
+                // Favorite shelves
+                if (state.favoriteShelves.isNotEmpty()) {
+                    Text(
+                        stringResource(R.string.dashboard_favorite_shelves),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                    state.favoriteShelves.forEach { entry ->
                         FrostCard(
-                            onClick = { onOpenLocation(stat.householdId, stat.location.id) },
+                            onClick = { onOpenLocation(entry.householdId, entry.shelf.location_id) },
                             modifier = Modifier.fillMaxWidth(),
                         ) {
                             Row(
-                                modifier = Modifier
-                                    .padding(16.dp)
-                                    .fillMaxWidth(),
+                                modifier =
+                                    Modifier
+                                        .padding(16.dp)
+                                        .fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                Text(stat.location.name, style = MaterialTheme.typography.bodyLarge)
-                                Icon(Icons.Default.Star, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                Text(entry.shelf.name, style = MaterialTheme.typography.bodyLarge)
+                                Icon(
+                                    Icons.Default.Star,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                )
                             }
                         }
                     }
-            }
-
-            // Favorite shelves
-            if (state.favoriteShelves.isNotEmpty()) {
-                Text(stringResource(R.string.dashboard_favorite_shelves), style = MaterialTheme.typography.titleMedium)
-                state.favoriteShelves.forEach { entry ->
-                    FrostCard(
-                        onClick = { onOpenLocation(entry.householdId, entry.shelf.location_id) },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .padding(16.dp)
-                                .fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(entry.shelf.name, style = MaterialTheme.typography.bodyLarge)
-                            Icon(Icons.Default.Star, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                        }
-                    }
                 }
-            }
 
-            Spacer(Modifier.height(24.dp))
-        }
+                Spacer(Modifier.height(24.dp))
+            }
         } // end PullToRefreshBox
     }
 }
 
 @Composable
-private fun StatCard(label: String, value: String, modifier: Modifier = Modifier) {
+private fun StatCard(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+) {
     FrostCard(modifier = modifier) {
         Column(
             modifier = Modifier.padding(12.dp),
@@ -295,7 +337,10 @@ private fun RunningLowCard(items: List<LowStockItem>) {
 }
 
 @Composable
-private fun MissingItemsCard(count: Int, onClick: () -> Unit) {
+private fun MissingItemsCard(
+    count: Int,
+    onClick: () -> Unit,
+) {
     Card(
         onClick = onClick,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
@@ -309,8 +354,11 @@ private fun MissingItemsCard(count: Int, onClick: () -> Unit) {
             Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error)
             Column {
                 Text(
-                    if (count == 1) stringResource(R.string.dashboard_missing_one)
-                    else stringResource(R.string.dashboard_missing_many, count),
+                    if (count == 1) {
+                        stringResource(R.string.dashboard_missing_one)
+                    } else {
+                        stringResource(R.string.dashboard_missing_many, count)
+                    },
                     color = MaterialTheme.colorScheme.onErrorContainer,
                     fontWeight = FontWeight.Medium,
                 )

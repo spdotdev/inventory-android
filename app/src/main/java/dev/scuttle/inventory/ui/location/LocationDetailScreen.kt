@@ -4,17 +4,17 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
@@ -30,7 +30,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -39,13 +38,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -59,18 +59,17 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
-import dev.scuttle.inventory.ui.common.LiveStatusText
-import dev.scuttle.inventory.data.dto.ProductDto
 import dev.scuttle.inventory.ui.app.DrawerViewModel
+import dev.scuttle.inventory.ui.common.LiveStatusText
 import dev.scuttle.inventory.ui.products.ProductsPane
 import dev.scuttle.inventory.ui.products.ProductsViewModel
 import dev.scuttle.inventory.ui.shelves.ShelvesViewModel
@@ -126,10 +125,15 @@ fun LocationDetailScreen(
                 },
                 navigationIcon = {
                     if (state.deleteMode) {
-                        TextButton(onClick = shelvesViewModel::exitDeleteMode) { Text(stringResource(R.string.action_cancel)) }
+                        TextButton(
+                            onClick = shelvesViewModel::exitDeleteMode,
+                        ) { Text(stringResource(R.string.action_cancel)) }
                     } else {
                         IconButton(onClick = onBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = stringResource(R.string.action_back),
+                            )
                         }
                     }
                 },
@@ -142,14 +146,20 @@ fun LocationDetailScreen(
                             modifier = Modifier.padding(end = 8.dp),
                         ) {
                             Text(
-                                if (state.selectedShelves.isEmpty()) stringResource(R.string.location_delete_button)
-                                else stringResource(R.string.location_delete_count_button, state.selectedShelves.size)
+                                if (state.selectedShelves.isEmpty()) {
+                                    stringResource(R.string.location_delete_button)
+                                } else {
+                                    stringResource(R.string.location_delete_count_button, state.selectedShelves.size)
+                                },
                             )
                         }
                     } else {
                         if (state.shelves.isNotEmpty()) {
                             IconButton(onClick = shelvesViewModel::enterDeleteMode) {
-                                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.location_delete_shelves_cd))
+                                Icon(
+                                    Icons.Default.Delete,
+                                    contentDescription = stringResource(R.string.location_delete_shelves_cd),
+                                )
                             }
                         }
                         IconButton(onClick = { showAddShelfSheet = true }) {
@@ -164,7 +174,10 @@ fun LocationDetailScreen(
         },
         floatingActionButton = {
             if (!state.deleteMode && currentShelfId != null) {
-                FloatingActionButton(modifier = Modifier.navigationBarsPadding(), onClick = { showAddProductSheet = true }) {
+                FloatingActionButton(
+                    modifier = Modifier.navigationBarsPadding(),
+                    onClick = { showAddProductSheet = true },
+                ) {
                     Icon(Icons.Default.Add, contentDescription = stringResource(R.string.location_add_product_cd))
                 }
             }
@@ -176,113 +189,137 @@ fun LocationDetailScreen(
                 shelvesViewModel.refresh()
                 productsRefreshKey++
             },
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding),
         ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .navigationBarsPadding(),
-        ) {
-            if (state.loading) {
-                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-            }
-
-            state.error?.let {
-                LiveStatusText(it, modifier = Modifier.padding(16.dp))
-            }
-
-            if (state.shelves.isEmpty()) {
-                // Suppress "no shelves yet" on a failed load — the error line above
-                // already explains it; showing both reads as a false empty (W7).
-                if (!state.loading && state.error == null) {
-                    Text(
-                        text = stringResource(R.string.location_no_shelves),
-                        modifier = Modifier.padding(16.dp),
-                    )
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .navigationBarsPadding(),
+            ) {
+                if (state.loading) {
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                 }
-            } else {
-                ScrollableTabRow(
-                    selectedTabIndex = currentPage,
-                ) {
-                    state.shelves.forEachIndexed { index, shelf ->
-                        val isSelected = if (state.deleteMode) shelf.id in state.selectedShelves
-                                         else currentPage == index
-                        val tabHasWarning = shelfWarnings[shelf.id] == true
-                        // The warning is conveyed visually by red text + a dot; give the
-                        // text row a content description so it isn't color-only (WCAG
-                        // 1.4.1) and TalkBack announces "<shelf>, has missing items" (W9).
-                        val warningCd = if (tabHasWarning && !state.deleteMode) {
-                            stringResource(R.string.location_shelf_missing_cd, shelf.name)
-                        } else {
-                            null
-                        }
-                        Tab(
-                            selected = isSelected,
-                            onClick = {
+
+                state.error?.let {
+                    LiveStatusText(it, modifier = Modifier.padding(16.dp))
+                }
+
+                if (state.shelves.isEmpty()) {
+                    // Suppress "no shelves yet" on a failed load — the error line above
+                    // already explains it; showing both reads as a false empty (W7).
+                    if (!state.loading && state.error == null) {
+                        Text(
+                            text = stringResource(R.string.location_no_shelves),
+                            modifier = Modifier.padding(16.dp),
+                        )
+                    }
+                } else {
+                    ScrollableTabRow(
+                        selectedTabIndex = currentPage,
+                    ) {
+                        state.shelves.forEachIndexed { index, shelf ->
+                            val isSelected =
                                 if (state.deleteMode) {
-                                    shelvesViewModel.toggleShelfSelection(shelf.id)
+                                    shelf.id in state.selectedShelves
                                 } else {
-                                    scope.launch { pagerState.animateScrollToPage(index) }
+                                    currentPage == index
                                 }
-                            },
-                            text = {
-                                if (state.deleteMode && shelf.id in state.selectedShelves) {
-                                    Text(shelf.name)
+                            val tabHasWarning = shelfWarnings[shelf.id] == true
+                            // The warning is conveyed visually by red text + a dot; give the
+                            // text row a content description so it isn't color-only (WCAG
+                            // 1.4.1) and TalkBack announces "<shelf>, has missing items" (W9).
+                            val warningCd =
+                                if (tabHasWarning && !state.deleteMode) {
+                                    stringResource(R.string.location_shelf_missing_cd, shelf.name)
                                 } else {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                        modifier = if (warningCd != null) {
-                                            Modifier.clearAndSetSemantics { contentDescription = warningCd }
-                                        } else {
-                                            Modifier
-                                        },
-                                    ) {
-                                        Text(
-                                            shelf.name,
-                                            color = if (tabHasWarning && !state.deleteMode) MaterialTheme.colorScheme.error else Color.Unspecified,
-                                        )
-                                        if (tabHasWarning && !state.deleteMode) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(6.dp)
-                                                    .background(MaterialTheme.colorScheme.error, CircleShape),
+                                    null
+                                }
+                            Tab(
+                                selected = isSelected,
+                                onClick = {
+                                    if (state.deleteMode) {
+                                        shelvesViewModel.toggleShelfSelection(shelf.id)
+                                    } else {
+                                        scope.launch { pagerState.animateScrollToPage(index) }
+                                    }
+                                },
+                                text = {
+                                    if (state.deleteMode && shelf.id in state.selectedShelves) {
+                                        Text(shelf.name)
+                                    } else {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                            modifier =
+                                                if (warningCd != null) {
+                                                    Modifier.clearAndSetSemantics { contentDescription = warningCd }
+                                                } else {
+                                                    Modifier
+                                                },
+                                        ) {
+                                            Text(
+                                                shelf.name,
+                                                color =
+                                                    if (tabHasWarning && !state.deleteMode) {
+                                                        MaterialTheme.colorScheme.error
+                                                    } else {
+                                                        Color.Unspecified
+                                                    },
                                             )
+                                            if (tabHasWarning && !state.deleteMode) {
+                                                Box(
+                                                    modifier =
+                                                        Modifier
+                                                            .size(6.dp)
+                                                            .background(MaterialTheme.colorScheme.error, CircleShape),
+                                                )
+                                            }
                                         }
                                     }
-                                }
+                                },
+                                icon =
+                                    if (state.deleteMode && shelf.id in state.selectedShelves) {
+                                        {
+                                            Icon(
+                                                Icons.Default.CheckCircle,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(16.dp),
+                                            )
+                                        }
+                                    } else {
+                                        null
+                                    },
+                            )
+                        }
+                    }
+
+                    HorizontalPager(
+                        state = pagerState,
+                        userScrollEnabled = !state.deleteMode,
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                    ) { page ->
+                        val shelf = state.shelves[page]
+                        ProductsPane(
+                            householdId = householdId,
+                            shelfId = shelf.id,
+                            snackbarHostState = snackbarHostState,
+                            onOpenProduct = { product -> onOpenProduct(householdId, product.shelf_id, product.id) },
+                            onWarningChange = { hasWarning ->
+                                shelfWarnings = shelfWarnings + (shelf.id to hasWarning)
+                                drawerViewModel.reportLocationWarning(locationId, shelfWarnings.values.any { it })
                             },
-                            icon = if (state.deleteMode && shelf.id in state.selectedShelves) {
-                                { Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(16.dp)) }
-                            } else null,
+                            refreshKey = productsRefreshKey,
                         )
                     }
                 }
-
-                HorizontalPager(
-                    state = pagerState,
-                    userScrollEnabled = !state.deleteMode,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                ) { page ->
-                    val shelf = state.shelves[page]
-                    ProductsPane(
-                        householdId = householdId,
-                        shelfId = shelf.id,
-                        snackbarHostState = snackbarHostState,
-                        onOpenProduct = { product -> onOpenProduct(householdId, product.shelf_id, product.id) },
-                        onWarningChange = { hasWarning ->
-                            shelfWarnings = shelfWarnings + (shelf.id to hasWarning)
-                            drawerViewModel.reportLocationWarning(locationId, shelfWarnings.values.any { it })
-                        },
-                        refreshKey = productsRefreshKey,
-                    )
-                }
             }
-        }
         } // end PullToRefreshBox
     }
 
@@ -293,10 +330,11 @@ fun LocationDetailScreen(
             sheetState = sheetState,
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .padding(bottom = 32.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                        .padding(bottom = 32.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 Text(text = stringResource(R.string.add_shelf_sheet_title), style = MaterialTheme.typography.titleLarge)
@@ -310,11 +348,12 @@ fun LocationDetailScreen(
                         label = { Text(stringResource(R.string.add_shelf_field_name)) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(autoCorrect = false, imeAction = ImeAction.Done),
-                        keyboardActions = KeyboardActions(onDone = {
-                            keyboardController?.hide()
-                            shelvesViewModel.create()
-                            showAddShelfSheet = false
-                        }),
+                        keyboardActions =
+                            KeyboardActions(onDone = {
+                                keyboardController?.hide()
+                                shelvesViewModel.create()
+                                showAddShelfSheet = false
+                            }),
                         modifier = Modifier.weight(1f),
                     )
                     Button(
@@ -359,18 +398,23 @@ private fun AddProductSheet(
         sheetState = sheetState,
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 32.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(0.dp),
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                Text(text = stringResource(R.string.add_product_sheet_title), style = MaterialTheme.typography.titleLarge)
+                Text(
+                    text = stringResource(R.string.add_product_sheet_title),
+                    style = MaterialTheme.typography.titleLarge,
+                )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -381,11 +425,12 @@ private fun AddProductSheet(
                         label = { Text(stringResource(R.string.add_product_field_name)) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(autoCorrect = false, imeAction = ImeAction.Done),
-                        keyboardActions = KeyboardActions(onDone = {
-                            keyboardController?.hide()
-                            viewModel.create()
-                            onDismiss()
-                        }),
+                        keyboardActions =
+                            KeyboardActions(onDone = {
+                                keyboardController?.hide()
+                                viewModel.create()
+                                onDismiss()
+                            }),
                         modifier = Modifier.weight(1f),
                     )
                     Button(
@@ -407,13 +452,14 @@ private fun AddProductSheet(
                     Text(
                         text = name,
                         style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                keyboardController?.hide()
-                                viewModel.selectSuggestion(name)
-                            }
-                            .padding(horizontal = 24.dp, vertical = 14.dp),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    keyboardController?.hide()
+                                    viewModel.selectSuggestion(name)
+                                }
+                                .padding(horizontal = 24.dp, vertical = 14.dp),
                     )
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 24.dp))
                 }

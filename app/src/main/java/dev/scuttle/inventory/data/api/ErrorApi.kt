@@ -6,5 +6,7 @@ import retrofit2.http.POST
 
 interface ErrorApi {
     @POST("errors")
-    suspend fun log(@Body body: ClientErrorRequest)
+    suspend fun log(
+        @Body body: ClientErrorRequest,
+    )
 }

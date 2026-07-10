@@ -19,13 +19,20 @@ data class MissingItemsUiState(
 )
 
 @HiltViewModel
-class MissingItemsViewModel @Inject constructor(
-    private val store: HierarchyStore,
-) : ViewModel() {
+class MissingItemsViewModel
+    @Inject
+    constructor(
+        private val store: HierarchyStore,
+    ) : ViewModel() {
+        val state: StateFlow<MissingItemsUiState> =
+            store.state.map { s ->
+                MissingItemsUiState(
+                    loading = s.loading,
+                    refreshing = s.refreshing,
+                    items = s.missingItems,
+                    error = s.error,
+                )
+            }.stateIn(viewModelScope, SharingStarted.Eagerly, MissingItemsUiState())
 
-    val state: StateFlow<MissingItemsUiState> = store.state.map { s ->
-        MissingItemsUiState(loading = s.loading, refreshing = s.refreshing, items = s.missingItems, error = s.error)
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, MissingItemsUiState())
-
-    fun refresh() = store.refresh(userInitiated = true)
-}
+        fun refresh() = store.refresh(userInitiated = true)
+    }

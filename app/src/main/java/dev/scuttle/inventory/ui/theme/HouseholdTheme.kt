@@ -39,27 +39,29 @@ data class HouseholdTheme(
     val icon: ImageVector,
 )
 
-private val householdAccents = listOf(
-    Color(0xFF7DD3FC), // sky (Frost accent)
-    Color(0xFF5EEAD4), // teal
-    Color(0xFFA5B4FC), // indigo
-    Color(0xFFF9A8D4), // pink
-    Color(0xFFFCD34D), // amber
-    Color(0xFF86EFAC), // green
-    Color(0xFFC4B5FD), // violet
-    Color(0xFFFDBA74), // orange
-)
+private val householdAccents =
+    listOf(
+        Color(0xFF7DD3FC), // sky (Frost accent)
+        Color(0xFF5EEAD4), // teal
+        Color(0xFFA5B4FC), // indigo
+        Color(0xFFF9A8D4), // pink
+        Color(0xFFFCD34D), // amber
+        Color(0xFF86EFAC), // green
+        Color(0xFFC4B5FD), // violet
+        Color(0xFFFDBA74), // orange
+    )
 
-private val householdIcons = listOf(
-    Icons.Filled.Home,
-    Icons.Filled.Kitchen,
-    Icons.Filled.House,
-    Icons.Filled.Apartment,
-    Icons.Filled.Cottage,
-    Icons.Filled.Warehouse,
-    Icons.Filled.Storefront,
-    Icons.Filled.Inventory2,
-)
+private val householdIcons =
+    listOf(
+        Icons.Filled.Home,
+        Icons.Filled.Kitchen,
+        Icons.Filled.House,
+        Icons.Filled.Apartment,
+        Icons.Filled.Cottage,
+        Icons.Filled.Warehouse,
+        Icons.Filled.Storefront,
+        Icons.Filled.Inventory2,
+    )
 
 /** Stable theme for a household id. Index math lives in HouseholdThemeIndex.kt. */
 fun householdTheme(id: Long): HouseholdTheme =
@@ -78,10 +80,11 @@ fun HouseholdAvatar(
 ) {
     val theme = householdTheme(householdId)
     Box(
-        modifier = modifier
-            .size(size)
-            .clip(CircleShape)
-            .background(theme.accent.copy(alpha = 0.28f)),
+        modifier =
+            modifier
+                .size(size)
+                .clip(CircleShape)
+                .background(theme.accent.copy(alpha = 0.28f)),
         contentAlignment = Alignment.Center,
     ) {
         Icon(

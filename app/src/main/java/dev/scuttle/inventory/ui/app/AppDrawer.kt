@@ -10,8 +10,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -55,16 +55,19 @@ fun AppDrawer(
     // Use a raw Surface so we can control the layout ourselves.
     // ModalDrawerSheet adds an internal verticalScroll which breaks weight-based pinning.
     Surface(
-        modifier = Modifier
-            .fillMaxHeight()
-            .width(DrawerDefaults.MaximumDrawerWidth),
+        modifier =
+            Modifier
+                .fillMaxHeight()
+                .width(DrawerDefaults.MaximumDrawerWidth),
         color = MaterialTheme.colorScheme.surface,
         tonalElevation = DrawerDefaults.ModalDrawerElevation,
         shape = DrawerDefaults.shape,
     ) {
-        Column(modifier = Modifier
-            .fillMaxHeight()
-            .windowInsetsPadding(WindowInsets.safeDrawing)
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxHeight()
+                    .windowInsetsPadding(WindowInsets.safeDrawing),
         ) {
             Spacer(Modifier.height(8.dp))
 
@@ -113,16 +116,28 @@ fun AppDrawer(
                     Icon(
                         Icons.Default.Warning,
                         contentDescription = null,
-                        tint = if (missingCount > 0) MaterialTheme.colorScheme.error
-                               else MaterialTheme.colorScheme.onSurfaceVariant,
+                        tint =
+                            if (missingCount > 0) {
+                                MaterialTheme.colorScheme.error
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
                     )
                 },
                 label = {
                     Text(
-                        text = if (missingCount > 0) stringResource(R.string.drawer_missing_items_count, missingCount)
-                               else stringResource(R.string.drawer_missing_items),
-                        color = if (missingCount > 0) MaterialTheme.colorScheme.error
-                                else MaterialTheme.colorScheme.onSurfaceVariant,
+                        text =
+                            if (missingCount > 0) {
+                                stringResource(R.string.drawer_missing_items_count, missingCount)
+                            } else {
+                                stringResource(R.string.drawer_missing_items)
+                            },
+                        color =
+                            if (missingCount > 0) {
+                                MaterialTheme.colorScheme.error
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
                     )
                 },
                 selected = false,
@@ -134,10 +149,11 @@ fun AppDrawer(
 
             // Scrollable middle section — takes all remaining space
             Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()),
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState()),
             ) {
                 if (state.entries.isEmpty() && !state.loading) {
                     Text(
@@ -167,7 +183,11 @@ fun AppDrawer(
                             IconButton(onClick = { onNavigateSearch(entry.id) }) {
                                 Icon(
                                     Icons.Default.Search,
-                                    contentDescription = stringResource(R.string.drawer_search_household_cd, entry.name),
+                                    contentDescription =
+                                        stringResource(
+                                            R.string.drawer_search_household_cd,
+                                            entry.name,
+                                        ),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
@@ -179,8 +199,12 @@ fun AppDrawer(
                             label = {
                                 Text(
                                     text = if (hasWarning) "⚠ ${location.name}" else location.name,
-                                    color = if (hasWarning) MaterialTheme.colorScheme.error
-                                            else MaterialTheme.colorScheme.onSurface,
+                                    color =
+                                        if (hasWarning) {
+                                            MaterialTheme.colorScheme.error
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurface
+                                        },
                                 )
                             },
                             selected = false,
@@ -201,7 +225,6 @@ fun AppDrawer(
                 onClick = onNavigateSettings,
                 modifier = Modifier.padding(horizontal = 12.dp),
             )
-
         }
     }
 }

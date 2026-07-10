@@ -1,17 +1,16 @@
 package dev.scuttle.inventory.ui.households
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -80,7 +79,10 @@ fun HouseholdsScreen(
                 title = { Text(stringResource(R.string.households_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.action_back),
+                        )
                     }
                 },
             )
@@ -94,62 +96,69 @@ fun HouseholdsScreen(
         PullToRefreshBox(
             isRefreshing = state.refreshing,
             onRefresh = viewModel::refresh,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .navigationBarsPadding(),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .navigationBarsPadding(),
         ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Spacer(Modifier.height(4.dp))
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Spacer(Modifier.height(4.dp))
 
-            state.error?.let {
-                LiveStatusText(it)
-            }
+                state.error?.let {
+                    LiveStatusText(it)
+                }
 
-            if (state.households.isEmpty() && !state.loading) {
-                Text(
-                    text = stringResource(R.string.households_empty),
-                    modifier = Modifier.padding(top = 24.dp),
-                )
-            }
+                if (state.households.isEmpty() && !state.loading) {
+                    Text(
+                        text = stringResource(R.string.households_empty),
+                        modifier = Modifier.padding(top = 24.dp),
+                    )
+                }
 
-            state.households.forEach { household ->
-                FrostCard(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .semantics { contentDescription = household.name },
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
-                            .fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                state.households.forEach { household ->
+                    FrostCard(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .semantics { contentDescription = household.name },
                     ) {
-                        HouseholdAvatar(householdId = household.id)
-                        Text(
-                            text = household.name,
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.weight(1f),
-                        )
-                        IconButton(onClick = { onOpenInvite(household.id, household.name) }) {
-                            Icon(Icons.Default.Share, contentDescription = stringResource(R.string.households_invite_cd, household.name))
-                        }
-                        TextButton(onClick = { confirmLeaveId = household.id }) {
-                            Text(stringResource(R.string.households_leave), color = MaterialTheme.colorScheme.error)
+                        Row(
+                            modifier =
+                                Modifier
+                                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                                    .fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            HouseholdAvatar(householdId = household.id)
+                            Text(
+                                text = household.name,
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.weight(1f),
+                            )
+                            IconButton(onClick = { onOpenInvite(household.id, household.name) }) {
+                                Icon(
+                                    Icons.Default.Share,
+                                    contentDescription = stringResource(R.string.households_invite_cd, household.name),
+                                )
+                            }
+                            TextButton(onClick = { confirmLeaveId = household.id }) {
+                                Text(stringResource(R.string.households_leave), color = MaterialTheme.colorScheme.error)
+                            }
                         }
                     }
                 }
-            }
 
-            Spacer(Modifier.height(80.dp))
-        }
+                Spacer(Modifier.height(80.dp))
+            }
         } // end PullToRefreshBox
     }
 
@@ -159,24 +168,29 @@ fun HouseholdsScreen(
             sheetState = sheetState,
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .padding(bottom = 32.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                        .padding(bottom = 32.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                Text(text = stringResource(R.string.dashboard_create_household), style = MaterialTheme.typography.titleLarge)
+                Text(
+                    text = stringResource(R.string.dashboard_create_household),
+                    style = MaterialTheme.typography.titleLarge,
+                )
                 OutlinedTextField(
                     value = state.newName,
                     onValueChange = viewModel::onNewNameChange,
                     label = { Text(stringResource(R.string.households_field_name)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(autoCorrect = false, imeAction = ImeAction.Done),
-                    keyboardActions = KeyboardActions(onDone = {
-                        keyboardController?.hide()
-                        viewModel.create()
-                        showCreateSheet = false
-                    }),
+                    keyboardActions =
+                        KeyboardActions(onDone = {
+                            keyboardController?.hide()
+                            viewModel.create()
+                            showCreateSheet = false
+                        }),
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Button(
@@ -201,7 +215,10 @@ fun HouseholdsScreen(
             title = { Text(stringResource(R.string.households_leave_dialog_title, name)) },
             text = { Text(stringResource(R.string.households_leave_dialog_text)) },
             confirmButton = {
-                TextButton(onClick = { viewModel.leave(id); confirmLeaveId = null }) {
+                TextButton(onClick = {
+                    viewModel.leave(id)
+                    confirmLeaveId = null
+                }) {
                     Text(stringResource(R.string.households_leave), color = MaterialTheme.colorScheme.error)
                 }
             },

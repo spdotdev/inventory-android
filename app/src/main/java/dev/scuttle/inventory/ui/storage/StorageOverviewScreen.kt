@@ -3,18 +3,18 @@ package dev.scuttle.inventory.ui.storage
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -28,10 +28,8 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import dev.scuttle.inventory.ui.theme.FrostCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -45,6 +43,7 @@ import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
@@ -69,6 +68,7 @@ import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.dto.LocationDto
 import dev.scuttle.inventory.ui.common.ErrorRetry
 import dev.scuttle.inventory.ui.common.storageTypeLabel
+import dev.scuttle.inventory.ui.theme.FrostCard
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -99,12 +99,18 @@ fun StorageOverviewScreen(
                 title = { Text(stringResource(R.string.all_storage_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.action_back),
+                        )
                     }
                 },
                 actions = {
                     IconButton(onClick = onOpenSearch) {
-                        Icon(Icons.Default.Search, contentDescription = stringResource(R.string.storage_overview_search_cd))
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = stringResource(R.string.storage_overview_search_cd),
+                        )
                     }
                     IconButton(onClick = onOpenDrawer) {
                         Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.action_open_menu))
@@ -121,90 +127,98 @@ fun StorageOverviewScreen(
         PullToRefreshBox(
             isRefreshing = state.refreshing,
             onRefresh = viewModel::refresh,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding),
         ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .navigationBarsPadding()
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Spacer(Modifier.height(4.dp))
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .navigationBarsPadding()
+                        .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Spacer(Modifier.height(4.dp))
 
-            if (state.loading) {
-                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-            }
+                if (state.loading) {
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                }
 
-            state.error?.let {
-                ErrorRetry(message = it, onRetry = viewModel::refresh)
-            }
+                state.error?.let {
+                    ErrorRetry(message = it, onRetry = viewModel::refresh)
+                }
 
-            // Don't show the empty text on a failed load — the ErrorRetry above
-            // already explains it; "No storages yet" alongside would be a false
-            // "your account is empty" (W7).
-            if (state.locations.isEmpty() && !state.loading && state.error == null) {
-                Text(
-                    text = stringResource(R.string.storage_overview_empty),
-                    modifier = Modifier.padding(top = 8.dp),
-                )
-            }
-
-            state.locations.forEach { location ->
-                key(location.id) {
-                    // Hoist formatted string for use inside non-composable semantics block
-                    val openDesc = stringResource(R.string.storage_overview_open_cd, location.name)
-
-                    val swipeState = rememberSwipeToDismissBoxState(
-                        confirmValueChange = { value ->
-                            if (value == SwipeToDismissBoxValue.EndToStart) {
-                                pendingDeleteLocation = location
-                            }
-                            false // always snap back; deletion confirmed via dialog
-                        },
+                // Don't show the empty text on a failed load — the ErrorRetry above
+                // already explains it; "No storages yet" alongside would be a false
+                // "your account is empty" (W7).
+                if (state.locations.isEmpty() && !state.loading && state.error == null) {
+                    Text(
+                        text = stringResource(R.string.storage_overview_empty),
+                        modifier = Modifier.padding(top = 8.dp),
                     )
-                    SwipeToDismissBox(
-                        state = swipeState,
-                        enableDismissFromStartToEnd = false,
-                        backgroundContent = {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(
-                                        color = MaterialTheme.colorScheme.errorContainer,
-                                        shape = MaterialTheme.shapes.medium,
-                                    ),
-                                contentAlignment = Alignment.CenterEnd,
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Delete,
-                                    contentDescription = stringResource(R.string.action_delete),
-                                    tint = MaterialTheme.colorScheme.onErrorContainer,
-                                    modifier = Modifier.padding(horizontal = 20.dp),
-                                )
-                            }
-                        },
-                    ) {
-                        FrostCard(
-                            onClick = { onOpenLocation(location.id) },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .semantics { contentDescription = openDesc },
+                }
+
+                state.locations.forEach { location ->
+                    key(location.id) {
+                        // Hoist formatted string for use inside non-composable semantics block
+                        val openDesc = stringResource(R.string.storage_overview_open_cd, location.name)
+
+                        val swipeState =
+                            rememberSwipeToDismissBoxState(
+                                confirmValueChange = { value ->
+                                    if (value == SwipeToDismissBoxValue.EndToStart) {
+                                        pendingDeleteLocation = location
+                                    }
+                                    false // always snap back; deletion confirmed via dialog
+                                },
+                            )
+                        SwipeToDismissBox(
+                            state = swipeState,
+                            enableDismissFromStartToEnd = false,
+                            backgroundContent = {
+                                Box(
+                                    modifier =
+                                        Modifier
+                                            .fillMaxSize()
+                                            .background(
+                                                color = MaterialTheme.colorScheme.errorContainer,
+                                                shape = MaterialTheme.shapes.medium,
+                                            ),
+                                    contentAlignment = Alignment.CenterEnd,
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = stringResource(R.string.action_delete),
+                                        tint = MaterialTheme.colorScheme.onErrorContainer,
+                                        modifier = Modifier.padding(horizontal = 20.dp),
+                                    )
+                                }
+                            },
                         ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Text(text = location.name, style = MaterialTheme.typography.bodyLarge)
-                                Text(text = storageTypeLabel(location.type), style = MaterialTheme.typography.bodySmall)
+                            FrostCard(
+                                onClick = { onOpenLocation(location.id) },
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .semantics { contentDescription = openDesc },
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Text(text = location.name, style = MaterialTheme.typography.bodyLarge)
+                                    Text(
+                                        text = storageTypeLabel(location.type),
+                                        style = MaterialTheme.typography.bodySmall,
+                                    )
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            Spacer(Modifier.height(80.dp))
-        }
+                Spacer(Modifier.height(80.dp))
+            }
         } // end PullToRefreshBox
     }
 
@@ -234,13 +248,17 @@ fun StorageOverviewScreen(
             sheetState = sheetState,
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .padding(bottom = 32.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                        .padding(bottom = 32.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                Text(text = stringResource(R.string.add_storage_sheet_title), style = MaterialTheme.typography.titleLarge)
+                Text(
+                    text = stringResource(R.string.add_storage_sheet_title),
+                    style = MaterialTheme.typography.titleLarge,
+                )
 
                 Text(text = stringResource(R.string.add_storage_type_label))
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -263,11 +281,12 @@ fun StorageOverviewScreen(
                         label = { Text(stringResource(R.string.add_storage_name_field)) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(autoCorrect = false, imeAction = ImeAction.Done),
-                        keyboardActions = KeyboardActions(onDone = {
-                            keyboardController?.hide()
-                            viewModel.create()
-                            showAddSheet = false
-                        }),
+                        keyboardActions =
+                            KeyboardActions(onDone = {
+                                keyboardController?.hide()
+                                viewModel.create()
+                                showAddSheet = false
+                            }),
                         modifier = Modifier.weight(1f),
                     )
                     Button(

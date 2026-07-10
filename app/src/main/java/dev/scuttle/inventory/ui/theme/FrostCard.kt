@@ -14,9 +14,10 @@ import androidx.compose.ui.unit.dp
 /** Container + border tint for the Frost translucent card treatment (D-021), theme-aware. */
 data class FrostCardColors(val container: Color, val border: Color)
 
-val LocalFrostCardColors = staticCompositionLocalOf {
-    FrostCardColors(container = Color.Unspecified, border = Color.Unspecified)
-}
+val LocalFrostCardColors =
+    staticCompositionLocalOf {
+        FrostCardColors(container = Color.Unspecified, border = Color.Unspecified)
+    }
 
 private val FrostCardShape = RoundedCornerShape(22.dp)
 

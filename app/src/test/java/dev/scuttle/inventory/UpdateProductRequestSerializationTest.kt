@@ -13,21 +13,21 @@ import org.junit.Test
  * didn't persist. Every field must always be encoded (null as explicit null).
  */
 class UpdateProductRequestSerializationTest {
-
     private val json = Json { ignoreUnknownKeys = true } // mirrors NetworkModule
 
     @Test
     fun cleared_fields_are_encoded_as_explicit_nulls_and_false() {
-        val body = json.encodeToString(
-            UpdateProductRequest.serializer(),
-            UpdateProductRequest(
-                name = "Milk",
-                description = null,
-                code = null,
-                is_mandatory = false,
-                low_stock_threshold = null,
-            ),
-        )
+        val body =
+            json.encodeToString(
+                UpdateProductRequest.serializer(),
+                UpdateProductRequest(
+                    name = "Milk",
+                    description = null,
+                    code = null,
+                    is_mandatory = false,
+                    low_stock_threshold = null,
+                ),
+            )
 
         assertEquals(
             """{"name":"Milk","description":null,"code":null,"is_mandatory":false,"low_stock_threshold":null}""",

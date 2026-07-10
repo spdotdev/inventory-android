@@ -1,0 +1,6 @@
+# Keep ktlint and detekt in agreement (detekt MaxLineLength defaults to 120).
+root = true
+
+[*.{kt,kts}]
+max_line_length = 120
+ktlint_function_naming_ignore_when_annotated_with = Composable

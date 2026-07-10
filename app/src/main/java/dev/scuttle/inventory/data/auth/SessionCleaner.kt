@@ -21,22 +21,24 @@ import javax.inject.Singleton
  * always-online, no-local-DB rule.
  */
 @Singleton
-class SessionCleaner @Inject constructor(
-    private val householdRepository: HouseholdRepository,
-    private val locationRepository: LocationRepository,
-    private val shelfRepository: ShelfRepository,
-    private val productRepository: ProductRepository,
-    private val hierarchyStore: HierarchyStore,
-    private val favoritesStore: FavoritesStore,
-    private val defaultHouseholdStore: DefaultHouseholdStore,
-) {
-    fun clear() {
-        householdRepository.clear()
-        locationRepository.clear()
-        shelfRepository.clear()
-        productRepository.clear()
-        hierarchyStore.clear()
-        favoritesStore.clear()
-        defaultHouseholdStore.clear()
+class SessionCleaner
+    @Inject
+    constructor(
+        private val householdRepository: HouseholdRepository,
+        private val locationRepository: LocationRepository,
+        private val shelfRepository: ShelfRepository,
+        private val productRepository: ProductRepository,
+        private val hierarchyStore: HierarchyStore,
+        private val favoritesStore: FavoritesStore,
+        private val defaultHouseholdStore: DefaultHouseholdStore,
+    ) {
+        fun clear() {
+            householdRepository.clear()
+            locationRepository.clear()
+            shelfRepository.clear()
+            productRepository.clear()
+            hierarchyStore.clear()
+            favoritesStore.clear()
+            defaultHouseholdStore.clear()
+        }
     }
-}

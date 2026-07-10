@@ -4,15 +4,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -42,7 +42,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -55,12 +54,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
+import dev.scuttle.inventory.data.HouseholdWithLocations
+import dev.scuttle.inventory.data.dto.LocationDto
+import dev.scuttle.inventory.ui.app.DrawerViewModel
 import dev.scuttle.inventory.ui.common.ErrorRetry
 import dev.scuttle.inventory.ui.common.SnackbarErrorEffect
 import dev.scuttle.inventory.ui.common.storageTypeLabel
-import dev.scuttle.inventory.data.dto.LocationDto
-import dev.scuttle.inventory.ui.app.DrawerViewModel
-import dev.scuttle.inventory.data.HouseholdWithLocations
 import dev.scuttle.inventory.ui.theme.FrostCard
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -107,16 +106,18 @@ fun AllStoragesScreen(
         PullToRefreshBox(
             isRefreshing = state.refreshing,
             onRefresh = { viewModel.refresh() },
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .navigationBarsPadding(),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .navigationBarsPadding(),
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp),
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Spacer(Modifier.height(4.dp))
@@ -142,7 +143,10 @@ fun AllStoragesScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                         IconButton(onClick = { onOpenStorage(entry.id) }) {
-                            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.all_storage_add_location_cd))
+                            Icon(
+                                Icons.Default.Add,
+                                contentDescription = stringResource(R.string.all_storage_add_location_cd),
+                            )
                         }
                     }
 
@@ -151,26 +155,28 @@ fun AllStoragesScreen(
                             val hasWarning = state.locationWarnings[location.id] == true
                             val isFavorite = location.id in localState.favoriteLocationIds
 
-                            val swipeState = rememberSwipeToDismissBoxState(
-                                confirmValueChange = { value ->
-                                    if (value == SwipeToDismissBoxValue.EndToStart) {
-                                        pendingDelete = entry to location
-                                    }
-                                    false
-                                },
-                            )
+                            val swipeState =
+                                rememberSwipeToDismissBoxState(
+                                    confirmValueChange = { value ->
+                                        if (value == SwipeToDismissBoxValue.EndToStart) {
+                                            pendingDelete = entry to location
+                                        }
+                                        false
+                                    },
+                                )
                             SwipeToDismissBox(
                                 state = swipeState,
                                 enableDismissFromStartToEnd = false,
                                 modifier = Modifier.fillMaxWidth(),
                                 backgroundContent = {
                                     Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .background(
-                                                color = MaterialTheme.colorScheme.errorContainer,
-                                                shape = MaterialTheme.shapes.medium,
-                                            ),
+                                        modifier =
+                                            Modifier
+                                                .fillMaxSize()
+                                                .background(
+                                                    color = MaterialTheme.colorScheme.errorContainer,
+                                                    shape = MaterialTheme.shapes.medium,
+                                                ),
                                         contentAlignment = Alignment.CenterEnd,
                                     ) {
                                         Icon(
@@ -184,9 +190,10 @@ fun AllStoragesScreen(
                             ) {
                                 val rowContent: @Composable () -> Unit = {
                                     Row(
-                                        modifier = Modifier
-                                            .padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp)
-                                            .fillMaxWidth(),
+                                        modifier =
+                                            Modifier
+                                                .padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp)
+                                                .fillMaxWidth(),
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically,
                                     ) {
@@ -210,8 +217,20 @@ fun AllStoragesScreen(
                                         IconButton(onClick = { localViewModel.toggleFavorite(location.id) }) {
                                             Icon(
                                                 if (isFavorite) Icons.Default.Star else Icons.Outlined.StarOutline,
-                                                contentDescription = if (isFavorite) stringResource(R.string.all_storage_favorite_remove_cd) else stringResource(R.string.all_storage_favorite_add_cd),
-                                                tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                                contentDescription =
+                                                    if (isFavorite) {
+                                                        stringResource(
+                                                            R.string.all_storage_favorite_remove_cd,
+                                                        )
+                                                    } else {
+                                                        stringResource(R.string.all_storage_favorite_add_cd)
+                                                    },
+                                                tint =
+                                                    if (isFavorite) {
+                                                        MaterialTheme.colorScheme.primary
+                                                    } else {
+                                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                                    },
                                             )
                                         }
                                     }
@@ -220,7 +239,13 @@ fun AllStoragesScreen(
                                     Card(
                                         onClick = { onOpenLocation(entry.id, location.id) },
                                         modifier = Modifier.fillMaxWidth(),
-                                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f)),
+                                        colors =
+                                            CardDefaults.cardColors(
+                                                containerColor =
+                                                    MaterialTheme.colorScheme.errorContainer.copy(
+                                                        alpha = 0.4f,
+                                                    ),
+                                            ),
                                         content = { rowContent() },
                                     )
                                 } else {
@@ -247,7 +272,10 @@ fun AllStoragesScreen(
             text = { Text(stringResource(R.string.delete_dialog_location_text)) },
             confirmButton = {
                 Button(
-                    onClick = { viewModel.deleteLocation(entry.id, location.id); pendingDelete = null },
+                    onClick = {
+                        viewModel.deleteLocation(entry.id, location.id)
+                        pendingDelete = null
+                    },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                 ) { Text(stringResource(R.string.action_delete)) }
             },

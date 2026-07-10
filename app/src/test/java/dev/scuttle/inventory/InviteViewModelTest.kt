@@ -9,7 +9,6 @@ import org.junit.Rule
 import org.junit.Test
 
 class InviteViewModelTest {
-
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
@@ -21,21 +20,23 @@ class InviteViewModelTest {
     }
 
     @Test
-    fun load_populates_code_and_link() = runTest {
-        val viewModel = InviteViewModel(FakeInviteRepository())
+    fun load_populates_code_and_link() =
+        runTest {
+            val viewModel = InviteViewModel(FakeInviteRepository())
 
-        viewModel.load(householdId = 1)
+            viewModel.load(householdId = 1)
 
-        assertEquals("FROST-7K2Q", viewModel.state.value.code)
-        assertEquals("https://inventory.test/join/FROST-7K2Q", viewModel.state.value.link)
-    }
+            assertEquals("FROST-7K2Q", viewModel.state.value.code)
+            assertEquals("https://inventory.test/join/FROST-7K2Q", viewModel.state.value.link)
+        }
 
     @Test
-    fun load_failure_surfaces_an_error() = runTest {
-        val viewModel = InviteViewModel(FakeInviteRepository(fail = true))
+    fun load_failure_surfaces_an_error() =
+        runTest {
+            val viewModel = InviteViewModel(FakeInviteRepository(fail = true))
 
-        viewModel.load(householdId = 1)
+            viewModel.load(householdId = 1)
 
-        assertEquals("offline", viewModel.state.value.error)
-    }
+            assertEquals("offline", viewModel.state.value.error)
+        }
 }

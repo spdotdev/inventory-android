@@ -1,14 +1,15 @@
 package dev.scuttle.inventory.ui.settings
 
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -31,23 +32,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.compose.ui.platform.LocalContext
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
 import dev.scuttle.inventory.R
-import dev.scuttle.inventory.ui.common.LiveStatusText
 import dev.scuttle.inventory.data.settings.AppLanguage
+import dev.scuttle.inventory.ui.common.LiveStatusText
 import dev.scuttle.inventory.ui.theme.ThemeMode
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -70,9 +69,10 @@ fun SettingsScreen(
 
     val scanPrompt = stringResource(R.string.settings_scan_prompt)
 
-    val scanLauncher = rememberLauncherForActivityResult(ScanContract()) { result ->
-        result.contents?.let { joinViewModel.onCodeChange(it) }
-    }
+    val scanLauncher =
+        rememberLauncherForActivityResult(ScanContract()) { result ->
+            result.contents?.let { joinViewModel.onCodeChange(it) }
+        }
 
     val statusBarInsets = WindowInsets.statusBars
     Scaffold(
@@ -91,15 +91,19 @@ fun SettingsScreen(
         },
     ) { padding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(padding)
-                .navigationBarsPadding()
-                .padding(horizontal = 24.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(padding)
+                    .navigationBarsPadding()
+                    .padding(horizontal = 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text(text = stringResource(R.string.settings_language_section), style = MaterialTheme.typography.titleMedium)
+            Text(
+                text = stringResource(R.string.settings_language_section),
+                style = MaterialTheme.typography.titleMedium,
+            )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 AppLanguage.entries.forEach { option ->
                     FilterChip(
@@ -125,7 +129,7 @@ fun SettingsScreen(
                                     ThemeMode.SYSTEM -> stringResource(R.string.theme_system)
                                     ThemeMode.LIGHT -> stringResource(R.string.theme_light)
                                     ThemeMode.DARK -> stringResource(R.string.theme_dark)
-                                }
+                                },
                             )
                         },
                     )
@@ -151,19 +155,24 @@ fun SettingsScreen(
                     onValueChange = joinViewModel::onCodeChange,
                     label = { Text(stringResource(R.string.settings_join_field)) },
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(
-                        capitalization = KeyboardCapitalization.Characters,
-                        autoCorrect = false,
-                        imeAction = ImeAction.Done,
-                    ),
-                    keyboardActions = KeyboardActions(onDone = {
-                        keyboardController?.hide()
-                        joinViewModel.join()
-                    }),
+                    keyboardOptions =
+                        KeyboardOptions(
+                            capitalization = KeyboardCapitalization.Characters,
+                            autoCorrect = false,
+                            imeAction = ImeAction.Done,
+                        ),
+                    keyboardActions =
+                        KeyboardActions(onDone = {
+                            keyboardController?.hide()
+                            joinViewModel.join()
+                        }),
                     modifier = Modifier.weight(1f),
                 )
                 Button(
-                    onClick = { keyboardController?.hide(); joinViewModel.join() },
+                    onClick = {
+                        keyboardController?.hide()
+                        joinViewModel.join()
+                    },
                     enabled = !joinState.loading && joinState.code.isNotBlank(),
                 ) {
                     Text(stringResource(R.string.settings_join_button))
@@ -176,7 +185,7 @@ fun SettingsScreen(
                             setPrompt(scanPrompt)
                             setBeepEnabled(false)
                             setOrientationLocked(false)
-                        }
+                        },
                     )
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -184,7 +193,10 @@ fun SettingsScreen(
                 Text(stringResource(R.string.settings_scan_qr_button))
             }
 
-            Text(text = stringResource(R.string.settings_households_section), style = MaterialTheme.typography.titleMedium)
+            Text(
+                text = stringResource(R.string.settings_households_section),
+                style = MaterialTheme.typography.titleMedium,
+            )
             Button(
                 onClick = onOpenHouseholds,
                 modifier = Modifier.fillMaxWidth(),

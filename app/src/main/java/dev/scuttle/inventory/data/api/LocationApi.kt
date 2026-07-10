@@ -11,7 +11,9 @@ import retrofit2.http.Path
 
 interface LocationApi {
     @GET("households/{household}/locations")
-    suspend fun list(@Path("household") householdId: Long): LocationListResponse
+    suspend fun list(
+        @Path("household") householdId: Long,
+    ): LocationListResponse
 
     @POST("households/{household}/locations")
     suspend fun create(

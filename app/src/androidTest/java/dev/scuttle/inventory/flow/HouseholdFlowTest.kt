@@ -3,12 +3,12 @@
 package dev.scuttle.inventory.flow
 
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.filterToOne
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.waitUntilAtLeastOneExists
@@ -18,7 +18,6 @@ import org.junit.Test
 
 @HiltAndroidTest
 class HouseholdFlowTest : FlowTestBase() {
-
     @Test
     fun create_household_appears_in_list() {
         // Login with empty households

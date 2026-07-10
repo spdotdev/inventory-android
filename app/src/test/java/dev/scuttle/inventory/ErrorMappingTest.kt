@@ -11,7 +11,6 @@ import java.net.UnknownHostException
 
 /** The shared Throwable -> user-message mapper (network + HTTP status handling). */
 class ErrorMappingTest {
-
     private fun http(code: Int) = HttpException(Response.error<Any>(code, "".toResponseBody(null)))
 
     @Test

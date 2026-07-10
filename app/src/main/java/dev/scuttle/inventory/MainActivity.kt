@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import kotlinx.coroutines.launch
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -29,6 +28,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import dagger.hilt.android.AndroidEntryPoint
+import dev.scuttle.inventory.data.settings.SharedPrefsLanguageStore
 import dev.scuttle.inventory.ui.app.AppDrawer
 import dev.scuttle.inventory.ui.app.DrawerViewModel
 import dev.scuttle.inventory.ui.auth.AuthScreen
@@ -39,18 +39,18 @@ import dev.scuttle.inventory.ui.home.AllStoragesScreen
 import dev.scuttle.inventory.ui.households.HouseholdsScreen
 import dev.scuttle.inventory.ui.invite.InviteScreen
 import dev.scuttle.inventory.ui.location.LocationDetailScreen
+import dev.scuttle.inventory.ui.missing.MissingItemsScreen
 import dev.scuttle.inventory.ui.products.ProductDetailScreen
 import dev.scuttle.inventory.ui.search.SearchScreen
 import dev.scuttle.inventory.ui.settings.SettingsScreen
 import dev.scuttle.inventory.ui.settings.ThemeViewModel
-import dev.scuttle.inventory.data.settings.SharedPrefsLanguageStore
-import dev.scuttle.inventory.ui.missing.MissingItemsScreen
 import dev.scuttle.inventory.ui.storage.StorageOverviewScreen
 import dev.scuttle.inventory.ui.theme.InventoryTheme
 import dev.scuttle.inventory.ui.theme.ThemeMode
+import kotlinx.coroutines.launch
+
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
     override fun attachBaseContext(newBase: Context) {
         val lang = SharedPrefsLanguageStore(newBase).get()
         val locale = java.util.Locale(lang.tag)
@@ -65,11 +65,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             val themeViewModel: ThemeViewModel = hiltViewModel()
             val mode by themeViewModel.mode.collectAsState()
-            val dark = when (mode) {
-                ThemeMode.SYSTEM -> isSystemInDarkTheme()
-                ThemeMode.LIGHT -> false
-                ThemeMode.DARK -> true
-            }
+            val dark =
+                when (mode) {
+                    ThemeMode.SYSTEM -> isSystemInDarkTheme()
+                    ThemeMode.LIGHT -> false
+                    ThemeMode.DARK -> true
+                }
 
             InventoryTheme(darkTheme = dark) {
                 Surface(modifier = Modifier.fillMaxSize()) {
@@ -95,10 +96,24 @@ private object Routes {
     const val MISSING_ITEMS = "missing-items"
 
     fun storage(householdId: Long) = "storage/$householdId"
+
     fun search(householdId: Long) = "search/$householdId"
-    fun invite(householdId: Long, householdName: String) = "invite/$householdId/${java.net.URLEncoder.encode(householdName, "UTF-8")}"
-    fun location(householdId: Long, locationId: Long) = "location/$householdId/$locationId"
-    fun productDetail(householdId: Long, shelfId: Long, productId: Long) = "product-detail/$householdId/$shelfId/$productId"
+
+    fun invite(
+        householdId: Long,
+        householdName: String,
+    ) = "invite/$householdId/${java.net.URLEncoder.encode(householdName, "UTF-8")}"
+
+    fun location(
+        householdId: Long,
+        locationId: Long,
+    ) = "location/$householdId/$locationId"
+
+    fun productDetail(
+        householdId: Long,
+        shelfId: Long,
+        productId: Long,
+    ) = "product-detail/$householdId/$shelfId/$productId"
 }
 
 /** Where an auth-state change should send the user. */
@@ -112,12 +127,16 @@ enum class AuthRedirect { TO_DASHBOARD, TO_AUTH }
  * so the restored/initial back stack is left intact. `previous == null` marks the
  * first composition. Pure + framework-free so it's unit-testable.
  */
-fun authRedirectFor(previous: Boolean?, current: Boolean): AuthRedirect? = when {
-    previous == current -> null
-    previous == null && !current -> null
-    current -> AuthRedirect.TO_DASHBOARD
-    else -> AuthRedirect.TO_AUTH
-}
+fun authRedirectFor(
+    previous: Boolean?,
+    current: Boolean,
+): AuthRedirect? =
+    when {
+        previous == current -> null
+        previous == null && !current -> null
+        current -> AuthRedirect.TO_DASHBOARD
+        else -> AuthRedirect.TO_AUTH
+    }
 
 @Composable
 private fun InventoryNavHost(
@@ -147,14 +166,16 @@ private fun InventoryNavHost(
 
         if (current) drawerViewModel.refresh()
         when (redirect) {
-            AuthRedirect.TO_DASHBOARD -> navController.navigate(Routes.DASHBOARD) {
-                popUpTo(navController.graph.id) { inclusive = true }
-                launchSingleTop = true
-            }
-            AuthRedirect.TO_AUTH -> navController.navigate(Routes.AUTH) {
-                popUpTo(navController.graph.id) { inclusive = true }
-                launchSingleTop = true
-            }
+            AuthRedirect.TO_DASHBOARD ->
+                navController.navigate(Routes.DASHBOARD) {
+                    popUpTo(navController.graph.id) { inclusive = true }
+                    launchSingleTop = true
+                }
+            AuthRedirect.TO_AUTH ->
+                navController.navigate(Routes.AUTH) {
+                    popUpTo(navController.graph.id) { inclusive = true }
+                    launchSingleTop = true
+                }
             null -> Unit // no transition — leave the restored back stack intact
         }
     }
@@ -283,22 +304,28 @@ private fun InventoryNavHost(
 
             composable(
                 route = Routes.INVITE,
-                arguments = listOf(
-                    navArgument("householdId") { type = NavType.LongType },
-                    navArgument("householdName") { type = NavType.StringType },
-                ),
+                arguments =
+                    listOf(
+                        navArgument("householdId") { type = NavType.LongType },
+                        navArgument("householdName") { type = NavType.StringType },
+                    ),
             ) { entry ->
                 val householdId = entry.arguments?.getLong("householdId") ?: return@composable
                 val householdName = entry.arguments?.getString("householdName") ?: ""
-                InviteScreen(householdId = householdId, storageName = householdName, onBack = { navController.popBackStack() })
+                InviteScreen(
+                    householdId = householdId,
+                    storageName = householdName,
+                    onBack = { navController.popBackStack() },
+                )
             }
 
             composable(
                 route = Routes.LOCATION,
-                arguments = listOf(
-                    navArgument("householdId") { type = NavType.LongType },
-                    navArgument("locationId") { type = NavType.LongType },
-                ),
+                arguments =
+                    listOf(
+                        navArgument("householdId") { type = NavType.LongType },
+                        navArgument("locationId") { type = NavType.LongType },
+                    ),
             ) { entry ->
                 val householdId = entry.arguments?.getLong("householdId") ?: return@composable
                 val locationId = entry.arguments?.getLong("locationId") ?: return@composable
@@ -325,11 +352,12 @@ private fun InventoryNavHost(
 
             composable(
                 route = Routes.PRODUCT_DETAIL,
-                arguments = listOf(
-                    navArgument("householdId") { type = NavType.LongType },
-                    navArgument("shelfId") { type = NavType.LongType },
-                    navArgument("productId") { type = NavType.LongType },
-                ),
+                arguments =
+                    listOf(
+                        navArgument("householdId") { type = NavType.LongType },
+                        navArgument("shelfId") { type = NavType.LongType },
+                        navArgument("productId") { type = NavType.LongType },
+                    ),
             ) {
                 ProductDetailScreen(onBack = { navController.popBackStack() })
             }

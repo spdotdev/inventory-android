@@ -13,7 +13,6 @@ import org.junit.Test
  * option without a label would otherwise silently fall back to the raw enum.
  */
 class StorageTypeLabelTest {
-
     @Test
     fun known_types_map_to_string_resources() {
         assertEquals(R.string.storage_type_freezer, storageTypeLabelRes("freezer"))

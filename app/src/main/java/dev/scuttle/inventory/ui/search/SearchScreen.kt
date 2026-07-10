@@ -55,11 +55,12 @@ fun SearchScreen(
     }
 
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .systemBarsPadding()
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp),
+        modifier =
+            modifier
+                .fillMaxSize()
+                .systemBarsPadding()
+                .verticalScroll(rememberScrollState())
+                .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         TextButton(onClick = onBack) {
@@ -71,13 +72,15 @@ fun SearchScreen(
             onValueChange = viewModel::onQueryChange,
             label = { Text(stringResource(R.string.search_field_label)) },
             singleLine = true,
-            keyboardOptions = KeyboardOptions(
-                autoCorrect = false,
-                imeAction = ImeAction.Search,
-            ),
-            keyboardActions = KeyboardActions(
-                onSearch = { keyboardController?.hide() }
-            ),
+            keyboardOptions =
+                KeyboardOptions(
+                    autoCorrect = false,
+                    imeAction = ImeAction.Search,
+                ),
+            keyboardActions =
+                KeyboardActions(
+                    onSearch = { keyboardController?.hide() },
+                ),
             modifier = Modifier.fillMaxWidth().focusRequester(focusRequester).testTag("search_field"),
         )
 

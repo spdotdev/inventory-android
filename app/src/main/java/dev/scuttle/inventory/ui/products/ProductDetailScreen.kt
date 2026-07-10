@@ -4,23 +4,22 @@ import android.content.Context
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.FileProvider
 import androidx.compose.foundation.border
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -30,7 +29,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -42,6 +40,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -51,13 +50,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import dev.scuttle.inventory.R
@@ -117,21 +117,23 @@ fun ProductDetailScreen(
     // Camera URI stored in a ref so it's available when TakePicture returns
     var cameraImageUri by remember { mutableStateOf<Uri?>(null) }
 
-    val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        if (uri != null) {
-            localImageUri = uri
-            val mime = context.contentResolver.getType(uri) ?: "image/jpeg"
-            viewModel.uploadImage(uri, mime)
-        }
-    }
-    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
-        if (success) {
-            cameraImageUri?.let { uri ->
+    val galleryLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            if (uri != null) {
                 localImageUri = uri
-                viewModel.uploadImage(uri, "image/jpeg")
+                val mime = context.contentResolver.getType(uri) ?: "image/jpeg"
+                viewModel.uploadImage(uri, mime)
             }
         }
-    }
+    val cameraLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+            if (success) {
+                cameraImageUri?.let { uri ->
+                    localImageUri = uri
+                    viewModel.uploadImage(uri, "image/jpeg")
+                }
+            }
+        }
 
     // One-shot action errors (save/upload/delete) surface as a transient Snackbar,
     // then are consumed so they don't re-announce; load errors still let the user
@@ -155,7 +157,10 @@ fun ProductDetailScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.action_back),
+                        )
                     }
                 },
                 actions = {
@@ -180,128 +185,134 @@ fun ProductDetailScreen(
         PullToRefreshBox(
             isRefreshing = state.refreshing,
             onRefresh = viewModel::load,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding),
         ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .navigationBarsPadding()
-                .padding(horizontal = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            if (state.loading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-
-            // Errors are shown via the Scaffold's Snackbar (SnackbarErrorEffect above).
-
-            // Image section
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
-                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium),
-                contentAlignment = Alignment.Center,
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .navigationBarsPadding()
+                        .padding(horizontal = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                val imageSource: Any? = localImageUri ?: product?.image_url
-                if (imageSource != null) {
-                    AsyncImage(
-                        model = imageSource,
-                        contentDescription = stringResource(R.string.product_detail_image_cd),
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                } else {
-                    Icon(
-                        Icons.Default.CameraAlt,
-                        contentDescription = null,
-                        modifier = Modifier.size(48.dp),
-                        tint = MaterialTheme.colorScheme.outlineVariant,
-                    )
-                }
-            }
+                if (state.loading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = { galleryLauncher.launch("image/*") }, modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.product_detail_gallery))
-                }
-                Button(
-                    onClick = {
-                        val uri = createCameraUri(context)
-                        cameraImageUri = uri
-                        cameraLauncher.launch(uri)
-                    },
-                    modifier = Modifier.weight(1f),
+                // Errors are shown via the Scaffold's Snackbar (SnackbarErrorEffect above).
+
+                // Image section
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium),
+                    contentAlignment = Alignment.Center,
                 ) {
-                    Text(stringResource(R.string.product_detail_camera))
+                    val imageSource: Any? = localImageUri ?: product?.image_url
+                    if (imageSource != null) {
+                        AsyncImage(
+                            model = imageSource,
+                            contentDescription = stringResource(R.string.product_detail_image_cd),
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    } else {
+                        Icon(
+                            Icons.Default.CameraAlt,
+                            contentDescription = null,
+                            modifier = Modifier.size(48.dp),
+                            tint = MaterialTheme.colorScheme.outlineVariant,
+                        )
+                    }
                 }
-            }
 
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it.take(50) },
-                label = { Text(stringResource(R.string.product_detail_field_name)) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            OutlinedTextField(
-                value = description,
-                onValueChange = { description = it },
-                label = { Text(stringResource(R.string.product_detail_field_description)) },
-                minLines = 3,
-                maxLines = 5,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            OutlinedTextField(
-                value = code,
-                onValueChange = { code = it.uppercase() },
-                label = { Text(stringResource(R.string.product_detail_field_code)) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.product_detail_mandatory_label), style = MaterialTheme.typography.bodyLarge)
-                    Text(
-                        stringResource(R.string.product_detail_mandatory_hint),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(onClick = { galleryLauncher.launch("image/*") }, modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.product_detail_gallery))
+                    }
+                    Button(
+                        onClick = {
+                            val uri = createCameraUri(context)
+                            cameraImageUri = uri
+                            cameraLauncher.launch(uri)
+                        },
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Text(stringResource(R.string.product_detail_camera))
+                    }
                 }
-                Switch(checked = isMandatory, onCheckedChange = { isMandatory = it })
+
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it.take(50) },
+                    label = { Text(stringResource(R.string.product_detail_field_name)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
+                OutlinedTextField(
+                    value = description,
+                    onValueChange = { description = it },
+                    label = { Text(stringResource(R.string.product_detail_field_description)) },
+                    minLines = 3,
+                    maxLines = 5,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
+                OutlinedTextField(
+                    value = code,
+                    onValueChange = { code = it.uppercase() },
+                    label = { Text(stringResource(R.string.product_detail_field_code)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            stringResource(R.string.product_detail_mandatory_label),
+                            style = MaterialTheme.typography.bodyLarge,
+                        )
+                        Text(
+                            stringResource(R.string.product_detail_mandatory_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Switch(checked = isMandatory, onCheckedChange = { isMandatory = it })
+                }
+
+                OutlinedTextField(
+                    value = lowStockThreshold,
+                    onValueChange = { lowStockThreshold = it.filter(Char::isDigit).take(MAX_THRESHOLD_DIGITS) },
+                    label = { Text(stringResource(R.string.product_detail_field_low_stock)) },
+                    supportingText = { Text(stringResource(R.string.product_detail_low_stock_hint)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
+                Spacer(Modifier.height(16.dp))
+
+                Button(
+                    onClick = { showDeleteConfirm = true },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !state.loading,
+                ) {
+                    Text(stringResource(R.string.product_detail_delete_button))
+                }
+
+                Spacer(Modifier.height(24.dp))
             }
-
-            OutlinedTextField(
-                value = lowStockThreshold,
-                onValueChange = { lowStockThreshold = it.filter(Char::isDigit).take(MAX_THRESHOLD_DIGITS) },
-                label = { Text(stringResource(R.string.product_detail_field_low_stock)) },
-                supportingText = { Text(stringResource(R.string.product_detail_low_stock_hint)) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            Spacer(Modifier.height(16.dp))
-
-            Button(
-                onClick = { showDeleteConfirm = true },
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !state.loading,
-            ) {
-                Text(stringResource(R.string.product_detail_delete_button))
-            }
-
-            Spacer(Modifier.height(24.dp))
-        }
         } // end PullToRefreshBox
     }
 
@@ -312,7 +323,10 @@ fun ProductDetailScreen(
             text = { Text(stringResource(R.string.delete_dialog_product_text)) },
             confirmButton = {
                 Button(
-                    onClick = { viewModel.delete(); showDeleteConfirm = false },
+                    onClick = {
+                        viewModel.delete()
+                        showDeleteConfirm = false
+                    },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                 ) { Text(stringResource(R.string.action_delete)) }
             },

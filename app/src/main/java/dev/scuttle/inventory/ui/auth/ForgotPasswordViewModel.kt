@@ -19,26 +19,27 @@ data class ForgotPasswordUiState(
 )
 
 @HiltViewModel
-class ForgotPasswordViewModel @Inject constructor(
-    private val repository: AuthRepository,
-) : ViewModel() {
+class ForgotPasswordViewModel
+    @Inject
+    constructor(
+        private val repository: AuthRepository,
+    ) : ViewModel() {
+        private val _state = MutableStateFlow(ForgotPasswordUiState())
+        val state: StateFlow<ForgotPasswordUiState> = _state.asStateFlow()
 
-    private val _state = MutableStateFlow(ForgotPasswordUiState())
-    val state: StateFlow<ForgotPasswordUiState> = _state.asStateFlow()
+        fun onEmailChange(value: String) = _state.update { it.copy(email = value, error = null) }
 
-    fun onEmailChange(value: String) = _state.update { it.copy(email = value, error = null) }
-
-    fun submit() {
-        val email = _state.value.email.trim()
-        viewModelScope.launch {
-            _state.update { it.copy(loading = true, error = null) }
-            val result = runCatching { repository.forgotPassword(email) }
-            _state.update { state ->
-                result.fold(
-                    onSuccess = { state.copy(loading = false, sent = true) },
-                    onFailure = { state.copy(loading = false, error = "Something went wrong. Please try again.") },
-                )
+        fun submit() {
+            val email = _state.value.email.trim()
+            viewModelScope.launch {
+                _state.update { it.copy(loading = true, error = null) }
+                val result = runCatching { repository.forgotPassword(email) }
+                _state.update { state ->
+                    result.fold(
+                        onSuccess = { state.copy(loading = false, sent = true) },
+                        onFailure = { state.copy(loading = false, error = "Something went wrong. Please try again.") },
+                    )
+                }
             }
         }
     }
-}

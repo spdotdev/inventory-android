@@ -26,11 +26,12 @@ fun <T> List<T>.sortedByOrder(
     quantity: (T) -> Int,
 ): List<T> {
     val byName: Comparator<T> = compareBy(String.CASE_INSENSITIVE_ORDER, name)
-    val comparator = when (order) {
-        SortOrder.NAME_ASC -> byName
-        SortOrder.NAME_DESC -> byName.reversed()
-        SortOrder.QUANTITY_DESC -> compareByDescending(quantity).then(byName)
-        SortOrder.QUANTITY_ASC -> compareBy(quantity).then(byName)
-    }
+    val comparator =
+        when (order) {
+            SortOrder.NAME_ASC -> byName
+            SortOrder.NAME_DESC -> byName.reversed()
+            SortOrder.QUANTITY_DESC -> compareByDescending(quantity).then(byName)
+            SortOrder.QUANTITY_ASC -> compareBy(quantity).then(byName)
+        }
     return sortedWith(comparator)
 }

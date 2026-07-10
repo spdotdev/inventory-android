@@ -3,24 +3,23 @@
 package dev.scuttle.inventory.flow
 
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.hasTestTag
-import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.filterToOne
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.waitUntilAtLeastOneExists
-import dev.scuttle.inventory.ui.dashboard.DASHBOARD_TITLE_TEST_TAG
 import dagger.hilt.android.testing.HiltAndroidTest
 import dev.scuttle.inventory.FlowTestBase
+import dev.scuttle.inventory.ui.dashboard.DASHBOARD_TITLE_TEST_TAG
 import org.junit.Test
 
 @HiltAndroidTest
 class MissingItemsEmptyFlowTest : FlowTestBase() {
-
     @Test
     fun missing_items_screen_shows_empty_state_when_no_mandatory_items_missing() {
         // products_one.json: Milk, is_mandatory: false → zero missing items

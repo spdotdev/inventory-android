@@ -6,5 +6,8 @@ package dev.scuttle.inventory.data.error
  * that POSTs to /errors is [ErrorLoggerImpl], bound via Hilt.
  */
 interface ErrorLogger {
-    fun log(code: String, message: String? = null)
+    fun log(
+        code: String,
+        message: String? = null,
+    )
 }

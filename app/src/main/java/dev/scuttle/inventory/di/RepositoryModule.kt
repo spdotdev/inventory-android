@@ -1,5 +1,9 @@
 package dev.scuttle.inventory.di
 
+import dagger.Binds
+import dagger.Module
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
 import dev.scuttle.inventory.data.auth.AuthRepository
 import dev.scuttle.inventory.data.auth.AuthRepositoryImpl
 import dev.scuttle.inventory.data.error.ErrorLogger
@@ -16,16 +20,11 @@ import dev.scuttle.inventory.data.search.SearchRepository
 import dev.scuttle.inventory.data.search.SearchRepositoryImpl
 import dev.scuttle.inventory.data.shelf.ShelfRepository
 import dev.scuttle.inventory.data.shelf.ShelfRepositoryImpl
-import dagger.Binds
-import dagger.Module
-import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
-
     @Binds
     @Singleton
     abstract fun bindAuthRepository(impl: AuthRepositoryImpl): AuthRepository

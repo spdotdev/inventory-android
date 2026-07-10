@@ -9,13 +9,13 @@ import org.junit.Test
 
 /** Pure filter + sort logic backing the products list and search results. */
 class ProductViewTest {
-
-    private val products = listOf(
-        ProductDto(id = 1, name = "Peas", quantity = 4, shelf_id = 1, code = "P-100"),
-        ProductDto(id = 2, name = "apples", quantity = 0, shelf_id = 1, is_mandatory = true),
-        ProductDto(id = 3, name = "Butter", quantity = 2, shelf_id = 1, is_mandatory = true),
-        ProductDto(id = 4, name = "milk", quantity = 0, shelf_id = 1),
-    )
+    private val products =
+        listOf(
+            ProductDto(id = 1, name = "Peas", quantity = 4, shelf_id = 1, code = "P-100"),
+            ProductDto(id = 2, name = "apples", quantity = 0, shelf_id = 1, is_mandatory = true),
+            ProductDto(id = 3, name = "Butter", quantity = 2, shelf_id = 1, is_mandatory = true),
+            ProductDto(id = 4, name = "milk", quantity = 0, shelf_id = 1),
+        )
 
     @Test
     fun name_sort_is_case_insensitive() {
@@ -50,11 +50,21 @@ class ProductViewTest {
     fun mandatory_only_and_out_of_stock_flags_narrow_the_list() {
         assertEquals(
             setOf(2L, 3L),
-            products.applyView("", mandatoryOnly = true, outOfStockOnly = false, SortOrder.NAME_ASC).map { it.id }.toSet(),
+            products.applyView(
+                "",
+                mandatoryOnly = true,
+                outOfStockOnly = false,
+                SortOrder.NAME_ASC,
+            ).map { it.id }.toSet(),
         )
         assertEquals(
             setOf(2L, 4L),
-            products.applyView("", mandatoryOnly = false, outOfStockOnly = true, SortOrder.NAME_ASC).map { it.id }.toSet(),
+            products.applyView(
+                "",
+                mandatoryOnly = false,
+                outOfStockOnly = true,
+                SortOrder.NAME_ASC,
+            ).map { it.id }.toSet(),
         )
         // Combined: mandatory AND out of stock → only apples.
         assertEquals(

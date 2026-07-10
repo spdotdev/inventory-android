@@ -9,10 +9,8 @@ import kotlin.math.absoluteValue
 internal const val HOUSEHOLD_ACCENT_COUNT = 8
 internal const val HOUSEHOLD_ICON_COUNT = 8
 
-internal fun householdAccentIndex(id: Long): Int =
-    (id % HOUSEHOLD_ACCENT_COUNT).toInt().absoluteValue
+internal fun householdAccentIndex(id: Long): Int = (id % HOUSEHOLD_ACCENT_COUNT).toInt().absoluteValue
 
 // A different stride than the accent so the two don't move in lockstep for
 // small, sequential ids.
-internal fun householdIconIndex(id: Long): Int =
-    ((id * 3 + 1) % HOUSEHOLD_ICON_COUNT).toInt().absoluteValue
+internal fun householdIconIndex(id: Long): Int = ((id * 3 + 1) % HOUSEHOLD_ICON_COUNT).toInt().absoluteValue

@@ -6,5 +6,7 @@ import retrofit2.http.Path
 
 interface InviteApi {
     @GET("households/{household}/invite")
-    suspend fun invite(@Path("household") householdId: Long): InviteResponse
+    suspend fun invite(
+        @Path("household") householdId: Long,
+    ): InviteResponse
 }

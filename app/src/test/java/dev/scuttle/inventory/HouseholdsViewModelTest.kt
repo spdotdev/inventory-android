@@ -12,7 +12,6 @@ import org.junit.Rule
 import org.junit.Test
 
 class HouseholdsViewModelTest {
-
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
@@ -35,66 +34,76 @@ class HouseholdsViewModelTest {
 
         override suspend fun join(code: String): HouseholdDto = items.first()
 
-        override suspend fun leave(householdId: Long) { items.removeIf { it.id == householdId } }
-    }
-
-    @Test
-    fun loads_households_on_init() = runTest {
-        val viewModel = HouseholdsViewModel(FakeHouseholdRepository(), TestHierarchy.store(FakeHouseholdRepository()))
-
-        val state = viewModel.state.value
-        assertEquals(1, state.households.size)
-        assertEquals("Garage", state.households.first().name)
-        assertFalse(state.loading)
-    }
-
-    @Test
-    fun create_adds_a_household_and_clears_the_field() = runTest {
-        val viewModel = HouseholdsViewModel(FakeHouseholdRepository(), TestHierarchy.store(FakeHouseholdRepository()))
-        viewModel.onNewNameChange("Pantry")
-
-        viewModel.create()
-
-        val state = viewModel.state.value
-        assertEquals(2, state.households.size)
-        assertTrue(state.households.any { it.name == "Pantry" })
-        assertEquals("", state.newName)
-    }
-
-    @Test
-    fun create_refreshes_the_hierarchy_store() = runTest {
-        // X4: a newly-created household must reach the drawer/home hierarchy without
-        // a manual pull-to-refresh.
-        val repo = FakeHouseholdRepository()
-        val store = TestHierarchy.store(repo)
-        val viewModel = HouseholdsViewModel(repo, store)
-        viewModel.onNewNameChange("Pantry")
-
-        viewModel.create()
-
-        val loaded = store.state.first { s -> s.entries.any { it.name == "Pantry" } }
-        assertTrue(loaded.entries.any { it.name == "Pantry" })
-    }
-
-    @Test
-    fun list_failure_surfaces_an_error() = runTest {
-        val repo = FakeHouseholdRepository().apply { failList = true }
-        val viewModel = HouseholdsViewModel(repo, TestHierarchy.store(repo))
-
-        assertEquals("offline", viewModel.state.value.error)
-    }
-
-    @Test
-    fun leave_removes_household_from_list() = runTest {
-        val repo = FakeHouseholdRepository().apply {
-            items.add(HouseholdDto(id = 2, name = "Office", join_code = "BBBB-2222"))
+        override suspend fun leave(householdId: Long) {
+            items.removeIf { it.id == householdId }
         }
-        val viewModel = HouseholdsViewModel(repo, TestHierarchy.store(repo))
-        assertEquals(2, viewModel.state.value.households.size)
-
-        viewModel.leave(householdId = 1)
-
-        assertEquals(1, viewModel.state.value.households.size)
-        assertEquals("Office", viewModel.state.value.households.first().name)
     }
+
+    @Test
+    fun loads_households_on_init() =
+        runTest {
+            val viewModel =
+                HouseholdsViewModel(FakeHouseholdRepository(), TestHierarchy.store(FakeHouseholdRepository()))
+
+            val state = viewModel.state.value
+            assertEquals(1, state.households.size)
+            assertEquals("Garage", state.households.first().name)
+            assertFalse(state.loading)
+        }
+
+    @Test
+    fun create_adds_a_household_and_clears_the_field() =
+        runTest {
+            val viewModel =
+                HouseholdsViewModel(FakeHouseholdRepository(), TestHierarchy.store(FakeHouseholdRepository()))
+            viewModel.onNewNameChange("Pantry")
+
+            viewModel.create()
+
+            val state = viewModel.state.value
+            assertEquals(2, state.households.size)
+            assertTrue(state.households.any { it.name == "Pantry" })
+            assertEquals("", state.newName)
+        }
+
+    @Test
+    fun create_refreshes_the_hierarchy_store() =
+        runTest {
+            // X4: a newly-created household must reach the drawer/home hierarchy without
+            // a manual pull-to-refresh.
+            val repo = FakeHouseholdRepository()
+            val store = TestHierarchy.store(repo)
+            val viewModel = HouseholdsViewModel(repo, store)
+            viewModel.onNewNameChange("Pantry")
+
+            viewModel.create()
+
+            val loaded = store.state.first { s -> s.entries.any { it.name == "Pantry" } }
+            assertTrue(loaded.entries.any { it.name == "Pantry" })
+        }
+
+    @Test
+    fun list_failure_surfaces_an_error() =
+        runTest {
+            val repo = FakeHouseholdRepository().apply { failList = true }
+            val viewModel = HouseholdsViewModel(repo, TestHierarchy.store(repo))
+
+            assertEquals("offline", viewModel.state.value.error)
+        }
+
+    @Test
+    fun leave_removes_household_from_list() =
+        runTest {
+            val repo =
+                FakeHouseholdRepository().apply {
+                    items.add(HouseholdDto(id = 2, name = "Office", join_code = "BBBB-2222"))
+                }
+            val viewModel = HouseholdsViewModel(repo, TestHierarchy.store(repo))
+            assertEquals(2, viewModel.state.value.households.size)
+
+            viewModel.leave(householdId = 1)
+
+            assertEquals(1, viewModel.state.value.households.size)
+            assertEquals("Office", viewModel.state.value.households.first().name)
+        }
 }

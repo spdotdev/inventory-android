@@ -15,11 +15,17 @@ interface HouseholdApi {
     suspend fun list(): HouseholdListResponse
 
     @POST("households")
-    suspend fun create(@Body body: CreateHouseholdRequest): HouseholdResponse
+    suspend fun create(
+        @Body body: CreateHouseholdRequest,
+    ): HouseholdResponse
 
     @POST("households/join")
-    suspend fun join(@Body body: JoinHouseholdRequest): HouseholdResponse
+    suspend fun join(
+        @Body body: JoinHouseholdRequest,
+    ): HouseholdResponse
 
     @DELETE("households/{household}/leave")
-    suspend fun leave(@Path("household") householdId: Long)
+    suspend fun leave(
+        @Path("household") householdId: Long,
+    )
 }

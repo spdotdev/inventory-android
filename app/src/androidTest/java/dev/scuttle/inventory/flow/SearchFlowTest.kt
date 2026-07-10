@@ -4,10 +4,10 @@ package dev.scuttle.inventory.flow
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.filterToOne
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.hasClickAction
-import androidx.compose.ui.test.filterToOne
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -15,15 +15,14 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.waitUntilAtLeastOneExists
-import dev.scuttle.inventory.ui.dashboard.DASHBOARD_TITLE_TEST_TAG
-import dev.scuttle.inventory.ui.products.PRODUCT_DETAIL_TITLE_TEST_TAG
 import dagger.hilt.android.testing.HiltAndroidTest
 import dev.scuttle.inventory.FlowTestBase
+import dev.scuttle.inventory.ui.dashboard.DASHBOARD_TITLE_TEST_TAG
+import dev.scuttle.inventory.ui.products.PRODUCT_DETAIL_TITLE_TEST_TAG
 import org.junit.Test
 
 @HiltAndroidTest
 class SearchFlowTest : FlowTestBase() {
-
     @Test
     fun clicking_search_result_navigates_to_product_detail() {
         mockServer.enqueue(fixture("auth_login.json"))
@@ -67,7 +66,10 @@ class SearchFlowTest : FlowTestBase() {
             // note below) — the title's distinct testTag avoids that collision.
             // Wait for the loaded name, not just the tag — the tag composes
             // immediately with the "[Product]" placeholder while load() is in flight.
-            waitUntilAtLeastOneExists(hasTestTag(PRODUCT_DETAIL_TITLE_TEST_TAG).and(hasText("Milk")), timeoutMillis = 5_000)
+            waitUntilAtLeastOneExists(
+                hasTestTag(PRODUCT_DETAIL_TITLE_TEST_TAG).and(hasText("Milk")),
+                timeoutMillis = 5_000,
+            )
             onNodeWithTag(PRODUCT_DETAIL_TITLE_TEST_TAG).assertTextEquals("Milk")
         }
     }

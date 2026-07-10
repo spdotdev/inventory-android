@@ -23,13 +23,22 @@ import java.util.concurrent.TimeUnit
  * emulator / MockWebServer is needed.
  */
 class AuthInterceptorTest {
-
     private class FakeTokenStore(initial: String?) : TokenStore {
         private var token = initial
         private val _authState = MutableStateFlow(initial != null)
+
         override fun get(): String? = token
-        override fun set(token: String) { this.token = token; _authState.value = true }
-        override fun clear() { token = null; _authState.value = false }
+
+        override fun set(token: String) {
+            this.token = token
+            _authState.value = true
+        }
+
+        override fun clear() {
+            token = null
+            _authState.value = false
+        }
+
         override val authState = _authState
     }
 
@@ -39,6 +48,7 @@ class AuthInterceptorTest {
         val onProceed: (Request) -> Unit = {},
     ) : Interceptor.Chain {
         override fun request(): Request = request
+
         override fun proceed(request: Request): Response {
             onProceed(request)
             return Response.Builder()
@@ -49,14 +59,31 @@ class AuthInterceptorTest {
                 .body("".toResponseBody(null))
                 .build()
         }
+
         override fun connection(): Connection? = null
+
         override fun call(): Call = throw NotImplementedError()
+
         override fun connectTimeoutMillis(): Int = 0
-        override fun withConnectTimeout(timeout: Int, unit: TimeUnit): Interceptor.Chain = this
+
+        override fun withConnectTimeout(
+            timeout: Int,
+            unit: TimeUnit,
+        ): Interceptor.Chain = this
+
         override fun readTimeoutMillis(): Int = 0
-        override fun withReadTimeout(timeout: Int, unit: TimeUnit): Interceptor.Chain = this
+
+        override fun withReadTimeout(
+            timeout: Int,
+            unit: TimeUnit,
+        ): Interceptor.Chain = this
+
         override fun writeTimeoutMillis(): Int = 0
-        override fun withWriteTimeout(timeout: Int, unit: TimeUnit): Interceptor.Chain = this
+
+        override fun withWriteTimeout(
+            timeout: Int,
+            unit: TimeUnit,
+        ): Interceptor.Chain = this
     }
 
     private val request = Request.Builder().url("http://localhost/api/v1/households").build()

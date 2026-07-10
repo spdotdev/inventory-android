@@ -7,15 +7,24 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class AllStoragesViewModelTest {
-
     private class FakeFavoritesStore(initialLocations: Set<Long> = emptySet()) : FavoritesStore {
         private val locations = initialLocations.toMutableSet()
         private val shelves = mutableSetOf<Long>()
+
         override fun getFavoriteLocations() = locations.toSet()
-        override fun toggleFavoriteLocation(id: Long) { if (!locations.add(id)) locations.remove(id) }
+
+        override fun toggleFavoriteLocation(id: Long) {
+            if (!locations.add(id)) locations.remove(id)
+        }
+
         override fun isFavoriteLocation(id: Long) = id in locations
+
         override fun getFavoriteShelves() = shelves.toSet()
-        override fun toggleFavoriteShelf(id: Long) { if (!shelves.add(id)) shelves.remove(id) }
+
+        override fun toggleFavoriteShelf(id: Long) {
+            if (!shelves.add(id)) shelves.remove(id)
+        }
+
         override fun isFavoriteShelf(id: Long) = id in shelves
     }
 

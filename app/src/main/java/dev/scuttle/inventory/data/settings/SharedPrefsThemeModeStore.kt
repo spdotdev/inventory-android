@@ -4,7 +4,6 @@ import android.content.Context
 import dev.scuttle.inventory.ui.theme.ThemeMode
 
 class SharedPrefsThemeModeStore(context: Context) : ThemeModeStore {
-
     private val prefs = context.getSharedPreferences("inventory_settings", Context.MODE_PRIVATE)
 
     override fun get(): ThemeMode {
