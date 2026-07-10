@@ -12,3 +12,8 @@ complexity:
     ignoreAnnotated: ['Composable']
   CyclomaticComplexMethod:
     ignoreAnnotated: ['Composable']
+style:
+  MagicNumber:
+    # Named top-level/property constants (e.g. Color(0xFFE53935)) are the fix
+    # for magic numbers, not an instance of them.
+    ignorePropertyDeclaration: true

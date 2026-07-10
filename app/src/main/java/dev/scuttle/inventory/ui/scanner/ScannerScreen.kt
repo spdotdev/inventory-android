@@ -204,25 +204,28 @@ private fun processFrame(
 private const val FRAME_SIDE_FRACTION = 0.68f
 private const val FRAME_VERTICAL_BIAS = 0.4f
 
+// ZXing-red laser (Material Red 600).
+private val LaserRed = Color(0xFFE53935)
+
 /**
- * Classic viewfinder overlay: everything outside a centered rounded square is
- * dimmed, the square is stroked in the Frost accent, and a horizontal scan
- * line sweeps up and down inside it. Purely decorative — ML Kit analyzes the
- * full frame — but it tells the user where to point.
+ * Classic viewfinder overlay, following the ZXing convention: everything
+ * outside a centered rounded square is dimmed, the square is stroked in red,
+ * and a red "laser" line sits fixed across the MIDDLE of the frame, pulsing
+ * its opacity like the original ViewfinderView. Purely decorative — ML Kit
+ * analyzes the full frame — but it tells the user where to point.
  */
 @Composable
 private fun ScannerOverlay() {
-    val accent = MaterialTheme.colorScheme.primary
-    val transition = rememberInfiniteTransition(label = "scan-line")
-    val lineProgress by transition.animateFloat(
-        initialValue = 0.08f,
-        targetValue = 0.92f,
+    val transition = rememberInfiniteTransition(label = "laser")
+    val laserAlpha by transition.animateFloat(
+        initialValue = 0.45f,
+        targetValue = 1f,
         animationSpec =
             infiniteRepeatable(
-                animation = tween(durationMillis = 1800, easing = LinearEasing),
+                animation = tween(durationMillis = 600, easing = LinearEasing),
                 repeatMode = RepeatMode.Reverse,
             ),
-        label = "scan-line-y",
+        label = "laser-alpha",
     )
 
     Canvas(modifier = Modifier.fillMaxSize()) {
@@ -248,23 +251,23 @@ private fun ScannerOverlay() {
             }
         drawPath(scrim, color = Color.Black.copy(alpha = 0.55f))
 
-        // Frame stroke.
+        // Frame stroke (red, per the classic scanner look).
         drawRoundRect(
-            color = accent,
+            color = LaserRed,
             topLeft = frame.topLeft,
             size = frame.size,
             cornerRadius = corner,
             style = Stroke(width = 3.dp.toPx()),
         )
 
-        // Sweeping scan line, inset so it never touches the rounded corners.
-        val inset = 18.dp.toPx()
-        val lineY = frame.top + frame.height * lineProgress
+        // Fixed center "laser" line with the traditional opacity pulse.
+        val inset = 14.dp.toPx()
+        val lineY = frame.top + frame.height / 2f
         drawLine(
-            color = accent.copy(alpha = 0.9f),
+            color = LaserRed.copy(alpha = laserAlpha),
             start = Offset(frame.left + inset, lineY),
             end = Offset(frame.right - inset, lineY),
-            strokeWidth = 2.dp.toPx(),
+            strokeWidth = 3.dp.toPx(),
         )
     }
 }
