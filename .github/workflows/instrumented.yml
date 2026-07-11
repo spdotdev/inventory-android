@@ -36,7 +36,7 @@ jobs:
       DEBUG_KEY_ALIAS: ${{ secrets.DEBUG_KEY_ALIAS }}
       DEBUG_KEY_PASSWORD: ${{ secrets.DEBUG_KEY_PASSWORD }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       # KVM enables hardware acceleration so the emulator boots in reasonable time.
       - name: Enable KVM
