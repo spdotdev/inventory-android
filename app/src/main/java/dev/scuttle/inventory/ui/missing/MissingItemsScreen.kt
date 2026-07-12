@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -37,6 +38,7 @@ import dev.scuttle.inventory.ui.theme.FrostCard
 @Composable
 fun MissingItemsScreen(
     onBack: () -> Unit,
+    onOpenSettings: () -> Unit = {},
     onOpenLocation: (householdId: Long, locationId: Long) -> Unit,
     viewModel: MissingItemsViewModel = hiltViewModel(),
 ) {
@@ -65,6 +67,9 @@ fun MissingItemsScreen(
                             tint = MaterialTheme.colorScheme.error,
                             modifier = Modifier.padding(end = 16.dp),
                         )
+                    }
+                    IconButton(onClick = onOpenSettings) {
+                        Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.action_settings))
                     }
                 },
             )
