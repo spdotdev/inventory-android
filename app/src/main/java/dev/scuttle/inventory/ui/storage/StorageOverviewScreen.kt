@@ -23,7 +23,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -77,7 +76,6 @@ fun StorageOverviewScreen(
     householdId: Long,
     modifier: Modifier = Modifier,
     onBack: () -> Unit = {},
-    onOpenDrawer: () -> Unit = {},
     onOpenLocation: (Long) -> Unit = {},
     onOpenSearch: () -> Unit = {},
     viewModel: StorageOverviewViewModel = hiltViewModel(),
@@ -112,9 +110,6 @@ fun StorageOverviewScreen(
                             Icons.Default.Search,
                             contentDescription = stringResource(R.string.storage_overview_search_cd),
                         )
-                    }
-                    IconButton(onClick = onOpenDrawer) {
-                        Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.action_open_menu))
                     }
                 },
             )
