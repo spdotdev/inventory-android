@@ -18,8 +18,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.AlertDialog
@@ -50,6 +50,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -68,7 +69,7 @@ import dev.scuttle.inventory.ui.theme.FrostCard
 fun AllStoragesScreen(
     modifier: Modifier = Modifier,
     viewModel: DrawerViewModel,
-    onOpenDrawer: () -> Unit = {},
+    onOpenSettings: () -> Unit = {},
     onOpenLocation: (householdId: Long, locationId: Long) -> Unit = { _, _ -> },
     onOpenStorage: (householdId: Long) -> Unit = {},
     localViewModel: AllStoragesViewModel = hiltViewModel(),
@@ -91,14 +92,12 @@ fun AllStoragesScreen(
             TopAppBar(
                 windowInsets = statusBarInsets,
                 title = { Text(stringResource(R.string.all_storage_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onOpenDrawer) {
-                        Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.action_open_menu))
-                    }
-                },
                 actions = {
                     IconButton(onClick = { viewModel.refresh() }) {
                         Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.action_refresh))
+                    }
+                    IconButton(onClick = onOpenSettings) {
+                        Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.action_settings))
                     }
                 },
             )
@@ -249,7 +248,7 @@ fun AllStoragesScreen(
                                 if (hasWarning) {
                                     Card(
                                         onClick = { onOpenLocation(entry.id, location.id) },
-                                        modifier = Modifier.fillMaxWidth(),
+                                        modifier = Modifier.fillMaxWidth().testTag("home-location-${location.name}"),
                                         colors =
                                             CardDefaults.cardColors(
                                                 containerColor =
@@ -262,7 +261,7 @@ fun AllStoragesScreen(
                                 } else {
                                     FrostCard(
                                         onClick = { onOpenLocation(entry.id, location.id) },
-                                        modifier = Modifier.fillMaxWidth(),
+                                        modifier = Modifier.fillMaxWidth().testTag("home-location-${location.name}"),
                                         content = { rowContent() },
                                     )
                                 }
