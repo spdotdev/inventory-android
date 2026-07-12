@@ -42,6 +42,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavOptionsBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -162,6 +163,18 @@ private object Routes {
     ) = "product-detail/$householdId/$shelfId/$productId"
 }
 
+/**
+ * Nav options shared by every unparameterized bottom-tab destination (and any other
+ * call site that jumps to one, e.g. "Manage households" from Settings): pop back to
+ * DASHBOARD saving state, don't stack duplicates, and restore saved state on return.
+ * Not used for SEARCH — see the comments at its navigate() call sites.
+ */
+private val tabNavOptions: NavOptionsBuilder.() -> Unit = {
+    popUpTo(Routes.DASHBOARD) { saveState = true }
+    launchSingleTop = true
+    restoreState = true
+}
+
 /** Where an auth-state change should send the user. */
 enum class AuthRedirect { TO_DASHBOARD, TO_AUTH }
 
@@ -226,6 +239,7 @@ private fun InventoryNavHost(
     val currentRoute = backStackEntry?.destination?.route
     val drawerUi by drawerViewModel.state.collectAsState()
     var showHouseholdPicker by remember { mutableStateOf(false) }
+    val householdPickerSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val bottomTabs =
         listOf(
             BottomTab("dashboard", Routes.DASHBOARD, R.string.nav_dashboard, Icons.Filled.SpaceDashboard),
@@ -248,26 +262,32 @@ private fun InventoryNavHost(
                                     val entries = drawerUi.entries
                                     when {
                                         entries.size == 1 ->
+                                            // No restoreState: SEARCH is parameterized
+                                            // (search/{householdId}); a saved back-stack
+                                            // entry would restore verbatim with its OLD
+                                            // householdId, silently ignoring this one.
                                             navController.navigate(Routes.search(entries.first().id)) {
                                                 popUpTo(Routes.DASHBOARD) { saveState = true }
                                                 launchSingleTop = true
-                                                restoreState = true
                                             }
                                         entries.size > 1 -> showHouseholdPicker = true
                                         else -> Unit
                                     }
                                 } else {
-                                    navController.navigate(tab.route) {
-                                        popUpTo(Routes.DASHBOARD) { saveState = true }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
+                                    navController.navigate(tab.route, tabNavOptions)
                                 }
                             },
                             icon = {
                                 if (tab.key == "missing-items" && drawerUi.missingItemCount > 0) {
                                     BadgedBox(badge = { Badge { Text("${drawerUi.missingItemCount}") } }) {
-                                        Icon(tab.icon, contentDescription = null)
+                                        Icon(
+                                            tab.icon,
+                                            contentDescription =
+                                                stringResource(
+                                                    R.string.drawer_missing_items_count,
+                                                    drawerUi.missingItemCount,
+                                                ),
+                                        )
                                     }
                                 } else {
                                     Icon(tab.icon, contentDescription = null)
@@ -282,7 +302,10 @@ private fun InventoryNavHost(
         },
     ) { scaffoldPadding ->
         if (showHouseholdPicker) {
-            ModalBottomSheet(onDismissRequest = { showHouseholdPicker = false }) {
+            ModalBottomSheet(
+                onDismissRequest = { showHouseholdPicker = false },
+                sheetState = householdPickerSheetState,
+            ) {
                 Text(
                     stringResource(R.string.search_choose_household_title),
                     style = MaterialTheme.typography.titleMedium,
@@ -294,10 +317,13 @@ private fun InventoryNavHost(
                         selected = false,
                         onClick = {
                             showHouseholdPicker = false
+                            // No restoreState: SEARCH is parameterized
+                            // (search/{householdId}); a saved back-stack entry would
+                            // restore verbatim with its OLD householdId, silently
+                            // ignoring the household just picked here.
                             navController.navigate(Routes.search(entry.id)) {
                                 popUpTo(Routes.DASHBOARD) { saveState = true }
                                 launchSingleTop = true
-                                restoreState = true
                             }
                         },
                         modifier = Modifier.padding(horizontal = 12.dp).testTag("household-picker-${entry.name}"),
@@ -346,7 +372,7 @@ private fun InventoryNavHost(
                     onOpenSearch = { hhId ->
                         navController.navigate(Routes.search(hhId)) { launchSingleTop = true }
                     },
-                    onOpenHouseholds = { navController.navigate(Routes.HOUSEHOLDS) },
+                    onOpenHouseholds = { navController.navigate(Routes.HOUSEHOLDS, tabNavOptions) },
                     onOpenMissingItems = { navController.navigate(Routes.MISSING_ITEMS) { launchSingleTop = true } },
                 )
             }
@@ -355,7 +381,7 @@ private fun InventoryNavHost(
                 SettingsScreen(
                     onBack = { navController.popBackStack() },
                     onSignOut = { authViewModel.signOut() },
-                    onOpenHouseholds = { navController.navigate(Routes.HOUSEHOLDS) },
+                    onOpenHouseholds = { navController.navigate(Routes.HOUSEHOLDS, tabNavOptions) },
                     themeViewModel = themeViewModel,
                 )
             }
