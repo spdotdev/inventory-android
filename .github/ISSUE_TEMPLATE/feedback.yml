@@ -6,6 +6,9 @@ body:
   - type: markdown
     attributes:
       value: |
+        ☝️ **Keep that title short** — a few words we can spot it by. Your idea
+        goes in the boxes below, not up there.
+
         Not a bug — just something that felt wrong, slow, confusing, or that
         you wished the app did. This is genuinely useful; send it.
 
@@ -13,10 +16,6 @@ body:
         too much here — what you were doing, what you expected, what you'd
         rather it did. A sentence we can act on beats a sentence we have to
         come back and ask about.
-
-        **Keep the title short.** It's only a label we recognise the issue by.
-        Everything that matters goes in the boxes below — an idea that lives
-        only in the title is one we can easily miss.
 
   - type: textarea
     id: feedback

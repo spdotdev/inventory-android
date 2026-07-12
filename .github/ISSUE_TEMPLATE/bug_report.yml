@@ -6,16 +6,15 @@ body:
   - type: markdown
     attributes:
       value: |
+        ☝️ **Keep that title short** — a few words we can spot it by. The detail
+        goes in the boxes below, not up there.
+
         Thanks for testing! **Please write as much detail as you can** — there
         is no such thing as too much here. The more you give us, the less
         likely we have to come back and ask you to reproduce it again. If
         you're unsure whether something is relevant, put it in anyway.
 
         **The single most useful thing you can add is a screenshot.**
-
-        **Keep the title short.** It's only a label we recognise the bug by.
-        Everything that matters goes in the boxes below — a detail that lives
-        only in the title is one we can easily miss.
 
   - type: textarea
     id: what-happened
