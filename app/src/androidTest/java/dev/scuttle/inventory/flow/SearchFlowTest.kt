@@ -9,7 +9,6 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -44,11 +43,8 @@ class SearchFlowTest : FlowTestBase() {
             Thread.sleep(3_000)
             waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 5_000)
 
-            onNodeWithContentDescription("Open menu").performClick()
-            waitUntilAtLeastOneExists(hasTestTag("drawer-nav-search"), timeoutMillis = 5_000)
-
             mockServer.route("/households/1/search", fixture("search_results.json"))
-            onNodeWithTag("drawer-nav-search").performClick()
+            onNodeWithTag("bottom-nav-search").performClick()
             waitUntilAtLeastOneExists(hasTestTag("search_field"), timeoutMillis = 5_000)
 
             onNodeWithTag("search_field").performTextInput("Milk")
@@ -90,12 +86,8 @@ class SearchFlowTest : FlowTestBase() {
             Thread.sleep(3_000)
             waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 5_000)
 
-            // Open drawer → Search
-            onNodeWithContentDescription("Open menu").performClick()
-            waitUntilAtLeastOneExists(hasTestTag("drawer-nav-search"), timeoutMillis = 5_000)
-
             mockServer.route("/households/1/search", fixture("search_results.json"))
-            onNodeWithTag("drawer-nav-search").performClick()
+            onNodeWithTag("bottom-nav-search").performClick()
             waitForIdle()
 
             // Type query in the search field
