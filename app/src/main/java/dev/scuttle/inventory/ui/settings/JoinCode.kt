@@ -2,6 +2,10 @@ package dev.scuttle.inventory.ui.settings
 
 private const val JOIN_PATH = "/join/"
 
+/** The server mints join codes as two groups of four characters, e.g. `ABCD-2345`. */
+private const val CODE_GROUP_LENGTH = 4
+private const val CODE_LENGTH = CODE_GROUP_LENGTH * 2
+
 /**
  * Reduce whatever the user hands us — a scanned QR, a pasted link, a typed code — to the bare
  * join code the API stores (`XXXX-XXXX`, uppercase).
@@ -25,8 +29,8 @@ fun parseJoinCode(raw: String): String {
             .uppercase()
 
     val body = cleaned.replace("-", "")
-    return if (body.length == 8 && body.all { it.isLetterOrDigit() }) {
-        "${body.take(4)}-${body.drop(4)}"
+    return if (body.length == CODE_LENGTH && body.all { it.isLetterOrDigit() }) {
+        "${body.take(CODE_GROUP_LENGTH)}-${body.drop(CODE_GROUP_LENGTH)}"
     } else {
         cleaned
     }
