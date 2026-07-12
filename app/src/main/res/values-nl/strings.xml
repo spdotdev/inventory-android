@@ -27,6 +27,7 @@
     <string name="dashboard_tap_to_restock">Tik om te zien wat aangevuld moet worden</string>
     <string name="dashboard_products_by_location">Producten per locatie</string>
     <string name="dashboard_running_low">Bijna op</string>
+    <string name="dashboard_across_households">in %d huishoudens</string>
     <string name="nav_dashboard">Dashboard</string>
     <string name="nav_storage">Opslag</string>
     <string name="nav_search">Zoeken</string>

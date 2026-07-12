@@ -27,6 +27,7 @@
     <string name="dashboard_tap_to_restock">Tap to see what needs restocking</string>
     <string name="dashboard_products_by_location">Products by location</string>
     <string name="dashboard_running_low">Running low</string>
+    <string name="dashboard_across_households">across %d households</string>
     <string name="nav_dashboard">Dashboard</string>
     <string name="nav_storage">Storage</string>
     <string name="nav_search">Search</string>

@@ -1,9 +1,7 @@
 package dev.scuttle.inventory.ui.dashboard
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,11 +13,9 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
@@ -52,6 +48,7 @@ import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.LowStockItem
 import dev.scuttle.inventory.ui.common.LiveStatusText
 import dev.scuttle.inventory.ui.theme.FrostCard
+import dev.scuttle.inventory.ui.theme.HouseholdAvatar
 
 /**
  * Distinct from the plain text "Dashboard", which also appears as the bottom-nav
@@ -73,7 +70,12 @@ fun DashboardScreen(
     viewModel: DashboardViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
-    val primaryColor = MaterialTheme.colorScheme.primary
+
+    // The household a row belongs to, or null when there's only one household and
+    // saying so would just be noise (#33).
+    val badgeFor: (Long) -> DashboardHousehold? = { householdId ->
+        if (state.showHouseholdAttribution) state.householdFor(householdId) else null
+    }
 
     if (state.hasNoHouseholds && !state.loading) {
         AlertDialog(
@@ -132,29 +134,43 @@ fun DashboardScreen(
             ) {
                 state.error?.let { LiveStatusText(it) }
 
-                // Stat cards
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    StatCard(
-                        label = stringResource(R.string.dashboard_stat_locations),
-                        value = state.totalLocations.toString(),
-                        modifier = Modifier.weight(1f),
-                        onClick = onOpenAllStorage,
-                    )
-                    StatCard(
-                        label = stringResource(R.string.dashboard_stat_shelves),
-                        value = state.totalShelves.toString(),
-                        modifier = Modifier.weight(1f),
-                        onClick = onOpenAllStorage,
-                    )
-                    StatCard(
-                        label = stringResource(R.string.dashboard_stat_products),
-                        value = state.totalProducts.toString(),
-                        modifier = Modifier.weight(1f),
-                        onClick = { state.firstHouseholdId?.let(onOpenSearch) },
-                    )
+                // Stat cards. The caption belongs to the row, so they're grouped in
+                // their own Column rather than taking the page's 16dp rhythm.
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        StatCard(
+                            label = stringResource(R.string.dashboard_stat_locations),
+                            value = state.totalLocations.toString(),
+                            modifier = Modifier.weight(1f),
+                            onClick = onOpenAllStorage,
+                        )
+                        StatCard(
+                            label = stringResource(R.string.dashboard_stat_shelves),
+                            value = state.totalShelves.toString(),
+                            modifier = Modifier.weight(1f),
+                            onClick = onOpenAllStorage,
+                        )
+                        StatCard(
+                            label = stringResource(R.string.dashboard_stat_products),
+                            value = state.totalProducts.toString(),
+                            modifier = Modifier.weight(1f),
+                            onClick = { state.firstHouseholdId?.let(onOpenSearch) },
+                        )
+                    }
+
+                    // These numbers sum every household; say so rather than let them
+                    // read as one household's (#33).
+                    if (state.showHouseholdAttribution) {
+                        Text(
+                            stringResource(R.string.dashboard_across_households, state.households.size),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                        )
+                    }
                 }
 
                 if (state.mandatoryWarnings > 0) {
@@ -165,82 +181,25 @@ fun DashboardScreen(
                 // excluded — they're already in the red card above).
                 if (state.lowStockItems.isNotEmpty()) {
                     Text(stringResource(R.string.dashboard_running_low), style = MaterialTheme.typography.titleMedium)
-                    RunningLowCard(state.lowStockItems, onOpenLocation = onOpenLocation)
+                    RunningLowCard(
+                        items = state.lowStockItems,
+                        badgeFor = badgeFor,
+                        onOpenLocation = onOpenLocation,
+                    )
                 }
 
-                // Bar chart
+                // Bar chart, grouped per household when there's more than one (#33)
                 if (state.locationStats.isNotEmpty()) {
                     Text(
                         stringResource(R.string.dashboard_products_by_location),
                         style = MaterialTheme.typography.titleMedium,
                     )
-                    FrostCard(modifier = Modifier.fillMaxWidth()) {
-                        Column(
-                            modifier = Modifier.padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            val maxVal = state.locationStats.maxOfOrNull { it.productCount } ?: 1
-                            state.locationStats.forEach { stat ->
-                                Column(
-                                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                                    modifier =
-                                        Modifier
-                                            .fillMaxWidth()
-                                            .clickable { onOpenLocation(stat.householdId, stat.location.id) }
-                                            .padding(vertical = 2.dp),
-                                ) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                    ) {
-                                        Text(
-                                            stat.location.name,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            maxLines = 1,
-                                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                                            modifier = Modifier.weight(1f),
-                                        )
-                                        Icon(
-                                            Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                            contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.size(16.dp),
-                                        )
-                                    }
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                    ) {
-                                        Box(
-                                            modifier =
-                                                Modifier
-                                                    .weight(1f)
-                                                    .height(12.dp)
-                                                    .background(
-                                                        MaterialTheme.colorScheme.surfaceVariant,
-                                                        MaterialTheme.shapes.extraSmall,
-                                                    ),
-                                        ) {
-                                            val fraction = if (maxVal > 0) stat.productCount.toFloat() / maxVal else 0f
-                                            Box(
-                                                modifier =
-                                                    Modifier
-                                                        .fillMaxWidth(fraction.coerceIn(0f, 1f))
-                                                        .height(12.dp)
-                                                        .background(primaryColor, MaterialTheme.shapes.extraSmall),
-                                            )
-                                        }
-                                        Text(
-                                            stat.productCount.toString(),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            modifier = Modifier.width(24.dp),
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    DashboardLocationChart(
+                        groups = state.groupedLocationStats,
+                        maxProductCount = state.maxLocationProductCount,
+                        showHouseholdHeaders = state.showHouseholdAttribution,
+                        onOpenLocation = onOpenLocation,
+                    )
                 }
 
                 // Favorite locations
@@ -252,26 +211,11 @@ fun DashboardScreen(
                     state.locationStats
                         .filter { it.location.id in state.favoriteLocationIds }
                         .forEach { stat ->
-                            FrostCard(
+                            FavoriteRow(
+                                name = stat.location.name,
+                                household = badgeFor(stat.householdId),
                                 onClick = { onOpenLocation(stat.householdId, stat.location.id) },
-                                modifier = Modifier.fillMaxWidth(),
-                            ) {
-                                Row(
-                                    modifier =
-                                        Modifier
-                                            .padding(16.dp)
-                                            .fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    Text(stat.location.name, style = MaterialTheme.typography.bodyLarge)
-                                    Icon(
-                                        Icons.Default.Star,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary,
-                                    )
-                                }
-                            }
+                            )
                         }
                 }
 
@@ -282,26 +226,11 @@ fun DashboardScreen(
                         style = MaterialTheme.typography.titleMedium,
                     )
                     state.favoriteShelves.forEach { entry ->
-                        FrostCard(
+                        FavoriteRow(
+                            name = entry.shelf.name,
+                            household = badgeFor(entry.householdId),
                             onClick = { onOpenLocation(entry.householdId, entry.shelf.location_id) },
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Row(
-                                modifier =
-                                    Modifier
-                                        .padding(16.dp)
-                                        .fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Text(entry.shelf.name, style = MaterialTheme.typography.bodyLarge)
-                                Icon(
-                                    Icons.Default.Star,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                )
-                            }
-                        }
+                        )
                     }
                 }
 
@@ -329,9 +258,59 @@ private fun StatCard(
     }
 }
 
+/**
+ * The household badge for a row, sized for a list item. Carries the household name
+ * as its content description — on these flat lists the avatar is the only thing
+ * saying which household the row belongs to, so it must not be silent to TalkBack.
+ */
+@Composable
+private fun HouseholdBadge(household: DashboardHousehold) {
+    HouseholdAvatar(
+        householdId = household.id,
+        colorKey = household.color,
+        iconKey = household.icon,
+        size = 24.dp,
+        contentDescription = household.name,
+    )
+}
+
+/** A favorited location or shelf. [household] is null when there's nothing to disambiguate. */
+@Composable
+private fun FavoriteRow(
+    name: String,
+    household: DashboardHousehold?,
+    onClick: () -> Unit,
+) {
+    FrostCard(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier =
+                Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            household?.let { HouseholdBadge(it) }
+            Text(
+                name,
+                style = MaterialTheme.typography.bodyLarge,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
+            )
+            Icon(
+                Icons.Default.Star,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+            )
+        }
+    }
+}
+
 @Composable
 private fun RunningLowCard(
     items: List<LowStockItem>,
+    badgeFor: (Long) -> DashboardHousehold?,
     onOpenLocation: (householdId: Long, locationId: Long) -> Unit,
 ) {
     FrostCard(modifier = Modifier.fillMaxWidth()) {
@@ -346,8 +325,9 @@ private fun RunningLowCard(
                             .fillMaxWidth()
                             .clickable { onOpenLocation(item.householdId, item.locationId) },
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
+                    badgeFor(item.householdId)?.let { HouseholdBadge(it) }
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             item.productName,

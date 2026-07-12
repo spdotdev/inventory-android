@@ -282,6 +282,117 @@ class DashboardViewModelTest {
         }
 
     @Test
+    fun a_single_household_gets_no_attribution_ui() =
+        runTest {
+            val vm = viewModel(locationsByHousehold = mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge"))))
+
+            // Issue #33 is a multi-household problem; a one-household user should see
+            // the dashboard exactly as before — no headers, no badges, no caption.
+            assertFalse(vm.state.value.showHouseholdAttribution)
+            assertEquals(1, vm.state.value.households.size)
+        }
+
+    @Test
+    fun two_households_are_exposed_with_their_theme_keys() =
+        runTest {
+            val vm =
+                viewModel(
+                    households =
+                        listOf(
+                            HouseholdDto(1, "Home", "AAAA", color = "teal", icon = "home"),
+                            HouseholdDto(2, "Beach house", "BBBB"),
+                        ),
+                )
+
+            assertTrue(vm.state.value.showHouseholdAttribution)
+            val (home, beach) = vm.state.value.households
+            assertEquals("Home", home.name)
+            assertEquals("teal", home.color)
+            assertEquals("home", home.icon)
+            // Null keys are legal: the client derives a stable default from the id.
+            assertEquals("Beach house", beach.name)
+            assertEquals(null, beach.color)
+        }
+
+    @Test
+    fun location_stats_are_grouped_per_household_in_store_order() =
+        runTest {
+            val vm =
+                viewModel(
+                    households =
+                        listOf(
+                            HouseholdDto(1, "Home", "AAAA"),
+                            HouseholdDto(2, "Beach house", "BBBB"),
+                        ),
+                    locationsByHousehold =
+                        mapOf(
+                            1L to listOf(LocationDto(10, "Bijkeuken", "pantry"), LocationDto(11, "Kelder", "cellar")),
+                            2L to listOf(LocationDto(20, "Freezer Downstairs", "freezer")),
+                        ),
+                )
+
+            val groups = vm.state.value.groupedLocationStats
+
+            assertEquals(2, groups.size)
+            assertEquals("Home", groups[0].household.name)
+            assertEquals(listOf("Bijkeuken", "Kelder"), groups[0].stats.map { it.location.name })
+            assertEquals("Beach house", groups[1].household.name)
+            assertEquals(listOf("Freezer Downstairs"), groups[1].stats.map { it.location.name })
+        }
+
+    @Test
+    fun a_household_with_no_locations_gets_no_group() =
+        runTest {
+            val vm =
+                viewModel(
+                    households =
+                        listOf(
+                            HouseholdDto(1, "Home", "AAAA"),
+                            HouseholdDto(2, "Empty", "BBBB"),
+                        ),
+                    locationsByHousehold = mapOf(1L to listOf(LocationDto(10, "Bijkeuken", "pantry"))),
+                )
+
+            assertEquals(
+                listOf("Home"),
+                vm.state.value.groupedLocationStats
+                    .map { it.household.name },
+            )
+        }
+
+    @Test
+    fun the_bar_scale_is_global_so_households_stay_comparable() =
+        runTest {
+            val vm =
+                viewModel(
+                    households =
+                        listOf(
+                            HouseholdDto(1, "Home", "AAAA"),
+                            HouseholdDto(2, "Beach house", "BBBB"),
+                        ),
+                    locationsByHousehold =
+                        mapOf(
+                            1L to listOf(LocationDto(10, "Bijkeuken", "pantry")),
+                            2L to listOf(LocationDto(20, "Freezer", "freezer")),
+                        ),
+                    shelvesByLocation =
+                        mapOf(
+                            10L to listOf(ShelfDto(100, "Top", 0, 10)),
+                            20L to listOf(ShelfDto(200, "Top", 0, 20)),
+                        ),
+                    productsByShelf =
+                        mapOf(
+                            100L to (1..9).map { ProductDto(it.toLong(), "P$it", 1, 100) },
+                            200L to listOf(ProductDto(50, "Peas", 1, 200), ProductDto(51, "Fish", 1, 200)),
+                        ),
+                )
+
+            // Scaled per-card, Beach house's 2 products would fill its bar as completely
+            // as Home's 9 fill theirs, and the chart would lie about the comparison.
+            assertEquals(9, vm.state.value.maxLocationProductCount)
+        }
+
+    @Test
     fun favorite_shelves_list_reflects_favorited_ids() =
         runTest {
             val vm =

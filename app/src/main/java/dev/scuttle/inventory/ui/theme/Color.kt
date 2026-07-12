@@ -10,7 +10,7 @@ val FrostOnAccent = Color(0xFF06283B)
 
 val FrostDarkBackground = Color(0xFF0C1822)
 val FrostDarkSurface = Color(0xFF10212E)
-val FrostDarkSurfaceVariant = Color(0xFF182C3A)
+val FrostDarkSurfaceVariant = Color(FROST_DARK_SURFACE_VARIANT_ARGB)
 val FrostDarkOnSurface = Color(0xFFEAF6FF)
 val FrostDarkOnSurfaceVariant = Color(0xFFB0CCE0)
 
@@ -19,6 +19,9 @@ val FrostLightPrimary = Color(0xFF2298BA) // medium teal-blue, ~4.5:1 on white
 val FrostLightOnPrimary = Color(0xFFFFFFFF)
 val FrostLightBackground = Color(0xFFC2D5E3) // muted steel-blue (matches ref bg)
 val FrostLightSurface = Color(0xFFF5FAFD) // near-white card surface
-val FrostLightSurfaceVariant = Color(0xFFDCECF6) // slightly tinted for chart bg / chips
+
+// Built from the ARGB constants in HouseholdPalette.kt (not a duplicate literal) so the
+// household-accent contrast test measures against the track the bars actually sit on.
+val FrostLightSurfaceVariant = Color(FROST_LIGHT_SURFACE_VARIANT_ARGB) // chart bg / chips
 val FrostLightOnSurface = Color(0xFF0D2436)
 val FrostLightOnSurfaceVariant = Color(0xFF3D5A6E)
