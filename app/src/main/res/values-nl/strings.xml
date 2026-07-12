@@ -31,6 +31,8 @@
     <string name="nav_storage">Opslag</string>
     <string name="nav_search">Zoeken</string>
     <string name="nav_settings">Instellingen</string>
+    <string name="nav_households">Huishoudens</string>
+    <string name="nav_missing_items">Ontbrekend</string>
     <string name="scanner_title">Barcode scannen</string>
     <string name="scanner_permission_denied">Cameratoegang is nodig om barcodes te scannen. Je kunt producten nog steeds handmatig toevoegen en bewerken.</string>
     <string name="location_scan_cd">Scan een barcode</string>
@@ -42,6 +44,7 @@
 
     <!-- Global actions -->
     <string name="action_open_menu">Menu openen</string>
+    <string name="action_settings">Instellingen</string>
     <string name="action_refresh">Vernieuwen</string>
     <string name="action_retry">Opnieuw</string>
     <string name="action_back">Terug</string>
@@ -146,6 +149,7 @@
     <string name="search_field_label">Producten zoeken</string>
     <string name="search_no_results">Geen resultaten.</string>
     <string name="search_result_qty">Aantal: %s</string>
+    <string name="search_choose_household_title">In welk huishouden zoeken?</string>
 
     <!-- Settings -->
     <string name="settings_title">Instellingen</string>

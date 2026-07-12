@@ -31,6 +31,8 @@
     <string name="nav_storage">Storage</string>
     <string name="nav_search">Search</string>
     <string name="nav_settings">Settings</string>
+    <string name="nav_households">Households</string>
+    <string name="nav_missing_items">Missing</string>
     <string name="scanner_title">Scan barcode</string>
     <string name="scanner_permission_denied">Camera permission is needed to scan barcodes. You can still add and edit products manually.</string>
     <string name="location_scan_cd">Scan a barcode</string>
@@ -42,6 +44,7 @@
 
     <!-- Global actions -->
     <string name="action_open_menu">Open menu</string>
+    <string name="action_settings">Settings</string>
     <string name="action_refresh">Refresh</string>
     <string name="action_retry">Retry</string>
     <string name="action_back">Back</string>
@@ -146,6 +149,7 @@
     <string name="search_field_label">Search products</string>
     <string name="search_no_results">No matches.</string>
     <string name="search_result_qty">Qty: %s</string>
+    <string name="search_choose_household_title">Search which household?</string>
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>
