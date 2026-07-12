@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -63,6 +64,7 @@ import dev.scuttle.inventory.ui.theme.HouseholdAvatar
 fun HouseholdsScreen(
     modifier: Modifier = Modifier,
     onBack: () -> Unit = {},
+    onOpenSettings: () -> Unit = {},
     onOpenInvite: (householdId: Long, householdName: String) -> Unit = { _, _ -> },
     viewModel: HouseholdsViewModel = hiltViewModel(),
 ) {
@@ -87,6 +89,11 @@ fun HouseholdsScreen(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.action_back),
                         )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onOpenSettings) {
+                        Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.action_settings))
                     }
                 },
             )
