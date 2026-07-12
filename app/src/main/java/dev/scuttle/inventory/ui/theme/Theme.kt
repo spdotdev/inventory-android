@@ -6,6 +6,7 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
 private val DarkColors =
@@ -45,6 +46,14 @@ private val LightFrostCardColors =
         border = FrostLightPrimary.copy(alpha = 0.18f),
     )
 
+/**
+ * The theme's *resolved* dark flag. `isSystemInDarkTheme()` is not a substitute:
+ * the app has its own System/Light/Dark setting, so the caller of [InventoryTheme]
+ * decides, and a composable picking a theme-dependent colour (e.g.
+ * `householdBarAccent`) has to read the same answer the scheme was built from.
+ */
+val LocalFrostIsDark = staticCompositionLocalOf { false }
+
 @Composable
 fun InventoryTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -52,6 +61,7 @@ fun InventoryTheme(
 ) {
     CompositionLocalProvider(
         LocalFrostCardColors provides if (darkTheme) DarkFrostCardColors else LightFrostCardColors,
+        LocalFrostIsDark provides darkTheme,
     ) {
         MaterialTheme(
             colorScheme = if (darkTheme) DarkColors else LightColors,
