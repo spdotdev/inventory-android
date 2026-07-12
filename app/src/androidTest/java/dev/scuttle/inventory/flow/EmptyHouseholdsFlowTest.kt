@@ -8,7 +8,7 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -34,12 +34,9 @@ class EmptyHouseholdsFlowTest : FlowTestBase() {
             Thread.sleep(3_000)
             waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 5_000)
 
-            // Drawer → Households; HouseholdsViewModel.refresh() → GET /households → empty
-            onNodeWithContentDescription("Open menu").performClick()
-            waitUntilAtLeastOneExists(hasText("Households").and(hasClickAction()), timeoutMillis = 5_000)
-
+            // Households tab; HouseholdsViewModel.refresh() → GET /households → empty
             mockServer.route("/households", fixture("households_empty.json"))
-            onAllNodesWithText("Households").filterToOne(hasClickAction()).performClick()
+            onNodeWithTag("bottom-nav-households").performClick()
             waitForIdle()
 
             waitUntilAtLeastOneExists(hasText("No households yet", substring = true), timeoutMillis = 5_000)

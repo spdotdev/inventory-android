@@ -9,6 +9,7 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -36,11 +37,9 @@ class InviteFlowTest : FlowTestBase() {
             Thread.sleep(3_000)
             waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 5_000)
 
-            // Open drawer → Households
-            onNodeWithContentDescription("Open menu").performClick()
-            waitUntilAtLeastOneExists(hasText("Households").and(hasClickAction()), timeoutMillis = 5_000)
+            // Households tab
             mockServer.route("/households", fixture("households_one.json"))
-            onAllNodesWithText("Households").filterToOne(hasClickAction()).performClick()
+            onNodeWithTag("bottom-nav-households").performClick()
             waitForIdle()
 
             // Tap share icon for "Home" → InviteScreen loads — GET /households/1/invite
