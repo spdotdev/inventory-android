@@ -48,7 +48,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       # Verify the committed gradle-wrapper.jar matches a known-good Gradle
       # release checksum (it was fetched from Gradle's official release tag).
