@@ -25,7 +25,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -85,7 +84,6 @@ fun LocationDetailScreen(
     drawerViewModel: DrawerViewModel,
     modifier: Modifier = Modifier,
     onBack: () -> Unit = {},
-    onOpenDrawer: () -> Unit = {},
     onOpenProduct: (householdId: Long, shelfId: Long, productId: Long) -> Unit = { _, _, _ -> },
     onOpenScanner: () -> Unit = {},
     scannedCode: String? = null,
@@ -169,9 +167,6 @@ fun LocationDetailScreen(
                         }
                         IconButton(onClick = { showAddShelfSheet = true }) {
                             Icon(Icons.Default.Add, contentDescription = stringResource(R.string.location_add_shelf_cd))
-                        }
-                        IconButton(onClick = onOpenDrawer) {
-                            Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.action_open_menu))
                         }
                     }
                 },

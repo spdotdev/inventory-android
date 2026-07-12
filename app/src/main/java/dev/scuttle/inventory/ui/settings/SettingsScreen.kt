@@ -15,7 +15,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -53,7 +53,7 @@ import dev.scuttle.inventory.ui.theme.ThemeMode
 @Composable
 fun SettingsScreen(
     modifier: Modifier = Modifier,
-    onOpenDrawer: () -> Unit = {},
+    onBack: () -> Unit = {},
     onSignOut: () -> Unit = {},
     onOpenHouseholds: () -> Unit = {},
     themeViewModel: ThemeViewModel = hiltViewModel(),
@@ -83,8 +83,11 @@ fun SettingsScreen(
                 windowInsets = statusBarInsets,
                 title = { Text(stringResource(R.string.settings_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onOpenDrawer) {
-                        Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.action_open_menu))
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.action_back),
+                        )
                     }
                 },
             )

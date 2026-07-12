@@ -30,7 +30,8 @@
     <string name="nav_dashboard">Dashboard</string>
     <string name="nav_storage">Storage</string>
     <string name="nav_search">Search</string>
-    <string name="nav_settings">Settings</string>
+    <string name="nav_households">Households</string>
+    <string name="nav_missing_items">Missing</string>
     <string name="scanner_title">Scan barcode</string>
     <string name="scanner_permission_denied">Camera permission is needed to scan barcodes. You can still add and edit products manually.</string>
     <string name="location_scan_cd">Scan a barcode</string>
@@ -41,7 +42,7 @@
     <string name="dashboard_favorite_shelves">Favorite shelves</string>
 
     <!-- Global actions -->
-    <string name="action_open_menu">Open menu</string>
+    <string name="action_settings">Settings</string>
     <string name="action_refresh">Refresh</string>
     <string name="action_retry">Retry</string>
     <string name="action_back">Back</string>
@@ -146,6 +147,7 @@
     <string name="search_field_label">Search products</string>
     <string name="search_no_results">No matches.</string>
     <string name="search_result_qty">Qty: %s</string>
+    <string name="search_choose_household_title">Search which household?</string>
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>
@@ -186,15 +188,7 @@
     <string name="storage_type_other">Other</string>
 
     <!-- Drawer -->
-    <string name="drawer_all_storage">All storage</string>
-    <string name="drawer_dashboard">Dashboard</string>
-    <string name="drawer_search">Search</string>
-    <string name="drawer_search_household_cd">Search %1$s</string>
-    <string name="drawer_households">Households</string>
-    <string name="drawer_missing_items">Missing items</string>
     <string name="drawer_missing_items_count">Missing items · %d</string>
-    <string name="drawer_settings">Settings</string>
-    <string name="drawer_no_households_hint">No households yet. Go to Settings to create one or join with an invite code.</string>
 
     <!-- Invite -->
     <string name="invite_title">Invite to storage</string>

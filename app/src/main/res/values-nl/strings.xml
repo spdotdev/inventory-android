@@ -30,7 +30,8 @@
     <string name="nav_dashboard">Dashboard</string>
     <string name="nav_storage">Opslag</string>
     <string name="nav_search">Zoeken</string>
-    <string name="nav_settings">Instellingen</string>
+    <string name="nav_households">Huishoudens</string>
+    <string name="nav_missing_items">Ontbrekend</string>
     <string name="scanner_title">Barcode scannen</string>
     <string name="scanner_permission_denied">Cameratoegang is nodig om barcodes te scannen. Je kunt producten nog steeds handmatig toevoegen en bewerken.</string>
     <string name="location_scan_cd">Scan een barcode</string>
@@ -41,7 +42,7 @@
     <string name="dashboard_favorite_shelves">Favoriete planken</string>
 
     <!-- Global actions -->
-    <string name="action_open_menu">Menu openen</string>
+    <string name="action_settings">Instellingen</string>
     <string name="action_refresh">Vernieuwen</string>
     <string name="action_retry">Opnieuw</string>
     <string name="action_back">Terug</string>
@@ -146,6 +147,7 @@
     <string name="search_field_label">Producten zoeken</string>
     <string name="search_no_results">Geen resultaten.</string>
     <string name="search_result_qty">Aantal: %s</string>
+    <string name="search_choose_household_title">In welk huishouden zoeken?</string>
 
     <!-- Settings -->
     <string name="settings_title">Instellingen</string>
@@ -186,15 +188,7 @@
     <string name="storage_type_other">Overig</string>
 
     <!-- Drawer -->
-    <string name="drawer_all_storage">Alle opslag</string>
-    <string name="drawer_dashboard">Dashboard</string>
-    <string name="drawer_search">Zoeken</string>
-    <string name="drawer_search_household_cd">Zoek in %1$s</string>
-    <string name="drawer_households">Huishoudens</string>
-    <string name="drawer_missing_items">Ontbrekende artikelen</string>
     <string name="drawer_missing_items_count">Ontbrekende artikelen · %d</string>
-    <string name="drawer_settings">Instellingen</string>
-    <string name="drawer_no_households_hint">Nog geen huishoudens. Ga naar Instellingen om er een aan te maken of deel te nemen met een uitnodigingscode.</string>
 
     <!-- Invite -->
     <string name="invite_title">Uitnodigen voor huishouden</string>

@@ -37,13 +37,13 @@ class AddShelfFlowTest : FlowTestBase() {
             Thread.sleep(3_000)
             waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 5_000)
 
-            // Open drawer → navigate to Fridge (LocationDetailScreen)
-            onNodeWithContentDescription("Open menu").performClick()
-            waitUntilAtLeastOneExists(hasTestTag("drawer-location-Fridge"), timeoutMillis = 8_000)
+            // Storage tab → navigate to Fridge (LocationDetailScreen)
+            onNodeWithTag("bottom-nav-home").performClick()
+            waitUntilAtLeastOneExists(hasTestTag("home-location-Fridge"), timeoutMillis = 8_000)
 
             mockServer.route("/households/1/locations/10/shelves", fixture("shelves_one.json"))
             mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
-            onNodeWithTag("drawer-location-Fridge").performClick()
+            onNodeWithTag("home-location-Fridge").performClick()
             waitForIdle()
 
             // Tap "Add shelf" FAB → fill name → submit

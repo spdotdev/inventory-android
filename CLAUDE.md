@@ -47,9 +47,10 @@ multi-user, multi-household inventory. General-purpose; freezer/fridge/pantry ar
 5. **Search** — global product search; results show location › shelf + quantity.
 6. **Invite** — join code + copyable link + QR (QR rendered from the link).
 7. **Settings** — theme (System/Light/Dark), household management, account / sign out.
-Navigation: Household → Storage overview → Shelves (tabs) → Products. A bottom
-navigation bar (Dashboard / Storage / Search / Settings) covers the top-level screens;
-the drawer remains for household switching and location quick-jumps.
+Navigation: Household → Storage overview → Shelves (tabs) → Products. A 5-tab bottom
+bar (Dashboard / Storage / Households / Missing / Search) is the app's only navigation
+surface — there is no drawer. Settings is reached via a gear icon in each top-level
+screen's app bar.
 
 ## Design — B · Frost (D-021)
 - Frosted-glass cards, icy-blue accent **#7dd3fc**, rounded controls, **Plus Jakarta Sans**.

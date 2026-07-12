@@ -20,8 +20,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
@@ -54,10 +54,9 @@ import dev.scuttle.inventory.ui.common.LiveStatusText
 import dev.scuttle.inventory.ui.theme.FrostCard
 
 /**
- * Distinct from the plain text "Dashboard", which also appears as the
- * always-composed drawer nav item label (ModalNavigationDrawer keeps drawer
- * content in the tree even when closed) — tests must target this tag, not
- * the text, to avoid matching the closed drawer instead of this screen.
+ * Distinct from the plain text "Dashboard", which also appears as the bottom-nav
+ * tab label — tests must target this tag, not the text, to avoid matching the
+ * nav bar item instead of this screen's title.
  */
 const val DASHBOARD_TITLE_TEST_TAG = "dashboard_top_bar_title"
 
@@ -65,7 +64,7 @@ const val DASHBOARD_TITLE_TEST_TAG = "dashboard_top_bar_title"
 @Composable
 fun DashboardScreen(
     modifier: Modifier = Modifier,
-    onOpenDrawer: () -> Unit = {},
+    onOpenSettings: () -> Unit = {},
     onOpenLocation: (householdId: Long, locationId: Long) -> Unit = { _, _ -> },
     onOpenHouseholds: () -> Unit = {},
     onOpenMissingItems: () -> Unit = {},
@@ -103,14 +102,12 @@ fun DashboardScreen(
                         modifier = Modifier.testTag(DASHBOARD_TITLE_TEST_TAG),
                     )
                 },
-                navigationIcon = {
-                    IconButton(onClick = onOpenDrawer) {
-                        Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.action_open_menu))
-                    }
-                },
                 actions = {
                     IconButton(onClick = viewModel::refresh) {
                         Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.action_refresh))
+                    }
+                    IconButton(onClick = onOpenSettings) {
+                        Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.action_settings))
                     }
                 },
             )

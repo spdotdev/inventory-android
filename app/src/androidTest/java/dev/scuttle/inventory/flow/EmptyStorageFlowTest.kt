@@ -9,6 +9,7 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -35,10 +36,9 @@ class EmptyStorageFlowTest : FlowTestBase() {
             Thread.sleep(3_000)
             waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 5_000)
 
-            // Drawer → All storage → tap "Add storage location" for Home → StorageOverviewScreen
-            onNodeWithContentDescription("Open menu").performClick()
-            waitUntilAtLeastOneExists(hasText("All storage").and(hasClickAction()), timeoutMillis = 5_000)
-            onAllNodesWithText("All storage").filterToOne(hasClickAction()).performClick()
+            // Storage tab → AllStoragesScreen → tap "Add storage location" for Home → StorageOverviewScreen
+            onNodeWithTag("bottom-nav-home").performClick()
+            waitForIdle()
             Thread.sleep(2_000)
             waitForIdle()
 

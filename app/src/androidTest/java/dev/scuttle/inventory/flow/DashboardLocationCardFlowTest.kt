@@ -8,7 +8,6 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -37,14 +36,14 @@ class DashboardLocationCardFlowTest : FlowTestBase() {
             Thread.sleep(3_000)
             waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 5_000)
 
-            // Open drawer, wait until DrawerViewModel has loaded "Fridge" as a clickable item
-            onNodeWithContentDescription("Open menu").performClick()
-            waitUntilAtLeastOneExists(hasTestTag("drawer-location-Fridge"), timeoutMillis = 8_000)
+            // Tap Storage tab, wait until AllStoragesScreen has loaded "Fridge" as a clickable item
+            onNodeWithTag("bottom-nav-home").performClick()
+            waitUntilAtLeastOneExists(hasTestTag("home-location-Fridge"), timeoutMillis = 8_000)
 
-            // Register LocationDetailScreen routes after Drawer VM is done (avoids race with Drawer refresh)
+            // Register LocationDetailScreen routes after Storage VM is done (avoids race with refresh)
             mockServer.route("/households/1/locations/10/shelves", fixture("shelves_one.json"))
             mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
-            onNodeWithTag("drawer-location-Fridge").performClick()
+            onNodeWithTag("home-location-Fridge").performClick()
             waitForIdle()
 
             // LocationDetailScreen: "Top shelf" tab and "Milk" product visible

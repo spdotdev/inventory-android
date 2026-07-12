@@ -7,45 +7,55 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.DrawerValue
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SpaceDashboard
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.stringResource
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Surface
-import androidx.compose.material3.rememberDrawerState
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavOptionsBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import dagger.hilt.android.AndroidEntryPoint
 import dev.scuttle.inventory.data.realtime.LiveUpdates
 import dev.scuttle.inventory.data.settings.SharedPrefsLanguageStore
-import dev.scuttle.inventory.ui.app.AppDrawer
 import dev.scuttle.inventory.ui.app.DrawerViewModel
 import dev.scuttle.inventory.ui.auth.AuthScreen
 import dev.scuttle.inventory.ui.auth.AuthViewModel
@@ -64,7 +74,6 @@ import dev.scuttle.inventory.ui.settings.ThemeViewModel
 import dev.scuttle.inventory.ui.storage.StorageOverviewScreen
 import dev.scuttle.inventory.ui.theme.InventoryTheme
 import dev.scuttle.inventory.ui.theme.ThemeMode
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -116,6 +125,7 @@ class MainActivity : ComponentActivity() {
 }
 
 private data class BottomTab(
+    val key: String,
     val route: String,
     val labelRes: Int,
     val icon: androidx.compose.ui.graphics.vector.ImageVector,
@@ -157,6 +167,26 @@ private object Routes {
     ) = "product-detail/$householdId/$shelfId/$productId"
 }
 
+/**
+ * Nav options shared by every unparameterized bottom-tab destination (and any other
+ * call site that jumps to one, e.g. "Manage households" from Settings): pop back to
+ * DASHBOARD and don't stack duplicates.
+ *
+ * Deliberately NOT `popUpTo(saveState = true)` / `restoreState = true`: all five bottom
+ * tabs are flat single screens whose data lives in the singleton HierarchyStore, so
+ * save/restore would only buy back scroll position / search text — but saveState saves
+ * the ENTIRE back-stack chunk stacked above a tab root (e.g. Settings, StorageOverview,
+ * Search), keyed by that chunk's deepest destination. A later navigate() to the same tab
+ * with restoreState = true then replays that whole chunk instead of pushing a fresh tab
+ * screen, so a tab tap can land on a non-tab screen (bottom bar disappears) or do nothing
+ * at all (if the chunk being restored is the screen already showing). Not used for
+ * SEARCH either — see the comments at its navigate() call sites.
+ */
+private val tabNavOptions: NavOptionsBuilder.() -> Unit = {
+    popUpTo(Routes.DASHBOARD)
+    launchSingleTop = true
+}
+
 /** Where an auth-state change should send the user. */
 enum class AuthRedirect { TO_DASHBOARD, TO_AUTH }
 
@@ -179,6 +209,7 @@ fun authRedirectFor(
         else -> AuthRedirect.TO_AUTH
     }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun InventoryNavHost(
     themeViewModel: ThemeViewModel,
@@ -187,11 +218,6 @@ private fun InventoryNavHost(
 ) {
     val navController = rememberNavController()
     val authState by authViewModel.state.collectAsState()
-    val drawerState = rememberDrawerState(DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
-
-    val openDrawer: () -> Unit = { scope.launch { drawerState.open() } }
-    val closeDrawer: () -> Unit = { scope.launch { drawerState.close() } }
 
     // Redirect only on an actual auth *transition* (login / logout), never on a bare
     // `authenticated == true`. On process-death restore the NavController rehydrates its
@@ -221,94 +247,123 @@ private fun InventoryNavHost(
         }
     }
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            AppDrawer(
-                viewModel = drawerViewModel,
-                onNavigateHome = {
-                    closeDrawer()
-                    navController.navigate(Routes.HOME) {
-                        popUpTo(Routes.HOME) { inclusive = true }
-                        launchSingleTop = true
-                    }
-                },
-                onNavigateDashboard = {
-                    closeDrawer()
-                    navController.navigate(Routes.DASHBOARD) { launchSingleTop = true }
-                },
-                onNavigateSearch = { householdId ->
-                    closeDrawer()
-                    navController.navigate(Routes.search(householdId)) { launchSingleTop = true }
-                },
-                onNavigateHouseholds = {
-                    closeDrawer()
-                    navController.navigate(Routes.HOUSEHOLDS) { launchSingleTop = true }
-                },
-                onNavigateMissingItems = {
-                    closeDrawer()
-                    navController.navigate(Routes.MISSING_ITEMS) { launchSingleTop = true }
-                },
-                onNavigateLocation = { householdId, locationId ->
-                    closeDrawer()
-                    navController.navigate(Routes.location(householdId, locationId)) {
-                        launchSingleTop = true
-                    }
-                },
-                onNavigateSettings = {
-                    closeDrawer()
-                    navController.navigate(Routes.SETTINGS) { launchSingleTop = true }
-                },
-            )
-        },
-        gesturesEnabled = authState.authenticated,
-    ) {
-        // Bottom navigation (UX wave 2): the app's four top-level destinations are
-        // permanently visible instead of hidden behind the hamburger drawer. The
-        // drawer stays for household/location quick-jumps. Detail screens (location,
-        // product, scanner, invite, ...) keep the full-screen layout — the bar only
-        // shows on the tabs themselves.
-        val backStackEntry by navController.currentBackStackEntryAsState()
-        val currentRoute = backStackEntry?.destination?.route
-        val drawerUi by drawerViewModel.state.collectAsState()
-        val firstHouseholdId = drawerUi.entries.firstOrNull()?.id
-        val bottomTabs =
-            listOf(
-                BottomTab(Routes.DASHBOARD, R.string.nav_dashboard, Icons.Filled.SpaceDashboard),
-                BottomTab(Routes.HOME, R.string.nav_storage, Icons.Filled.Home),
-                BottomTab(Routes.SEARCH, R.string.nav_search, Icons.Filled.Search),
-                BottomTab(Routes.SETTINGS, R.string.nav_settings, Icons.Filled.Settings),
-            )
-        Scaffold(
-            contentWindowInsets = WindowInsets(0),
-            bottomBar = {
-                if (bottomTabs.any { it.route == currentRoute }) {
-                    NavigationBar {
-                        bottomTabs.forEach { tab ->
-                            NavigationBarItem(
-                                selected = currentRoute == tab.route,
-                                onClick = {
-                                    val target =
-                                        if (tab.route == Routes.SEARCH) {
-                                            firstHouseholdId?.let(Routes::search) ?: return@NavigationBarItem
-                                        } else {
-                                            tab.route
-                                        }
-                                    navController.navigate(target) {
-                                        popUpTo(Routes.DASHBOARD) { saveState = true }
-                                        launchSingleTop = true
-                                        restoreState = true
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = backStackEntry?.destination?.route
+    val drawerUi by drawerViewModel.state.collectAsState()
+    var showHouseholdPicker by rememberSaveable { mutableStateOf(false) }
+    val householdPickerSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val bottomTabs =
+        listOf(
+            BottomTab("dashboard", Routes.DASHBOARD, R.string.nav_dashboard, Icons.Filled.SpaceDashboard),
+            BottomTab("home", Routes.HOME, R.string.nav_storage, Icons.Filled.Home),
+            BottomTab("households", Routes.HOUSEHOLDS, R.string.nav_households, Icons.Filled.People),
+            BottomTab("missing-items", Routes.MISSING_ITEMS, R.string.nav_missing_items, Icons.Filled.Warning),
+            BottomTab("search", Routes.SEARCH, R.string.nav_search, Icons.Filled.Search),
+        )
+    val onOpenSettings: () -> Unit = { navController.navigate(Routes.SETTINGS) { launchSingleTop = true } }
+    Scaffold(
+        contentWindowInsets = WindowInsets(0),
+        bottomBar = {
+            if (bottomTabs.any { it.route == currentRoute }) {
+                NavigationBar {
+                    bottomTabs.forEach { tab ->
+                        NavigationBarItem(
+                            selected = currentRoute == tab.route,
+                            // Search needs a householdId to navigate to (or to offer a
+                            // choice of household), which comes from drawerUi.entries —
+                            // loaded asynchronously from HierarchyStore and possibly empty
+                            // for real (a household-less account). Gate the tab on that so
+                            // it's never tappable-but-inert: with nothing loaded yet (or
+                            // ever), the tab shows disabled instead of silently doing
+                            // nothing when tapped. The other four tabs don't depend on
+                            // this data, so they stay always enabled.
+                            enabled = if (tab.key == "search") drawerUi.entries.isNotEmpty() else true,
+                            onClick = {
+                                if (tab.key == "search") {
+                                    val entries = drawerUi.entries
+                                    when {
+                                        entries.size == 1 ->
+                                            // No saveState/restoreState: SEARCH is
+                                            // parameterized (search/{householdId}); a
+                                            // saved back-stack entry would restore
+                                            // verbatim with its OLD householdId, silently
+                                            // ignoring this one.
+                                            navController.navigate(Routes.search(entries.first().id)) {
+                                                popUpTo(Routes.DASHBOARD)
+                                                launchSingleTop = true
+                                            }
+                                        entries.size > 1 -> showHouseholdPicker = true
+                                        // Unreachable via the UI: `enabled` above already
+                                        // keeps the tab untappable when entries is empty.
+                                        // Kept as a defensive no-op, not a real dead end.
+                                        else -> Unit
                                     }
-                                },
-                                icon = { Icon(tab.icon, contentDescription = null) },
-                                label = { Text(stringResource(tab.labelRes)) },
-                                modifier = Modifier.testTag("bottom-nav-${tab.route}"),
-                            )
-                        }
+                                } else {
+                                    navController.navigate(tab.route, tabNavOptions)
+                                }
+                            },
+                            icon = {
+                                if (tab.key == "missing-items" && drawerUi.missingItemCount > 0) {
+                                    BadgedBox(badge = { Badge { Text("${drawerUi.missingItemCount}") } }) {
+                                        Icon(
+                                            tab.icon,
+                                            contentDescription =
+                                                stringResource(
+                                                    R.string.drawer_missing_items_count,
+                                                    drawerUi.missingItemCount,
+                                                ),
+                                        )
+                                    }
+                                } else {
+                                    Icon(tab.icon, contentDescription = null)
+                                }
+                            },
+                            label = { Text(stringResource(tab.labelRes)) },
+                            modifier = Modifier.testTag("bottom-nav-${tab.key}"),
+                        )
                     }
                 }
-            },
-        ) { scaffoldPadding ->
+            }
+        },
+    ) { scaffoldPadding ->
+        if (showHouseholdPicker) {
+            ModalBottomSheet(
+                onDismissRequest = { showHouseholdPicker = false },
+                sheetState = householdPickerSheetState,
+            ) {
+                Column(
+                    modifier =
+                        Modifier
+                            .verticalScroll(rememberScrollState())
+                            .navigationBarsPadding(),
+                ) {
+                    Text(
+                        stringResource(R.string.search_choose_household_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(16.dp),
+                    )
+                    drawerUi.entries.forEach { entry ->
+                        NavigationDrawerItem(
+                            label = { Text(entry.name) },
+                            selected = false,
+                            onClick = {
+                                showHouseholdPicker = false
+                                // No saveState/restoreState: SEARCH is parameterized
+                                // (search/{householdId}); a saved back-stack entry would
+                                // restore verbatim with its OLD householdId, silently
+                                // ignoring the household just picked here.
+                                navController.navigate(Routes.search(entry.id)) {
+                                    popUpTo(Routes.DASHBOARD)
+                                    launchSingleTop = true
+                                }
+                            },
+                            modifier =
+                                Modifier.padding(horizontal = 12.dp).testTag("household-picker-${entry.name}"),
+                        )
+                    }
+                }
+            }
+        }
         NavHost(
             navController = navController,
             startDestination = Routes.AUTH,
@@ -328,7 +383,7 @@ private fun InventoryNavHost(
             composable(Routes.HOME) {
                 AllStoragesScreen(
                     viewModel = drawerViewModel,
-                    onOpenDrawer = openDrawer,
+                    onOpenSettings = onOpenSettings,
                     onOpenLocation = { hhId, locId ->
                         navController.navigate(Routes.location(hhId, locId))
                     },
@@ -340,7 +395,7 @@ private fun InventoryNavHost(
 
             composable(Routes.DASHBOARD) {
                 DashboardScreen(
-                    onOpenDrawer = openDrawer,
+                    onOpenSettings = onOpenSettings,
                     onOpenLocation = { hhId, locId ->
                         navController.navigate(Routes.location(hhId, locId))
                     },
@@ -350,16 +405,16 @@ private fun InventoryNavHost(
                     onOpenSearch = { hhId ->
                         navController.navigate(Routes.search(hhId)) { launchSingleTop = true }
                     },
-                    onOpenHouseholds = { navController.navigate(Routes.HOUSEHOLDS) },
+                    onOpenHouseholds = { navController.navigate(Routes.HOUSEHOLDS, tabNavOptions) },
                     onOpenMissingItems = { navController.navigate(Routes.MISSING_ITEMS) { launchSingleTop = true } },
                 )
             }
 
             composable(Routes.SETTINGS) {
                 SettingsScreen(
-                    onOpenDrawer = openDrawer,
+                    onBack = { navController.popBackStack() },
                     onSignOut = { authViewModel.signOut() },
-                    onOpenHouseholds = { navController.navigate(Routes.HOUSEHOLDS) },
+                    onOpenHouseholds = { navController.navigate(Routes.HOUSEHOLDS, tabNavOptions) },
                     themeViewModel = themeViewModel,
                 )
             }
@@ -367,6 +422,7 @@ private fun InventoryNavHost(
             composable(Routes.HOUSEHOLDS) {
                 HouseholdsScreen(
                     onBack = { navController.popBackStack() },
+                    onOpenSettings = onOpenSettings,
                     onOpenInvite = { id, name -> navController.navigate(Routes.invite(id, name)) },
                 )
             }
@@ -379,7 +435,6 @@ private fun InventoryNavHost(
                 StorageOverviewScreen(
                     householdId = householdId,
                     onBack = { navController.popBackStack() },
-                    onOpenDrawer = openDrawer,
                     onOpenLocation = { navController.navigate(Routes.location(householdId, it)) },
                     onOpenSearch = { navController.navigate(Routes.search(householdId)) },
                 )
@@ -393,6 +448,7 @@ private fun InventoryNavHost(
                 SearchScreen(
                     householdId = householdId,
                     onBack = { navController.popBackStack() },
+                    onOpenSettings = onOpenSettings,
                     onOpenProduct = { hhId, shelfId, productId ->
                         navController.navigate(Routes.productDetail(hhId, shelfId, productId))
                     },
@@ -434,7 +490,6 @@ private fun InventoryNavHost(
                     locationId = locationId,
                     drawerViewModel = drawerViewModel,
                     onBack = { navController.popBackStack() },
-                    onOpenDrawer = openDrawer,
                     onOpenProduct = { hhId, shelfId, productId ->
                         navController.navigate(Routes.productDetail(hhId, shelfId, productId))
                     },
@@ -447,6 +502,7 @@ private fun InventoryNavHost(
             composable(Routes.MISSING_ITEMS) {
                 MissingItemsScreen(
                     onBack = { navController.popBackStack() },
+                    onOpenSettings = onOpenSettings,
                     onOpenLocation = { hhId, locId ->
                         navController.navigate(Routes.location(hhId, locId))
                     },
@@ -474,7 +530,6 @@ private fun InventoryNavHost(
             ) {
                 ProductDetailScreen(onBack = { navController.popBackStack() })
             }
-        }
         }
     }
 }

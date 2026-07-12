@@ -37,12 +37,12 @@ class StorageToProductFlowTest : FlowTestBase() {
             Thread.sleep(3_000)
             waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 5_000)
 
-            onNodeWithContentDescription("Open menu").performClick()
-            waitUntilAtLeastOneExists(hasTestTag("drawer-location-Fridge"), timeoutMillis = 8_000)
+            onNodeWithTag("bottom-nav-home").performClick()
+            waitUntilAtLeastOneExists(hasTestTag("home-location-Fridge"), timeoutMillis = 8_000)
 
             mockServer.route("/households/1/locations/10/shelves", fixture("shelves_one.json"))
             mockServer.route("/households/1/shelves/100/products", fixture("products_empty.json"))
-            onNodeWithTag("drawer-location-Fridge").performClick()
+            onNodeWithTag("home-location-Fridge").performClick()
             Thread.sleep(2_000)
             waitForIdle()
 
