@@ -7,6 +7,7 @@ import androidx.compose.ui.test.filterToOne
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -37,6 +38,10 @@ class SearchNoResultsFlowTest : FlowTestBase() {
             waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 5_000)
 
             mockServer.route("/households", fixture("households_one.json"))
+            // Search tab is disabled until drawerUi.entries loads (HierarchyStore, async
+            // after login) — tapping it before then is a no-op on a disabled node, not an
+            // error, so wait for enabled first or the click silently does nothing.
+            waitUntilAtLeastOneExists(hasTestTag("bottom-nav-search").and(isEnabled()), timeoutMillis = 8_000)
             onNodeWithTag("bottom-nav-search").performClick()
             waitForIdle()
 

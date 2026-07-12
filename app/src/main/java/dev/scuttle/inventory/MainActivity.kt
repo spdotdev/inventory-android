@@ -257,6 +257,15 @@ private fun InventoryNavHost(
                     bottomTabs.forEach { tab ->
                         NavigationBarItem(
                             selected = currentRoute == tab.route,
+                            // Search needs a householdId to navigate to (or to offer a
+                            // choice of household), which comes from drawerUi.entries —
+                            // loaded asynchronously from HierarchyStore and possibly empty
+                            // for real (a household-less account). Gate the tab on that so
+                            // it's never tappable-but-inert: with nothing loaded yet (or
+                            // ever), the tab shows disabled instead of silently doing
+                            // nothing when tapped. The other four tabs don't depend on
+                            // this data, so they stay always enabled.
+                            enabled = if (tab.key == "search") drawerUi.entries.isNotEmpty() else true,
                             onClick = {
                                 if (tab.key == "search") {
                                     val entries = drawerUi.entries
@@ -271,6 +280,9 @@ private fun InventoryNavHost(
                                                 launchSingleTop = true
                                             }
                                         entries.size > 1 -> showHouseholdPicker = true
+                                        // Unreachable via the UI: `enabled` above already
+                                        // keeps the tab untappable when entries is empty.
+                                        // Kept as a defensive no-op, not a real dead end.
                                         else -> Unit
                                     }
                                 } else {
