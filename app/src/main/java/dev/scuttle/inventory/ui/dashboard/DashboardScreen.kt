@@ -54,10 +54,9 @@ import dev.scuttle.inventory.ui.common.LiveStatusText
 import dev.scuttle.inventory.ui.theme.FrostCard
 
 /**
- * Distinct from the plain text "Dashboard", which also appears as the
- * always-composed drawer nav item label (ModalNavigationDrawer keeps drawer
- * content in the tree even when closed) — tests must target this tag, not
- * the text, to avoid matching the closed drawer instead of this screen.
+ * Distinct from the plain text "Dashboard", which also appears as the bottom-nav
+ * tab label — tests must target this tag, not the text, to avoid matching the
+ * nav bar item instead of this screen's title.
  */
 const val DASHBOARD_TITLE_TEST_TAG = "dashboard_top_bar_title"
 
