@@ -37,14 +37,14 @@ class MoveProductFlowTest : FlowTestBase() {
             Thread.sleep(3_000)
             waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 5_000)
 
-            // Drawer → Fridge (LocationDetailScreen with "Top shelf" tab showing Milk)
-            onNodeWithContentDescription("Open menu").performClick()
-            waitUntilAtLeastOneExists(hasTestTag("drawer-location-Fridge"), timeoutMillis = 8_000)
+            // Storage tab → Fridge (LocationDetailScreen with "Top shelf" tab showing Milk)
+            onNodeWithTag("bottom-nav-home").performClick()
+            waitUntilAtLeastOneExists(hasTestTag("home-location-Fridge"), timeoutMillis = 8_000)
 
             mockServer.route("/households/1/locations/10/shelves", fixture("shelves_two.json"))
             mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
             mockServer.route("/households/1/shelves/101/products", fixture("products_empty.json"))
-            onNodeWithTag("drawer-location-Fridge").performClick()
+            onNodeWithTag("home-location-Fridge").performClick()
             waitForIdle()
 
             // Tap "Move Milk" → startMove builds target list
