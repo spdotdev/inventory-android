@@ -1,0 +1,109 @@
+name: 🐞 Bug report
+description: Something in the app is broken, wrong, or crashed.
+title: "[Bug] "
+labels: ["bug", "from-tester"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for testing! The more of this you fill in, the less likely we
+        have to come back and ask you to reproduce it again.
+
+        **The single most useful thing you can add is a screenshot.**
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe the problem in your own words.
+      placeholder: I tapped the Search tab and nothing happened at all.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: How do we make it happen again?
+      description: |
+        Step by step, from opening the app. Even if it feels obvious — the
+        exact order often turns out to be the thing that matters.
+      placeholder: |
+        1. Open the app (already signed in)
+        2. Tap the Storage tab at the bottom
+        3. Tap the "Fridge" card
+        4. Tap the ⚙️ in the top right
+        5. Screen goes blank
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect instead?
+      placeholder: I expected the Settings screen to open.
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot or screen recording
+      description: |
+        **Required.** Drag an image or video straight into this box, or tap
+        it and pick from your gallery.
+
+        On Android: hold **Power + Volume Down** for a screenshot. For a
+        recording, swipe down twice and tap **Screen record**.
+
+        If the app crashed and closed before you could capture it, write
+        "crashed, no screenshot" here and tell us exactly what you were doing
+        in the steps above.
+      placeholder: Drop the image here.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: version
+    attributes:
+      label: Which build are you on?
+      description: |
+        The version from the link you installed. If you're not sure, pick
+        "Not sure" — don't guess.
+      options:
+        - v0.1.6 (bottom navigation bar)
+        - v0.1.5 (older — has the side menu)
+        - Not sure
+    validations:
+      required: true
+
+  - type: input
+    id: device
+    attributes:
+      label: Phone and Android version
+      description: |
+        Find it in your phone's **Settings → About phone**.
+      placeholder: Pixel 7 Pro, Android 16
+    validations:
+      required: true
+
+  - type: dropdown
+    id: reproducible
+    attributes:
+      label: Does it happen every time?
+      options:
+        - Every time
+        - Sometimes
+        - It happened once and I can't repeat it
+    validations:
+      required: true
+
+  - type: textarea
+    id: anything-else
+    attributes:
+      label: Anything else?
+      description: |
+        Optional. Anything that felt relevant — e.g. you were on mobile data
+        rather than wifi, you'd just switched household, the app had been
+        open in the background a while.
+    validations:
+      required: false

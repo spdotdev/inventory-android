@@ -1,0 +1,43 @@
+name: 💡 Feedback or idea
+description: Something works, but it's awkward, confusing, or missing.
+title: "[Feedback] "
+labels: ["feedback", "from-tester"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Not a bug — just something that felt wrong, slow, confusing, or that
+        you wished the app did. This is genuinely useful; send it.
+
+  - type: textarea
+    id: feedback
+    attributes:
+      label: What's on your mind?
+      description: |
+        What were you trying to do, and what got in the way?
+      placeholder: |
+        I keep tapping where the old side menu used to be to switch
+        households. It took me a while to find the Households tab.
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot
+      description: |
+        Optional, but a picture of the screen you're talking about saves a
+        lot of back-and-forth. Drag it into this box.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: version
+    attributes:
+      label: Which build are you on?
+      options:
+        - v0.1.6 (bottom navigation bar)
+        - v0.1.5 (older — has the side menu)
+        - Not sure
+    validations:
+      required: true
