@@ -34,9 +34,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -44,10 +46,13 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
+import dev.scuttle.inventory.BuildConfig
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.settings.AppLanguage
 import dev.scuttle.inventory.ui.common.LiveStatusText
 import dev.scuttle.inventory.ui.theme.ThemeMode
+
+const val SETTINGS_VERSION_TEST_TAG = "settings-version"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -214,6 +219,20 @@ fun SettingsScreen(
             ) {
                 Text(stringResource(R.string.settings_sign_out_button))
             }
+
+            // Testers are asked to quote this in bug reports (see the GitHub issue
+            // forms) — without it they can only guess which build they're on.
+            Text(
+                text =
+                    stringResource(
+                        R.string.settings_version,
+                        BuildConfig.VERSION_NAME,
+                        BuildConfig.VERSION_CODE,
+                    ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.align(Alignment.CenterHorizontally).testTag(SETTINGS_VERSION_TEST_TAG),
+            )
         }
     }
 

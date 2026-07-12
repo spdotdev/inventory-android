@@ -163,6 +163,7 @@
     <string name="settings_my_households_button">Mijn huishoudens</string>
     <string name="settings_account_section">Account</string>
     <string name="settings_sign_out_button">Uitloggen</string>
+    <string name="settings_version">Versie %1$s (build %2$d)</string>
     <string name="settings_sign_out_dialog_title">Uitloggen?</string>
     <string name="settings_sign_out_dialog_text">Je moet opnieuw inloggen.</string>
 
