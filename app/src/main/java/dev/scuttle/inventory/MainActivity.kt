@@ -7,9 +7,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.People
@@ -166,13 +170,21 @@ private object Routes {
 /**
  * Nav options shared by every unparameterized bottom-tab destination (and any other
  * call site that jumps to one, e.g. "Manage households" from Settings): pop back to
- * DASHBOARD saving state, don't stack duplicates, and restore saved state on return.
- * Not used for SEARCH — see the comments at its navigate() call sites.
+ * DASHBOARD and don't stack duplicates.
+ *
+ * Deliberately NOT `popUpTo(saveState = true)` / `restoreState = true`: all five bottom
+ * tabs are flat single screens whose data lives in the singleton HierarchyStore, so
+ * save/restore would only buy back scroll position / search text — but saveState saves
+ * the ENTIRE back-stack chunk stacked above a tab root (e.g. Settings, StorageOverview,
+ * Search), keyed by that chunk's deepest destination. A later navigate() to the same tab
+ * with restoreState = true then replays that whole chunk instead of pushing a fresh tab
+ * screen, so a tab tap can land on a non-tab screen (bottom bar disappears) or do nothing
+ * at all (if the chunk being restored is the screen already showing). Not used for
+ * SEARCH either — see the comments at its navigate() call sites.
  */
 private val tabNavOptions: NavOptionsBuilder.() -> Unit = {
-    popUpTo(Routes.DASHBOARD) { saveState = true }
+    popUpTo(Routes.DASHBOARD)
     launchSingleTop = true
-    restoreState = true
 }
 
 /** Where an auth-state change should send the user. */
@@ -238,7 +250,7 @@ private fun InventoryNavHost(
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
     val drawerUi by drawerViewModel.state.collectAsState()
-    var showHouseholdPicker by remember { mutableStateOf(false) }
+    var showHouseholdPicker by rememberSaveable { mutableStateOf(false) }
     val householdPickerSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val bottomTabs =
         listOf(
@@ -271,12 +283,13 @@ private fun InventoryNavHost(
                                     val entries = drawerUi.entries
                                     when {
                                         entries.size == 1 ->
-                                            // No restoreState: SEARCH is parameterized
-                                            // (search/{householdId}); a saved back-stack
-                                            // entry would restore verbatim with its OLD
-                                            // householdId, silently ignoring this one.
+                                            // No saveState/restoreState: SEARCH is
+                                            // parameterized (search/{householdId}); a
+                                            // saved back-stack entry would restore
+                                            // verbatim with its OLD householdId, silently
+                                            // ignoring this one.
                                             navController.navigate(Routes.search(entries.first().id)) {
-                                                popUpTo(Routes.DASHBOARD) { saveState = true }
+                                                popUpTo(Routes.DASHBOARD)
                                                 launchSingleTop = true
                                             }
                                         entries.size > 1 -> showHouseholdPicker = true
@@ -318,28 +331,36 @@ private fun InventoryNavHost(
                 onDismissRequest = { showHouseholdPicker = false },
                 sheetState = householdPickerSheetState,
             ) {
-                Text(
-                    stringResource(R.string.search_choose_household_title),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(16.dp),
-                )
-                drawerUi.entries.forEach { entry ->
-                    NavigationDrawerItem(
-                        label = { Text(entry.name) },
-                        selected = false,
-                        onClick = {
-                            showHouseholdPicker = false
-                            // No restoreState: SEARCH is parameterized
-                            // (search/{householdId}); a saved back-stack entry would
-                            // restore verbatim with its OLD householdId, silently
-                            // ignoring the household just picked here.
-                            navController.navigate(Routes.search(entry.id)) {
-                                popUpTo(Routes.DASHBOARD) { saveState = true }
-                                launchSingleTop = true
-                            }
-                        },
-                        modifier = Modifier.padding(horizontal = 12.dp).testTag("household-picker-${entry.name}"),
+                Column(
+                    modifier =
+                        Modifier
+                            .verticalScroll(rememberScrollState())
+                            .navigationBarsPadding(),
+                ) {
+                    Text(
+                        stringResource(R.string.search_choose_household_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(16.dp),
                     )
+                    drawerUi.entries.forEach { entry ->
+                        NavigationDrawerItem(
+                            label = { Text(entry.name) },
+                            selected = false,
+                            onClick = {
+                                showHouseholdPicker = false
+                                // No saveState/restoreState: SEARCH is parameterized
+                                // (search/{householdId}); a saved back-stack entry would
+                                // restore verbatim with its OLD householdId, silently
+                                // ignoring the household just picked here.
+                                navController.navigate(Routes.search(entry.id)) {
+                                    popUpTo(Routes.DASHBOARD)
+                                    launchSingleTop = true
+                                }
+                            },
+                            modifier =
+                                Modifier.padding(horizontal = 12.dp).testTag("household-picker-${entry.name}"),
+                        )
+                    }
                 }
             }
         }
