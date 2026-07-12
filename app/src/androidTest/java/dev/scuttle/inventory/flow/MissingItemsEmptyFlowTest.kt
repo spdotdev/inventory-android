@@ -8,7 +8,7 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -37,11 +37,8 @@ class MissingItemsEmptyFlowTest : FlowTestBase() {
             Thread.sleep(3_000)
             waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 5_000)
 
-            // Drawer → "Missing items"
-            onNodeWithContentDescription("Open menu").performClick()
-            waitUntilAtLeastOneExists(hasText("Missing items").and(hasClickAction()), timeoutMillis = 5_000)
-
-            onAllNodesWithText("Missing items").filterToOne(hasClickAction()).performClick()
+            // Missing items tab
+            onNodeWithTag("bottom-nav-missing-items").performClick()
             waitForIdle()
 
             // loadFromCache() reads non-mandatory products from in-memory cache → no missing items
