@@ -65,13 +65,17 @@ abstract class FlowTestBase {
             .trim()
 
     /**
-     * Open a product row by tapping its NAME area (left side), not the node
-     * center: performClick's center tap lands on the quantity stepper cluster —
-     * a DISABLED "−" (qty 0) silently swallows the click and the card's
+     * Open a product row by tapping its NAME area, not the node center:
+     * performClick's center tap lands on the quantity stepper cluster — a
+     * DISABLED "−" (qty 0) silently swallows the click and the card's
      * navigation onClick never fires. Humans naturally tap the name, which is
      * why manual testing never reproduced it (found via the 06a989b layout
      * shift; nightly-emulator + phone both failed the same way).
+     *
+     * The name is the card's top line since #31 (it used to be its left column),
+     * so aim high rather than left — the stepper now owns the lower half at
+     * every horizontal offset.
      */
     protected fun androidx.compose.ui.test.SemanticsNodeInteraction.clickNameArea() =
-        performTouchInput { click(percentOffset(0.15f, 0.5f)) }
+        performTouchInput { click(percentOffset(0.15f, 0.2f)) }
 }

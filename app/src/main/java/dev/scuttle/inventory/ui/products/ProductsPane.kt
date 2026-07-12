@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -58,7 +60,7 @@ import dev.scuttle.inventory.ui.common.SnackbarErrorEffect
 import dev.scuttle.inventory.ui.common.SortMenu
 import dev.scuttle.inventory.ui.theme.FrostCard
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun ProductsPane(
     householdId: Long,
@@ -209,7 +211,12 @@ fun ProductsPane(
                         onClick = { onOpenProduct(product) },
                         modifier = Modifier.fillMaxWidth().testTag("product-${product.id}"),
                     ) {
-                        Row(
+                        // Name on its own line, controls beneath it. Sharing one line with the
+                        // stepper and the move button left the name only the width those
+                        // controls didn't want — a quarter of the card, and less still in
+                        // locales where "Move" is a longer word ("Verplaatsen"), which squashed
+                        // names down to two or three characters (#31).
+                        Column(
                             modifier =
                                 Modifier
                                     .fillMaxWidth()
@@ -220,80 +227,87 @@ fun ProductsPane(
                                             Color.Transparent
                                         },
                                     ).padding(horizontal = 16.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                // Long names wrap to at most two lines and then
-                                // ellipsize — never the one-char-per-line squash
-                                // reported on narrow devices. Full name lives on
-                                // the detail screen, one tap away.
+                            Text(
+                                text = product.name,
+                                style = MaterialTheme.typography.bodyLarge,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                            if (!product.code.isNullOrBlank()) {
                                 Text(
-                                    text = product.name,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    maxLines = 2,
+                                    text = product.code,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                 )
-                                if (!product.code.isNullOrBlank()) {
+                            }
+                            if (product.is_mandatory == true) {
+                                Text(
+                                    text = stringResource(R.string.products_pane_mandatory_label),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color =
+                                        if (isMandatoryWarning) {
+                                            MaterialTheme.colorScheme.error
+                                        } else {
+                                            MaterialTheme.colorScheme.primary
+                                        },
+                                )
+                            }
+                            // FlowRow, not Row: at large font scales the move button drops to
+                            // its own line instead of being clipped off the card's edge.
+                            FlowRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    OutlinedButton(
+                                        onClick = { viewModel.decrement(product.id) },
+                                        enabled = !state.loading && product.quantity > 0,
+                                        modifier =
+                                            Modifier.semantics {
+                                                contentDescription = decreaseDesc
+                                            },
+                                    ) {
+                                        Text("−")
+                                    }
                                     Text(
-                                        text = product.code,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                }
-                                if (product.is_mandatory == true) {
-                                    Text(
-                                        text = stringResource(R.string.products_pane_mandatory_label),
-                                        style = MaterialTheme.typography.labelSmall,
+                                        text = product.quantity.toString(),
                                         color =
                                             if (isMandatoryWarning) {
                                                 MaterialTheme.colorScheme.error
                                             } else {
-                                                MaterialTheme.colorScheme.primary
+                                                MaterialTheme.colorScheme.onSurface
                                             },
                                     )
+                                    OutlinedButton(
+                                        onClick = { viewModel.increment(product.id) },
+                                        enabled = !state.loading,
+                                        modifier =
+                                            Modifier.semantics {
+                                                contentDescription = increaseDesc
+                                            },
+                                    ) {
+                                        Text("+")
+                                    }
                                 }
-                            }
-                            OutlinedButton(
-                                onClick = { viewModel.decrement(product.id) },
-                                enabled = !state.loading && product.quantity > 0,
-                                modifier =
-                                    Modifier.semantics {
-                                        contentDescription = decreaseDesc
-                                    },
-                            ) {
-                                Text("−")
-                            }
-                            Text(
-                                text = product.quantity.toString(),
-                                color =
-                                    if (isMandatoryWarning) {
-                                        MaterialTheme.colorScheme.error
-                                    } else {
-                                        MaterialTheme.colorScheme.onSurface
-                                    },
-                            )
-                            OutlinedButton(
-                                onClick = { viewModel.increment(product.id) },
-                                enabled = !state.loading,
-                                modifier =
-                                    Modifier.semantics {
-                                        contentDescription = increaseDesc
-                                    },
-                            ) {
-                                Text("+")
-                            }
-                            TextButton(
-                                onClick = { viewModel.startMove(product.id) },
-                                enabled = !state.loading,
-                                modifier =
-                                    Modifier.semantics {
-                                        contentDescription = moveDesc
-                                    },
-                            ) {
-                                Text(stringResource(R.string.products_pane_move_button))
+                                TextButton(
+                                    onClick = { viewModel.startMove(product.id) },
+                                    enabled = !state.loading,
+                                    modifier =
+                                        Modifier.semantics {
+                                            contentDescription = moveDesc
+                                        },
+                                ) {
+                                    Text(stringResource(R.string.products_pane_move_button))
+                                }
                             }
                         }
                     }
