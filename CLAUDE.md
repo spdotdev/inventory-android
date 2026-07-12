@@ -71,6 +71,36 @@ live-updates client — see `ROADMAP.md` / `BACKLOG.md`.
 - Tests cover critical paths: auth/token handling, household scoping, stock actions,
   error/empty/offline states. No trivial UI tests.
 
+## Measuring type or layout on a device — read the device's settings first
+Android rewrites text before your measurement ever sees it. **Check these before trusting
+any on-device font/layout number, and state their values alongside the result:**
+
+```bash
+adb shell settings get system font_scale               # 1.0 = unscaled
+adb shell settings get secure font_weight_adjustment   # 0 = none; 300 = "Bold text" ON
+```
+
+`font_weight_adjustment` is added to *every* requested `FontWeight` (400→700, 500→800, …)
+and then clamps at the family's heaviest weight — so with it on, several distinct weights
+collapse onto one and glyph metrics come back **identical**. That reads exactly like a
+broken font, and in 2026-07 it cost a session: the app's variable font was "diagnosed" as
+ignoring its `wght` axis and nearly replaced with five static files, when the axis was fine
+and the phone simply had **Bold text** enabled (this is also the whole of issue #32 — the
+tester's two phones differ by that setting, not by build).
+
+Two habits that catch it:
+- **Run the control.** Before concluding the app is broken, measure the same thing with
+  `FontFamily.Default` (does the system font vary by weight here?) and re-measure with the
+  setting neutralised. A number that only misbehaves under one device config is a device
+  config finding, not a code finding.
+- **Neutralise, then restore.** Set the value for the experiment and put the user's original
+  back when done — these are the phone owner's accessibility preferences, not test knobs.
+
+The same applies to `font_scale`: a label that fits at 1.0 can ellipsize at 1.6, and flow
+tests run at whatever the device is set to, so they will not catch it. To cover a font scale
+the device isn't on, render the composable in isolation and override `LocalDensity`
+(see `ProductFilterSortRowTest`).
+
 ## Status
 Functionally-complete (MVP + Phase 2), CI-green, running against the **production
 backend at `https://inventory.scuttle.dev/api/v1`**. The single-activity Compose +
