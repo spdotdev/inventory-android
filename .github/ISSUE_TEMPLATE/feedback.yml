@@ -37,7 +37,11 @@ body:
       label: Which build are you on?
       description: |
         Open **Settings** in the app (the ⚙️ in the top right) and scroll to
-        the bottom — the version is the last line.
-      placeholder: Version 0.1.6 (build 7)
+        the bottom — the version is the last line, in the form
+        "Version X.X.X (build N)". Copy it exactly.
+
+        Leave this empty if you just installed the APK we sent you — we'll
+        assume you're on the latest build.
+      placeholder: Latest
     validations:
-      required: true
+      required: false

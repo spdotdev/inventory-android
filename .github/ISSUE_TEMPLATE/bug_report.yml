@@ -68,10 +68,14 @@ body:
       label: Which build are you on?
       description: |
         Open **Settings** in the app (the ⚙️ in the top right) and scroll to
-        the bottom — the version is the last line. Copy it exactly.
-      placeholder: Version 0.1.6 (build 7)
+        the bottom — the version is the last line, in the form
+        "Version X.X.X (build N)". Copy it exactly.
+
+        Leave this empty if you just installed the APK we sent you — we'll
+        assume you're on the latest build.
+      placeholder: Latest
     validations:
-      required: true
+      required: false
 
   - type: dropdown
     id: device
@@ -81,76 +85,24 @@ body:
         - Pixel 7 Pro
         - Pixel 10
         - Samsung Galaxy S24
-        - Another phone (say which one below)
+        - Another phone (say which one in "Anything else?" at the bottom)
     validations:
       required: true
 
-  - type: input
+  - type: dropdown
     id: android-version
     attributes:
       label: Android version
       description: |
         Find it in your phone's **Settings → About phone**. If you picked
-        "another phone" above, put the model here too.
-      placeholder: Android 16
-    validations:
-      required: true
-
-  - type: markdown
-    attributes:
-      value: |
-        ### How this phone's text is set up
-
-        Android has settings that change how **every** app looks — how heavy the
-        text is, how big everything is. Two phones with different settings will
-        render the app differently even on the same build, and that has already
-        sent us chasing a bug that was never in the app (#32).
-
-        Quickest way to find these: open **Settings**, use the **search box at
-        the top**, and type **bold** or **font size**.
-
-  - type: dropdown
-    id: bold-text
-    attributes:
-      label: Is "Bold text" turned on for this phone?
-      description: |
-        **Pixel:** Settings → Accessibility → Display size and text → **Bold text**
-        **Samsung:** Settings → Display → Font size and style → **Bold font**
+        "another phone" above, say which model in the box at the bottom.
+      default: 0
       options:
-        - "No — it's off"
-        - "Yes — it's on"
+        - Android 16
+        - Android 15
+        - Android 14
+        - Android 13 or older
         - Not sure
-    validations:
-      required: true
-
-  - type: input
-    id: text-size
-    attributes:
-      label: Font size and display size
-      description: |
-        **Pixel:** Settings → Accessibility → Display size and text — the
-        **Font size** and **Display size** sliders.
-        **Samsung:** Settings → Display → **Font size and style**, and
-        Settings → Display → **Screen zoom**.
-
-        "Default" is a perfectly good answer if you've never touched them.
-      placeholder: "Font size: default. Display size: one step larger."
-    validations:
-      required: false
-
-  - type: textarea
-    id: comparing-phones
-    attributes:
-      label: Comparing two phones?
-      description: |
-        Only if this report is about the app looking or behaving **differently
-        on two phones**. Tell us which screenshot came from which phone — and
-        please fill in the "Bold text" and font/display size answers above for
-        **both** of them, since a difference between phones is usually a
-        difference between these settings.
-      placeholder: |
-        First screenshot: Galaxy S24 — Bold text ON, font size default.
-        Second screenshot: Pixel 7 Pro — Bold text off, font size default.
     validations:
       required: false
 
@@ -170,8 +122,17 @@ body:
     attributes:
       label: Anything else?
       description: |
-        Optional. Anything that felt relevant — e.g. you were on mobile data
-        rather than wifi, you'd just switched household, the app had been
-        open in the background a while.
+        Optional. Anything that felt relevant — including any phone settings
+        you've changed that might affect how the app looks or behaves.
+      placeholder: |
+        Anything that felt relevant, for example:
+
+        - Phone settings you've changed — text size, display size, bold text,
+          dark mode, battery saver, a different system language. Settings like
+          these change how every app looks, so they're worth mentioning.
+        - Which phone, if you picked "another phone" above.
+        - I was on mobile data, not wifi.
+        - I'd just switched household.
+        - The app had been open in the background for a while.
     validations:
       required: false
