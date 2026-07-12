@@ -52,3 +52,4 @@ google-services.json
 
 # Local agent/loop state
 /.claude/
+.superpowers/
