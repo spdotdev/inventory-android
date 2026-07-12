@@ -21,6 +21,8 @@ class JoinHouseholdViewModelTest {
         val joined: HouseholdDto = HouseholdDto(2, "Friends", "BBBB"),
         var failJoin: Boolean = false,
     ) : HouseholdRepository {
+        var joinedWith: String? = null
+
         override fun getCached() = null
 
         override suspend fun list() = emptyList<HouseholdDto>()
@@ -28,6 +30,7 @@ class JoinHouseholdViewModelTest {
         override suspend fun create(name: String) = joined
 
         override suspend fun join(code: String): HouseholdDto {
+            joinedWith = code
             if (failJoin) throw RuntimeException("Invalid code.")
             return joined
         }
@@ -43,6 +46,34 @@ class JoinHouseholdViewModelTest {
         assertNull(vm.state.value.error)
         assertFalse(vm.state.value.success)
     }
+
+    @Test
+    fun scanning_an_invite_qr_shows_and_sends_the_bare_code() =
+        runTest {
+            // #30: the QR encodes the invite *link*; the API matches the join code exactly,
+            // so the link has to be reduced to the code before it reaches the field or the API.
+            val repo = FakeHouseholdRepository()
+            val vm = JoinHouseholdViewModel(repo, TestHierarchy.store(FakeHouseholdRepository()))
+
+            vm.onCodeScanned("https://inventory.scuttle.dev/join/BBBB-2222")
+            assertEquals("BBBB-2222", vm.state.value.code)
+
+            vm.join()
+            assertEquals("BBBB-2222", repo.joinedWith)
+            assertTrue(vm.state.value.success)
+        }
+
+    @Test
+    fun a_pasted_invite_link_is_reduced_to_the_code_on_submit() =
+        runTest {
+            val repo = FakeHouseholdRepository()
+            val vm = JoinHouseholdViewModel(repo, TestHierarchy.store(FakeHouseholdRepository()))
+
+            vm.onCodeChange("https://inventory.scuttle.dev/join/BBBB-2222")
+            vm.join()
+
+            assertEquals("BBBB-2222", repo.joinedWith)
+        }
 
     @Test
     fun join_with_empty_code_does_nothing() =

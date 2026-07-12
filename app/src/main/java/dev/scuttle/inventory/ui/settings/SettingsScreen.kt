@@ -76,7 +76,7 @@ fun SettingsScreen(
 
     val scanLauncher =
         rememberLauncherForActivityResult(ScanContract()) { result ->
-            result.contents?.let { joinViewModel.onCodeChange(it) }
+            result.contents?.let { joinViewModel.onCodeScanned(it) }
         }
 
     val statusBarInsets = WindowInsets.statusBars

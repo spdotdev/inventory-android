@@ -32,8 +32,12 @@ class JoinHouseholdViewModel
 
         fun onCodeChange(value: String) = _state.update { it.copy(code = value, error = null, success = false) }
 
+        /** A scanned invite QR carries the invite *link*, so show the user the code inside it (#30). */
+        fun onCodeScanned(contents: String) = onCodeChange(parseJoinCode(contents))
+
         fun join() {
-            val code = _state.value.code.trim()
+            // Also parse here so a pasted link works, not just a scanned one.
+            val code = parseJoinCode(_state.value.code)
             if (code.isEmpty()) return
             viewModelScope.launch {
                 _state.update { it.copy(loading = true, error = null, success = false) }
