@@ -9,21 +9,20 @@ body:
         ☝️ **Keep that title short** — a few words we can spot it by. The detail
         goes in the boxes below, not up there.
 
-        Thanks for testing! **Please write as much detail as you can** — there
-        is no such thing as too much here. The more you give us, the less
-        likely we have to come back and ask you to reproduce it again. If
-        you're unsure whether something is relevant, put it in anyway.
-
-        **The single most useful thing you can add is a screenshot.**
+        Thanks for testing! **The single most useful thing you can add is a
+        screenshot.**
 
   - type: textarea
     id: what-happened
     attributes:
       label: What happened?
       description: |
-        Describe the problem in your own words, in as much detail as you can —
-        even if you already summed it up in the title, write it out properly
-        here.
+        Describe the problem in your own words, and **write as much detail as
+        you can** — there is no such thing as too much here. The more you give
+        us, the less likely we have to come back and ask you to reproduce it
+        again, so if you're unsure whether something is relevant, put it in
+        anyway. Even if you already summed it up in the title, write it out
+        properly here.
       placeholder: I tapped the Search tab and nothing happened at all.
     validations:
       required: true

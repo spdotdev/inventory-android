@@ -12,19 +12,16 @@ body:
         Not a bug — just something that felt wrong, slow, confusing, or that
         you wished the app did. This is genuinely useful; send it.
 
-        **Please write as much detail as you can.** There is no such thing as
-        too much here — what you were doing, what you expected, what you'd
-        rather it did. A sentence we can act on beats a sentence we have to
-        come back and ask about.
-
   - type: textarea
     id: feedback
     attributes:
       label: What's on your mind?
       description: |
-        What were you trying to do, and what got in the way? Spell it out
-        even if it feels obvious — which screen you were on, what you tapped,
-        what you saw.
+        What were you trying to do, and what got in the way? **Write as much
+        detail as you can** — there is no such thing as too much here. Spell it
+        out even if it feels obvious: which screen you were on, what you
+        tapped, what you saw. A sentence we can act on beats one we have to
+        come back and ask about.
       placeholder: |
         I keep tapping where the old side menu used to be to switch
         households. It took me a while to find the Households tab.
