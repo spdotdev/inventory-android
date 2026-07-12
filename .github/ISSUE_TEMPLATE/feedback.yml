@@ -9,15 +9,40 @@ body:
         Not a bug — just something that felt wrong, slow, confusing, or that
         you wished the app did. This is genuinely useful; send it.
 
+        **Please write as much detail as you can.** There is no such thing as
+        too much here — what you were doing, what you expected, what you'd
+        rather it did. A sentence we can act on beats a sentence we have to
+        come back and ask about.
+
+        **Keep the title short.** It's only a label we recognise the issue by.
+        Everything that matters goes in the boxes below — an idea that lives
+        only in the title is one we can easily miss.
+
   - type: textarea
     id: feedback
     attributes:
       label: What's on your mind?
       description: |
-        What were you trying to do, and what got in the way?
+        What were you trying to do, and what got in the way? Spell it out
+        even if it feels obvious — which screen you were on, what you tapped,
+        what you saw.
       placeholder: |
         I keep tapping where the old side menu used to be to switch
         households. It took me a while to find the Households tab.
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: What would you like it to do instead?
+      description: |
+        Your actual idea — this is the box for it. Even a rough one is fine,
+        and "I don't know, but the current way doesn't work for me" is a valid
+        answer. Please don't leave this to the title.
+      placeholder: |
+        Give each household its own colour on the Dashboard, so I can tell at
+        a glance which card belongs to which.
     validations:
       required: true
 
