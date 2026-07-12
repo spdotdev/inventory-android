@@ -31,13 +31,13 @@ body:
     validations:
       required: false
 
-  - type: dropdown
+  - type: input
     id: version
     attributes:
       label: Which build are you on?
-      options:
-        - v0.1.6 (bottom navigation bar)
-        - v0.1.5 (older — has the side menu)
-        - Not sure
+      description: |
+        Open **Settings** in the app (the ⚙️ in the top right) and scroll to
+        the bottom — the version is the last line.
+      placeholder: Version 0.1.6 (build 7)
     validations:
       required: true

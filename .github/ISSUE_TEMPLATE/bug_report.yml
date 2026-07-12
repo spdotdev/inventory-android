@@ -62,17 +62,14 @@ body:
     validations:
       required: true
 
-  - type: dropdown
+  - type: input
     id: version
     attributes:
       label: Which build are you on?
       description: |
-        The version from the link you installed. If you're not sure, pick
-        "Not sure" — don't guess.
-      options:
-        - v0.1.6 (bottom navigation bar)
-        - v0.1.5 (older — has the side menu)
-        - Not sure
+        Open **Settings** in the app (the ⚙️ in the top right) and scroll to
+        the bottom — the version is the last line. Copy it exactly.
+      placeholder: Version 0.1.6 (build 7)
     validations:
       required: true
 
