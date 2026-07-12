@@ -26,7 +26,9 @@ class MissingItemsViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
-    private class FakeHouseholdRepository(val households: List<HouseholdDto>) : HouseholdRepository {
+    private class FakeHouseholdRepository(
+        val households: List<HouseholdDto>,
+    ) : HouseholdRepository {
         override fun getCached() = households
 
         override suspend fun list() = households
@@ -57,7 +59,9 @@ class MissingItemsViewModelTest {
         ) {}
     }
 
-    private class FakeShelfRepository(val byLocation: Map<Long, List<ShelfDto>> = emptyMap()) : ShelfRepository {
+    private class FakeShelfRepository(
+        val byLocation: Map<Long, List<ShelfDto>> = emptyMap(),
+    ) : ShelfRepository {
         override fun getCached(
             householdId: Long,
             locationId: Long,
@@ -81,7 +85,9 @@ class MissingItemsViewModelTest {
         ) {}
     }
 
-    private class FakeProductRepository(val byShelf: Map<Long, List<ProductDto>> = emptyMap()) : ProductRepository {
+    private class FakeProductRepository(
+        val byShelf: Map<Long, List<ProductDto>> = emptyMap(),
+    ) : ProductRepository {
         override fun getCached(
             householdId: Long,
             shelfId: Long,
@@ -210,7 +216,10 @@ class MissingItemsViewModelTest {
                     productsByShelf = mapOf(100L to listOf(ProductDto(1, "Milk", 1, 100, is_mandatory = false))),
                 )
 
-            assertTrue(vm.state.value.items.isEmpty())
+            assertTrue(
+                vm.state.value.items
+                    .isEmpty(),
+            )
             assertFalse(vm.state.value.loading)
         }
 
@@ -225,8 +234,18 @@ class MissingItemsViewModelTest {
                 )
 
             assertEquals(1, vm.state.value.items.size)
-            assertEquals("Milk", vm.state.value.items.first().productName)
-            assertEquals("Fridge", vm.state.value.items.first().locationName)
+            assertEquals(
+                "Milk",
+                vm.state.value.items
+                    .first()
+                    .productName,
+            )
+            assertEquals(
+                "Fridge",
+                vm.state.value.items
+                    .first()
+                    .locationName,
+            )
         }
 
     @Test
@@ -239,7 +258,10 @@ class MissingItemsViewModelTest {
                     productsByShelf = mapOf(100L to listOf(ProductDto(1, "Milk", 3, 100, is_mandatory = true))),
                 )
 
-            assertTrue(vm.state.value.items.isEmpty())
+            assertTrue(
+                vm.state.value.items
+                    .isEmpty(),
+            )
         }
 
     @Test
@@ -267,7 +289,9 @@ class MissingItemsViewModelTest {
                         ),
                 )
 
-            val names = vm.state.value.items.map { it.locationName }
+            val names =
+                vm.state.value.items
+                    .map { it.locationName }
             assertEquals(listOf("Fridge", "Pantry"), names)
         }
 }

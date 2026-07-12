@@ -42,7 +42,9 @@ class LiveUpdatesTest {
         }
     }
 
-    private class FakeTokenStore(signedIn: Boolean) : TokenStore {
+    private class FakeTokenStore(
+        signedIn: Boolean,
+    ) : TokenStore {
         private val state = MutableStateFlow(signedIn)
         private var token: String? = if (signedIn) "token" else null
 

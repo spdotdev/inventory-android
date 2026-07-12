@@ -72,14 +72,12 @@ class ProductDetailViewModel
                                 loading = false,
                                 refreshing = false,
                                 product =
-                                    products.find {
-                                            p ->
+                                    products.find { p ->
                                         p.id == productId
                                     },
                             )
                         }
-                    }
-                    .onFailure { e ->
+                    }.onFailure { e ->
                         _state.update {
                             it.copy(
                                 loading = false,
@@ -125,8 +123,7 @@ class ProductDetailViewModel
                 _state.update { it.copy(loading = true, error = null) }
                 runCatching { repository.delete(householdId, shelfId, productId) }
                     .onSuccess { _state.update { it.copy(loading = false, deleted = true) } }
-                    .onFailure {
-                            e ->
+                    .onFailure { e ->
                         _state.update { it.copy(loading = false, error = e.toUserMessage("Failed to delete.")) }
                     }
             }

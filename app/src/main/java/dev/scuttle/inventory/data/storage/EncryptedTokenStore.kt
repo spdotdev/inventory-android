@@ -9,11 +9,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /** Token storage backed by EncryptedSharedPreferences (Keystore-wrapped key). */
-class EncryptedTokenStore(context: Context) : TokenStore {
+class EncryptedTokenStore(
+    context: Context,
+) : TokenStore {
     private val prefs: SharedPreferences =
         run {
             val masterKey =
-                MasterKey.Builder(context)
+                MasterKey
+                    .Builder(context)
                     .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
                     .build()
 

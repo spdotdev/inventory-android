@@ -24,7 +24,9 @@ class DashboardViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
-    private class FakeHouseholdRepository(val households: List<HouseholdDto>) : HouseholdRepository {
+    private class FakeHouseholdRepository(
+        val households: List<HouseholdDto>,
+    ) : HouseholdRepository {
         override fun getCached() = households
 
         override suspend fun list() = households
@@ -36,7 +38,9 @@ class DashboardViewModelTest {
         override suspend fun leave(householdId: Long) {}
     }
 
-    private class FakeLocationRepository(val byHousehold: Map<Long, List<LocationDto>>) : LocationRepository {
+    private class FakeLocationRepository(
+        val byHousehold: Map<Long, List<LocationDto>>,
+    ) : LocationRepository {
         override fun getCached(householdId: Long) = byHousehold[householdId]
 
         override suspend fun list(householdId: Long) = byHousehold[householdId].orEmpty()
@@ -53,7 +57,9 @@ class DashboardViewModelTest {
         ) {}
     }
 
-    private class FakeShelfRepository(val byLocation: Map<Long, List<ShelfDto>>) : ShelfRepository {
+    private class FakeShelfRepository(
+        val byLocation: Map<Long, List<ShelfDto>>,
+    ) : ShelfRepository {
         override fun getCached(
             householdId: Long,
             locationId: Long,
@@ -77,7 +83,9 @@ class DashboardViewModelTest {
         ) {}
     }
 
-    private class FakeProductRepository(val byShelf: Map<Long, List<ProductDto>>) : ProductRepository {
+    private class FakeProductRepository(
+        val byShelf: Map<Long, List<ProductDto>>,
+    ) : ProductRepository {
         override fun getCached(
             householdId: Long,
             shelfId: Long,
@@ -292,6 +300,11 @@ class DashboardViewModelTest {
             vm.toggleFavoriteShelf(100L)
 
             assertEquals(1, vm.state.value.favoriteShelves.size)
-            assertEquals("Top", vm.state.value.favoriteShelves.first().shelf.name)
+            assertEquals(
+                "Top",
+                vm.state.value.favoriteShelves
+                    .first()
+                    .shelf.name,
+            )
         }
 }

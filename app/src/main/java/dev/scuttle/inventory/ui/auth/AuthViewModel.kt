@@ -98,8 +98,7 @@ class AuthViewModel
                 _state.update { state ->
                     result.fold(
                         onSuccess = { state.copy(googleLoading = false, authenticated = true) },
-                        onFailure = {
-                                error ->
+                        onFailure = { error ->
                             state.copy(googleLoading = false, error = error.toGoogleAuthErrorMessage())
                         },
                     )

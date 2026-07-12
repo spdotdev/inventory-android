@@ -1,6 +1,9 @@
 package dev.scuttle.inventory.data.settings
 
-enum class AppLanguage(val tag: String, val label: String) {
+enum class AppLanguage(
+    val tag: String,
+    val label: String,
+) {
     EN("en", "English"),
     NL("nl", "Dutch"),
 }

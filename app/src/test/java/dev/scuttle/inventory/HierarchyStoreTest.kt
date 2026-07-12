@@ -252,7 +252,12 @@ class HierarchyStoreTest {
                     FakeProductRepository(mapOf(100L to listOf(ProductDto(1, "Milk", 0, 100, is_mandatory = true)))),
                 )
             store.refresh(userInitiated = true)
-            assertEquals(1, store.state.first { !it.loading }.entries.size)
+            assertEquals(
+                1,
+                store.state
+                    .first { !it.loading }
+                    .entries.size,
+            )
 
             store.clear()
 

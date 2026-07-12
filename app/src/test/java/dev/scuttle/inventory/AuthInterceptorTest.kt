@@ -23,7 +23,9 @@ import java.util.concurrent.TimeUnit
  * emulator / MockWebServer is needed.
  */
 class AuthInterceptorTest {
-    private class FakeTokenStore(initial: String?) : TokenStore {
+    private class FakeTokenStore(
+        initial: String?,
+    ) : TokenStore {
         private var token = initial
         private val _authState = MutableStateFlow(initial != null)
 
@@ -51,7 +53,8 @@ class AuthInterceptorTest {
 
         override fun proceed(request: Request): Response {
             onProceed(request)
-            return Response.Builder()
+            return Response
+                .Builder()
                 .request(request)
                 .protocol(Protocol.HTTP_1_1)
                 .code(responseCode)

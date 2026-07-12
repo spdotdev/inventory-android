@@ -108,8 +108,7 @@ class StorageOverviewViewModel
                 _state.update { state ->
                     result.fold(
                         onSuccess = { state.copy(loading = false, refreshing = false) },
-                        onFailure = {
-                                error ->
+                        onFailure = { error ->
                             state.copy(
                                 loading = false,
                                 refreshing = false,

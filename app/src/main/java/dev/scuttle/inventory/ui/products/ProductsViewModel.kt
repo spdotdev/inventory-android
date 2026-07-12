@@ -29,10 +29,14 @@ data class MoveTarget(
 
 sealed interface ScanResult {
     /** The scanned code matched [productName]; its quantity was incremented. */
-    data class Incremented(val productName: String) : ScanResult
+    data class Incremented(
+        val productName: String,
+    ) : ScanResult
 
     /** No product on this shelf carries [code]; it will be attached to the next create. */
-    data class Unknown(val code: String) : ScanResult
+    data class Unknown(
+        val code: String,
+    ) : ScanResult
 }
 
 data class ProductsUiState(
@@ -227,7 +231,12 @@ class ProductsViewModel
         fun consumeScanResult() = _state.update { it.copy(scanResult = null) }
 
         fun decrement(productId: Long) {
-            if (_state.value.products.find { it.id == productId }?.quantity ?: 0 <= 0) return
+            if (_state.value.products
+                    .find { it.id == productId }
+                    ?.quantity ?: 0 <= 0
+            ) {
+                return
+            }
             mutateOne { h, s -> productRepository.remove(h, s, productId, 1) }
         }
 
@@ -250,8 +259,7 @@ class ProductsViewModel
                 _state.update { state ->
                     result.fold(
                         onSuccess = { targets -> state.copy(loading = false, moveTargets = targets) },
-                        onFailure = {
-                                e ->
+                        onFailure = { e ->
                             state.copy(
                                 loading = false,
                                 error = e.toUserMessage("Couldn't load shelves."),
@@ -303,8 +311,7 @@ class ProductsViewModel
                 _state.update { state ->
                     result.fold(
                         onSuccess = { state.copy(loading = false) },
-                        onFailure = {
-                                error ->
+                        onFailure = { error ->
                             state.copy(loading = false, error = error.toUserMessage("Something went wrong."))
                         },
                     )

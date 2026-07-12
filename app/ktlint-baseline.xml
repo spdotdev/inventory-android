@@ -1,99 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <baseline version="1.0">
-    <file name="src/main/java/dev/scuttle/inventory/MainActivity.kt">
-        <error line="142" column="13" source="standard:function-naming" />
-    </file>
     <file name="src/main/java/dev/scuttle/inventory/data/dto/ErrorDtos.kt">
         <error line="1" column="1" source="standard:filename" />
     </file>
     <file name="src/main/java/dev/scuttle/inventory/data/dto/InviteDtos.kt">
         <error line="1" column="1" source="standard:filename" />
-    </file>
-    <file name="src/main/java/dev/scuttle/inventory/ui/app/AppDrawer.kt">
-        <error line="43" column="5" source="standard:function-naming" />
-    </file>
-    <file name="src/main/java/dev/scuttle/inventory/ui/auth/AuthScreen.kt">
-        <error line="55" column="5" source="standard:function-naming" />
-    </file>
-    <file name="src/main/java/dev/scuttle/inventory/ui/auth/ForgotPasswordScreen.kt">
-        <error line="37" column="5" source="standard:function-naming" />
-    </file>
-    <file name="src/main/java/dev/scuttle/inventory/ui/common/ErrorRetry.kt">
-        <error line="23" column="5" source="standard:function-naming" />
-    </file>
-    <file name="src/main/java/dev/scuttle/inventory/ui/common/ErrorSnackbar.kt">
-        <error line="19" column="5" source="standard:function-naming" />
-    </file>
-    <file name="src/main/java/dev/scuttle/inventory/ui/common/LiveStatusText.kt">
-        <error line="20" column="5" source="standard:function-naming" />
-    </file>
-    <file name="src/main/java/dev/scuttle/inventory/ui/common/SortMenu.kt">
-        <error line="29" column="5" source="standard:function-naming" />
-    </file>
-    <file name="src/main/java/dev/scuttle/inventory/ui/dashboard/DashboardScreen.kt">
-        <error line="62" column="5" source="standard:function-naming" />
-        <error line="270" column="13" source="standard:function-naming" />
-        <error line="287" column="13" source="standard:function-naming" />
-        <error line="320" column="13" source="standard:function-naming" />
-    </file>
-    <file name="src/main/java/dev/scuttle/inventory/ui/dashboard/DashboardViewModel.kt">
-        <error line="42" column="21" source="standard:property-naming" />
-    </file>
-    <file name="src/main/java/dev/scuttle/inventory/ui/home/AllStoragesScreen.kt">
-        <error line="67" column="5" source="standard:function-naming" />
-        <error line="225" column="1" source="standard:max-line-length" />
-    </file>
-    <file name="src/main/java/dev/scuttle/inventory/ui/households/HouseholdsScreen.kt">
-        <error line="60" column="5" source="standard:function-naming" />
-    </file>
-    <file name="src/main/java/dev/scuttle/inventory/ui/invite/InviteScreen.kt">
-        <error line="48" column="5" source="standard:function-naming" />
-    </file>
-    <file name="src/main/java/dev/scuttle/inventory/ui/location/LocationDetailScreen.kt">
-        <error line="80" column="5" source="standard:function-naming" />
-        <error line="255" column="1" source="standard:max-line-length" />
-        <error line="364" column="13" source="standard:function-naming" />
-    </file>
-    <file name="src/main/java/dev/scuttle/inventory/ui/missing/MissingItemsScreen.kt">
-        <error line="38" column="5" source="standard:function-naming" />
-    </file>
-    <file name="src/main/java/dev/scuttle/inventory/ui/products/ProductDetailScreen.kt">
-        <error line="81" column="5" source="standard:function-naming" />
-    </file>
-    <file name="src/main/java/dev/scuttle/inventory/ui/products/ProductsPane.kt">
-        <error line="62" column="5" source="standard:function-naming" />
-    </file>
-    <file name="src/main/java/dev/scuttle/inventory/ui/search/SearchScreen.kt">
-        <error line="38" column="5" source="standard:function-naming" />
-    </file>
-    <file name="src/main/java/dev/scuttle/inventory/ui/settings/SettingsScreen.kt">
-        <error line="54" column="5" source="standard:function-naming" />
-    </file>
-    <file name="src/main/java/dev/scuttle/inventory/ui/storage/StorageOverviewScreen.kt">
-        <error line="75" column="5" source="standard:function-naming" />
-    </file>
-    <file name="src/main/java/dev/scuttle/inventory/ui/theme/FrostCard.kt">
-        <error line="31" column="5" source="standard:function-naming" />
-    </file>
-    <file name="src/main/java/dev/scuttle/inventory/ui/theme/HouseholdTheme.kt">
-        <error line="44" column="28" source="standard:discouraged-comment-location" />
-        <error line="45" column="28" source="standard:discouraged-comment-location" />
-        <error line="46" column="28" source="standard:discouraged-comment-location" />
-        <error line="47" column="28" source="standard:discouraged-comment-location" />
-        <error line="48" column="28" source="standard:discouraged-comment-location" />
-        <error line="49" column="28" source="standard:discouraged-comment-location" />
-        <error line="50" column="28" source="standard:discouraged-comment-location" />
-        <error line="51" column="28" source="standard:discouraged-comment-location" />
-        <error line="76" column="5" source="standard:function-naming" />
-    </file>
-    <file name="src/main/java/dev/scuttle/inventory/ui/theme/Shape.kt">
-        <error line="10" column="48" source="standard:discouraged-comment-location" />
-        <error line="11" column="44" source="standard:discouraged-comment-location" />
-        <error line="12" column="45" source="standard:discouraged-comment-location" />
-        <error line="13" column="44" source="standard:discouraged-comment-location" />
-        <error line="14" column="49" source="standard:discouraged-comment-location" />
-    </file>
-    <file name="src/main/java/dev/scuttle/inventory/ui/theme/Theme.kt">
-        <error line="49" column="5" source="standard:function-naming" />
     </file>
 </baseline>

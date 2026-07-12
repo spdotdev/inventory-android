@@ -60,7 +60,12 @@ class ShelvesViewModelTest {
             viewModel.load(householdId = 1, locationId = 1)
 
             assertEquals(1, viewModel.state.value.shelves.size)
-            assertEquals("Top", viewModel.state.value.shelves.first().name)
+            assertEquals(
+                "Top",
+                viewModel.state.value.shelves
+                    .first()
+                    .name,
+            )
         }
 
     @Test
@@ -72,7 +77,10 @@ class ShelvesViewModelTest {
 
             viewModel.create()
 
-            assertTrue(viewModel.state.value.shelves.any { it.name == "Middle" })
+            assertTrue(
+                viewModel.state.value.shelves
+                    .any { it.name == "Middle" },
+            )
             assertEquals("", viewModel.state.value.newName)
         }
 
@@ -100,14 +108,20 @@ class ShelvesViewModelTest {
 
             viewModel.enterDeleteMode()
             assertTrue(viewModel.state.value.deleteMode)
-            assertTrue(viewModel.state.value.selectedShelves.isEmpty())
+            assertTrue(
+                viewModel.state.value.selectedShelves
+                    .isEmpty(),
+            )
 
             viewModel.toggleShelfSelection(1L)
             assertTrue(1L in viewModel.state.value.selectedShelves)
 
             viewModel.exitDeleteMode()
             assertFalse(viewModel.state.value.deleteMode)
-            assertTrue(viewModel.state.value.selectedShelves.isEmpty())
+            assertTrue(
+                viewModel.state.value.selectedShelves
+                    .isEmpty(),
+            )
         }
 
     @Test
@@ -126,7 +140,12 @@ class ShelvesViewModelTest {
             viewModel.deleteSelected()
 
             assertEquals(1, viewModel.state.value.shelves.size)
-            assertEquals("Bottom", viewModel.state.value.shelves.first().name)
+            assertEquals(
+                "Bottom",
+                viewModel.state.value.shelves
+                    .first()
+                    .name,
+            )
             assertFalse(viewModel.state.value.deleteMode)
         }
 }

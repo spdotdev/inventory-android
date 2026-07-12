@@ -17,7 +17,9 @@ class ForgotPasswordViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     /** Only forgotPassword() is exercised; the rest satisfy the interface. */
-    private class FakeAuthRepository(private val succeed: Boolean) : AuthRepository {
+    private class FakeAuthRepository(
+        private val succeed: Boolean,
+    ) : AuthRepository {
         override fun isAuthenticated(): Boolean = false
 
         override val sessionActive = MutableStateFlow(false)

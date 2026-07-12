@@ -39,8 +39,7 @@ class InviteViewModel
                 _state.update { state ->
                     result.fold(
                         onSuccess = { invite -> state.copy(loading = false, code = invite.code, link = invite.link) },
-                        onFailure = {
-                                error ->
+                        onFailure = { error ->
                             state.copy(loading = false, error = error.toUserMessage("Couldn't load the invite."))
                         },
                     )

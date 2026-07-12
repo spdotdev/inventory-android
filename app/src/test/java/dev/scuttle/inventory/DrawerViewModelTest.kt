@@ -26,7 +26,9 @@ class DrawerViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
-    private class FakeHouseholdRepository(val households: List<HouseholdDto>) : HouseholdRepository {
+    private class FakeHouseholdRepository(
+        val households: List<HouseholdDto>,
+    ) : HouseholdRepository {
         override fun getCached() = households
 
         override suspend fun list() = households
@@ -61,7 +63,9 @@ class DrawerViewModelTest {
         }
     }
 
-    private class FakeShelfRepository(val byLocation: Map<Long, List<ShelfDto>> = emptyMap()) : ShelfRepository {
+    private class FakeShelfRepository(
+        val byLocation: Map<Long, List<ShelfDto>> = emptyMap(),
+    ) : ShelfRepository {
         override fun getCached(
             householdId: Long,
             locationId: Long,
@@ -85,7 +89,9 @@ class DrawerViewModelTest {
         ) {}
     }
 
-    private class FakeProductRepository(val byShelf: Map<Long, List<ProductDto>> = emptyMap()) : ProductRepository {
+    private class FakeProductRepository(
+        val byShelf: Map<Long, List<ProductDto>> = emptyMap(),
+    ) : ProductRepository {
         override fun getCached(
             householdId: Long,
             shelfId: Long,
@@ -183,8 +189,18 @@ class DrawerViewModelTest {
             val vm = DrawerViewModel(store, locRepo)
 
             assertEquals(1, vm.state.value.entries.size)
-            assertEquals("Home", vm.state.value.entries.first().name)
-            assertEquals(1, vm.state.value.entries.first().locations.size)
+            assertEquals(
+                "Home",
+                vm.state.value.entries
+                    .first()
+                    .name,
+            )
+            assertEquals(
+                1,
+                vm.state.value.entries
+                    .first()
+                    .locations.size,
+            )
         }
 
     @Test
@@ -301,12 +317,29 @@ class DrawerViewModelTest {
                     locationRepo = fakeLocRepo,
                 )
             val vm = DrawerViewModel(store, fakeLocRepo)
-            assertEquals(2, vm.state.value.entries.first().locations.size)
+            assertEquals(
+                2,
+                vm.state.value.entries
+                    .first()
+                    .locations.size,
+            )
 
             fakeLocRepo.data[1L]?.removeIf { it.id == 10L }
             store.loadFromCache()
 
-            assertEquals(1, vm.state.value.entries.first().locations.size)
-            assertEquals("Pantry", vm.state.value.entries.first().locations.first().name)
+            assertEquals(
+                1,
+                vm.state.value.entries
+                    .first()
+                    .locations.size,
+            )
+            assertEquals(
+                "Pantry",
+                vm.state.value.entries
+                    .first()
+                    .locations
+                    .first()
+                    .name,
+            )
         }
 }

@@ -7,7 +7,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class AllStoragesViewModelTest {
-    private class FakeFavoritesStore(initialLocations: Set<Long> = emptySet()) : FavoritesStore {
+    private class FakeFavoritesStore(
+        initialLocations: Set<Long> = emptySet(),
+    ) : FavoritesStore {
         private val locations = initialLocations.toMutableSet()
         private val shelves = mutableSetOf<Long>()
 

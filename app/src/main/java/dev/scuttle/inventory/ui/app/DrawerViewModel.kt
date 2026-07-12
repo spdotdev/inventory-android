@@ -37,16 +37,17 @@ class DrawerViewModel
         private val locationRepository: LocationRepository,
     ) : ViewModel() {
         val state: StateFlow<DrawerUiState> =
-            store.state.map { s ->
-                DrawerUiState(
-                    entries = s.entries,
-                    locationWarnings = s.locationWarnings,
-                    missingItemCount = s.missingItemCount,
-                    loading = s.loading,
-                    refreshing = s.refreshing,
-                    error = s.error,
-                )
-            }.stateIn(viewModelScope, SharingStarted.Eagerly, DrawerUiState())
+            store.state
+                .map { s ->
+                    DrawerUiState(
+                        entries = s.entries,
+                        locationWarnings = s.locationWarnings,
+                        missingItemCount = s.missingItemCount,
+                        loading = s.loading,
+                        refreshing = s.refreshing,
+                        error = s.error,
+                    )
+                }.stateIn(viewModelScope, SharingStarted.Eagerly, DrawerUiState())
 
         private var deleteJob: Job? = null
 

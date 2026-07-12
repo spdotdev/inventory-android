@@ -162,7 +162,12 @@ private fun qrBitmap(
     size: Int = 512,
 ): Bitmap? {
     if (content.isEmpty()) return null
-    if (!android.util.Patterns.WEB_URL.matcher(content).matches()) return null
+    if (!android.util.Patterns.WEB_URL
+            .matcher(content)
+            .matches()
+    ) {
+        return null
+    }
     return runCatching {
         val matrix = QRCodeWriter().encode(content, BarcodeFormat.QR_CODE, size, size)
         val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)

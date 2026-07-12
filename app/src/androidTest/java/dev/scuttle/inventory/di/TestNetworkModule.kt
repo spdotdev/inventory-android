@@ -35,20 +35,22 @@ object TestNetworkModule {
     @Provides
     @Singleton
     fun provideOkHttpClient(tokenStore: TokenStore): OkHttpClient =
-        OkHttpClient.Builder()
+        OkHttpClient
+            .Builder()
             .addInterceptor { chain ->
                 val token = tokenStore.get()
                 val req =
                     if (token != null) {
-                        chain.request().newBuilder()
+                        chain
+                            .request()
+                            .newBuilder()
                             .addHeader("Authorization", "Bearer $token")
                             .build()
                     } else {
                         chain.request()
                     }
                 chain.proceed(req)
-            }
-            .build()
+            }.build()
 
     @Provides
     @Singleton
@@ -61,7 +63,8 @@ object TestNetworkModule {
         json: Json,
         baseUrl: String,
     ): Retrofit =
-        Retrofit.Builder()
+        Retrofit
+            .Builder()
             .baseUrl(baseUrl)
             .client(client)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))

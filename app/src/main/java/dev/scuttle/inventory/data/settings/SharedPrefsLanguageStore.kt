@@ -2,7 +2,9 @@ package dev.scuttle.inventory.data.settings
 
 import android.content.Context
 
-class SharedPrefsLanguageStore(context: Context) : LanguageStore {
+class SharedPrefsLanguageStore(
+    context: Context,
+) : LanguageStore {
     private val prefs = context.getSharedPreferences("inventory_settings", Context.MODE_PRIVATE)
 
     override fun get(): AppLanguage {

@@ -114,7 +114,11 @@ class ProductDetailViewModelTest {
             val product = ProductDto(id = 42, name = "Milk", quantity = 2, shelf_id = 1)
             val vm = ProductDetailViewModel(savedState(productId = 42), FakeProductRepository(listOf(product)))
 
-            assertEquals("Milk", vm.state.value.product?.name)
+            assertEquals(
+                "Milk",
+                vm.state.value.product
+                    ?.name,
+            )
             assertFalse(vm.state.value.loading)
         }
 
@@ -146,8 +150,15 @@ class ProductDetailViewModelTest {
             vm.save(ProductEdit("Oat Milk", "lactose free", null, isMandatory = true, lowStockThreshold = null))
 
             assertTrue(vm.state.value.saved)
-            assertEquals("Oat Milk", vm.state.value.product?.name)
-            assertTrue(vm.state.value.product?.is_mandatory == true)
+            assertEquals(
+                "Oat Milk",
+                vm.state.value.product
+                    ?.name,
+            )
+            assertTrue(
+                vm.state.value.product
+                    ?.is_mandatory == true,
+            )
             assertFalse(vm.state.value.loading)
         }
 

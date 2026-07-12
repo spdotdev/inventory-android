@@ -50,21 +50,25 @@ class ProductViewTest {
     fun mandatory_only_and_out_of_stock_flags_narrow_the_list() {
         assertEquals(
             setOf(2L, 3L),
-            products.applyView(
-                "",
-                mandatoryOnly = true,
-                outOfStockOnly = false,
-                SortOrder.NAME_ASC,
-            ).map { it.id }.toSet(),
+            products
+                .applyView(
+                    "",
+                    mandatoryOnly = true,
+                    outOfStockOnly = false,
+                    SortOrder.NAME_ASC,
+                ).map { it.id }
+                .toSet(),
         )
         assertEquals(
             setOf(2L, 4L),
-            products.applyView(
-                "",
-                mandatoryOnly = false,
-                outOfStockOnly = true,
-                SortOrder.NAME_ASC,
-            ).map { it.id }.toSet(),
+            products
+                .applyView(
+                    "",
+                    mandatoryOnly = false,
+                    outOfStockOnly = true,
+                    SortOrder.NAME_ASC,
+                ).map { it.id }
+                .toSet(),
         )
         // Combined: mandatory AND out of stock → only apples.
         assertEquals(

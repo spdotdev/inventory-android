@@ -101,17 +101,28 @@ class HouseholdsViewModelTest {
 
             viewModel.updateTheme(householdId = 1, color = "teal", icon = "cottage")
 
-            val household = viewModel.state.value.households.first()
+            val household =
+                viewModel.state.value.households
+                    .first()
             assertEquals("teal", household.color)
             assertEquals("cottage", household.icon)
             // The drawer reads HierarchyStore — the theme must reach it too.
-            val entry = store.state.first { s -> s.entries.isNotEmpty() }.entries.first()
+            val entry =
+                store.state
+                    .first { s -> s.entries.isNotEmpty() }
+                    .entries
+                    .first()
             assertEquals("teal", entry.color)
             assertEquals("cottage", entry.icon)
 
             // Clearing goes back to null (derived default).
             viewModel.updateTheme(householdId = 1, color = null, icon = null)
-            assertEquals(null, viewModel.state.value.households.first().color)
+            assertEquals(
+                null,
+                viewModel.state.value.households
+                    .first()
+                    .color,
+            )
         }
 
     @Test
@@ -136,6 +147,11 @@ class HouseholdsViewModelTest {
             viewModel.leave(householdId = 1)
 
             assertEquals(1, viewModel.state.value.households.size)
-            assertEquals("Office", viewModel.state.value.households.first().name)
+            assertEquals(
+                "Office",
+                viewModel.state.value.households
+                    .first()
+                    .name,
+            )
         }
 }

@@ -8,7 +8,9 @@ import dev.scuttle.inventory.R
  * It is a transient *view* preference (always-online, nothing persisted), not
  * part of the server-authoritative model.
  */
-enum class SortOrder(val labelRes: Int) {
+enum class SortOrder(
+    val labelRes: Int,
+) {
     NAME_ASC(R.string.sort_name_asc),
     NAME_DESC(R.string.sort_name_desc),
     QUANTITY_DESC(R.string.sort_quantity_desc),

@@ -108,8 +108,7 @@ class ShelvesViewModel
                         deleteMode = false,
                         selectedShelves = emptySet(),
                         shelves =
-                            it.shelves.filter {
-                                    s ->
+                            it.shelves.filter { s ->
                                 s.id !in ids
                             },
                     )
@@ -137,8 +136,7 @@ class ShelvesViewModel
                 _state.update { state ->
                     result.fold(
                         onSuccess = { state.copy(loading = false, refreshing = false) },
-                        onFailure = {
-                                error ->
+                        onFailure = { error ->
                             state.copy(
                                 loading = false,
                                 refreshing = false,

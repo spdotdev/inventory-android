@@ -105,8 +105,7 @@ class HouseholdsViewModel
                 _state.update { state ->
                     result.fold(
                         onSuccess = { state.copy(loading = false, refreshing = false) },
-                        onFailure = {
-                                e ->
+                        onFailure = { e ->
                             state.copy(
                                 loading = false,
                                 refreshing = false,

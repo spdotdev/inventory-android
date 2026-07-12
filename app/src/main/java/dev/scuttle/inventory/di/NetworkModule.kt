@@ -41,7 +41,8 @@ object NetworkModule {
     @Singleton
     fun provideOkHttpClient(authInterceptor: AuthInterceptor): OkHttpClient {
         val builder =
-            OkHttpClient.Builder()
+            OkHttpClient
+                .Builder()
                 .addInterceptor(authInterceptor)
         if (BuildConfig.DEBUG) {
             builder.addInterceptor(
@@ -57,7 +58,8 @@ object NetworkModule {
         client: OkHttpClient,
         json: Json,
     ): Retrofit =
-        Retrofit.Builder()
+        Retrofit
+            .Builder()
             .baseUrl(BuildConfig.BASE_URL)
             .client(client)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))

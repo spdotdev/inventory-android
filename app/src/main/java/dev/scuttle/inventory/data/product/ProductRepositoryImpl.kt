@@ -38,7 +38,9 @@ class ProductRepositoryImpl
             quantity: Int,
             code: String?,
         ): ProductDto =
-            api.create(householdId, shelfId, CreateProductRequest(name = name, quantity = quantity, code = code)).data
+            api
+                .create(householdId, shelfId, CreateProductRequest(name = name, quantity = quantity, code = code))
+                .data
                 .also { created ->
                     val key = householdId to shelfId
                     cache[key] = (cache[key] ?: emptyList()) + created
@@ -50,14 +52,22 @@ class ProductRepositoryImpl
             productId: Long,
             edit: ProductEdit,
         ): ProductDto =
-            api.update(
-                householdId,
-                shelfId,
-                productId,
-                UpdateProductRequest(edit.name, edit.description, edit.code, edit.isMandatory, edit.lowStockThreshold),
-            ).data.also { updated ->
-                cache.replaceProduct(householdId, shelfId, updated)
-            }
+            api
+                .update(
+                    householdId,
+                    shelfId,
+                    productId,
+                    UpdateProductRequest(
+                        edit.name,
+                        edit.description,
+                        edit.code,
+                        edit.isMandatory,
+                        edit.lowStockThreshold,
+                    ),
+                ).data
+                .also { updated ->
+                    cache.replaceProduct(householdId, shelfId, updated)
+                }
 
         override suspend fun add(
             householdId: Long,
@@ -86,8 +96,7 @@ class ProductRepositoryImpl
             targetShelfId: Long,
         ): ProductDto =
             api.move(householdId, shelfId, productId, MoveProductRequest(targetShelfId)).data.also {
-                cache[householdId to shelfId] = cache[householdId to shelfId]?.filter {
-                        p ->
+                cache[householdId to shelfId] = cache[householdId to shelfId]?.filter { p ->
                     p.id != productId
                 } ?: emptyList()
             }

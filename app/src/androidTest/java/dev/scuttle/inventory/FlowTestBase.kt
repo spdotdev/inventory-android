@@ -50,17 +50,19 @@ abstract class FlowTestBase {
                         hiltRule.inject()
                     }
                 },
-            )
-            .around(clearTokenRule)
+            ).around(clearTokenRule)
             .around(composeRule)
 
     protected val testContext: Context
         get() = InstrumentationRegistry.getInstrumentation().context
 
     protected fun fixture(name: String): String =
-        testContext.assets.open(
-            "fixtures/$name",
-        ).bufferedReader().readText().trim()
+        testContext.assets
+            .open(
+                "fixtures/$name",
+            ).bufferedReader()
+            .readText()
+            .trim()
 
     /**
      * Open a product row by tapping its NAME area (left side), not the node

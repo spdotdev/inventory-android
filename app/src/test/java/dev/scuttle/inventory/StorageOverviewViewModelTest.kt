@@ -196,7 +196,12 @@ class StorageOverviewViewModelTest {
             viewModel.load(householdId = 1)
 
             assertEquals(1, viewModel.state.value.locations.size)
-            assertEquals("Chest", viewModel.state.value.locations.first().name)
+            assertEquals(
+                "Chest",
+                viewModel.state.value.locations
+                    .first()
+                    .name,
+            )
         }
 
     @Test

@@ -36,50 +36,50 @@ class LiveUpdates(
     private val hierarchyStore: HierarchyStore,
     dispatcher: CoroutineDispatcher,
 ) {
-        @Inject
-        constructor(
-            gateway: RealtimeGateway,
-            tokenStore: TokenStore,
-            hierarchyStore: HierarchyStore,
-        ) : this(gateway, tokenStore, hierarchyStore, Dispatchers.Default)
+    @Inject
+    constructor(
+        gateway: RealtimeGateway,
+        tokenStore: TokenStore,
+        hierarchyStore: HierarchyStore,
+    ) : this(gateway, tokenStore, hierarchyStore, Dispatchers.Default)
 
-        private val scope = CoroutineScope(SupervisorJob() + dispatcher)
-        private val foreground = MutableStateFlow(false)
-        private val pings = MutableSharedFlow<Unit>(extraBufferCapacity = 64)
-        private val started = AtomicBoolean(false)
+    private val scope = CoroutineScope(SupervisorJob() + dispatcher)
+    private val foreground = MutableStateFlow(false)
+    private val pings = MutableSharedFlow<Unit>(extraBufferCapacity = 64)
+    private val started = AtomicBoolean(false)
 
-        /** Wired to the single activity's onStart/onStop. */
-        fun setForeground(value: Boolean) {
-            foreground.value = value
-        }
+    /** Wired to the single activity's onStart/onStop. */
+    fun setForeground(value: Boolean) {
+        foreground.value = value
+    }
 
-        /** Idempotent — the activity may be recreated, the singleton is not. */
-        @OptIn(FlowPreview::class)
-        fun start() {
-            if (!started.compareAndSet(false, true)) return
-            scope.launch {
-                combine(
-                    foreground,
-                    tokenStore.authState,
-                    hierarchyStore.state
-                        .map { s -> s.entries.map(HouseholdWithLocations::id).sorted() }
-                        .distinctUntilChanged(),
-                ) { fg, authed, ids -> Triple(fg, authed, ids) }
-                    .distinctUntilChanged()
-                    .collect { (fg, authed, ids) ->
-                        gateway.disconnect()
-                        if (fg && authed && ids.isNotEmpty()) {
-                            val token = tokenStore.get() ?: return@collect
-                            gateway.connect(token, ids) { pings.tryEmit(Unit) }
-                        }
+    /** Idempotent — the activity may be recreated, the singleton is not. */
+    @OptIn(FlowPreview::class)
+    fun start() {
+        if (!started.compareAndSet(false, true)) return
+        scope.launch {
+            combine(
+                foreground,
+                tokenStore.authState,
+                hierarchyStore.state
+                    .map { s -> s.entries.map(HouseholdWithLocations::id).sorted() }
+                    .distinctUntilChanged(),
+            ) { fg, authed, ids -> Triple(fg, authed, ids) }
+                .distinctUntilChanged()
+                .collect { (fg, authed, ids) ->
+                    gateway.disconnect()
+                    if (fg && authed && ids.isNotEmpty()) {
+                        val token = tokenStore.get() ?: return@collect
+                        gateway.connect(token, ids) { pings.tryEmit(Unit) }
                     }
-            }
-            scope.launch {
-                // Debounced: a burst of mutations (e.g. rapid +/+/+ stock taps by
-                // another member) collapses into one re-fetch.
-                pings.debounce(PING_DEBOUNCE_MS).collect {
-                    hierarchyStore.refresh()
                 }
+        }
+        scope.launch {
+            // Debounced: a burst of mutations (e.g. rapid +/+/+ stock taps by
+            // another member) collapses into one re-fetch.
+            pings.debounce(PING_DEBOUNCE_MS).collect {
+                hierarchyStore.refresh()
             }
         }
     }
+}

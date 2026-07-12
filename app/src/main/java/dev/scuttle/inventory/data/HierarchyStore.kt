@@ -128,11 +128,16 @@ class HierarchyStore
             lowStockItems.sortWith(compareBy({ it.locationName }, { it.shelfName }, { it.productName }))
             _state.update { s ->
                 s.copy(
-                    entries = entries, missingItems = missingItems, missingItemCount = mandatoryWarnings,
+                    entries = entries,
+                    missingItems = missingItems,
+                    missingItemCount = mandatoryWarnings,
                     lowStockItems = lowStockItems,
-                    totalShelves = totalShelves, totalProducts = totalProducts,
-                    mandatoryWarnings = mandatoryWarnings, locationStats = locationStats,
-                    allShelves = allShelves, locationWarnings = warningsByLocation(missingItems),
+                    totalShelves = totalShelves,
+                    totalProducts = totalProducts,
+                    mandatoryWarnings = mandatoryWarnings,
+                    locationStats = locationStats,
+                    allShelves = allShelves,
+                    locationWarnings = warningsByLocation(missingItems),
                 )
             }
         }
@@ -148,12 +153,20 @@ class HierarchyStore
             missingItems.map { it.locationId }.associateWith { true }
 
         /** Where a product lives — shared context for building warning items. */
-        private data class ProductPlace(val shelf: ShelfDto, val location: LocationDto, val householdId: Long)
+        private data class ProductPlace(
+            val shelf: ShelfDto,
+            val location: LocationDto,
+            val householdId: Long,
+        )
 
         private sealed interface Warning {
-            data class Missing(val item: MissingItem) : Warning
+            data class Missing(
+                val item: MissingItem,
+            ) : Warning
 
-            data class Low(val item: LowStockItem) : Warning
+            data class Low(
+                val item: LowStockItem,
+            ) : Warning
         }
 
         /**
@@ -233,8 +246,7 @@ class HierarchyStore
                         // the visible ProductsPane could populate — the API is server-authoritative,
                         // and a mutation refreshes after the server confirms, so this is the truth.
                         onSuccess = { update -> _state.value = update },
-                        onFailure = {
-                                e ->
+                        onFailure = { e ->
                             _state.update {
                                 it.copy(loading = false, refreshing = false, error = e.toUserMessage("Failed to load."))
                             }

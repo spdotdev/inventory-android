@@ -2,7 +2,9 @@ package dev.scuttle.inventory.data.settings
 
 import android.content.Context
 
-class SharedPrefsFavoritesStore(context: Context) : FavoritesStore {
+class SharedPrefsFavoritesStore(
+    context: Context,
+) : FavoritesStore {
     private val prefs = context.getSharedPreferences("favorites", Context.MODE_PRIVATE)
 
     override fun getFavoriteLocations(): Set<Long> = getLongSet("locations")

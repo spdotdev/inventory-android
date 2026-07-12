@@ -134,7 +134,9 @@ class ProductsViewModelTest {
         }
     }
 
-    private class FakeLocationRepository(private val locations: List<LocationDto>) : LocationRepository {
+    private class FakeLocationRepository(
+        private val locations: List<LocationDto>,
+    ) : LocationRepository {
         override fun getCached(householdId: Long): List<LocationDto>? = null
 
         override suspend fun list(householdId: Long): List<LocationDto> = locations
@@ -151,7 +153,9 @@ class ProductsViewModelTest {
         ) {}
     }
 
-    private class FakeShelfRepository(private val byLocation: Map<Long, List<ShelfDto>>) : ShelfRepository {
+    private class FakeShelfRepository(
+        private val byLocation: Map<Long, List<ShelfDto>>,
+    ) : ShelfRepository {
         override fun getCached(
             householdId: Long,
             locationId: Long,
@@ -213,7 +217,12 @@ class ProductsViewModelTest {
             vm.load(householdId = 1, shelfId = 1)
 
             assertEquals(1, vm.state.value.products.size)
-            assertEquals("Peas", vm.state.value.products.first().name)
+            assertEquals(
+                "Peas",
+                vm.state.value.products
+                    .first()
+                    .name,
+            )
         }
 
     @Test
@@ -224,9 +233,19 @@ class ProductsViewModelTest {
             vm.load(householdId = 1, shelfId = 1)
 
             vm.increment(1)
-            assertEquals(3, vm.state.value.products.first().quantity)
+            assertEquals(
+                3,
+                vm.state.value.products
+                    .first()
+                    .quantity,
+            )
             vm.decrement(1)
-            assertEquals(2, vm.state.value.products.first().quantity)
+            assertEquals(
+                2,
+                vm.state.value.products
+                    .first()
+                    .quantity,
+            )
         }
 
     @Test
@@ -238,7 +257,10 @@ class ProductsViewModelTest {
 
             vm.create()
 
-            assertTrue(vm.state.value.products.any { it.name == "Bread" && it.quantity == 0 })
+            assertTrue(
+                vm.state.value.products
+                    .any { it.name == "Bread" && it.quantity == 0 },
+            )
             assertEquals("", vm.state.value.newName)
         }
 
@@ -251,7 +273,12 @@ class ProductsViewModelTest {
 
             vm.onBarcodeScanned("871234")
 
-            assertEquals(3, vm.state.value.products.first().quantity)
+            assertEquals(
+                3,
+                vm.state.value.products
+                    .first()
+                    .quantity,
+            )
             assertEquals(ScanResult.Incremented("Milk"), vm.state.value.scanResult)
             assertEquals(null, vm.state.value.pendingCode)
         }
@@ -292,7 +319,10 @@ class ProductsViewModelTest {
             vm.confirmMove(targetShelfId = targets.first().shelfId)
 
             assertEquals(Triple(1L, 1L, 2L), products.lastMove)
-            assertTrue(vm.state.value.products.isEmpty()) // moved off this shelf
+            assertTrue(
+                vm.state.value.products
+                    .isEmpty(),
+            ) // moved off this shelf
             assertEquals(null, vm.state.value.movingProductId)
         }
 
@@ -308,7 +338,9 @@ class ProductsViewModelTest {
                 edit = ProductEdit("Oat Milk", "lactose free", null, isMandatory = true, lowStockThreshold = null),
             )
 
-            val product = vm.state.value.products.first { it.id == 1L }
+            val product =
+                vm.state.value.products
+                    .first { it.id == 1L }
             assertEquals("Oat Milk", product.name)
             assertTrue(product.is_mandatory == true)
         }
@@ -328,7 +360,12 @@ class ProductsViewModelTest {
             vm.delete(productId = 1)
 
             assertEquals(1, vm.state.value.products.size)
-            assertEquals("Butter", vm.state.value.products.first().name)
+            assertEquals(
+                "Butter",
+                vm.state.value.products
+                    .first()
+                    .name,
+            )
         }
 
     @Test
@@ -346,7 +383,10 @@ class ProductsViewModelTest {
             vm.cancelMove()
 
             assertEquals(null, vm.state.value.movingProductId)
-            assertTrue(vm.state.value.moveTargets.isEmpty())
+            assertTrue(
+                vm.state.value.moveTargets
+                    .isEmpty(),
+            )
         }
 
     @Test

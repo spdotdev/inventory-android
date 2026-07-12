@@ -12,7 +12,9 @@ class InviteViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
-    private class FakeInviteRepository(private val fail: Boolean = false) : InviteRepository {
+    private class FakeInviteRepository(
+        private val fail: Boolean = false,
+    ) : InviteRepository {
         override suspend fun invite(householdId: Long): InviteResponse {
             if (fail) throw RuntimeException("offline")
             return InviteResponse(code = "FROST-7K2Q", link = "https://inventory.test/join/FROST-7K2Q")

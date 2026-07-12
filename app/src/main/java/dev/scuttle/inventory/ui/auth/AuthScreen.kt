@@ -72,14 +72,16 @@ fun AuthScreen(
     fun launchGoogleSignIn() {
         viewModel.onGoogleLoading()
         val googleIdOption =
-            GetGoogleIdOption.Builder()
+            GetGoogleIdOption
+                .Builder()
                 .setServerClientId(BuildConfig.GOOGLE_CLIENT_ID)
                 // Show all accounts, not just previously-authorized ones, so first-time
                 // sign-in works without a prior grant.
                 .setFilterByAuthorizedAccounts(false)
                 .build()
         val request =
-            GetCredentialRequest.Builder()
+            GetCredentialRequest
+                .Builder()
                 .addCredentialOption(googleIdOption)
                 .build()
 

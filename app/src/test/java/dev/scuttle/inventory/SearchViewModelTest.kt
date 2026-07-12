@@ -60,12 +60,18 @@ class SearchViewModelTest {
             viewModel.setHousehold(1)
             viewModel.onQueryChange("ice")
             advanceUntilIdle()
-            assertTrue(viewModel.state.value.results.isNotEmpty())
+            assertTrue(
+                viewModel.state.value.results
+                    .isNotEmpty(),
+            )
 
             viewModel.onQueryChange("")
             advanceUntilIdle()
 
-            assertTrue(viewModel.state.value.results.isEmpty())
+            assertTrue(
+                viewModel.state.value.results
+                    .isEmpty(),
+            )
         }
 
     @Test
@@ -81,13 +87,15 @@ class SearchViewModelTest {
             viewModel.setSort(SortOrder.QUANTITY_DESC)
             assertEquals(
                 listOf("Peas", "Vanilla ice cream"),
-                viewModel.state.value.sortedResults.map { it.name },
+                viewModel.state.value.sortedResults
+                    .map { it.name },
             )
 
             viewModel.setSort(SortOrder.NAME_ASC)
             assertEquals(
                 listOf("Peas", "Vanilla ice cream"),
-                viewModel.state.value.sortedResults.map { it.name },
+                viewModel.state.value.sortedResults
+                    .map { it.name },
             )
         }
 

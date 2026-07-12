@@ -474,8 +474,7 @@ private fun AddProductSheet(
                                 .clickable {
                                     keyboardController?.hide()
                                     viewModel.selectSuggestion(name)
-                                }
-                                .padding(horizontal = 24.dp, vertical = 14.dp),
+                                }.padding(horizontal = 24.dp, vertical = 14.dp),
                     )
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 24.dp))
                 }

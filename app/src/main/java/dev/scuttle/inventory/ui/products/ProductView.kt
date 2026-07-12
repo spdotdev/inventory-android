@@ -23,6 +23,5 @@ fun List<ProductDto>.applyView(
             (q.isEmpty() || p.name.contains(q, ignoreCase = true) || codeMatches) &&
                 (!mandatoryOnly || p.is_mandatory == true) &&
                 (!outOfStockOnly || p.quantity == 0)
-        }
-        .sortedByOrder(sort, name = { it.name }, quantity = { it.quantity })
+        }.sortedByOrder(sort, name = { it.name }, quantity = { it.quantity })
 }

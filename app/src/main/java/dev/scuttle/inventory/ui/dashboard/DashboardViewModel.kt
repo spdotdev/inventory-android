@@ -40,18 +40,18 @@ class DashboardViewModel
         private val store: HierarchyStore,
         private val favoritesStore: FavoritesStore,
     ) : ViewModel() {
-        private val _favState =
+        private val favState =
             MutableStateFlow(
                 favoritesStore.getFavoriteLocations() to favoritesStore.getFavoriteShelves(),
             )
 
         val state: StateFlow<DashboardUiState> =
-            combine(store.state, _favState) { s, (favLocs, favShelves) ->
+            combine(store.state, favState) { s, (favLocs, favShelves) ->
                 DashboardUiState(
                     loading = s.loading,
                     refreshing = s.refreshing,
                     hasNoHouseholds = s.entries.isEmpty() && !s.loading,
-            firstHouseholdId = s.entries.firstOrNull()?.id,
+                    firstHouseholdId = s.entries.firstOrNull()?.id,
                     totalLocations = s.locationStats.size,
                     totalShelves = s.totalShelves,
                     totalProducts = s.totalProducts,
@@ -69,11 +69,11 @@ class DashboardViewModel
 
         fun toggleFavoriteLocation(id: Long) {
             favoritesStore.toggleFavoriteLocation(id)
-            _favState.update { favoritesStore.getFavoriteLocations() to favoritesStore.getFavoriteShelves() }
+            favState.update { favoritesStore.getFavoriteLocations() to favoritesStore.getFavoriteShelves() }
         }
 
         fun toggleFavoriteShelf(id: Long) {
             favoritesStore.toggleFavoriteShelf(id)
-            _favState.update { favoritesStore.getFavoriteLocations() to favoritesStore.getFavoriteShelves() }
+            favState.update { favoritesStore.getFavoriteLocations() to favoritesStore.getFavoriteShelves() }
         }
     }
