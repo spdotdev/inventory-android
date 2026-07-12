@@ -58,7 +58,48 @@ import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.dto.ProductDto
 import dev.scuttle.inventory.ui.common.SnackbarErrorEffect
 import dev.scuttle.inventory.ui.common.SortMenu
+import dev.scuttle.inventory.ui.common.SortOrder
 import dev.scuttle.inventory.ui.theme.FrostCard
+
+/**
+ * The mandatory / out-of-stock filter chips and the sort menu.
+ *
+ * Extracted so it can be rendered on its own at a forced font scale — the sort label is the part
+ * that breaks, and only at font scales the flow tests can't reach through a real Activity.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+internal fun ProductFilterSortRow(
+    mandatoryOnly: Boolean,
+    outOfStockOnly: Boolean,
+    sort: SortOrder,
+    onToggleMandatory: () -> Unit,
+    onToggleOutOfStock: () -> Unit,
+    onSortSelect: (SortOrder) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    // FlowRow, not Row: the chips are sized to their content and are measured first, so in a Row
+    // the sort label got only the leftover width — already too little at 360dp, and less again as
+    // the font scales up. Here every item keeps its width and the row wraps instead.
+    FlowRow(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        itemVerticalAlignment = Alignment.CenterVertically,
+    ) {
+        FilterChip(
+            selected = mandatoryOnly,
+            onClick = onToggleMandatory,
+            label = { Text(stringResource(R.string.products_pane_filter_mandatory)) },
+        )
+        FilterChip(
+            selected = outOfStockOnly,
+            onClick = onToggleOutOfStock,
+            label = { Text(stringResource(R.string.products_pane_filter_out_of_stock)) },
+        )
+        SortMenu(current = sort, onSelect = onSortSelect)
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -136,24 +177,14 @@ fun ProductsPane(
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth().testTag("product-filter"),
             )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                FilterChip(
-                    selected = state.mandatoryOnly,
-                    onClick = viewModel::toggleMandatoryOnly,
-                    label = { Text(stringResource(R.string.products_pane_filter_mandatory)) },
-                )
-                FilterChip(
-                    selected = state.outOfStockOnly,
-                    onClick = viewModel::toggleOutOfStockOnly,
-                    label = { Text(stringResource(R.string.products_pane_filter_out_of_stock)) },
-                )
-                Spacer(Modifier.weight(1f))
-                SortMenu(current = state.sort, onSelect = viewModel::setSort)
-            }
+            ProductFilterSortRow(
+                mandatoryOnly = state.mandatoryOnly,
+                outOfStockOnly = state.outOfStockOnly,
+                sort = state.sort,
+                onToggleMandatory = viewModel::toggleMandatoryOnly,
+                onToggleOutOfStock = viewModel::toggleOutOfStockOnly,
+                onSortSelect = viewModel::setSort,
+            )
         }
 
         if (state.products.isEmpty() && !state.loading) {
