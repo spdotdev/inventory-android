@@ -28,18 +28,13 @@ import dev.scuttle.inventory.data.hierarchy.ShelfDeleteStrategy
 
 /**
  * One radio choice offered by [DeleteStrategyDialog]: the wire value it sends
- * ([strategy]), the copy that names it ([labelRes]), a slot for a secondary
- * explanatory line ([descriptionRes] — the built-in [shelfStrategyOptions] and
- * [locationStrategyOptions] point it at the same string as [labelRes], since the
- * brief defines only one line of copy per option; a caller with genuinely
- * distinct follow-up copy can point the two at different resources and the
- * dialog will render both), and whether picking it requires a [MoveTarget]
- * ([requiresTarget] — true only for the MOVE_* member of either strategy enum).
+ * ([strategy]), the copy that names it ([labelRes]), and whether picking it
+ * requires a [MoveTarget] ([requiresTarget] — true only for the MOVE_* member
+ * of either strategy enum).
  */
 data class StrategyOption<T>(
     val strategy: T,
     @StringRes val labelRes: Int,
-    @StringRes val descriptionRes: Int,
     val requiresTarget: Boolean,
 )
 
@@ -159,15 +154,6 @@ private fun <T> StrategyOptionRow(
             RadioButton(selected = selected, onClick = onSelect)
             Text(stringResource(option.labelRes))
         }
-        // Only rendered when a caller supplies a description distinct from its
-        // label — the built-in options don't, so this is a no-op for them today.
-        if (option.descriptionRes != option.labelRes) {
-            Text(
-                text = stringResource(option.descriptionRes),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
     }
 }
 
@@ -199,19 +185,16 @@ fun shelfStrategyOptions(): List<StrategyOption<ShelfDeleteStrategy>> =
         StrategyOption(
             strategy = ShelfDeleteStrategy.MOVE_PRODUCTS,
             labelRes = R.string.delete_strategy_move,
-            descriptionRes = R.string.delete_strategy_move,
             requiresTarget = true,
         ),
         StrategyOption(
             strategy = ShelfDeleteStrategy.UNSORT_PRODUCTS,
             labelRes = R.string.delete_strategy_unsort,
-            descriptionRes = R.string.delete_strategy_unsort,
             requiresTarget = false,
         ),
         StrategyOption(
             strategy = ShelfDeleteStrategy.DELETE_PRODUCTS,
             labelRes = R.string.delete_strategy_delete,
-            descriptionRes = R.string.delete_strategy_delete,
             requiresTarget = false,
         ),
     )
@@ -226,13 +209,11 @@ fun locationStrategyOptions(): List<StrategyOption<LocationDeleteStrategy>> =
         StrategyOption(
             strategy = LocationDeleteStrategy.MOVE_CONTENTS,
             labelRes = R.string.delete_strategy_move,
-            descriptionRes = R.string.delete_strategy_move,
             requiresTarget = true,
         ),
         StrategyOption(
             strategy = LocationDeleteStrategy.DELETE_CONTENTS,
             labelRes = R.string.delete_strategy_delete,
-            descriptionRes = R.string.delete_strategy_delete,
             requiresTarget = false,
         ),
     )
