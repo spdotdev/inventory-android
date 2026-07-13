@@ -315,7 +315,7 @@ fun StorageOverviewScreen(
         }
     }
 
-    renamingLocation?.let {
+    renamingLocation?.let { location ->
         ModalBottomSheet(
             onDismissRequest = { renamingLocation = null },
             sheetState = sheetState,
@@ -356,10 +356,7 @@ fun StorageOverviewScreen(
                     Button(
                         onClick = {
                             keyboardController?.hide()
-                            val location = renamingLocation
-                            if (location != null) {
-                                viewModel.rename(location.id, renameName, renameType)
-                            }
+                            viewModel.rename(location.id, renameName, renameType)
                             renamingLocation = null
                         },
                         enabled = renameName.isNotBlank(),

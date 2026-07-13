@@ -22,13 +22,16 @@ import dev.scuttle.inventory.R
 import dev.scuttle.inventory.ui.theme.FrostCard
 
 /**
- * One row of the shelves list view.
+ * One row of an editable hierarchy list — shared by the shelves list
+ * (LocationDetailScreen) and the locations list (StorageOverviewScreen).
  *
- * Outside edit mode this is a plain [FrostCard]: tapping it opens the shelf, same
- * as tapping its tab did before. In edit mode the row grows a leading [Checkbox]
- * (selection for the batch delete/confirm flow), a rename pencil, and trailing
- * up/down [IconButton]s for the manual drag order — all three gated off for the
- * Unsorted shelf via [isSystem], since it can't be renamed, selected, or reordered.
+ * Outside edit mode this is a plain [FrostCard]: tapping it opens the row's
+ * target, same as before edit mode existed. In edit mode the row grows a
+ * leading [Checkbox] (selection for the batch delete/confirm flow), a rename
+ * pencil, and trailing up/down [IconButton]s for the manual drag order — all
+ * three gated off via [isSystem] for a row that can't be renamed, selected, or
+ * reordered (the shelves screen's "Unsorted" shelf; locations have no
+ * equivalent and always pass `isSystem = false`).
  */
 @Composable
 fun EditableRow(
