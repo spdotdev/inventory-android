@@ -305,6 +305,22 @@ class ShelvesViewModelTest {
         }
 
     @Test
+    fun move_down_on_the_last_shelf_does_nothing() =
+        runTest {
+            val repo = FakeShelfRepository().apply { items.add(ShelfDto(1, "Top", 0, 1L)) }
+            val vm = viewModel(repo)
+            vm.load(householdId = 1, locationId = 1)
+
+            vm.moveDown(1L)
+
+            assertEquals(
+                listOf("Top"),
+                vm.state.value.shelves
+                    .map { it.name },
+            )
+        }
+
+    @Test
     fun reordering_sends_the_complete_id_list_excluding_the_system_shelf() =
         runTest {
             // A partial list produces duplicate positions server-side, and the
@@ -349,6 +365,24 @@ class ShelvesViewModelTest {
             assertTrue(
                 vm.state.value.selected
                     .isEmpty(),
+            )
+        }
+
+    @Test
+    fun rename_updates_the_shelf_name() =
+        runTest {
+            val repo = FakeShelfRepository().apply { items.add(ShelfDto(1, "Top", 0, 1L)) }
+            val vm = viewModel(repo)
+            vm.load(householdId = 1, locationId = 1)
+
+            vm.rename(1L, "Freezer top")
+
+            assertEquals(1L, repo.lastRenamedId)
+            assertEquals(
+                "Freezer top",
+                vm.state.value.shelves
+                    .first()
+                    .name,
             )
         }
 

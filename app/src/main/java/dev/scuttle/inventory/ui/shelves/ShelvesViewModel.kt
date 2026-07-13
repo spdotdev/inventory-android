@@ -23,6 +23,9 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
 
+/** Server-side shelf name column limit — clamped here (rename) and in onNewNameChange (create). */
+private const val MAX_SHELF_NAME_LENGTH = 50
+
 data class ShelvesUiState(
     val loading: Boolean = false,
     // Only a user-initiated refresh() flips this; create/delete use `loading` alone,
@@ -91,7 +94,8 @@ class ShelvesViewModel
             }
         }
 
-        fun onNewNameChange(value: String) = _state.update { it.copy(newName = value.take(50), error = null) }
+        fun onNewNameChange(value: String) =
+            _state.update { it.copy(newName = value.take(MAX_SHELF_NAME_LENGTH), error = null) }
 
         fun refresh() {
             val h = householdId ?: return
@@ -160,7 +164,9 @@ class ShelvesViewModel
             val l = locationId
             if (h == null || l == null) return
             val shelf = _state.value.shelves.firstOrNull { it.id == shelfId }
-            val trimmed = name.trim()
+            // Clamped here too (not just in the Compose text field), so this method
+            // is safe to call from anywhere, not only the one wired-up dialog.
+            val trimmed = name.trim().take(MAX_SHELF_NAME_LENGTH)
             // The Unsorted shelf's name is server-owned; the client only localises
             // its displayed label, so it can never be renamed from here.
             if (shelf == null || shelf.is_system || trimmed.isEmpty()) return

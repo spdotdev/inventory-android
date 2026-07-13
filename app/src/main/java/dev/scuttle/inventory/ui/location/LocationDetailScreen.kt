@@ -275,6 +275,10 @@ fun LocationDetailScreen(
                                 selected = shelf.id in state.selected,
                                 canMoveUp = !shelf.is_system && index > 0,
                                 canMoveDown = !shelf.is_system && index < nonSystemShelfCount - 1,
+                                // Selecting doesn't touch the network, but rename/reorder each
+                                // fire their own request immediately — held off while another
+                                // mutation is in flight so two don't race each other.
+                                actionsEnabled = !state.loading,
                                 onClick = {
                                     if (state.editMode) {
                                         shelvesViewModel.toggleSelection(shelf.id)

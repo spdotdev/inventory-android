@@ -42,6 +42,10 @@ fun EditableRow(
     onMoveUp: () -> Unit,
     onMoveDown: () -> Unit,
     modifier: Modifier = Modifier,
+    // Selecting (the checkbox) never hits the network, so it stays enabled while a
+    // mutation is in flight — only rename/reorder, which each fire their own
+    // request immediately, need to be held off to avoid racing a second one.
+    actionsEnabled: Boolean = true,
 ) {
     val editable = editMode && !isSystem
     FrostCard(
@@ -67,16 +71,16 @@ fun EditableRow(
                         .padding(vertical = 14.dp),
             )
             if (editable) {
-                IconButton(onClick = onRename) {
+                IconButton(onClick = onRename, enabled = actionsEnabled) {
                     Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.shelf_rename_title))
                 }
-                IconButton(onClick = onMoveUp, enabled = canMoveUp) {
+                IconButton(onClick = onMoveUp, enabled = canMoveUp && actionsEnabled) {
                     Icon(
                         Icons.Default.KeyboardArrowUp,
                         contentDescription = stringResource(R.string.shelf_move_up_cd),
                     )
                 }
-                IconButton(onClick = onMoveDown, enabled = canMoveDown) {
+                IconButton(onClick = onMoveDown, enabled = canMoveDown && actionsEnabled) {
                     Icon(
                         Icons.Default.KeyboardArrowDown,
                         contentDescription = stringResource(R.string.shelf_move_down_cd),
