@@ -89,3 +89,13 @@ Detailed build order: [`CLAUDE.md`](CLAUDE.md) and [`docs/android-plan.md`](docs
   attached a debug-signed `app-debug.apk` to a GitHub prerelease (the workflow's
   intended preview behavior; the DEBUG_KEYSTORE_* secrets are in place). Still ahead
   of any Play Store upload: a real release signingConfig + AAB output.
+
+### SECURITY
+- [x] **CodeQL SAST + dependency review CI** — shipped 2026-07-13. `codeql.yml` runs
+  static security analysis over the Kotlin/Java source on push/PR to `main` plus a
+  weekly schedule (results in the repo's Security > Code scanning tab);
+  `dependency-review.yml` blocks PRs introducing new high-severity-vulnerable
+  dependencies. Complements the existing `gitleaks` secret scan and Dependabot.
+- [x] **`SECURITY.md`** — shipped 2026-07-13. Documents supported versions, how to
+  report a vulnerability privately (GitHub Security Advisory or maintainer email), and
+  scope (client vs. `inventory-laravel` backend).

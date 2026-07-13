@@ -1,0 +1,55 @@
+name: CodeQL
+
+# Supersede an in-flight run when a newer commit lands on the same ref, so
+# rapid pushes/PR updates don't stack redundant runs.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Static security analysis (SAST) for the Kotlin/Java source. Complements
+# gitleaks (secret-scan.yml, catches committed credentials) and ktlint/detekt
+# (ci.yml, style/quality) with vulnerability-pattern scanning — injection,
+# insecure crypto, unsafe deserialization, etc. Results show up under the
+# repo's Security > Code scanning tab.
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # 04:15 UTC weekly — catches newly published query rules against unchanged code.
+    - cron: '15 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: java-kotlin
+
+      # Autobuild handles Gradle projects; falls back to `./gradlew assembleDebug`
+      # behavior via the Android/Kotlin Gradle build detected in the repo root.
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v4
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: '/language:java-kotlin'

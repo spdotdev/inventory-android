@@ -24,7 +24,9 @@ make install-hooks            # optional: pre-push runs tests locally
 
 Requires JDK 17 and the Android SDK (compileSdk 34). CI runs wrapper validation, unit
 tests, lint, and ktlint/detekt (baseline-gated) on every push/PR; instrumented flow
-tests run nightly on an emulator.
+tests run nightly on an emulator. Security gates: `gitleaks` secret scanning on every
+push/PR, CodeQL SAST on push/PR + weekly, and dependency review on PRs — see
+[`SECURITY.md`](SECURITY.md).
 
 ## Distribution
 
@@ -46,6 +48,7 @@ matching OAuth client ID on both the device config and the server
 - Product spec — vision, data model, API contract (canonical for all repos):
   [`inventory-laravel/docs/`](https://github.com/spdotdev/inventory-laravel/tree/main/docs)
 - Engineering working agreement: [`CLAUDE.md`](CLAUDE.md)
+- Security policy / reporting a vulnerability: [`SECURITY.md`](SECURITY.md)
 
 ## Related repositories
 

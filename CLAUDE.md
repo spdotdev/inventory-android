@@ -101,6 +101,12 @@ tests run at whatever the device is set to, so they will not catch it. To cover 
 the device isn't on, render the composable in isolation and override `LocalDensity`
 (see `ProductFilterSortRowTest`).
 
+## Security
+Vulnerability reports go through [`SECURITY.md`](SECURITY.md) (GitHub Security
+Advisory or maintainer email — **not** a public issue). CI runs `gitleaks` (secret
+scan), CodeQL (SAST) on push/PR + weekly schedule, and dependency review (blocks
+high-severity-vulnerable new dependencies) — see `.github/workflows/`.
+
 ## Status
 Functionally-complete (MVP + Phase 2), CI-green, running against the **production
 backend at `https://inventory.scuttle.dev/api/v1`**. The single-activity Compose +
