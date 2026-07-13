@@ -1,7 +1,7 @@
 package dev.scuttle.inventory.data.shelf
 
 import dev.scuttle.inventory.data.dto.ShelfDto
-import dev.scuttle.inventory.data.hierarchy.ShelfDeleteStrategy
+import dev.scuttle.inventory.data.hierarchy.ShelfDeletion
 
 interface ShelfRepository {
     fun getCached(
@@ -48,9 +48,7 @@ interface ShelfRepository {
         householdId: Long,
         locationId: Long,
         shelfId: Long,
-        batchId: String,
-        strategy: ShelfDeleteStrategy?,
-        targetShelfId: Long?,
+        deletion: ShelfDeletion,
     ): Unit = throw UnsupportedOperationException("deleteWithStrategy not supported")
 
     /** Drop the in-memory cache so one account's data never bleeds into the next session. */

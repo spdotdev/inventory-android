@@ -1,7 +1,7 @@
 package dev.scuttle.inventory.data.location
 
 import dev.scuttle.inventory.data.dto.LocationDto
-import dev.scuttle.inventory.data.hierarchy.LocationDeleteStrategy
+import dev.scuttle.inventory.data.hierarchy.LocationDeletion
 
 interface LocationRepository {
     fun getCached(householdId: Long): List<LocationDto>?
@@ -39,9 +39,7 @@ interface LocationRepository {
     suspend fun deleteWithStrategy(
         householdId: Long,
         locationId: Long,
-        batchId: String,
-        strategy: LocationDeleteStrategy?,
-        targetLocationId: Long?,
+        deletion: LocationDeletion,
     ): Unit = throw UnsupportedOperationException("deleteWithStrategy not supported")
 
     /** Drop the in-memory cache so one account's data never bleeds into the next session. */

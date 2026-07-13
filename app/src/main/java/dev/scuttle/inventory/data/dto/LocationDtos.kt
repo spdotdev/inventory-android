@@ -13,9 +13,19 @@ data class LocationDto(
     // (shelvesWithContents), which counts any non-system shelf plus a system
     // "Unsorted" shelf that actually holds something. Decide `needsStrategy` from
     // THIS, or a location containing one empty shelf 422s on every delete.
+    //
+    // CACHE STALENESS: LocationRepositoryImpl's cache only gets replaced by
+    // location-level calls (list/create/rename/reorder/delete). A shelf mutation
+    // (ShelfRepository.create/delete/deleteWithStrategy) does NOT touch it, so a
+    // cached LocationDto's shelf_count can read stale — e.g. still 0 right after
+    // a shelf was added to a previously-empty location. Any UI deriving
+    // `needsStrategy` from this field MUST go through HierarchyStore.refresh()
+    // first; a cached read can silently re-create the very 422 this field exists
+    // to prevent.
     val shelf_count: Int = 0,
     // Total products across all the location's shelves. Feeds the dialog's
-    // "2 locations · 17 products" summary.
+    // "2 locations · 17 products" summary. Same cache-staleness caveat as
+    // shelf_count above — refresh before trusting this after a shelf mutation.
     val product_count: Int = 0,
 )
 

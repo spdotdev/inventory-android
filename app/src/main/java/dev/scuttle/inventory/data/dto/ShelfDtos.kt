@@ -13,6 +13,13 @@ data class ShelfDto(
     val is_system: Boolean = false,
     // The server requires a delete STRATEGY when a shelf has products. This is how
     // the client knows to ask, and it feeds the dialog's "17 products" summary.
+    //
+    // CACHE STALENESS: ShelfRepositoryImpl's cache is keyed by (householdId,
+    // locationId) and is only replaced by shelf-level calls for that key. A
+    // product-level mutation (add/remove/move) does not update it, so a cached
+    // ShelfDto's product_count can read stale. Any UI deriving `needsStrategy`
+    // from this field MUST go through HierarchyStore.refresh() first; a cached
+    // read can silently re-create the very 422 this field exists to prevent.
     val product_count: Int = 0,
 )
 
@@ -34,11 +41,6 @@ data class CreateShelfRequest(
 @Serializable
 data class UpdateShelfRequest(
     val name: String,
-)
-
-@Serializable
-data class ReorderRequest(
-    val ids: List<Long>,
 )
 
 // No property defaults: the app's Json has encodeDefaults=false, so a defaulted

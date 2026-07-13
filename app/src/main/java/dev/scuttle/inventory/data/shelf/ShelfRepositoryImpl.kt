@@ -6,7 +6,7 @@ import dev.scuttle.inventory.data.dto.DeleteShelfRequest
 import dev.scuttle.inventory.data.dto.ReorderRequest
 import dev.scuttle.inventory.data.dto.ShelfDto
 import dev.scuttle.inventory.data.dto.UpdateShelfRequest
-import dev.scuttle.inventory.data.hierarchy.ShelfDeleteStrategy
+import dev.scuttle.inventory.data.hierarchy.ShelfDeletion
 import javax.inject.Inject
 
 class ShelfRepositoryImpl
@@ -54,7 +54,13 @@ class ShelfRepositoryImpl
         ): ShelfDto =
             api.update(householdId, locationId, shelfId, UpdateShelfRequest(name = name)).data.also { updated ->
                 val key = householdId to locationId
-                cache[key] = cache[key]?.map { if (it.id == shelfId) updated else it } ?: listOf(updated)
+                // On a cache miss, leave the cache absent rather than fabricating a
+                // 1-element list — getCached() returning null means "go fetch", and a
+                // bogus single-shelf cache would lie about every other shelf in this
+                // location until the next full refresh.
+                cache[key]?.let { cached ->
+                    cache[key] = cached.map { if (it.id == shelfId) updated else it }
+                }
             }
 
         override suspend fun reorder(
@@ -70,18 +76,16 @@ class ShelfRepositoryImpl
             householdId: Long,
             locationId: Long,
             shelfId: Long,
-            batchId: String,
-            strategy: ShelfDeleteStrategy?,
-            targetShelfId: Long?,
+            deletion: ShelfDeletion,
         ) {
             api.delete(
                 householdId,
                 locationId,
                 shelfId,
                 DeleteShelfRequest(
-                    strategy = strategy?.wire,
-                    target_shelf_id = targetShelfId,
-                    deletion_batch_id = batchId,
+                    strategy = deletion.strategy?.wire,
+                    target_shelf_id = deletion.targetShelfId,
+                    deletion_batch_id = deletion.batchId,
                 ),
             )
             val key = householdId to locationId
