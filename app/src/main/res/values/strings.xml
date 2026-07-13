@@ -85,13 +85,18 @@
     <!-- Location detail / Shelves -->
     <string name="location_shelves_title">Shelves</string>
     <string name="location_selected_count">%d selected</string>
-    <string name="location_delete_shelves_cd">Select shelves to delete</string>
+    <string name="location_edit_shelves_cd">Edit shelves</string>
+    <string name="location_view_toggle_cd">Switch between tab and list view</string>
     <string name="location_add_shelf_cd">Add shelf</string>
     <string name="location_add_product_cd">Add product</string>
     <string name="location_no_shelves">No shelves yet. Tap + in the top bar to add one.</string>
     <string name="location_shelf_missing_cd">%1$s, has missing items</string>
     <string name="location_delete_count_button">Delete (%d)</string>
     <string name="location_delete_button">Delete</string>
+    <string name="shelf_move_up_cd">Move shelf up</string>
+    <string name="shelf_move_down_cd">Move shelf down</string>
+    <string name="shelf_rename_title">Rename shelf</string>
+    <string name="shelves_deleted">Shelves deleted.</string>
 
     <!-- Add shelf sheet -->
     <string name="add_shelf_sheet_title">Add shelf</string>

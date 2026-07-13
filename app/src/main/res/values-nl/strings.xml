@@ -85,13 +85,18 @@
     <!-- Location detail / Shelves -->
     <string name="location_shelves_title">Planken</string>
     <string name="location_selected_count">%d geselecteerd</string>
-    <string name="location_delete_shelves_cd">Planken selecteren om te verwijderen</string>
+    <string name="location_edit_shelves_cd">Planken bewerken</string>
+    <string name="location_view_toggle_cd">Wisselen tussen tab- en lijstweergave</string>
     <string name="location_add_shelf_cd">Plank toevoegen</string>
     <string name="location_add_product_cd">Product toevoegen</string>
     <string name="location_no_shelves">Nog geen planken. Tik op + in de bovenbalk om er een toe te voegen.</string>
     <string name="location_shelf_missing_cd">%1$s, ontbrekende artikelen</string>
     <string name="location_delete_count_button">Verwijderen (%d)</string>
     <string name="location_delete_button">Verwijderen</string>
+    <string name="shelf_move_up_cd">Plank omhoog verplaatsen</string>
+    <string name="shelf_move_down_cd">Plank omlaag verplaatsen</string>
+    <string name="shelf_rename_title">Plank hernoemen</string>
+    <string name="shelves_deleted">Planken verwijderd.</string>
 
     <!-- Add shelf sheet -->
     <string name="add_shelf_sheet_title">Plank toevoegen</string>
