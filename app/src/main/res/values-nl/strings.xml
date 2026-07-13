@@ -60,8 +60,6 @@
     <string name="all_storage_favorite_remove_cd">Verwijderen uit favorieten</string>
 
     <!-- Delete dialogs -->
-    <string name="delete_dialog_location_title">\"%s\" verwijderen?</string>
-    <string name="delete_dialog_location_text">Alle planken en producten hierin worden permanent verwijderd.</string>
     <string name="delete_dialog_product_title">\"%s\" verwijderen?</string>
     <string name="delete_dialog_product_text">Dit product wordt permanent van de plank verwijderd.</string>
 

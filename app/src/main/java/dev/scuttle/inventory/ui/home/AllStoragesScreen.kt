@@ -1,8 +1,6 @@
 package dev.scuttle.inventory.ui.home
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,13 +16,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.StarOutline
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -32,21 +28,22 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,12 +53,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
-import dev.scuttle.inventory.data.HouseholdWithLocations
-import dev.scuttle.inventory.data.dto.LocationDto
 import dev.scuttle.inventory.ui.app.DrawerViewModel
 import dev.scuttle.inventory.ui.common.ErrorRetry
 import dev.scuttle.inventory.ui.common.SnackbarErrorEffect
 import dev.scuttle.inventory.ui.common.storageTypeLabel
+import dev.scuttle.inventory.ui.hierarchy.DeleteStrategyDialog
+import dev.scuttle.inventory.ui.hierarchy.locationStrategyOptions
 import dev.scuttle.inventory.ui.theme.FrostCard
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -77,10 +74,16 @@ fun AllStoragesScreen(
     val state by viewModel.state.collectAsState()
     val localState by localViewModel.state.collectAsState()
     val actionError by viewModel.actionError.collectAsState()
-    var pendingDelete by remember { mutableStateOf<Pair<HouseholdWithLocations, LocationDto>?>(null) }
+    // Delete now lives behind edit mode: a swipe should not be able to destroy a
+    // fridge full of food. Mirrors StorageOverviewScreen's own edit-mode gate
+    // (Task 5) — kept as plain Compose state here rather than in DrawerViewModel
+    // because it's purely a "which icon does this row show" toggle, not a
+    // network-backed concern the way pendingDelete/moveTargets below are.
+    var editMode by rememberSaveable { mutableStateOf(false) }
 
     val snackbarHostState = remember { SnackbarHostState() }
-    // Surface a failed swipe-to-delete as a transient snackbar so it isn't silent (W10).
+    // Surfaces a failed delete (or a failed undo) as a transient snackbar so it
+    // isn't silent (W10).
     SnackbarErrorEffect(actionError, snackbarHostState, onConsumed = viewModel::consumeActionError)
 
     val statusBarInsets = WindowInsets.statusBars
@@ -93,11 +96,25 @@ fun AllStoragesScreen(
                 windowInsets = statusBarInsets,
                 title = { Text(stringResource(R.string.all_storage_title)) },
                 actions = {
-                    IconButton(onClick = { viewModel.refresh() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.action_refresh))
-                    }
-                    IconButton(onClick = onOpenSettings) {
-                        Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.action_settings))
+                    if (editMode) {
+                        TextButton(onClick = { editMode = false }) {
+                            Text(stringResource(R.string.action_cancel))
+                        }
+                    } else {
+                        if (state.entries.any { it.locations.isNotEmpty() }) {
+                            IconButton(onClick = { editMode = true }) {
+                                Icon(
+                                    Icons.Default.Edit,
+                                    contentDescription = stringResource(R.string.storage_overview_edit_cd),
+                                )
+                            }
+                        }
+                        IconButton(onClick = { viewModel.refresh() }) {
+                            Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.action_refresh))
+                        }
+                        IconButton(onClick = onOpenSettings) {
+                            Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.action_settings))
+                        }
                     }
                 },
             )
@@ -142,11 +159,13 @@ fun AllStoragesScreen(
                             style = MaterialTheme.typography.titleSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
-                        IconButton(onClick = { onOpenStorage(entry.id) }) {
-                            Icon(
-                                Icons.Default.Add,
-                                contentDescription = stringResource(R.string.all_storage_add_location_cd),
-                            )
+                        if (!editMode) {
+                            IconButton(onClick = { onOpenStorage(entry.id) }) {
+                                Icon(
+                                    Icons.Default.Add,
+                                    contentDescription = stringResource(R.string.all_storage_add_location_cd),
+                                )
+                            }
                         }
                     }
 
@@ -155,75 +174,46 @@ fun AllStoragesScreen(
                             val hasWarning = state.locationWarnings[location.id] == true
                             val isFavorite = location.id in localState.favoriteLocationIds
 
-                            val swipeState =
-                                rememberSwipeToDismissBoxState(
-                                    confirmValueChange = { value ->
-                                        if (value == SwipeToDismissBoxValue.EndToStart) {
-                                            pendingDelete = entry to location
+                            val rowContent: @Composable () -> Unit = {
+                                Row(
+                                    modifier =
+                                        Modifier
+                                            .padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp)
+                                            .fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            location.name,
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            Text(
+                                                storageTypeLabel(location.type),
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            )
+                                            if (hasWarning) {
+                                                Text(
+                                                    stringResource(R.string.all_storage_stock_warning),
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.error,
+                                                )
+                                            }
                                         }
-                                        false
-                                    },
-                                )
-                            SwipeToDismissBox(
-                                state = swipeState,
-                                enableDismissFromStartToEnd = false,
-                                modifier = Modifier.fillMaxWidth(),
-                                backgroundContent = {
-                                    // Only draw the delete affordance mid-swipe: the frosted (translucent)
-                                    // cards otherwise let the red container + bin icon bleed through at
-                                    // rest, overlapping the row's own trailing controls.
-                                    if (swipeState.dismissDirection == SwipeToDismissBoxValue.EndToStart) {
-                                        Box(
-                                            modifier =
-                                                Modifier
-                                                    .fillMaxSize()
-                                                    .background(
-                                                        color = MaterialTheme.colorScheme.errorContainer,
-                                                        shape = MaterialTheme.shapes.medium,
-                                                    ),
-                                            contentAlignment = Alignment.CenterEnd,
-                                        ) {
+                                    }
+                                    if (editMode) {
+                                        IconButton(onClick = { viewModel.requestDelete(entry.id, location.id) }) {
                                             Icon(
                                                 Icons.Default.Delete,
                                                 contentDescription = stringResource(R.string.action_delete),
-                                                tint = MaterialTheme.colorScheme.onErrorContainer,
-                                                modifier = Modifier.padding(horizontal = 20.dp),
+                                                tint = MaterialTheme.colorScheme.error,
                                             )
                                         }
-                                    }
-                                },
-                            ) {
-                                val rowContent: @Composable () -> Unit = {
-                                    Row(
-                                        modifier =
-                                            Modifier
-                                                .padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp)
-                                                .fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically,
-                                    ) {
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(
-                                                location.name,
-                                                style = MaterialTheme.typography.bodyLarge,
-                                                maxLines = 2,
-                                                overflow = TextOverflow.Ellipsis,
-                                            )
-                                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                                Text(
-                                                    storageTypeLabel(location.type),
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                )
-                                                if (hasWarning) {
-                                                    Text(
-                                                        stringResource(R.string.all_storage_stock_warning),
-                                                        style = MaterialTheme.typography.bodySmall,
-                                                        color = MaterialTheme.colorScheme.error,
-                                                    )
-                                                }
-                                            }
-                                        }
+                                    } else {
                                         IconButton(onClick = { localViewModel.toggleFavorite(location.id) }) {
                                             Icon(
                                                 if (isFavorite) Icons.Default.Star else Icons.Outlined.StarOutline,
@@ -245,26 +235,26 @@ fun AllStoragesScreen(
                                         }
                                     }
                                 }
-                                if (hasWarning) {
-                                    Card(
-                                        onClick = { onOpenLocation(entry.id, location.id) },
-                                        modifier = Modifier.fillMaxWidth().testTag("home-location-${location.name}"),
-                                        colors =
-                                            CardDefaults.cardColors(
-                                                containerColor =
-                                                    MaterialTheme.colorScheme.errorContainer.copy(
-                                                        alpha = 0.4f,
-                                                    ),
-                                            ),
-                                        content = { rowContent() },
-                                    )
-                                } else {
-                                    FrostCard(
-                                        onClick = { onOpenLocation(entry.id, location.id) },
-                                        modifier = Modifier.fillMaxWidth().testTag("home-location-${location.name}"),
-                                        content = { rowContent() },
-                                    )
-                                }
+                            }
+                            if (hasWarning) {
+                                Card(
+                                    onClick = { onOpenLocation(entry.id, location.id) },
+                                    modifier = Modifier.fillMaxWidth().testTag("home-location-${location.name}"),
+                                    colors =
+                                        CardDefaults.cardColors(
+                                            containerColor =
+                                                MaterialTheme.colorScheme.errorContainer.copy(
+                                                    alpha = 0.4f,
+                                                ),
+                                        ),
+                                    content = { rowContent() },
+                                )
+                            } else {
+                                FrostCard(
+                                    onClick = { onOpenLocation(entry.id, location.id) },
+                                    modifier = Modifier.fillMaxWidth().testTag("home-location-${location.name}"),
+                                    content = { rowContent() },
+                                )
                             }
                         }
                     }
@@ -275,23 +265,37 @@ fun AllStoragesScreen(
         }
     }
 
-    pendingDelete?.let { (entry, location) ->
-        AlertDialog(
-            onDismissRequest = { pendingDelete = null },
-            title = { Text(stringResource(R.string.delete_dialog_location_title, location.name)) },
-            text = { Text(stringResource(R.string.delete_dialog_location_text)) },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        viewModel.deleteLocation(entry.id, location.id)
-                        pendingDelete = null
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                ) { Text(stringResource(R.string.action_delete)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { pendingDelete = null }) { Text(stringResource(R.string.action_cancel)) }
-            },
+    // The delete-strategy dialog for the location just tapped for delete.
+    // Non-null pendingDelete is the ONLY thing that shows this dialog, and
+    // confirmDelete() (the only path that actually deletes) is reachable
+    // exclusively from its confirm button — the per-row trash icon above only
+    // ever calls requestDelete().
+    state.pendingDelete?.let { plan ->
+        DeleteStrategyDialog(
+            plan = plan,
+            options = locationStrategyOptions(),
+            targets = state.moveTargets,
+            onDismiss = viewModel::cancelDelete,
+            onConfirm = { strategy, targetId -> viewModel.confirmDelete(strategy, targetId) },
         )
+    }
+
+    // Undo snackbar. A snackbar with an action, rather than a one-shot error
+    // effect (which has no action slot).
+    val undoLabel = stringResource(R.string.delete_undo)
+    val deletedMessage = stringResource(R.string.locations_deleted)
+    LaunchedEffect(state.lastBatchId) {
+        if (state.lastBatchId == null) return@LaunchedEffect
+        val result =
+            snackbarHostState.showSnackbar(
+                message = deletedMessage,
+                actionLabel = undoLabel,
+                duration = SnackbarDuration.Long,
+            )
+        if (result == SnackbarResult.ActionPerformed) {
+            viewModel.undoDelete()
+        } else {
+            viewModel.consumeLastBatch()
+        }
     }
 }

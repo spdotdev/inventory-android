@@ -14,6 +14,15 @@ interface LocationRepository {
         type: String,
     ): LocationDto
 
+    /**
+     * Bodyless delete — sends no `deletion_batch_id`. The server's
+     * DeleteLocationRequest requires it unconditionally, so calling this
+     * directly from a screen 422s every time. Every UI entry point (Storage
+     * overview's edit mode, Home's swipe-replacement edit mode) must go
+     * through [deleteWithStrategy] instead — see its own doc comment. Kept on
+     * the interface only for fakes/tests that exercise failure paths without
+     * needing the strategy machinery; do not wire a Composable to it.
+     */
     suspend fun delete(
         householdId: Long,
         locationId: Long,

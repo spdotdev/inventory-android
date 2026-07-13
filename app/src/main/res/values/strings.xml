@@ -60,8 +60,6 @@
     <string name="all_storage_favorite_remove_cd">Remove favorite</string>
 
     <!-- Delete dialogs -->
-    <string name="delete_dialog_location_title">Delete \"%s\"?</string>
-    <string name="delete_dialog_location_text">All shelves and products inside will be permanently deleted.</string>
     <string name="delete_dialog_product_title">Delete \"%s\"?</string>
     <string name="delete_dialog_product_text">This product will be permanently removed from the shelf.</string>
 
