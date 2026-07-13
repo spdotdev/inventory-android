@@ -49,7 +49,7 @@ class DeleteStrategyDialogTest {
         // Deleting the household's only location: there is nowhere to move the
         // contents to, so "move" must not be offered as a dead option (guard a).
         render(
-            plan = DeletePlan(itemCount = 1, productCount = 3, contentCount = 1, hasOtherTargets = false),
+            plan = DeletePlan(itemCount = 1, productCount = 3, contentCount = 1),
             options = locationStrategyOptions(),
             targets = emptyList(),
         )
@@ -78,7 +78,7 @@ class DeleteStrategyDialogTest {
             )
 
         render(
-            plan = DeletePlan(itemCount = 1, productCount = 3, contentCount = 1, hasOtherTargets = false),
+            plan = DeletePlan(itemCount = 1, productCount = 3, contentCount = 1),
             options = onlyOptionNeedsATarget,
             targets = emptyList(),
         )
@@ -92,7 +92,7 @@ class DeleteStrategyDialogTest {
         // exists for the selected move option, confirm is enabled — the
         // dialog isn't stuck disabled forever.
         render(
-            plan = DeletePlan(itemCount = 1, productCount = 3, contentCount = 1, hasOtherTargets = true),
+            plan = DeletePlan(itemCount = 1, productCount = 3, contentCount = 1),
             options = locationStrategyOptions(),
             targets = listOf(MoveTarget(id = 99L, name = "Pantry")),
         )
@@ -111,7 +111,7 @@ class DeleteStrategyDialogTest {
         var confirmCount = 0
 
         render(
-            plan = DeletePlan(itemCount = 2, productCount = 0, contentCount = 0, hasOtherTargets = true),
+            plan = DeletePlan(itemCount = 2, productCount = 0, contentCount = 0),
             options = locationStrategyOptions(),
             targets = listOf(MoveTarget(id = 99L, name = "Pantry")),
             onConfirm = { strategy, target ->

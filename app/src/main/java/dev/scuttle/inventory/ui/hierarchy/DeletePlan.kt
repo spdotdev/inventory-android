@@ -25,12 +25,13 @@ data class DeletePlan(
      * `shelf_count` for locations. Do not "simplify" this to productCount.
      */
     val contentCount: Int,
-    /** Is there anywhere else to put the contents? False when this is the only shelf/location. */
-    val hasOtherTargets: Boolean,
 ) {
     /** An empty container is safe to delete outright — a plain confirm will do. */
     val needsStrategy: Boolean get() = contentCount > 0
-
-    /** Never offer "move" when there is nothing to move to. */
-    val canMove: Boolean get() = hasOtherTargets
 }
+
+// Deliberately no `canMove`/`hasOtherTargets` here. Whether "move the contents
+// elsewhere" can be offered is decided from the target list the caller actually
+// hands the dialog (`targets.isNotEmpty()`), not from a boolean passed alongside
+// it. One signal, and it is the one the user can see: a plan claiming canMove
+// while the rendered target list is empty would offer a move with nowhere to go.

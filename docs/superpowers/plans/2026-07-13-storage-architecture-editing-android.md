@@ -637,6 +637,10 @@ top would leave the list disagreeing with the actual fridge."
 
 ## Task 3: The delete-strategy dialog
 
+> **AMENDED DURING EXECUTION — the code in this section is stale. `ui/hierarchy/` as shipped is authoritative.**
+> 1. `DeleteStrategyDialog` is **generic in the strategy type** — `fun <T : Any> DeleteStrategyDialog(plan, options: List<StrategyOption<T>>, targets: List<MoveTarget>, onDismiss, onConfirm: (T?, Long?) -> Unit)` — not hardcoded to `ShelfDeleteStrategy`. It has to serve Task 5's locations too, whose strategies are `LocationDeleteStrategy`.
+> 2. `DeletePlan` gained `contentCount` (`product_count` for a shelf, `shelf_count` for a location — the server asks about a location's SHELVES even when they are empty) and **lost `hasOtherTargets`/`canMove`**: whether "move" is offered is decided from the target list actually handed to the dialog, so there is one signal instead of two that can disagree.
+
 The user-facing half of the safety fix. Built and tested before it is wired to anything.
 
 **Files:**
@@ -1263,17 +1267,28 @@ class ShelvesViewModel
             val selected = state.shelves.filter { it.id in state.selected }
             if (selected.isEmpty()) return
 
-            // productCount comes from the shelves' own product counts once the API
-            // exposes them; until then the dialog asks whenever anything is selected
-            // and the server is the backstop (it 422s a strategy-less delete).
+            // For a SHELF, what the server counts as "has contents" IS its product
+            // count — so contentCount and productCount coincide here. They do NOT
+            // coincide for a location (Task 5): there, contentCount is shelf_count.
+            val products = selected.sumOf { s -> productCountFor(s.id) }
+
             _state.update {
                 it.copy(
                     pendingDelete =
                         DeletePlan(
                             itemCount = selected.size,
-                            productCount = selected.sumOf { s -> productCountFor(s.id) },
-                            hasOtherTargets = state.shelves.any { s -> s.id !in state.selected && !s.is_system },
+                            productCount = products,
+                            contentCount = products,
                         ),
+                    // The shelves the products could move TO: live, non-system, and
+                    // not themselves being deleted. This list is the ONLY signal for
+                    // whether "move" is offered — DeletePlan carries no canMove flag
+                    // (see DeletePlan.kt). Empty list => the dialog hides the move
+                    // option, so a move is never offered with nowhere to go.
+                    moveTargets =
+                        state.shelves
+                            .filter { s -> s.id !in state.selected && !s.is_system }
+                            .map { s -> MoveTarget(id = s.id, name = s.name) },
                 )
             }
         }
@@ -1403,7 +1418,11 @@ to keep."
 - Modify: `ui/storage/StorageOverviewViewModel.kt`, `ui/storage/StorageOverviewScreen.kt`
 - Test: `app/src/test/java/dev/scuttle/inventory/StorageOverviewViewModelTest.kt` (extend)
 
-**Interfaces:** mirrors Task 4 exactly — `enterEditMode()`, `exitEditMode()`, `toggleSelection(id)`, `moveUp/moveDown(id)`, `rename(id, name, type)`, `requestDelete()`, `confirmDelete(strategy, targetId)`, `undoDelete()`. The strategy enum is `LocationDeleteStrategy`, and **`canMove` is false when the household has only one location** — the dialog then offers only delete-or-cancel.
+**Interfaces:** mirrors Task 4 exactly — `enterEditMode()`, `exitEditMode()`, `toggleSelection(id)`, `moveUp/moveDown(id)`, `rename(id, name, type)`, `requestDelete()`, `confirmDelete(strategy, targetId)`, `undoDelete()`. The strategy enum is `LocationDeleteStrategy` (`MOVE_CONTENTS` / `DELETE_CONTENTS` — there is deliberately **no unsort** at the location level).
+
+Two things differ from Task 4 and are easy to get wrong:
+- **`contentCount` is `shelf_count`, NOT `product_count`.** The server requires a strategy when a location has SHELVES, even empty ones. Pass `productCount` for the summary line and `shelf_count` as `contentCount`; conflating them 422s every delete of a location whose shelves happen to be empty.
+- **`moveTargets` is the household's other live locations.** When the household has only one location that list is empty, and the dialog therefore offers only delete-or-cancel. `DeletePlan` carries no `canMove` flag — the rendered target list is the single signal.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -1414,7 +1433,9 @@ Append to `StorageOverviewViewModelTest.kt`. The key one:
     fun deleting_the_only_location_offers_no_move_target() =
         runTest {
             // There is nowhere to move the contents to, so the dialog must not
-            // dangle a "move" option that cannot work.
+            // dangle a "move" option that cannot work. The empty target list IS
+            // the mechanism (DeleteStrategyDialog hides a target-requiring option
+            // when handed no targets) — there is no canMove flag to assert on.
             val repo = FakeLocationRepository().apply { items.add(LocationDto(1, "Fridge", "fridge", 0)) }
             val viewModel = StorageOverviewViewModel(repo, FakeHierarchyStore(), FakeRestoreRepository())
             viewModel.load(householdId = 1)
@@ -1423,7 +1444,27 @@ Append to `StorageOverviewViewModelTest.kt`. The key one:
             viewModel.toggleSelection(1L)
             viewModel.requestDelete()
 
-            assertFalse(viewModel.state.value.pendingDelete!!.canMove)
+            assertTrue(viewModel.state.value.moveTargets.isEmpty())
+        }
+
+    @Test
+    fun deleting_a_location_whose_shelves_are_EMPTY_still_needs_a_strategy() =
+        runTest {
+            // The trap: the server asks about a location's SHELVES, not its products.
+            // A location with 3 empty shelves has productCount 0 but shelf_count 3.
+            val repo =
+                FakeLocationRepository().apply {
+                    items.add(LocationDto(1, "Fridge", "fridge", shelfCount = 3, productCount = 0))
+                    items.add(LocationDto(2, "Pantry", "pantry", shelfCount = 0, productCount = 0))
+                }
+            val viewModel = StorageOverviewViewModel(repo, FakeHierarchyStore(), FakeRestoreRepository())
+            viewModel.load(householdId = 1)
+
+            viewModel.enterEditMode()
+            viewModel.toggleSelection(1L)
+            viewModel.requestDelete()
+
+            assertTrue(viewModel.state.value.pendingDelete!!.needsStrategy)
         }
 
     @Test
@@ -1747,7 +1788,7 @@ Also drops the superseded strategy-less delete methods."
 
 2. **Stars on products are backend-only.** Backend T9 ships `is_starred`; no task here renders it. The spec calls for a star marker and a "starred only" filter on the products list. That is a small, self-contained addition to `ProductsPane` + `ProductFilterSortRow` and should be **Task 11** if you want it in this pass.
 
-**Type consistency.** `ShelfDeleteStrategy` / `LocationDeleteStrategy` (T1) are the exact types taken by `confirmDelete` (T4, T5) and `DeleteStrategyDialog.onConfirm` (T3). `DeletePlan(itemCount, productCount, hasOtherTargets)` (T3) is constructed with those three named args in T4 and T5. `orderByPosition(items, position, name)` (T2) is used in T4, T5 and T8.
+**Type consistency.** `ShelfDeleteStrategy` / `LocationDeleteStrategy` (T1) are the exact types taken by `confirmDelete` (T4, T5) and `DeleteStrategyDialog.onConfirm` (T3). `DeletePlan(itemCount, productCount, contentCount)` (T3) is constructed with those three named args in T4 and T5 — `contentCount` is `product_count` for a shelf and `shelf_count` for a location. `DeletePlan` has NO `canMove`/`hasOtherTargets`: move-availability comes from the `List<MoveTarget>` the caller hands `DeleteStrategyDialog`. `orderByPosition(items, position, name)` (T2) is used in T4, T5 and T8.
 
 **Known hazard.** Task 4 removes `deleteMode` / `selectedShelves` / `deleteSelected()` from `ShelvesViewModel`, which `ShelvesViewModelTest` and `LocationDetailScreen` both use today. Both are updated inside that task — but if you run tasks out of order, the build breaks there first.
 

@@ -68,7 +68,7 @@ fun <T : Any> DeleteStrategyDialog(
     onConfirm: (T?, Long?) -> Unit,
 ) {
     // Never offer a MOVE_* option when there is nowhere to move to — the caller
-    // may pass canMove-independent options, so this is enforced here too.
+    // may pass an option list that includes a move, so this is enforced here.
     val availableOptions = options.filter { !it.requiresTarget || targets.isNotEmpty() }
 
     // Options are supplied safest-first (move > unsort > delete), so the first
