@@ -20,12 +20,14 @@ import javax.inject.Singleton
  * calls `loadFromCache()`, which repopulates synchronously from the stale caches
  * before the network returns. In-memory/prefs only, so it respects the
  * always-online, no-local-DB rule.
+ *
+ * One constructor parameter per thing to clear is this class's entire job — it
+ * is a pure fan-out, not a design smell to split up; splitting it would need an
+ * artificial "clearable" abstraction (and Hilt multibinding) for no real benefit.
+ * (LongParameterList is baselined in detekt-baseline.xml, same mechanism as the
+ * other long-parameter-list Composables in this codebase.)
  */
 @Singleton
-// One constructor parameter per thing to clear is this class's entire job — it is
-// a pure fan-out, not a design smell to split up; splitting it would need an
-// artificial "clearable" abstraction (and Hilt multibinding) for no real benefit.
-@Suppress("LongParameterList")
 class SessionCleaner
     @Inject
     constructor(

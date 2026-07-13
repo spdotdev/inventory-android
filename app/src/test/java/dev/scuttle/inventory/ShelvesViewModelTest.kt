@@ -9,6 +9,7 @@ import dev.scuttle.inventory.data.household.HouseholdRepository
 import dev.scuttle.inventory.data.settings.ShelfViewStore
 import dev.scuttle.inventory.data.shelf.ShelfRepository
 import dev.scuttle.inventory.ui.shelves.ShelvesViewModel
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -32,8 +33,13 @@ class ShelvesViewModelTest {
         val batchIdsUsed = mutableListOf<String>()
         val strategiesUsed = mutableListOf<ShelfDeleteStrategy?>()
         val targetIdsUsed = mutableListOf<Long?>()
+        val deletedShelfIds = mutableListOf<Long>()
         var lastRenamedId: Long? = null
         var lastReorderIds: List<Long>? = null
+
+        // When set, deleteWithStrategy throws for this one id instead of deleting
+        // it — simulates a mid-batch server failure (Minor 4: partial batches).
+        var failDeleteId: Long? = null
 
         override fun getCached(
             householdId: Long,
@@ -80,20 +86,28 @@ class ShelvesViewModelTest {
             return updated
         }
 
+        var reorderGate: CompletableDeferred<Unit>? = null
+
         override suspend fun reorder(
             householdId: Long,
             locationId: Long,
             ids: List<Long>,
         ): List<ShelfDto> {
+            reorderGate?.await()
             lastReorderIds = ids
-            // Only positions of the given ids change — anything left out (the system
-            // shelf) stays exactly where it was, same as the real server endpoint.
-            val reordered = ids.mapIndexedNotNull { i, id -> items.find { it.id == id }?.copy(position = i) }
-            reordered.forEach { updated ->
-                val index = items.indexOfFirst { it.id == updated.id }
-                items[index] = updated
+            // Only positions of the given ids change...
+            ids.forEachIndexed { i, id ->
+                val index = items.indexOfFirst { it.id == id }
+                if (index >= 0) items[index] = items[index].copy(position = i)
             }
-            return reordered
+            // ...but the FULL list for the location is returned, system shelf
+            // included: PATCH .../shelves/reorder ends with `return
+            // $this->index(...)` server-side. A fake that returned only the
+            // reordered subset would hide the exact bug this fake exists to
+            // catch (the VM appending its own local system-shelf copy on top
+            // of the one the server already sent back → a duplicate id that
+            // crashes the LazyColumn's itemsIndexed(key = shelf.id)).
+            return items.toList()
         }
 
         override suspend fun deleteWithStrategy(
@@ -102,9 +116,11 @@ class ShelvesViewModelTest {
             shelfId: Long,
             deletion: ShelfDeletion,
         ) {
+            if (shelfId == failDeleteId) throw RuntimeException("delete failed")
             batchIdsUsed += deletion.batchId
             strategiesUsed += deletion.strategy
             targetIdsUsed += deletion.targetShelfId
+            deletedShelfIds += shelfId
             items.removeIf { it.id == shelfId }
         }
     }
@@ -347,6 +363,46 @@ class ShelvesViewModelTest {
         }
 
     @Test
+    fun the_optimistic_reorder_frame_keeps_the_system_shelf_before_the_server_confirms() =
+        runTest {
+            // Under the test dispatcher the fake's response normally lands
+            // synchronously and overwrites the optimistic frame before any
+            // assertion can observe it — so a VM that mutated the optimistic
+            // frame to `shelves = reordered` (silently dropping the system
+            // shelf) would still pass every other test in this file. Gating
+            // the fake's reorder() call parks the coroutine mid-flight so the
+            // optimistic frame itself can be inspected.
+            val repo =
+                FakeShelfRepository().apply {
+                    items.add(ShelfDto(1, "Top", 0, 1L))
+                    items.add(ShelfDto(2, "Middle", 1, 1L))
+                    items.add(ShelfDto(3, "Bottom", 2, 1L))
+                    items.add(ShelfDto(4, "Unsorted", 3, 1L, is_system = true))
+                }
+            val vm = viewModel(repo)
+            vm.load(householdId = 1, locationId = 1)
+            repo.reorderGate = CompletableDeferred()
+
+            vm.moveUp(3L)
+
+            // The server call is parked on the gate — this IS the optimistic frame.
+            assertEquals(
+                listOf("Top", "Bottom", "Middle", "Unsorted"),
+                vm.state.value.shelves
+                    .map { it.name },
+            )
+
+            repo.reorderGate?.complete(Unit)
+
+            // And it still holds once the (faithful, full-list) server response lands.
+            assertEquals(
+                listOf("Top", "Bottom", "Middle", "Unsorted"),
+                vm.state.value.shelves
+                    .map { it.name },
+            )
+        }
+
+    @Test
     fun the_unsorted_shelf_cannot_be_selected_for_deletion() =
         runTest {
             // It is a system shelf: it holds the products the user chose to KEEP.
@@ -486,6 +542,38 @@ class ShelvesViewModelTest {
         }
 
     @Test
+    fun requesting_delete_refreshes_the_shelf_list_so_a_stale_product_count_cannot_skip_the_strategy_prompt() =
+        runTest {
+            // Simulates a product added via the FAB / barcode scan / product
+            // delete — none of those mutations update ShelvesViewModel's own
+            // cached shelves list (see ShelfDto.product_count's doc comment).
+            // requestDelete() must re-fetch before building the plan, or a
+            // non-empty shelf gets deleted with no strategy and the server 422s.
+            val repo = FakeShelfRepository().apply { items.add(ShelfDto(1, "Snacks", 0, 1L, product_count = 0)) }
+            val vm = viewModel(repo)
+            vm.load(householdId = 1, locationId = 1)
+            vm.enterEditMode()
+            vm.toggleSelection(1L)
+
+            // The server-side count changed through a path this VM never
+            // observes; its own cached copy (product_count = 0) hasn't.
+            repo.items[0] = repo.items[0].copy(product_count = 1)
+
+            vm.requestDelete()
+
+            assertNotNull(vm.state.value.pendingDelete)
+            assertEquals(
+                1,
+                vm.state.value.pendingDelete
+                    ?.contentCount,
+            )
+            assertTrue(
+                vm.state.value.pendingDelete
+                    ?.needsStrategy == true,
+            )
+        }
+
+    @Test
     fun requesting_delete_offers_only_live_non_system_non_selected_shelves_as_move_targets() =
         runTest {
             val repo =
@@ -573,6 +661,90 @@ class ShelvesViewModelTest {
             vm.confirmDelete(ShelfDeleteStrategy.MOVE_PRODUCTS, targetId = 2L)
 
             assertEquals(listOf(2L), repo.targetIdsUsed)
+        }
+
+    @Test
+    fun confirming_a_delete_restores_the_view_the_user_had_before_entering_edit_mode() =
+        runTest {
+            // exitEditMode() (Cancel) and confirmDelete() (Delete) must leave the
+            // screen in the same shape — both restore the pre-edit view, not just
+            // exit editMode.
+            val repo = FakeShelfRepository().apply { items.add(ShelfDto(1, "Top", 0, 1L)) }
+            val vm = viewModel(repo)
+            vm.load(householdId = 1, locationId = 1)
+            assertFalse(vm.state.value.listView)
+
+            vm.enterEditMode()
+            vm.toggleSelection(1L)
+            vm.requestDelete()
+            vm.confirmDelete(null, targetId = null)
+
+            assertFalse(vm.state.value.editMode)
+            assertFalse(vm.state.value.listView)
+        }
+
+    @Test
+    fun a_batch_delete_that_partially_fails_still_surfaces_undo_for_what_landed() =
+        runTest {
+            val repo =
+                FakeShelfRepository().apply {
+                    items.add(ShelfDto(1, "Top", 0, 1L))
+                    items.add(ShelfDto(2, "Middle", 1, 1L))
+                    items.add(ShelfDto(3, "Bottom", 2, 1L))
+                    failDeleteId = 2L
+                }
+            val vm = viewModel(repo)
+            vm.load(householdId = 1, locationId = 1)
+            vm.enterEditMode()
+            vm.toggleSelection(1L)
+            vm.toggleSelection(2L)
+            vm.toggleSelection(3L)
+            vm.requestDelete()
+
+            vm.confirmDelete(ShelfDeleteStrategy.DELETE_PRODUCTS, targetId = null)
+
+            // Shelf 1's delete landed before shelf 2's failed — that must still be
+            // Undo-able, and the list must be reconciled with what the server
+            // actually holds now (1 gone; 2 and 3 remain — we stop at the first
+            // failure rather than attempting the rest blind).
+            assertNotNull(vm.state.value.lastBatchId)
+            assertEquals(listOf(1L), repo.deletedShelfIds)
+            assertEquals(
+                setOf(2L, 3L),
+                vm.state.value.shelves
+                    .map { it.id }
+                    .toSet(),
+            )
+            assertNotNull(vm.state.value.error)
+        }
+
+    @Test
+    fun confirming_delete_ignores_a_selected_id_no_longer_in_the_live_shelf_list() =
+        runTest {
+            val repo =
+                FakeShelfRepository().apply {
+                    items.add(ShelfDto(1, "Top", 0, 1L))
+                    items.add(ShelfDto(2, "Middle", 1, 1L))
+                }
+            val vm = viewModel(repo)
+            vm.load(householdId = 1, locationId = 1)
+            vm.enterEditMode()
+            vm.toggleSelection(1L)
+            vm.toggleSelection(2L)
+            vm.requestDelete()
+
+            // Shelf 2 disappears server-side (another device) while the dialog is
+            // open; a refresh (e.g. a live update) updates state.shelves but never
+            // touches state.selected.
+            repo.items.removeIf { it.id == 2L }
+            vm.refresh()
+
+            vm.confirmDelete(ShelfDeleteStrategy.DELETE_PRODUCTS, targetId = null)
+
+            // Only shelf 1 (still live) gets a delete request — requestDelete()
+            // filters its plan the same way, so confirmDelete must use the same
+            // filtered set, not the raw (possibly stale) selection.
+            assertEquals(listOf(1L), repo.deletedShelfIds)
         }
 
     @Test

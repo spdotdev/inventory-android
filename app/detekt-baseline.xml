@@ -77,7 +77,7 @@
     <ID>LongParameterList:DashboardScreen.kt$( modifier: Modifier = Modifier, onOpenDrawer: () -&gt; Unit = {}, onOpenLocation: (householdId: Long, locationId: Long) -&gt; Unit = { _, _ -&gt; }, onOpenHouseholds: () -&gt; Unit = {}, onOpenMissingItems: () -&gt; Unit = {}, viewModel: DashboardViewModel = hiltViewModel(), )</ID>
     <ID>LongParameterList:LocationDetailScreen.kt$( householdId: Long, locationId: Long, drawerViewModel: DrawerViewModel, modifier: Modifier = Modifier, onBack: () -&gt; Unit = {}, onOpenDrawer: () -&gt; Unit = {}, onOpenProduct: (householdId: Long, shelfId: Long, productId: Long) -&gt; Unit = { _, _, _ -&gt; }, shelvesViewModel: ShelvesViewModel = hiltViewModel(), )</ID>
     <ID>LongParameterList:ProductsPane.kt$( householdId: Long, shelfId: Long, snackbarHostState: SnackbarHostState, modifier: Modifier = Modifier, refreshKey: Int = 0, onOpenProduct: (ProductDto) -&gt; Unit = {}, onWarningChange: (Boolean) -&gt; Unit = {}, viewModel: ProductsViewModel = hiltViewModel(key = "products-$shelfId"), )</ID>
-    <ID>LongParameterList:SessionCleaner.kt$SessionCleaner$( private val householdRepository: HouseholdRepository, private val locationRepository: LocationRepository, private val shelfRepository: ShelfRepository, private val productRepository: ProductRepository, private val hierarchyStore: HierarchyStore, private val favoritesStore: FavoritesStore, private val defaultHouseholdStore: DefaultHouseholdStore, )</ID>
+    <ID>LongParameterList:SessionCleaner.kt$SessionCleaner$( private val householdRepository: HouseholdRepository, private val locationRepository: LocationRepository, private val shelfRepository: ShelfRepository, private val productRepository: ProductRepository, private val hierarchyStore: HierarchyStore, private val favoritesStore: FavoritesStore, private val defaultHouseholdStore: DefaultHouseholdStore, private val shelfViewStore: ShelfViewStore, )</ID>
     <ID>LongParameterList:SettingsScreen.kt$( modifier: Modifier = Modifier, onOpenDrawer: () -&gt; Unit = {}, onSignOut: () -&gt; Unit = {}, onOpenHouseholds: () -&gt; Unit = {}, themeViewModel: ThemeViewModel = hiltViewModel(), languageViewModel: LanguageViewModel = hiltViewModel(), joinViewModel: JoinHouseholdViewModel = hiltViewModel(), )</ID>
     <ID>LongParameterList:StorageOverviewScreen.kt$( householdId: Long, modifier: Modifier = Modifier, onBack: () -&gt; Unit = {}, onOpenDrawer: () -&gt; Unit = {}, onOpenLocation: (Long) -&gt; Unit = {}, onOpenSearch: () -&gt; Unit = {}, viewModel: StorageOverviewViewModel = hiltViewModel(), )</ID>
     <ID>MagicNumber:AuthInterceptor.kt$AuthInterceptor$401</ID>
@@ -205,12 +205,14 @@
     <ID>TooGenericExceptionThrown:ProductDetailViewModelTest.kt$ProductDetailViewModelTest.FakeProductRepository$throw RuntimeException("save failed")</ID>
     <ID>TooGenericExceptionThrown:ProductsViewModelTest.kt$ProductsViewModelTest.FakeProductRepository$throw RuntimeException("offline")</ID>
     <ID>TooGenericExceptionThrown:SearchViewModelTest.kt$SearchViewModelTest.FakeSearchRepository$throw RuntimeException("offline")</ID>
+    <ID>TooGenericExceptionThrown:ShelvesViewModelTest.kt$ShelvesViewModelTest.FakeShelfRepository$throw RuntimeException("delete failed")</ID>
     <ID>TooGenericExceptionThrown:ShelvesViewModelTest.kt$ShelvesViewModelTest.FakeShelfRepository$throw RuntimeException("offline")</ID>
     <ID>TooGenericExceptionThrown:StorageOverviewViewModelTest.kt$StorageOverviewViewModelTest.FakeLocationRepository$throw RuntimeException("offline")</ID>
     <ID>TooManyFunctions:AuthViewModel.kt$AuthViewModel : ViewModel</ID>
     <ID>TooManyFunctions:NetworkModule.kt$NetworkModule</ID>
     <ID>TooManyFunctions:ProductRepositoryImpl.kt$ProductRepositoryImpl : ProductRepository</ID>
     <ID>TooManyFunctions:ProductsViewModel.kt$ProductsViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:ShelvesViewModel.kt$ShelvesViewModel : ViewModel</ID>
     <ID>UnusedParameter:AuthViewModel.kt$AuthViewModel$mode: AuthMode</ID>
     <ID>UnusedParameter:LocationDetailScreen.kt$householdId: Long</ID>
   </CurrentIssues>

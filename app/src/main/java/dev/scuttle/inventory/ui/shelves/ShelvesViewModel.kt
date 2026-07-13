@@ -50,12 +50,12 @@ data class ShelvesUiState(
     val lastBatchId: String? = null,
 )
 
-@HiltViewModel
 // The method count is the required surface for this screen (edit mode, reorder,
 // rename, strategy-gated delete, undo, view toggle) — Task 5 mirrors this same
 // shape for locations, so splitting it up would fight the spec rather than the
 // class's actual cohesion (every method operates on the one ShelvesUiState).
-@Suppress("TooManyFunctions")
+// (TooManyFunctions is baselined in detekt-baseline.xml, same as AuthViewModel.)
+@HiltViewModel
 class ShelvesViewModel
     @Inject
     constructor(
@@ -210,40 +210,68 @@ class ShelvesViewModel
                 // list produces duplicate positions server-side, and the server
                 // does not want the system shelf in the payload at all.
                 val server = repository.reorder(h, l, reordered.map { it.id })
-                _state.update { it.copy(shelves = orderShelves(server + systemShelves)) }
+                // The server's response is the FULL shelf list for this location,
+                // is_system included (PATCH .../shelves/reorder ends with `return
+                // $this->index(...)`). Appending our own local systemShelves on
+                // top of that would duplicate the system shelf's id, and the list
+                // view's LazyColumn keys itemsIndexed by shelf.id — a duplicate
+                // key throws IllegalArgumentException on every reorder. Strip any
+                // system shelf(s) the server sent back before adding ours.
+                _state.update { it.copy(shelves = orderShelves(server.filterNot { s -> s.is_system } + systemShelves)) }
                 hierarchyStore.refresh()
             }
         }
 
-        /** Open the strategy dialog for the current selection. */
+        /**
+         * Open the strategy dialog for the current selection.
+         *
+         * Refreshes the shelf list from the server FIRST, then builds the plan off
+         * that fresh copy. ShelfDto.product_count's own doc comment warns why this
+         * is required: add-product / barcode-scan / product-delete all mutate a
+         * shelf's product count without this screen ever hearing about it, so the
+         * cached `state.shelves[].product_count` this dialog used to read from can
+         * be stale. Building `needsStrategy` off a stale zero would silently drop
+         * the strategy prompt and send a strategy-less delete for a shelf that
+         * still holds products — a guaranteed 422.
+         */
         fun requestDelete() {
-            val state = _state.value
-            val selected = state.shelves.filter { it.id in state.selected }
-            if (selected.isEmpty()) return
+            val h = householdId
+            val l = locationId
+            if (h == null || l == null) return
+            val selectedIds = _state.value.selected
+            if (selectedIds.isEmpty()) return
 
-            // For a SHELF, what the server counts as "has contents" IS its product
-            // count — so contentCount and productCount coincide here. They do NOT
-            // coincide for a location (Task 5): there, contentCount is shelf_count.
-            val products = selected.sumOf { it.product_count }
+            launchLoading {
+                val shelves = orderShelves(repository.list(h, l))
+                _state.update { it.copy(shelves = shelves) }
 
-            _state.update {
-                it.copy(
-                    pendingDelete =
-                        DeletePlan(
-                            itemCount = selected.size,
-                            productCount = products,
-                            contentCount = products,
-                        ),
-                    // The shelves the products could move TO: live, non-system, and
-                    // not themselves being deleted. This list is the ONLY signal for
-                    // whether "move" is offered — DeletePlan carries no canMove flag
-                    // (see DeletePlan.kt). Empty list => the dialog hides the move
-                    // option, so a move is never offered with nowhere to go.
-                    moveTargets =
-                        state.shelves
-                            .filter { s -> s.id !in state.selected && !s.is_system }
-                            .map { s -> MoveTarget(id = s.id, name = s.name) },
-                )
+                val selected = shelves.filter { it.id in selectedIds }
+                if (selected.isEmpty()) return@launchLoading
+
+                // For a SHELF, what the server counts as "has contents" IS its product
+                // count — so contentCount and productCount coincide here. They do NOT
+                // coincide for a location (Task 5): there, contentCount is shelf_count.
+                val products = selected.sumOf { it.product_count }
+
+                _state.update {
+                    it.copy(
+                        pendingDelete =
+                            DeletePlan(
+                                itemCount = selected.size,
+                                productCount = products,
+                                contentCount = products,
+                            ),
+                        // The shelves the products could move TO: live, non-system, and
+                        // not themselves being deleted. This list is the ONLY signal for
+                        // whether "move" is offered — DeletePlan carries no canMove flag
+                        // (see DeletePlan.kt). Empty list => the dialog hides the move
+                        // option, so a move is never offered with nowhere to go.
+                        moveTargets =
+                            shelves
+                                .filter { s -> s.id !in selectedIds && !s.is_system }
+                                .map { s -> MoveTarget(id = s.id, name = s.name) },
+                    )
+                }
             }
         }
 
@@ -254,7 +282,13 @@ class ShelvesViewModel
             val h = householdId
             val l = locationId
             if (h == null || l == null) return
-            val ids = _state.value.selected.toList()
+            val state = _state.value
+            // Same filter requestDelete() applies (and, by the time the dialog is
+            // open, requestDelete() has already refreshed state.shelves): only ids
+            // that still exist in the live list, so a shelf that vanished from
+            // under the user — another device, a refresh while the dialog was open
+            // — never gets a delete request for an id that no longer exists.
+            val ids = state.shelves.filter { it.id in state.selected }.map { it.id }
             if (ids.isEmpty()) return
 
             // ONE batch id for the whole gesture. Deleting three shelves is three
@@ -263,20 +297,49 @@ class ShelvesViewModel
             val batchId = UUID.randomUUID().toString()
 
             launchLoading {
-                ids.forEach { id ->
-                    repository.deleteWithStrategy(h, l, id, ShelfDeletion(batchId, strategy, targetId))
+                val succeeded = mutableListOf<Long>()
+                var failure: Throwable? = null
+                for (id in ids) {
+                    val result =
+                        runCatching {
+                            repository.deleteWithStrategy(h, l, id, ShelfDeletion(batchId, strategy, targetId))
+                        }
+                    result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+                    if (result.isSuccess) {
+                        succeeded += id
+                    } else {
+                        // Stop at the first failure: whatever already landed
+                        // server-side must still be reflected and made Undo-able,
+                        // but nothing past the failure was attempted, so there is
+                        // nothing more to reconcile for those ids.
+                        failure = result.exceptionOrNull()
+                        break
+                    }
                 }
+
+                if (succeeded.isNotEmpty()) {
+                    // A partial batch already changed the server's truth (and a
+                    // MOVE/UNSORT strategy can shift another shelf's product_count
+                    // too), so reconcile with a real refresh rather than a local
+                    // filter — and surface Undo for whatever actually landed.
+                    val fresh = orderShelves(repository.list(h, l))
+                    _state.update { it.copy(shelves = fresh, lastBatchId = batchId) }
+                    hierarchyStore.refresh()
+                }
+
+                // Cancel and Delete must leave the screen in the same shape: exit
+                // edit mode and restore the pre-edit view either way.
                 _state.update {
                     it.copy(
                         editMode = false,
+                        listView = viewBeforeEdit,
                         selected = emptySet(),
                         pendingDelete = null,
                         moveTargets = emptyList(),
-                        lastBatchId = batchId,
-                        shelves = it.shelves.filter { s -> s.id !in ids },
                     )
                 }
-                hierarchyStore.refresh()
+
+                failure?.let { throw it }
             }
         }
 
