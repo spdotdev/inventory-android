@@ -86,7 +86,7 @@ class HouseholdsViewModel
             color: String?,
             icon: String?,
         ) = launchLoading {
-            val updated = repository.updateTheme(householdId, color, icon)
+            val updated = repository.update(householdId, name = null, color = color, icon = icon)
             _state.update { s ->
                 s.copy(households = s.households.map { if (it.id == updated.id) updated else it })
             }

@@ -11,6 +11,7 @@ import dev.scuttle.inventory.data.api.HouseholdApi
 import dev.scuttle.inventory.data.api.InviteApi
 import dev.scuttle.inventory.data.api.LocationApi
 import dev.scuttle.inventory.data.api.ProductApi
+import dev.scuttle.inventory.data.api.RestoreApi
 import dev.scuttle.inventory.data.api.SearchApi
 import dev.scuttle.inventory.data.api.ShelfApi
 import dev.scuttle.inventory.data.storage.TokenStore
@@ -93,4 +94,7 @@ object TestNetworkModule {
 
     @Provides @Singleton
     fun provideErrorApi(r: Retrofit): ErrorApi = r.create(ErrorApi::class.java)
+
+    @Provides @Singleton
+    fun provideRestoreApi(r: Retrofit): RestoreApi = r.create(RestoreApi::class.java)
 }

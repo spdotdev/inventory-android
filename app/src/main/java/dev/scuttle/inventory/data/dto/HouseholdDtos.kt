@@ -35,11 +35,12 @@ data class JoinHouseholdRequest(
 )
 
 // No property defaults on purpose: the app's Json has encodeDefaults=false, so a
-// defaulted field would be OMITTED from the body and the server would keep the old
-// value instead of clearing it (same pitfall as UpdateProductRequest). Explicit
-// null = clear back to the derived default.
+// defaulted field would be OMITTED from the body and the server would keep the
+// old value instead of clearing it. Explicit null = clear back to the derived
+// default. `name` is nullable so a theme-only change doesn't have to resend it.
 @Serializable
-data class UpdateHouseholdThemeRequest(
+data class UpdateHouseholdRequest(
+    val name: String?,
     val color: String?,
     val icon: String?,
 )

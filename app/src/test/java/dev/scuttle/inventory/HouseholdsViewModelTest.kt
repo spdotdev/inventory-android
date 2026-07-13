@@ -38,13 +38,14 @@ class HouseholdsViewModelTest {
             items.removeIf { it.id == householdId }
         }
 
-        override suspend fun updateTheme(
+        override suspend fun update(
             householdId: Long,
+            name: String?,
             color: String?,
             icon: String?,
         ): HouseholdDto {
             val index = items.indexOfFirst { it.id == householdId }
-            items[index] = items[index].copy(color = color, icon = icon)
+            items[index] = items[index].copy(name = name ?: items[index].name, color = color, icon = icon)
             return items[index]
         }
     }

@@ -2,7 +2,11 @@ package dev.scuttle.inventory.data.location
 
 import dev.scuttle.inventory.data.api.LocationApi
 import dev.scuttle.inventory.data.dto.CreateLocationRequest
+import dev.scuttle.inventory.data.dto.DeleteLocationRequest
 import dev.scuttle.inventory.data.dto.LocationDto
+import dev.scuttle.inventory.data.dto.ReorderRequest
+import dev.scuttle.inventory.data.dto.UpdateLocationRequest
+import dev.scuttle.inventory.data.hierarchy.LocationDeleteStrategy
 import javax.inject.Inject
 
 class LocationRepositoryImpl
@@ -31,6 +35,47 @@ class LocationRepositoryImpl
             locationId: Long,
         ) {
             api.delete(householdId, locationId)
+            cache[householdId] = cache[householdId]?.filter { it.id != locationId } ?: emptyList()
+        }
+
+        override suspend fun rename(
+            householdId: Long,
+            locationId: Long,
+            name: String,
+            type: String,
+        ): LocationDto =
+            api
+                .update(householdId, locationId, UpdateLocationRequest(name = name, type = type))
+                .data
+                .also { updated ->
+                    val updatedList = cache[householdId]?.map { if (it.id == locationId) updated else it }
+                    cache[householdId] = updatedList ?: listOf(updated)
+                }
+
+        override suspend fun reorder(
+            householdId: Long,
+            ids: List<Long>,
+        ): List<LocationDto> =
+            api.reorder(householdId, ReorderRequest(ids)).data.also {
+                cache[householdId] = it
+            }
+
+        override suspend fun deleteWithStrategy(
+            householdId: Long,
+            locationId: Long,
+            batchId: String,
+            strategy: LocationDeleteStrategy?,
+            targetLocationId: Long?,
+        ) {
+            api.delete(
+                householdId,
+                locationId,
+                DeleteLocationRequest(
+                    strategy = strategy?.wire,
+                    target_location_id = targetLocationId,
+                    deletion_batch_id = batchId,
+                ),
+            )
             cache[householdId] = cache[householdId]?.filter { it.id != locationId } ?: emptyList()
         }
 
