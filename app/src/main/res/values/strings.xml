@@ -198,4 +198,17 @@
     <string name="invite_qr_cd">Invite QR code</string>
     <string name="invite_copy_link">Copy link</string>
     <string name="invite_copied">Copied!</string>
+
+    <!-- Delete strategy -->
+    <string name="delete_strategy_title">Delete %1$d item(s)?</string>
+    <string name="delete_strategy_summary">%1$d product(s) are stored inside. What should happen to them?</string>
+    <string name="delete_strategy_move">Move them somewhere else</string>
+    <string name="delete_strategy_unsort">Keep them here, in Unsorted</string>
+    <string name="delete_strategy_delete">Delete them too</string>
+    <string name="delete_strategy_pick_target">Where should they go?</string>
+    <string name="delete_strategy_no_target">There is nowhere else to move them.</string>
+    <string name="delete_undo">Undo</string>
+    <string name="delete_undone">Restored.</string>
+    <string name="delete_undo_failed">Couldn\'t undo — this was already restored or permanently removed.</string>
+    <string name="shelf_unsorted">Unsorted</string>
 </resources>

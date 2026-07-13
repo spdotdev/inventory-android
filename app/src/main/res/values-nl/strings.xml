@@ -198,4 +198,17 @@
     <string name="invite_qr_cd">Uitnodigings-QR-code</string>
     <string name="invite_copy_link">Link kopiëren</string>
     <string name="invite_copied">Gekopieerd!</string>
+
+    <!-- Delete strategy -->
+    <string name="delete_strategy_title">%1$d item(s) verwijderen?</string>
+    <string name="delete_strategy_summary">Er liggen %1$d product(en) in. Wat moet daarmee gebeuren?</string>
+    <string name="delete_strategy_move">Verplaats ze ergens anders heen</string>
+    <string name="delete_strategy_unsort">Bewaar ze hier, in Ongesorteerd</string>
+    <string name="delete_strategy_delete">Verwijder ze ook</string>
+    <string name="delete_strategy_pick_target">Waar moeten ze heen?</string>
+    <string name="delete_strategy_no_target">Er is geen andere plek om ze heen te verplaatsen.</string>
+    <string name="delete_undo">Ongedaan maken</string>
+    <string name="delete_undone">Hersteld.</string>
+    <string name="delete_undo_failed">Ongedaan maken lukt niet — dit is al hersteld of definitief verwijderd.</string>
+    <string name="shelf_unsorted">Ongesorteerd</string>
 </resources>
