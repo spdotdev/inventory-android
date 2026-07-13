@@ -13,6 +13,7 @@ import dev.scuttle.inventory.data.product.ProductEdit
 import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.data.settings.DefaultHouseholdStore
 import dev.scuttle.inventory.data.settings.FavoritesStore
+import dev.scuttle.inventory.data.settings.ShelfViewStore
 import dev.scuttle.inventory.data.shelf.ShelfRepository
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -189,6 +190,18 @@ class SessionCleanerTest {
         }
     }
 
+    private class RecordingShelfViewStore : ShelfViewStore {
+        var cleared = false
+
+        override fun isListView() = false
+
+        override fun setListView(listView: Boolean) = Unit
+
+        override fun clear() {
+            cleared = true
+        }
+    }
+
     @Test
     fun clear_fans_out_to_every_cache_and_store() {
         // X1: session end must wipe ALL per-account singleton state — miss one and
@@ -199,9 +212,10 @@ class SessionCleanerTest {
         val product = RecordingProductRepo()
         val favorites = RecordingFavoritesStore()
         val defaultHousehold = RecordingDefaultHouseholdStore()
+        val shelfView = RecordingShelfViewStore()
         val store = HierarchyStore(household, location, shelf, product)
 
-        SessionCleaner(household, location, shelf, product, store, favorites, defaultHousehold).clear()
+        SessionCleaner(household, location, shelf, product, store, favorites, defaultHousehold, shelfView).clear()
 
         assertTrue(household.cleared)
         assertTrue(location.cleared)
@@ -209,5 +223,6 @@ class SessionCleanerTest {
         assertTrue(product.cleared)
         assertTrue(favorites.cleared)
         assertTrue(defaultHousehold.cleared)
+        assertTrue(shelfView.cleared)
     }
 }

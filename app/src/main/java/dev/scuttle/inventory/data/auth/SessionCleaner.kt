@@ -6,6 +6,7 @@ import dev.scuttle.inventory.data.location.LocationRepository
 import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.data.settings.DefaultHouseholdStore
 import dev.scuttle.inventory.data.settings.FavoritesStore
+import dev.scuttle.inventory.data.settings.ShelfViewStore
 import dev.scuttle.inventory.data.shelf.ShelfRepository
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -21,6 +22,10 @@ import javax.inject.Singleton
  * always-online, no-local-DB rule.
  */
 @Singleton
+// One constructor parameter per thing to clear is this class's entire job — it is
+// a pure fan-out, not a design smell to split up; splitting it would need an
+// artificial "clearable" abstraction (and Hilt multibinding) for no real benefit.
+@Suppress("LongParameterList")
 class SessionCleaner
     @Inject
     constructor(
@@ -31,6 +36,7 @@ class SessionCleaner
         private val hierarchyStore: HierarchyStore,
         private val favoritesStore: FavoritesStore,
         private val defaultHouseholdStore: DefaultHouseholdStore,
+        private val shelfViewStore: ShelfViewStore,
     ) {
         fun clear() {
             householdRepository.clear()
@@ -40,5 +46,6 @@ class SessionCleaner
             hierarchyStore.clear()
             favoritesStore.clear()
             defaultHouseholdStore.clear()
+            shelfViewStore.clear()
         }
     }
