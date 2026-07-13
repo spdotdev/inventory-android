@@ -1,11 +1,10 @@
 package dev.scuttle.inventory.ui.storage
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -15,6 +14,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -22,9 +23,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -37,24 +37,23 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
@@ -68,7 +67,13 @@ import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.dto.LocationDto
 import dev.scuttle.inventory.ui.common.ErrorRetry
 import dev.scuttle.inventory.ui.common.storageTypeLabel
+import dev.scuttle.inventory.ui.hierarchy.DeleteStrategyDialog
+import dev.scuttle.inventory.ui.hierarchy.EditableRow
+import dev.scuttle.inventory.ui.hierarchy.locationStrategyOptions
 import dev.scuttle.inventory.ui.theme.FrostCard
+
+/** Matches the server-side location name column limit (same cap as StorageOverviewViewModel.onNewNameChange). */
+private const val MAX_LOCATION_NAME_LENGTH = 50
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -82,9 +87,12 @@ fun StorageOverviewScreen(
 ) {
     val state by viewModel.state.collectAsState()
     var showAddSheet by rememberSaveable { mutableStateOf(false) }
-    var pendingDeleteLocation by remember { mutableStateOf<LocationDto?>(null) }
+    var renamingLocation by remember { mutableStateOf<LocationDto?>(null) }
+    var renameName by remember { mutableStateOf("") }
+    var renameType by remember { mutableStateOf("freezer") }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val keyboardController = LocalSoftwareKeyboardController.current
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(householdId) { viewModel.load(householdId) }
 
@@ -92,31 +100,73 @@ fun StorageOverviewScreen(
     Scaffold(
         contentWindowInsets = WindowInsets(0),
         modifier = modifier,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 windowInsets = statusBarInsets,
-                title = { Text(stringResource(R.string.all_storage_title)) },
+                title = {
+                    if (state.editMode && state.selected.isNotEmpty()) {
+                        Text(stringResource(R.string.location_selected_count, state.selected.size))
+                    } else {
+                        Text(stringResource(R.string.all_storage_title))
+                    }
+                },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.action_back),
-                        )
+                    if (state.editMode) {
+                        TextButton(onClick = viewModel::exitEditMode) { Text(stringResource(R.string.action_cancel)) }
+                    } else {
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = stringResource(R.string.action_back),
+                            )
+                        }
                     }
                 },
                 actions = {
-                    IconButton(onClick = onOpenSearch) {
-                        Icon(
-                            Icons.Default.Search,
-                            contentDescription = stringResource(R.string.storage_overview_search_cd),
-                        )
+                    if (state.editMode) {
+                        Button(
+                            // requestDelete() only OPENS the strategy dialog — the actual
+                            // delete happens in confirmDelete(), wired to the dialog below.
+                            // This button must never call confirmDelete() directly: that
+                            // would be exactly the no-confirmation bug this task replaces.
+                            onClick = viewModel::requestDelete,
+                            enabled = state.selected.isNotEmpty() && !state.loading,
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                            modifier = Modifier.padding(end = 8.dp),
+                        ) {
+                            Text(
+                                if (state.selected.isEmpty()) {
+                                    stringResource(R.string.location_delete_button)
+                                } else {
+                                    stringResource(R.string.location_delete_count_button, state.selected.size)
+                                },
+                            )
+                        }
+                    } else {
+                        IconButton(onClick = onOpenSearch) {
+                            Icon(
+                                Icons.Default.Search,
+                                contentDescription = stringResource(R.string.storage_overview_search_cd),
+                            )
+                        }
+                        if (state.locations.isNotEmpty()) {
+                            IconButton(onClick = viewModel::enterEditMode) {
+                                Icon(
+                                    Icons.Default.Edit,
+                                    contentDescription = stringResource(R.string.storage_overview_edit_cd),
+                                )
+                            }
+                        }
                     }
                 },
             )
         },
         floatingActionButton = {
-            FloatingActionButton(modifier = Modifier.navigationBarsPadding(), onClick = { showAddSheet = true }) {
-                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.all_storage_add_location_cd))
+            if (!state.editMode) {
+                FloatingActionButton(modifier = Modifier.navigationBarsPadding(), onClick = { showAddSheet = true }) {
+                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.all_storage_add_location_cd))
+                }
             }
         },
     ) { padding ->
@@ -128,23 +178,13 @@ fun StorageOverviewScreen(
                     .fillMaxSize()
                     .padding(padding),
         ) {
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .navigationBarsPadding()
-                        .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Spacer(Modifier.height(4.dp))
-
+            Column(modifier = Modifier.fillMaxSize()) {
                 if (state.loading) {
                     LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                 }
 
                 state.error?.let {
-                    ErrorRetry(message = it, onRetry = viewModel::refresh)
+                    ErrorRetry(message = it, onRetry = viewModel::refresh, modifier = Modifier.padding(16.dp))
                 }
 
                 // Don't show the empty text on a failed load — the ErrorRetry above
@@ -153,52 +193,66 @@ fun StorageOverviewScreen(
                 if (state.locations.isEmpty() && !state.loading && state.error == null) {
                     Text(
                         text = stringResource(R.string.storage_overview_empty),
-                        modifier = Modifier.padding(top = 8.dp),
+                        modifier = Modifier.padding(16.dp),
                     )
                 }
 
-                state.locations.forEach { location ->
-                    key(location.id) {
-                        // Hoist formatted string for use inside non-composable semantics block
-                        val openDesc = stringResource(R.string.storage_overview_open_cd, location.name)
-
-                        val swipeState =
-                            rememberSwipeToDismissBoxState(
-                                confirmValueChange = { value ->
-                                    if (value == SwipeToDismissBoxValue.EndToStart) {
-                                        pendingDeleteLocation = location
-                                    }
-                                    false // always snap back; deletion confirmed via dialog
+                if (state.editMode) {
+                    // Delete now lives behind edit mode: a swipe should not be able
+                    // to destroy a fridge full of food. Keyed by location.id, same
+                    // as LocationDetailScreen's shelf list — the server's reorder
+                    // response replaces this list wholesale (StorageOverviewViewModel.move),
+                    // never merged, so no duplicate key can reach this LazyColumn.
+                    LazyColumn(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                        contentPadding = PaddingValues(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        itemsIndexed(state.locations, key = { _, location -> location.id }) { index, location ->
+                            EditableRow(
+                                name = location.name,
+                                editMode = true,
+                                isSystem = false,
+                                selected = location.id in state.selected,
+                                canMoveUp = index > 0,
+                                canMoveDown = index < state.locations.size - 1,
+                                // Selecting doesn't touch the network, but rename/reorder each
+                                // fire their own request immediately — held off while another
+                                // mutation is in flight so two don't race each other.
+                                actionsEnabled = !state.loading,
+                                onClick = { viewModel.toggleSelection(location.id) },
+                                onRename = {
+                                    renamingLocation = location
+                                    renameName = location.name
+                                    renameType = location.type
                                 },
+                                onMoveUp = { viewModel.moveUp(location.id) },
+                                onMoveDown = { viewModel.moveDown(location.id) },
+                                renameLabelRes = R.string.storage_edit_title,
+                                moveUpLabelRes = R.string.storage_move_up_cd,
+                                moveDownLabelRes = R.string.storage_move_down_cd,
                             )
-                        SwipeToDismissBox(
-                            state = swipeState,
-                            enableDismissFromStartToEnd = false,
-                            backgroundContent = {
-                                // Only draw the delete affordance mid-swipe: the frosted (translucent)
-                                // cards otherwise let the red container + bin icon bleed through at
-                                // rest, overlapping the row's own trailing controls.
-                                if (swipeState.dismissDirection == SwipeToDismissBoxValue.EndToStart) {
-                                    Box(
-                                        modifier =
-                                            Modifier
-                                                .fillMaxSize()
-                                                .background(
-                                                    color = MaterialTheme.colorScheme.errorContainer,
-                                                    shape = MaterialTheme.shapes.medium,
-                                                ),
-                                        contentAlignment = Alignment.CenterEnd,
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Delete,
-                                            contentDescription = stringResource(R.string.action_delete),
-                                            tint = MaterialTheme.colorScheme.onErrorContainer,
-                                            modifier = Modifier.padding(horizontal = 20.dp),
-                                        )
-                                    }
-                                }
-                            },
-                        ) {
+                        }
+                    }
+                } else {
+                    Column(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                                .verticalScroll(rememberScrollState())
+                                .navigationBarsPadding()
+                                .padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        Spacer(Modifier.height(4.dp))
+
+                        state.locations.forEach { location ->
+                            // Hoist formatted string for use inside non-composable semantics block
+                            val openDesc = stringResource(R.string.storage_overview_open_cd, location.name)
                             FrostCard(
                                 onClick = { onOpenLocation(location.id) },
                                 modifier =
@@ -220,38 +274,107 @@ fun StorageOverviewScreen(
                                 }
                             }
                         }
+
+                        Spacer(Modifier.height(80.dp))
                     }
                 }
-
-                Spacer(Modifier.height(80.dp))
             }
         } // end PullToRefreshBox
     }
 
-    pendingDeleteLocation?.let { location ->
-        AlertDialog(
-            onDismissRequest = { pendingDeleteLocation = null },
-            title = { Text(stringResource(R.string.delete_dialog_location_title, location.name)) },
-            text = { Text(stringResource(R.string.delete_dialog_location_text)) },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        viewModel.deleteLocation(location.id)
-                        pendingDeleteLocation = null
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                ) { Text(stringResource(R.string.action_delete)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { pendingDeleteLocation = null }) { Text(stringResource(R.string.action_cancel)) }
-            },
+    // The delete-strategy dialog for the current selection. Non-null pendingDelete
+    // is the ONLY thing that shows this dialog, and confirmDelete() (the only path
+    // that actually deletes) is reachable exclusively from its confirm button — the
+    // top bar's Delete button above only ever calls requestDelete().
+    state.pendingDelete?.let { plan ->
+        DeleteStrategyDialog(
+            plan = plan,
+            options = locationStrategyOptions(),
+            targets = state.moveTargets,
+            onDismiss = viewModel::cancelDelete,
+            onConfirm = { strategy, targetId -> viewModel.confirmDelete(strategy, targetId) },
         )
+    }
+
+    // Undo snackbar. A snackbar with an action, rather than a one-shot error
+    // effect (which has no action slot).
+    val undoLabel = stringResource(R.string.delete_undo)
+    val deletedMessage = stringResource(R.string.locations_deleted)
+    LaunchedEffect(state.lastBatchId) {
+        if (state.lastBatchId == null) return@LaunchedEffect
+        val result =
+            snackbarHostState.showSnackbar(
+                message = deletedMessage,
+                actionLabel = undoLabel,
+                duration = SnackbarDuration.Long,
+            )
+        if (result == SnackbarResult.ActionPerformed) {
+            viewModel.undoDelete()
+        } else {
+            viewModel.consumeLastBatch()
+        }
+    }
+
+    renamingLocation?.let {
+        ModalBottomSheet(
+            onDismissRequest = { renamingLocation = null },
+            sheetState = sheetState,
+        ) {
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                        .padding(bottom = 32.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Text(text = stringResource(R.string.storage_edit_title), style = MaterialTheme.typography.titleLarge)
+
+                Text(text = stringResource(R.string.add_storage_type_label))
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    STORAGE_TYPES.forEach { type ->
+                        FilterChip(
+                            selected = renameType == type,
+                            onClick = { renameType = type },
+                            label = { Text(storageTypeLabel(type)) },
+                        )
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    OutlinedTextField(
+                        value = renameName,
+                        onValueChange = { renameName = it.take(MAX_LOCATION_NAME_LENGTH) },
+                        label = { Text(stringResource(R.string.add_storage_name_field)) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(autoCorrect = false, imeAction = ImeAction.Done),
+                        modifier = Modifier.weight(1f),
+                    )
+                    Button(
+                        onClick = {
+                            keyboardController?.hide()
+                            val location = renamingLocation
+                            if (location != null) {
+                                viewModel.rename(location.id, renameName, renameType)
+                            }
+                            renamingLocation = null
+                        },
+                        enabled = renameName.isNotBlank(),
+                    ) {
+                        Text(stringResource(R.string.action_save))
+                    }
+                }
+            }
+        }
     }
 
     if (showAddSheet) {
         ModalBottomSheet(
             onDismissRequest = { showAddSheet = false },
-            sheetState = sheetState,
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         ) {
             Column(
                 modifier =

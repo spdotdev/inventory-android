@@ -182,6 +182,11 @@
     <string name="storage_overview_empty">No storage locations yet. Tap + to add a fridge, freezer or pantry.</string>
     <string name="storage_overview_search_cd">Search products</string>
     <string name="storage_overview_open_cd">Open %s</string>
+    <string name="storage_overview_edit_cd">Edit storage</string>
+    <string name="storage_move_up_cd">Move storage location up</string>
+    <string name="storage_move_down_cd">Move storage location down</string>
+    <string name="storage_edit_title">Edit storage location</string>
+    <string name="locations_deleted">Storage locations deleted.</string>
 
     <!-- Add storage sheet -->
     <string name="add_storage_sheet_title">Add storage</string>

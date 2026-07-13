@@ -1,5 +1,6 @@
 package dev.scuttle.inventory.ui.hierarchy
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -46,6 +47,12 @@ fun EditableRow(
     // mutation is in flight — only rename/reorder, which each fire their own
     // request immediately, need to be held off to avoid racing a second one.
     actionsEnabled: Boolean = true,
+    // Defaults preserve the shelves-screen wording; a caller editing a different
+    // kind of row (e.g. locations) passes its own copy so a screen reader never
+    // announces "Rename shelf" over a location row.
+    @StringRes renameLabelRes: Int = R.string.shelf_rename_title,
+    @StringRes moveUpLabelRes: Int = R.string.shelf_move_up_cd,
+    @StringRes moveDownLabelRes: Int = R.string.shelf_move_down_cd,
 ) {
     val editable = editMode && !isSystem
     FrostCard(
@@ -72,18 +79,18 @@ fun EditableRow(
             )
             if (editable) {
                 IconButton(onClick = onRename, enabled = actionsEnabled) {
-                    Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.shelf_rename_title))
+                    Icon(Icons.Default.Edit, contentDescription = stringResource(renameLabelRes))
                 }
                 IconButton(onClick = onMoveUp, enabled = canMoveUp && actionsEnabled) {
                     Icon(
                         Icons.Default.KeyboardArrowUp,
-                        contentDescription = stringResource(R.string.shelf_move_up_cd),
+                        contentDescription = stringResource(moveUpLabelRes),
                     )
                 }
                 IconButton(onClick = onMoveDown, enabled = canMoveDown && actionsEnabled) {
                     Icon(
                         Icons.Default.KeyboardArrowDown,
-                        contentDescription = stringResource(R.string.shelf_move_down_cd),
+                        contentDescription = stringResource(moveDownLabelRes),
                     )
                 }
             }

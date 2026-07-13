@@ -207,12 +207,14 @@
     <ID>TooGenericExceptionThrown:SearchViewModelTest.kt$SearchViewModelTest.FakeSearchRepository$throw RuntimeException("offline")</ID>
     <ID>TooGenericExceptionThrown:ShelvesViewModelTest.kt$ShelvesViewModelTest.FakeShelfRepository$throw RuntimeException("delete failed")</ID>
     <ID>TooGenericExceptionThrown:ShelvesViewModelTest.kt$ShelvesViewModelTest.FakeShelfRepository$throw RuntimeException("offline")</ID>
+    <ID>TooGenericExceptionThrown:StorageOverviewViewModelTest.kt$StorageOverviewViewModelTest.FakeLocationRepository$throw RuntimeException("delete failed")</ID>
     <ID>TooGenericExceptionThrown:StorageOverviewViewModelTest.kt$StorageOverviewViewModelTest.FakeLocationRepository$throw RuntimeException("offline")</ID>
     <ID>TooManyFunctions:AuthViewModel.kt$AuthViewModel : ViewModel</ID>
     <ID>TooManyFunctions:NetworkModule.kt$NetworkModule</ID>
     <ID>TooManyFunctions:ProductRepositoryImpl.kt$ProductRepositoryImpl : ProductRepository</ID>
     <ID>TooManyFunctions:ProductsViewModel.kt$ProductsViewModel : ViewModel</ID>
     <ID>TooManyFunctions:ShelvesViewModel.kt$ShelvesViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:StorageOverviewViewModel.kt$StorageOverviewViewModel : ViewModel</ID>
     <ID>UnusedParameter:AuthViewModel.kt$AuthViewModel$mode: AuthMode</ID>
     <ID>UnusedParameter:LocationDetailScreen.kt$householdId: Long</ID>
   </CurrentIssues>

@@ -182,6 +182,11 @@
     <string name="storage_overview_empty">Nog geen opslaglocaties. Tik op + om een koelkast, vriezer of voorraadkast toe te voegen.</string>
     <string name="storage_overview_search_cd">Producten zoeken</string>
     <string name="storage_overview_open_cd">%s openen</string>
+    <string name="storage_overview_edit_cd">Opslag bewerken</string>
+    <string name="storage_move_up_cd">Opslaglocatie omhoog verplaatsen</string>
+    <string name="storage_move_down_cd">Opslaglocatie omlaag verplaatsen</string>
+    <string name="storage_edit_title">Opslaglocatie bewerken</string>
+    <string name="locations_deleted">Opslaglocaties verwijderd.</string>
 
     <!-- Add storage sheet -->
     <string name="add_storage_sheet_title">Opslag toevoegen</string>
