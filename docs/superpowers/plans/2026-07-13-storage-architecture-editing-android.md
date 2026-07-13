@@ -153,6 +153,9 @@ data class ShelfDto(
     // Server-side flag for the "Unsorted" holding shelf. The client localises the
     // label off this — the server always stores the literal name "Unsorted".
     val is_system: Boolean = false,
+    // The server requires a delete STRATEGY when a shelf has products. This is how
+    // the client knows to ask, and it feeds the dialog's "17 products" summary.
+    val product_count: Int = 0,
 )
 
 // No property defaults: the app's Json has encodeDefaults=false, so a defaulted
@@ -184,6 +187,15 @@ data class LocationDto(
     val name: String,
     val type: String,
     val position: Int? = null,
+    // The server requires a delete STRATEGY when shelf_count > 0 — NOT when the
+    // location merely holds products. Both sides read the same server relation
+    // (shelvesWithContents), which counts any non-system shelf plus a system
+    // "Unsorted" shelf that actually holds something. Decide `needsStrategy` from
+    // THIS, or a location containing one empty shelf 422s on every delete.
+    val shelf_count: Int = 0,
+    // Total products across all the location's shelves. Feeds the dialog's
+    // "2 locations · 17 products" summary.
+    val product_count: Int = 0,
 )
 
 @Serializable
@@ -650,15 +662,27 @@ import org.junit.Test
 class DeletePlanTest {
     @Test
     fun an_empty_selection_needs_no_strategy() {
-        val plan = DeletePlan(itemCount = 2, productCount = 0, hasOtherTargets = true)
+        val plan = DeletePlan(itemCount = 2, productCount = 0, contentCount = 0, hasOtherTargets = true)
 
         // Nothing to rescue — a plain confirm is enough.
         assertFalse(plan.needsStrategy)
     }
 
     @Test
-    fun a_selection_holding_products_needs_a_strategy() {
-        val plan = DeletePlan(itemCount = 1, productCount = 12, hasOtherTargets = true)
+    fun a_shelf_holding_products_needs_a_strategy() {
+        // For a SHELF, contentCount is its product_count.
+        val plan = DeletePlan(itemCount = 1, productCount = 12, contentCount = 12, hasOtherTargets = true)
+
+        assertTrue(plan.needsStrategy)
+    }
+
+    @Test
+    fun a_location_holding_an_EMPTY_shelf_still_needs_a_strategy() {
+        // THE cross-repo trap. The server asks for a strategy when a location has
+        // SHELVES, not when it has products — so a location with one empty shelf
+        // (0 products, 1 shelf) must still prompt. Deciding this from productCount
+        // would send a strategy-less delete and 422 every single time.
+        val plan = DeletePlan(itemCount = 1, productCount = 0, contentCount = 1, hasOtherTargets = true)
 
         assertTrue(plan.needsStrategy)
     }
@@ -667,7 +691,7 @@ class DeletePlanTest {
     fun move_is_unavailable_when_there_is_nowhere_to_move_to() {
         // Deleting the household's only location: there is no other location to
         // take the contents, so the UI must not offer "move" as a dead option.
-        val plan = DeletePlan(itemCount = 1, productCount = 12, hasOtherTargets = false)
+        val plan = DeletePlan(itemCount = 1, productCount = 12, contentCount = 12, hasOtherTargets = false)
 
         assertTrue(plan.needsStrategy)
         assertFalse(plan.canMove)
@@ -675,7 +699,7 @@ class DeletePlanTest {
 
     @Test
     fun move_is_available_when_a_target_exists() {
-        val plan = DeletePlan(itemCount = 1, productCount = 12, hasOtherTargets = true)
+        val plan = DeletePlan(itemCount = 1, productCount = 12, contentCount = 12, hasOtherTargets = true)
 
         assertTrue(plan.canMove)
     }
@@ -705,13 +729,25 @@ package dev.scuttle.inventory.ui.hierarchy
 data class DeletePlan(
     /** How many containers (shelves or locations) are selected. */
     val itemCount: Int,
-    /** How many products live inside them, in total. */
+    /** How many products live inside them, in total. Feeds the summary line. */
     val productCount: Int,
+    /**
+     * What the SERVER counts as "has contents" for the thing being deleted.
+     *
+     * These two are NOT the same rule, and getting it wrong 422s every delete:
+     *  - deleting a SHELF    → the server asks when the shelf has PRODUCTS.
+     *  - deleting a LOCATION → the server asks when the location has SHELVES
+     *                          (`shelf_count`), even if those shelves are empty.
+     *
+     * So the caller passes the right count: `product_count` for shelves,
+     * `shelf_count` for locations. Do not "simplify" this to productCount.
+     */
+    val contentCount: Int,
     /** Is there anywhere else to put the contents? False when this is the only shelf/location. */
     val hasOtherTargets: Boolean,
 ) {
     /** An empty container is safe to delete outright — a plain confirm will do. */
-    val needsStrategy: Boolean get() = productCount > 0
+    val needsStrategy: Boolean get() = contentCount > 0
 
     /** Never offer "move" when there is nothing to move to. */
     val canMove: Boolean get() = hasOtherTargets
