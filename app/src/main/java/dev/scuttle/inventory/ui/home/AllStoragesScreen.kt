@@ -1,5 +1,7 @@
 package dev.scuttle.inventory.ui.home
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,12 +13,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
@@ -47,8 +51,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -56,6 +64,7 @@ import dev.scuttle.inventory.R
 import dev.scuttle.inventory.ui.app.DrawerViewModel
 import dev.scuttle.inventory.ui.common.ErrorRetry
 import dev.scuttle.inventory.ui.common.SnackbarErrorEffect
+import dev.scuttle.inventory.ui.common.orderByPosition
 import dev.scuttle.inventory.ui.common.storageTypeLabel
 import dev.scuttle.inventory.ui.hierarchy.DeleteStrategyDialog
 import dev.scuttle.inventory.ui.hierarchy.locationStrategyOptions
@@ -158,113 +167,174 @@ fun AllStoragesScreen(
                     Text(stringResource(R.string.all_storage_empty))
                 }
 
-                state.entries.forEach { entry ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp, start = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = entry.name,
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                // Household order is a device-local view preference (D8), never
+                // server state — see AllStoragesViewModel.orderedEntries's doc.
+                localViewModel.orderedEntries(state.entries).forEach { entry ->
+                    key(entry.id) {
+                        val isCollapsed = entry.id in localState.collapsedHouseholdIds
+                        // KeyboardArrowDown rotated -90° reads as a right-pointing
+                        // (collapsed) chevron and animates back to pointing-down
+                        // (expanded) — one icon, two states, matching this file's
+                        // existing "no new icon asset for a two-state toggle"
+                        // idiom (see the favorite star below). Keyed by household
+                        // id (like the location loop below) so this per-entry
+                        // animation state is never misattributed to a different
+                        // household across recompositions.
+                        val chevronRotation by animateFloatAsState(
+                            targetValue = if (isCollapsed) -90f else 0f,
+                            label = "household-chevron-${entry.id}",
                         )
-                        if (!editMode) {
-                            IconButton(onClick = { onOpenStorage(entry.id) }) {
+                        val toggleCollapsedCd =
+                            if (isCollapsed) {
+                                stringResource(R.string.all_storage_expand_household_cd, entry.name)
+                            } else {
+                                stringResource(R.string.all_storage_collapse_household_cd, entry.name)
+                            }
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp, start = 4.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Row(
+                                modifier =
+                                    Modifier
+                                        .weight(1f)
+                                        .clickable(role = Role.Button) {
+                                            localViewModel.toggleCollapsed(entry.id)
+                                        }.clearAndSetSemantics { contentDescription = toggleCollapsedCd },
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
                                 Icon(
-                                    Icons.Default.Add,
-                                    contentDescription = stringResource(R.string.all_storage_add_location_cd),
+                                    Icons.Default.KeyboardArrowDown,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.rotate(chevronRotation),
+                                )
+                                Spacer(Modifier.width(4.dp))
+                                Text(
+                                    text = entry.name,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
+                            if (!editMode) {
+                                IconButton(onClick = { onOpenStorage(entry.id) }) {
+                                    Icon(
+                                        Icons.Default.Add,
+                                        contentDescription = stringResource(R.string.all_storage_add_location_cd),
+                                    )
+                                }
+                            }
                         }
-                    }
 
-                    entry.locations.forEach { location ->
-                        key(location.id) {
-                            val hasWarning = state.locationWarnings[location.id] == true
-                            val isFavorite = location.id in localState.favoriteLocationIds
+                        // Collapsing only hides these rows -- it never touches
+                        // edit mode, favorites, or the delete-confirmation flow
+                        // below (state.pendingDelete), which lives outside this
+                        // Column entirely and stays reachable regardless of
+                        // collapse state. A row that isn't rendered can't be
+                        // tapped, so a collapsed group can never carry a pending
+                        // delete the user can't see.
+                        val orderedLocations =
+                            if (isCollapsed) {
+                                emptyList()
+                            } else {
+                                orderByPosition(entry.locations, { it.position }, { it.name })
+                            }
+                        orderedLocations.forEach { location ->
+                            key(location.id) {
+                                val hasWarning = state.locationWarnings[location.id] == true
+                                val isFavorite = location.id in localState.favoriteLocationIds
 
-                            val rowContent: @Composable () -> Unit = {
-                                Row(
-                                    modifier =
-                                        Modifier
-                                            .padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp)
-                                            .fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            location.name,
-                                            style = MaterialTheme.typography.bodyLarge,
-                                            maxLines = 2,
-                                            overflow = TextOverflow.Ellipsis,
-                                        )
-                                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                val rowContent: @Composable () -> Unit = {
+                                    Row(
+                                        modifier =
+                                            Modifier
+                                                .padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp)
+                                                .fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
                                             Text(
-                                                storageTypeLabel(location.type),
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                location.name,
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                maxLines = 2,
+                                                overflow = TextOverflow.Ellipsis,
                                             )
-                                            if (hasWarning) {
+                                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                                 Text(
-                                                    stringResource(R.string.all_storage_stock_warning),
+                                                    storageTypeLabel(location.type),
                                                     style = MaterialTheme.typography.bodySmall,
-                                                    color = MaterialTheme.colorScheme.error,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                )
+                                                if (hasWarning) {
+                                                    Text(
+                                                        stringResource(R.string.all_storage_stock_warning),
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.error,
+                                                    )
+                                                }
+                                            }
+                                        }
+                                        if (editMode) {
+                                            IconButton(
+                                                onClick = { viewModel.requestDelete(entry.id, location.id) },
+                                            ) {
+                                                Icon(
+                                                    Icons.Default.Delete,
+                                                    contentDescription = stringResource(R.string.action_delete),
+                                                    tint = MaterialTheme.colorScheme.error,
+                                                )
+                                            }
+                                        } else {
+                                            IconButton(onClick = { localViewModel.toggleFavorite(location.id) }) {
+                                                Icon(
+                                                    if (isFavorite) {
+                                                        Icons.Default.Star
+                                                    } else {
+                                                        Icons.Outlined.StarOutline
+                                                    },
+                                                    contentDescription =
+                                                        if (isFavorite) {
+                                                            stringResource(
+                                                                R.string.all_storage_favorite_remove_cd,
+                                                            )
+                                                        } else {
+                                                            stringResource(R.string.all_storage_favorite_add_cd)
+                                                        },
+                                                    tint =
+                                                        if (isFavorite) {
+                                                            MaterialTheme.colorScheme.primary
+                                                        } else {
+                                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                                        },
                                                 )
                                             }
                                         }
                                     }
-                                    if (editMode) {
-                                        IconButton(onClick = { viewModel.requestDelete(entry.id, location.id) }) {
-                                            Icon(
-                                                Icons.Default.Delete,
-                                                contentDescription = stringResource(R.string.action_delete),
-                                                tint = MaterialTheme.colorScheme.error,
-                                            )
-                                        }
-                                    } else {
-                                        IconButton(onClick = { localViewModel.toggleFavorite(location.id) }) {
-                                            Icon(
-                                                if (isFavorite) Icons.Default.Star else Icons.Outlined.StarOutline,
-                                                contentDescription =
-                                                    if (isFavorite) {
-                                                        stringResource(
-                                                            R.string.all_storage_favorite_remove_cd,
-                                                        )
-                                                    } else {
-                                                        stringResource(R.string.all_storage_favorite_add_cd)
-                                                    },
-                                                tint =
-                                                    if (isFavorite) {
-                                                        MaterialTheme.colorScheme.primary
-                                                    } else {
-                                                        MaterialTheme.colorScheme.onSurfaceVariant
-                                                    },
-                                            )
-                                        }
-                                    }
                                 }
-                            }
-                            if (hasWarning) {
-                                Card(
-                                    onClick = { onOpenLocation(entry.id, location.id) },
-                                    modifier = Modifier.fillMaxWidth().testTag("home-location-${location.name}"),
-                                    colors =
-                                        CardDefaults.cardColors(
-                                            containerColor =
-                                                MaterialTheme.colorScheme.errorContainer.copy(
-                                                    alpha = 0.4f,
-                                                ),
-                                        ),
-                                    content = { rowContent() },
-                                )
-                            } else {
-                                FrostCard(
-                                    onClick = { onOpenLocation(entry.id, location.id) },
-                                    modifier = Modifier.fillMaxWidth().testTag("home-location-${location.name}"),
-                                    content = { rowContent() },
-                                )
+                                if (hasWarning) {
+                                    Card(
+                                        onClick = { onOpenLocation(entry.id, location.id) },
+                                        modifier =
+                                            Modifier.fillMaxWidth().testTag("home-location-${location.name}"),
+                                        colors =
+                                            CardDefaults.cardColors(
+                                                containerColor =
+                                                    MaterialTheme.colorScheme.errorContainer.copy(
+                                                        alpha = 0.4f,
+                                                    ),
+                                            ),
+                                        content = { rowContent() },
+                                    )
+                                } else {
+                                    FrostCard(
+                                        onClick = { onOpenLocation(entry.id, location.id) },
+                                        modifier =
+                                            Modifier.fillMaxWidth().testTag("home-location-${location.name}"),
+                                        content = { rowContent() },
+                                    )
+                                }
                             }
                         }
                     }

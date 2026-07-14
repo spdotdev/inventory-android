@@ -59,6 +59,8 @@
     <string name="all_storage_stock_warning">⚠ Stock warning</string>
     <string name="all_storage_favorite_add_cd">Add to favorites</string>
     <string name="all_storage_favorite_remove_cd">Remove favorite</string>
+    <string name="all_storage_collapse_household_cd">Collapse %1$s</string>
+    <string name="all_storage_expand_household_cd">Expand %1$s</string>
 
     <!-- Delete dialogs -->
     <string name="delete_dialog_product_title">Delete \"%s\"?</string>

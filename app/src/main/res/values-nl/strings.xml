@@ -59,6 +59,8 @@
     <string name="all_storage_stock_warning">⚠ Voorraadwaarschuwing</string>
     <string name="all_storage_favorite_add_cd">Toevoegen aan favorieten</string>
     <string name="all_storage_favorite_remove_cd">Verwijderen uit favorieten</string>
+    <string name="all_storage_collapse_household_cd">%1$s inklappen</string>
+    <string name="all_storage_expand_household_cd">%1$s uitklappen</string>
 
     <!-- Delete dialogs -->
     <string name="delete_dialog_product_title">\"%s\" verwijderen?</string>

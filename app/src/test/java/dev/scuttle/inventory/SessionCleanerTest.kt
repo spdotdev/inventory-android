@@ -13,6 +13,7 @@ import dev.scuttle.inventory.data.product.ProductEdit
 import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.data.settings.DefaultHouseholdStore
 import dev.scuttle.inventory.data.settings.FavoritesStore
+import dev.scuttle.inventory.data.settings.HouseholdViewStore
 import dev.scuttle.inventory.data.settings.ShelfViewStore
 import dev.scuttle.inventory.data.shelf.ShelfRepository
 import org.junit.Assert.assertTrue
@@ -202,6 +203,22 @@ class SessionCleanerTest {
         }
     }
 
+    private class RecordingHouseholdViewStore : HouseholdViewStore {
+        var cleared = false
+
+        override fun collapsed() = emptySet<Long>()
+
+        override fun toggleCollapsed(id: Long) = Unit
+
+        override fun order() = emptyList<Long>()
+
+        override fun setOrder(ids: List<Long>) = Unit
+
+        override fun clear() {
+            cleared = true
+        }
+    }
+
     @Test
     fun clear_fans_out_to_every_cache_and_store() {
         // X1: session end must wipe ALL per-account singleton state — miss one and
@@ -213,9 +230,20 @@ class SessionCleanerTest {
         val favorites = RecordingFavoritesStore()
         val defaultHousehold = RecordingDefaultHouseholdStore()
         val shelfView = RecordingShelfViewStore()
+        val householdView = RecordingHouseholdViewStore()
         val store = HierarchyStore(household, location, shelf, product)
 
-        SessionCleaner(household, location, shelf, product, store, favorites, defaultHousehold, shelfView).clear()
+        SessionCleaner(
+            household,
+            location,
+            shelf,
+            product,
+            store,
+            favorites,
+            defaultHousehold,
+            shelfView,
+            householdView,
+        ).clear()
 
         assertTrue(household.cleared)
         assertTrue(location.cleared)
@@ -224,5 +252,6 @@ class SessionCleanerTest {
         assertTrue(favorites.cleared)
         assertTrue(defaultHousehold.cleared)
         assertTrue(shelfView.cleared)
+        assertTrue(householdView.cleared)
     }
 }
