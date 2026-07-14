@@ -48,7 +48,8 @@ class MoveProductFlowTest : FlowTestBase() {
             waitForIdle()
 
             // Tap "Move Milk" → startMove builds target list
-            // GET /households/1/locations, GET /households/1/locations/10/shelves → 2 shelves; current shelf 100 excluded → shows shelf 101
+            // GET /households/1/locations, GET /households/1/locations/10/shelves →
+            // 2 shelves; current shelf 100 excluded → shows shelf 101
             mockServer.route("/households/1/locations", fixture("locations_one.json"))
             mockServer.route("/households/1/locations/10/shelves", fixture("shelves_two.json"))
             waitUntilAtLeastOneExists(hasText("Milk"), timeoutMillis = 5_000)

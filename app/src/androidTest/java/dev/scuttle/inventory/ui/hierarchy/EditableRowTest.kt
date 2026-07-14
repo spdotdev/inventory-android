@@ -25,30 +25,37 @@ class EditableRowTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    private fun render(
-        editMode: Boolean,
-        isSystem: Boolean,
-        selected: Boolean = false,
-        canMoveUp: Boolean = true,
-        canMoveDown: Boolean = true,
-        onClick: () -> Unit = {},
-        onRename: () -> Unit = {},
-        onMoveUp: () -> Unit = {},
-        onMoveDown: () -> Unit = {},
-    ) {
+    // Groups every knob EditableRow itself exposes (the composable is exempt from
+    // LongParameterList as declarative UI, per detekt.yml; this is the same
+    // parameter surface one level removed, forwarded verbatim by the render() test
+    // helper below — a data class is detekt's own idiom for that, not a lint dodge:
+    // LongParameterList.ignoreDataClasses is on by default).
+    private data class RenderState(
+        val editMode: Boolean,
+        val isSystem: Boolean,
+        val selected: Boolean = false,
+        val canMoveUp: Boolean = true,
+        val canMoveDown: Boolean = true,
+        val onClick: () -> Unit = {},
+        val onRename: () -> Unit = {},
+        val onMoveUp: () -> Unit = {},
+        val onMoveDown: () -> Unit = {},
+    )
+
+    private fun render(state: RenderState) {
         composeRule.setContent {
             MaterialTheme {
                 EditableRow(
                     name = "Top shelf",
-                    editMode = editMode,
-                    isSystem = isSystem,
-                    selected = selected,
-                    canMoveUp = canMoveUp,
-                    canMoveDown = canMoveDown,
-                    onClick = onClick,
-                    onRename = onRename,
-                    onMoveUp = onMoveUp,
-                    onMoveDown = onMoveDown,
+                    editMode = state.editMode,
+                    isSystem = state.isSystem,
+                    selected = state.selected,
+                    canMoveUp = state.canMoveUp,
+                    canMoveDown = state.canMoveDown,
+                    onClick = state.onClick,
+                    onRename = state.onRename,
+                    onMoveUp = state.onMoveUp,
+                    onMoveDown = state.onMoveDown,
                 )
             }
         }
@@ -57,7 +64,7 @@ class EditableRowTest {
     @Test
     fun outside_edit_mode_shows_no_edit_affordances_but_the_row_is_still_tappable() {
         var clicked = false
-        render(editMode = false, isSystem = false, onClick = { clicked = true })
+        render(RenderState(editMode = false, isSystem = false, onClick = { clicked = true }))
 
         composeRule.onNodeWithContentDescription("Rename shelf").assertDoesNotExist()
         composeRule.onNodeWithContentDescription("Move shelf up").assertDoesNotExist()
@@ -73,11 +80,13 @@ class EditableRowTest {
         var movedUp = false
         var movedDown = false
         render(
-            editMode = true,
-            isSystem = false,
-            onRename = { renamed = true },
-            onMoveUp = { movedUp = true },
-            onMoveDown = { movedDown = true },
+            RenderState(
+                editMode = true,
+                isSystem = false,
+                onRename = { renamed = true },
+                onMoveUp = { movedUp = true },
+                onMoveDown = { movedDown = true },
+            ),
         )
 
         composeRule.onNodeWithContentDescription("Rename shelf").performClick()
@@ -91,7 +100,7 @@ class EditableRowTest {
 
     @Test
     fun the_unsorted_shelf_shows_no_rename_or_reorder_even_in_edit_mode() {
-        render(editMode = true, isSystem = true)
+        render(RenderState(editMode = true, isSystem = true))
 
         composeRule.onNodeWithContentDescription("Rename shelf").assertDoesNotExist()
         composeRule.onNodeWithContentDescription("Move shelf up").assertDoesNotExist()
