@@ -127,6 +127,69 @@ class HouseholdsViewModelTest {
         }
 
     @Test
+    fun renaming_a_household_updates_it_in_place() =
+        runTest {
+            val repo = FakeHouseholdRepository()
+            val viewModel = HouseholdsViewModel(repo, TestHierarchy.store(repo))
+
+            viewModel.update(1L, name = "House", color = null, icon = null)
+
+            assertEquals("House", viewModel.state.value.households.first().name)
+        }
+
+    @Test
+    fun renaming_a_household_preserves_its_existing_theme_when_passed_through() =
+        runTest {
+            // Mirrors HouseholdEditScreen's Save-name action: it passes the
+            // household's currently-known color/icon back through (not null),
+            // because UpdateHouseholdRequest's color/icon have no default and are
+            // ALWAYS encoded on the wire — an explicit null there clears the theme
+            // server-side. A rename must never have that side effect.
+            val repo = FakeHouseholdRepository().apply { items[0] = items[0].copy(color = "teal", icon = "cottage") }
+            val viewModel = HouseholdsViewModel(repo, TestHierarchy.store(repo))
+
+            viewModel.update(1L, name = "House", color = "teal", icon = "cottage")
+
+            val household = viewModel.state.value.households.first()
+            assertEquals("House", household.name)
+            assertEquals("teal", household.color)
+            assertEquals("cottage", household.icon)
+        }
+
+    @Test
+    fun clearing_the_theme_leaves_the_name_untouched() =
+        runTest {
+            // Mirrors HouseholdEditScreen's appearance swatches / "Default" action,
+            // which calls updateTheme(name = null, ...) — relying on `name`'s
+            // default to omit the key so the server's `sometimes|required` rule
+            // never sees an explicit null (which would 422) and never touches it.
+            val repo = FakeHouseholdRepository()
+            val viewModel = HouseholdsViewModel(repo, TestHierarchy.store(repo))
+            viewModel.updateTheme(householdId = 1, color = "teal", icon = "cottage")
+
+            viewModel.updateTheme(householdId = 1, color = null, icon = null)
+
+            val household = viewModel.state.value.households.first()
+            assertEquals("Garage", household.name)
+            assertEquals(null, household.color)
+            assertEquals(null, household.icon)
+        }
+
+    @Test
+    fun edit_mode_starts_off_and_toggles_on_enter_and_exit() =
+        runTest {
+            val repo = FakeHouseholdRepository()
+            val viewModel = HouseholdsViewModel(repo, TestHierarchy.store(repo))
+            assertFalse(viewModel.state.value.editMode)
+
+            viewModel.enterEditMode()
+            assertTrue(viewModel.state.value.editMode)
+
+            viewModel.exitEditMode()
+            assertFalse(viewModel.state.value.editMode)
+        }
+
+    @Test
     fun list_failure_surfaces_an_error() =
         runTest {
             val repo = FakeHouseholdRepository().apply { failList = true }

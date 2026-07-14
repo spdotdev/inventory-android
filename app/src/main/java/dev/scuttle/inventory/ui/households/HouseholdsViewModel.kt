@@ -23,6 +23,9 @@ data class HouseholdsUiState(
     val households: List<HouseholdDto> = emptyList(),
     val newName: String = "",
     val error: String? = null,
+    // Gates whether tapping a household row navigates to HouseholdEditScreen —
+    // mirrors StorageOverviewViewModel/ShelvesViewModel's editMode flag.
+    val editMode: Boolean = false,
 )
 
 @HiltViewModel
@@ -80,19 +83,41 @@ class HouseholdsViewModel
                 hierarchyStore.refresh()
             }
 
-        /** Persist the chosen theme keys (null = back to the derived default). */
-        fun updateTheme(
+        fun enterEditMode() = _state.update { it.copy(editMode = true) }
+
+        fun exitEditMode() = _state.update { it.copy(editMode = false) }
+
+        /**
+         * Rename and/or re-theme a household. A thin pass-through to
+         * [HouseholdRepository.update] — it does NOT infer "leave this alone" from
+         * a null argument the way the server infers it from an ABSENT key. Callers
+         * must supply every field they don't want touched with its CURRENT value:
+         * `color`/`icon` have no default on the wire (UpdateHouseholdRequest), so
+         * they are always sent, and an explicit null there clears the theme back
+         * to the derived default. `name` omits itself when null (its default), so
+         * `name = null` is the correct way to leave the name untouched — see
+         * [updateTheme], which relies on exactly that.
+         */
+        fun update(
             householdId: Long,
+            name: String?,
             color: String?,
             icon: String?,
         ) = launchLoading {
-            val updated = repository.update(householdId, name = null, color = color, icon = icon)
+            val updated = repository.update(householdId, name = name, color = color, icon = icon)
             _state.update { s ->
                 s.copy(households = s.households.map { if (it.id == updated.id) updated else it })
             }
             // Drawer avatars read HierarchyStore, not this VM's list (X4).
             hierarchyStore.refresh()
         }
+
+        /** Persist the chosen theme keys (null = back to the derived default); the name is never touched. */
+        fun updateTheme(
+            householdId: Long,
+            color: String?,
+            icon: String?,
+        ) = update(householdId, name = null, color = color, icon = icon)
 
         private fun launchLoading(
             refreshing: Boolean = false,
