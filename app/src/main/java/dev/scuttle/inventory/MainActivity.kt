@@ -7,32 +7,24 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.MoreHoriz
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.SpaceDashboard
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -43,7 +35,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavOptionsBuilder
 import androidx.navigation.NavType
@@ -253,15 +244,17 @@ private fun InventoryNavHost(
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
     val drawerUi by drawerViewModel.state.collectAsState()
-    var showHouseholdPicker by rememberSaveable { mutableStateOf(false) }
-    val householdPickerSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val bottomTabs =
         listOf(
             BottomTab("dashboard", Routes.DASHBOARD, R.string.nav_dashboard, Icons.Filled.SpaceDashboard),
             BottomTab("home", Routes.HOME, R.string.nav_storage, Icons.Filled.Home),
-            BottomTab("households", Routes.HOUSEHOLDS, R.string.nav_households, Icons.Filled.People),
+            // The centre slot is the primary-ACTION slot. Scanning is a weekly
+            // grocery-trip action; search is an occasional "where did I put it",
+            // and it already has a top-bar icon.
+            BottomTab("scanner", Routes.SCANNER, R.string.nav_scan, Icons.Filled.QrCodeScanner),
             BottomTab("missing-items", Routes.MISSING_ITEMS, R.string.nav_missing_items, Icons.Filled.Warning),
-            BottomTab("search", Routes.SEARCH, R.string.nav_search, Icons.Filled.Search),
+            // Not "Settings": it now holds households, join/invite and account.
+            BottomTab("more", Routes.SETTINGS, R.string.nav_more, Icons.Filled.MoreHoriz),
         )
     val onOpenSettings: () -> Unit = { navController.navigate(Routes.SETTINGS) { launchSingleTop = true } }
     Scaffold(
@@ -272,39 +265,7 @@ private fun InventoryNavHost(
                     bottomTabs.forEach { tab ->
                         NavigationBarItem(
                             selected = currentRoute == tab.route,
-                            // Search needs a householdId to navigate to (or to offer a
-                            // choice of household), which comes from drawerUi.entries —
-                            // loaded asynchronously from HierarchyStore and possibly empty
-                            // for real (a household-less account). Gate the tab on that so
-                            // it's never tappable-but-inert: with nothing loaded yet (or
-                            // ever), the tab shows disabled instead of silently doing
-                            // nothing when tapped. The other four tabs don't depend on
-                            // this data, so they stay always enabled.
-                            enabled = if (tab.key == "search") drawerUi.entries.isNotEmpty() else true,
-                            onClick = {
-                                if (tab.key == "search") {
-                                    val entries = drawerUi.entries
-                                    when {
-                                        entries.size == 1 ->
-                                            // No saveState/restoreState: SEARCH is
-                                            // parameterized (search/{householdId}); a
-                                            // saved back-stack entry would restore
-                                            // verbatim with its OLD householdId, silently
-                                            // ignoring this one.
-                                            navController.navigate(Routes.search(entries.first().id)) {
-                                                popUpTo(Routes.DASHBOARD)
-                                                launchSingleTop = true
-                                            }
-                                        entries.size > 1 -> showHouseholdPicker = true
-                                        // Unreachable via the UI: `enabled` above already
-                                        // keeps the tab untappable when entries is empty.
-                                        // Kept as a defensive no-op, not a real dead end.
-                                        else -> Unit
-                                    }
-                                } else {
-                                    navController.navigate(tab.route, tabNavOptions)
-                                }
-                            },
+                            onClick = { navController.navigate(tab.route, tabNavOptions) },
                             icon = {
                                 if (tab.key == "missing-items" && drawerUi.missingItemCount > 0) {
                                     BadgedBox(badge = { Badge { Text("${drawerUi.missingItemCount}") } }) {
@@ -329,44 +290,6 @@ private fun InventoryNavHost(
             }
         },
     ) { scaffoldPadding ->
-        if (showHouseholdPicker) {
-            ModalBottomSheet(
-                onDismissRequest = { showHouseholdPicker = false },
-                sheetState = householdPickerSheetState,
-            ) {
-                Column(
-                    modifier =
-                        Modifier
-                            .verticalScroll(rememberScrollState())
-                            .navigationBarsPadding(),
-                ) {
-                    Text(
-                        stringResource(R.string.search_choose_household_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(16.dp),
-                    )
-                    drawerUi.entries.forEach { entry ->
-                        NavigationDrawerItem(
-                            label = { Text(entry.name) },
-                            selected = false,
-                            onClick = {
-                                showHouseholdPicker = false
-                                // No saveState/restoreState: SEARCH is parameterized
-                                // (search/{householdId}); a saved back-stack entry would
-                                // restore verbatim with its OLD householdId, silently
-                                // ignoring the household just picked here.
-                                navController.navigate(Routes.search(entry.id)) {
-                                    popUpTo(Routes.DASHBOARD)
-                                    launchSingleTop = true
-                                }
-                            },
-                            modifier =
-                                Modifier.padding(horizontal = 12.dp).testTag("household-picker-${entry.name}"),
-                        )
-                    }
-                }
-            }
-        }
         NavHost(
             navController = navController,
             startDestination = Routes.AUTH,
@@ -386,7 +309,6 @@ private fun InventoryNavHost(
             composable(Routes.HOME) {
                 AllStoragesScreen(
                     viewModel = drawerViewModel,
-                    onOpenSettings = onOpenSettings,
                     onOpenLocation = { hhId, locId ->
                         navController.navigate(Routes.location(hhId, locId))
                     },
@@ -398,7 +320,6 @@ private fun InventoryNavHost(
 
             composable(Routes.DASHBOARD) {
                 DashboardScreen(
-                    onOpenSettings = onOpenSettings,
                     onOpenLocation = { hhId, locId ->
                         navController.navigate(Routes.location(hhId, locId))
                     },
@@ -517,7 +438,6 @@ private fun InventoryNavHost(
             composable(Routes.MISSING_ITEMS) {
                 MissingItemsScreen(
                     onBack = { navController.popBackStack() },
-                    onOpenSettings = onOpenSettings,
                     onOpenLocation = { hhId, locId ->
                         navController.navigate(Routes.location(hhId, locId))
                     },

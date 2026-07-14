@@ -18,7 +18,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.Card
@@ -66,7 +65,6 @@ import dev.scuttle.inventory.ui.theme.FrostCard
 fun AllStoragesScreen(
     modifier: Modifier = Modifier,
     viewModel: DrawerViewModel,
-    onOpenSettings: () -> Unit = {},
     onOpenLocation: (householdId: Long, locationId: Long) -> Unit = { _, _ -> },
     onOpenStorage: (householdId: Long) -> Unit = {},
     localViewModel: AllStoragesViewModel = hiltViewModel(),
@@ -111,9 +109,6 @@ fun AllStoragesScreen(
                         }
                         IconButton(onClick = { viewModel.refresh() }) {
                             Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.action_refresh))
-                        }
-                        IconButton(onClick = onOpenSettings) {
-                            Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.action_settings))
                         }
                     }
                 },

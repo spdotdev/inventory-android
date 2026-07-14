@@ -37,9 +37,12 @@ class LeaveHouseholdFlowTest : FlowTestBase() {
             Thread.sleep(3_000)
             waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 5_000)
 
-            // Households tab
+            // Households leaves the bottom bar in favour of Settings ("More") →
+            // "My households".
             mockServer.route("/households", fixture("households_two.json"))
-            onNodeWithTag("bottom-nav-households").performClick()
+            onNodeWithTag("bottom-nav-more").performClick()
+            waitForIdle()
+            onNodeWithText("My households").performClick()
             waitForIdle()
 
             waitUntilAtLeastOneExists(hasText("Office"), timeoutMillis = 5_000)

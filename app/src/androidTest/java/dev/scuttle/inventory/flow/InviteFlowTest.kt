@@ -37,9 +37,12 @@ class InviteFlowTest : FlowTestBase() {
             Thread.sleep(3_000)
             waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 5_000)
 
-            // Households tab
+            // Households leaves the bottom bar in favour of Settings ("More") →
+            // "My households".
             mockServer.route("/households", fixture("households_one.json"))
-            onNodeWithTag("bottom-nav-households").performClick()
+            onNodeWithTag("bottom-nav-more").performClick()
+            waitForIdle()
+            onNodeWithText("My households").performClick()
             waitForIdle()
 
             // Tap share icon for "Home" → InviteScreen loads — GET /households/1/invite

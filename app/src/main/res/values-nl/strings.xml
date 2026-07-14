@@ -33,6 +33,8 @@
     <string name="nav_search">Zoeken</string>
     <string name="nav_households">Huishoudens</string>
     <string name="nav_missing_items">Ontbrekend</string>
+    <string name="nav_scan">Scannen</string>
+    <string name="nav_more">Meer</string>
     <string name="scanner_title">Barcode scannen</string>
     <string name="scanner_permission_denied">Cameratoegang is nodig om barcodes te scannen. Je kunt producten nog steeds handmatig toevoegen en bewerken.</string>
     <string name="location_scan_cd">Scan een barcode</string>
