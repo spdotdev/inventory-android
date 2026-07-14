@@ -16,8 +16,10 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.waitUntilAtLeastOneExists
 import dagger.hilt.android.testing.HiltAndroidTest
 import dev.scuttle.inventory.FlowTestBase
+import dev.scuttle.inventory.data.hierarchy.LocationDeleteStrategy
 import dev.scuttle.inventory.ui.dashboard.DASHBOARD_TITLE_TEST_TAG
 import org.junit.Test
+import java.util.concurrent.TimeUnit
 
 /**
  * The regression test for the bug that started Task 5: swiping a location off
@@ -99,5 +101,82 @@ class DeleteLocationFlowTest : FlowTestBase() {
             waitUntilAtLeastOneExists(hasText("No storage locations yet", substring = true), timeoutMillis = 5_000)
             onNodeWithText("No storage locations yet. Tap + to add a fridge, freezer or pantry.").assertIsDisplayed()
         }
+    }
+
+    /**
+     * The asymmetry LocationDto.kt's own doc comment warns about: what the
+     * server counts as "has contents" for a LOCATION is its SHELF count, not
+     * its product count. A location holding shelves that are themselves
+     * completely empty (product_count = 0) must still stop and ask — getting
+     * this wrong 422s every such delete. locations_one_with_empty_shelf.json
+     * carries shelf_count=3, product_count=0 to pin exactly that case, as
+     * opposed to the plain-confirm (shelf_count=0) case above.
+     */
+    @Test
+    fun a_location_holding_only_empty_shelves_still_requires_a_strategy() {
+        mockServer.enqueue(fixture("auth_login.json"))
+        mockServer.route("/households", fixture("households_one.json"))
+        mockServer.route("/households/1/locations", fixture("locations_one_with_empty_shelf.json"))
+
+        composeRule.apply {
+            onNodeWithText("Email").performTextInput("test@example.com")
+            onNodeWithText("Password").performTextInput("password123")
+            onAllNodesWithText("Sign in").filterToOne(hasClickAction()).performClick()
+
+            Thread.sleep(3_000)
+            waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 5_000)
+
+            onNodeWithTag("bottom-nav-home").performClick()
+            waitForIdle()
+            Thread.sleep(2_000)
+            waitForIdle()
+
+            mockServer.route("/households/1/locations", fixture("locations_one_with_empty_shelf.json"))
+            waitUntilAtLeastOneExists(hasText("Home"), timeoutMillis = 5_000)
+            onNodeWithContentDescription("Add storage location").performClick()
+            Thread.sleep(2_000)
+            waitForIdle()
+
+            waitUntilAtLeastOneExists(hasText("Fridge"), timeoutMillis = 5_000)
+            Thread.sleep(1_000)
+            waitForIdle()
+
+            onNodeWithContentDescription("Edit storage").performClick()
+            waitForIdle()
+            onNodeWithText("Fridge").performClick()
+            waitForIdle()
+
+            // requestDelete() refreshes the location list first.
+            mockServer.route("/households/1/locations", fixture("locations_one_with_empty_shelf.json"))
+            onNodeWithText("Delete (1)").performClick()
+            waitForIdle()
+            waitUntilAtLeastOneExists(hasText("Delete 1 item(s)?"), timeoutMillis = 3_000)
+
+            // The strategy question renders despite ZERO products — it's the
+            // shelves, not the products, that force it. Fridge is the household's
+            // only location, so "move" is never offered (nowhere to move to).
+            onNodeWithText("0 product(s) are stored inside. What should happen to them?").assertIsDisplayed()
+            onNodeWithText("Move them somewhere else").assertDoesNotExist()
+
+            onNodeWithText("Delete them too").performClick()
+            waitForIdle()
+
+            mockServer.route("/households/1/locations/10", "", code = 204)
+            mockServer.route("/households/1/locations", fixture("locations_empty.json"))
+            onNodeWithTag("delete-strategy-confirm").performClick()
+            Thread.sleep(2_000)
+            waitForIdle()
+
+            waitUntilAtLeastOneExists(hasText("No storage locations yet", substring = true), timeoutMillis = 5_000)
+        }
+
+        val deleteRequest =
+            generateSequence { mockServer.server.takeRequest(1, TimeUnit.SECONDS) }
+                .firstOrNull { it.method == "DELETE" && it.path == "/households/1/locations/10" }
+        requireNotNull(deleteRequest) { "App never sent DELETE /households/1/locations/10" }
+        val body = deleteRequest.body.readUtf8()
+        val expectedStrategy = "\"strategy\":\"${LocationDeleteStrategy.DELETE_CONTENTS.wire}\""
+        assert(body.contains(expectedStrategy)) { "strategy missing/wrong — body was: $body" }
+        assert(!body.contains("target_location_id")) { "target_location_id must be OMITTED — body was: $body" }
     }
 }
