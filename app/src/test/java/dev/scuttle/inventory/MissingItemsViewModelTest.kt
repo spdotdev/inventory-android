@@ -131,7 +131,7 @@ class MissingItemsViewModelTest {
             householdId: Long,
             shelfId: Long,
             productId: Long,
-        ) {}
+        ) = "batch"
 
         override suspend fun uploadImage(
             householdId: Long,

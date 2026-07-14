@@ -3,6 +3,7 @@ package dev.scuttle.inventory.data.api
 import dev.scuttle.inventory.data.dto.AmountRequest
 import dev.scuttle.inventory.data.dto.CreateProductRequest
 import dev.scuttle.inventory.data.dto.MoveProductRequest
+import dev.scuttle.inventory.data.dto.ProductDeleteResponse
 import dev.scuttle.inventory.data.dto.ProductListResponse
 import dev.scuttle.inventory.data.dto.ProductResponse
 import dev.scuttle.inventory.data.dto.UpdateProductRequest
@@ -71,10 +72,13 @@ interface ProductApi {
         @Part image: MultipartBody.Part,
     ): ProductResponse
 
+    // Returns the server-minted deletion_batch_id (ProductController::destroy
+    // mints a batch-of-one) so the caller can offer Undo — a bodyless return
+    // type here would silently discard it, as it used to.
     @DELETE("households/{household}/shelves/{shelf}/products/{product}")
     suspend fun delete(
         @Path("household") householdId: Long,
         @Path("shelf") shelfId: Long,
         @Path("product") productId: Long,
-    )
+    ): ProductDeleteResponse
 }

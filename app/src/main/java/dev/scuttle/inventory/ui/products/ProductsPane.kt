@@ -26,7 +26,9 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
@@ -60,6 +62,7 @@ import dev.scuttle.inventory.ui.common.SnackbarErrorEffect
 import dev.scuttle.inventory.ui.common.SortMenu
 import dev.scuttle.inventory.ui.common.SortOrder
 import dev.scuttle.inventory.ui.common.shelfDisplayName
+import dev.scuttle.inventory.ui.hierarchy.UndoOutcome
 import dev.scuttle.inventory.ui.theme.FrostCard
 
 /**
@@ -136,6 +139,44 @@ fun ProductsPane(
             viewModel.consumeScanResult()
             snackbarHostState.showSnackbar(message)
         }
+    }
+
+    // Undo snackbar for a product delete — the app's single most frequent
+    // destructive action, and (before this) the only one with no Undo. A
+    // snackbar with an action, rather than a one-shot error effect (which has
+    // no action slot) — mirrors StorageOverviewScreen/ShelvesScreen.
+    val undoLabel = stringResource(R.string.delete_undo)
+    val productDeletedMessage = stringResource(R.string.product_deleted)
+    LaunchedEffect(state.lastBatchId) {
+        if (state.lastBatchId == null) return@LaunchedEffect
+        val result =
+            snackbarHostState.showSnackbar(
+                message = productDeletedMessage,
+                actionLabel = undoLabel,
+                duration = SnackbarDuration.Long,
+            )
+        if (result == SnackbarResult.ActionPerformed) {
+            viewModel.undoDelete()
+        } else {
+            viewModel.consumeLastBatch()
+        }
+    }
+
+    // The undo OUTCOME, as its own one-shot snackbar — distinct from the
+    // "deleted, [Undo]" snackbar above. A 409 here (already restored
+    // elsewhere, or past the undo window) shows the specific message instead
+    // of falling through to a generic error.
+    val undoneMessage = stringResource(R.string.delete_undone)
+    val undoFailedMessage = stringResource(R.string.delete_undo_failed)
+    LaunchedEffect(state.undoResult) {
+        val message =
+            when (state.undoResult) {
+                UndoOutcome.SUCCESS -> undoneMessage
+                UndoOutcome.FAILURE -> undoFailedMessage
+                null -> return@LaunchedEffect
+            }
+        snackbarHostState.showSnackbar(message)
+        viewModel.consumeUndoResult()
     }
 
     val lifecycleOwner = LocalLifecycleOwner.current

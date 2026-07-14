@@ -52,8 +52,10 @@ class DeleteProductFlowTest : FlowTestBase() {
             onNodeWithText("Milk").performTouchInput { swipeLeft() }
             waitForIdle()
 
-            // Confirm delete in the dialog
-            mockServer.enqueueEmpty(code = 204) // DELETE .../products/1000
+            // Confirm delete in the dialog — the real endpoint returns 200 with a
+            // deletion_batch_id body (ProductController::destroy mints a batch-of-one
+            // so the client can offer Undo), not an empty 204.
+            mockServer.enqueue(fixture("product_deleted.json")) // DELETE .../products/1000
             mockServer.route("/households/1/shelves/100/products", fixture("products_empty.json"))
             waitUntilAtLeastOneExists(hasText("Delete"), timeoutMillis = 3_000)
             onAllNodesWithText("Delete").filterToOne(hasClickAction()).performClick()

@@ -226,5 +226,6 @@
     <string name="delete_undo">Ongedaan maken</string>
     <string name="delete_undone">Hersteld.</string>
     <string name="delete_undo_failed">Ongedaan maken lukt niet — dit is al hersteld of definitief verwijderd.</string>
+    <string name="product_deleted">Product verwijderd.</string>
     <string name="shelf_unsorted">Ongesorteerd</string>
 </resources>

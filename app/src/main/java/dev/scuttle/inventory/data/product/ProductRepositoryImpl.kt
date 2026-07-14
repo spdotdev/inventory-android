@@ -122,9 +122,10 @@ class ProductRepositoryImpl
             householdId: Long,
             shelfId: Long,
             productId: Long,
-        ) {
-            api.delete(householdId, shelfId, productId)
+        ): String {
+            val batchId = api.delete(householdId, shelfId, productId).deletion_batch_id
             cache[householdId to shelfId] = cache[householdId to shelfId]?.filter { it.id != productId } ?: emptyList()
+            return batchId
         }
 
         override fun clear() {

@@ -29,6 +29,19 @@ data class ProductResponse(
     val data: ProductDto,
 )
 
+/**
+ * ProductController::destroy() mints a batch-of-one `deletion_batch_id` for a
+ * solo product delete (unlike shelf/location deletes, the CLIENT never mints
+ * this one) and returns it specifically so the client can offer Undo. The
+ * wire key stays snake_case — match it exactly, this project has already
+ * shipped one Critical from a serialization mismatch.
+ */
+@Serializable
+data class ProductDeleteResponse(
+    val message: String,
+    val deletion_batch_id: String,
+)
+
 @Serializable
 data class CreateProductRequest(
     val name: String,

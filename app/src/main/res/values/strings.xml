@@ -226,5 +226,6 @@
     <string name="delete_undo">Undo</string>
     <string name="delete_undone">Restored.</string>
     <string name="delete_undo_failed">Couldn\'t undo — this was already restored or permanently removed.</string>
+    <string name="product_deleted">Product deleted.</string>
     <string name="shelf_unsorted">Unsorted</string>
 </resources>

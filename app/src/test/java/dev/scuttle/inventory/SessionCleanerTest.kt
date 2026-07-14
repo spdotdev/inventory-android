@@ -141,7 +141,7 @@ class SessionCleanerTest {
             householdId: Long,
             shelfId: Long,
             productId: Long,
-        ) {}
+        ) = "batch"
 
         override fun clear() {
             cleared = true

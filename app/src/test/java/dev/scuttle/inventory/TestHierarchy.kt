@@ -108,7 +108,7 @@ object TestHierarchy {
             householdId: Long,
             shelfId: Long,
             productId: Long,
-        ) {}
+        ) = "batch"
     }
 
     /**
