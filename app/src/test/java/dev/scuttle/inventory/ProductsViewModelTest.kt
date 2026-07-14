@@ -475,6 +475,28 @@ class ProductsViewModelTest {
         }
 
     @Test
+    fun a_failed_delete_surfaces_its_error_instead_of_failing_silently() =
+        runTest {
+            // The bug: delete()'s failure branch set state.error, then immediately
+            // called refresh() to revert the optimistic removal — but refresh()
+            // routes through the shared launch() helper, which resets
+            // error = null the instant its coroutine starts. The error the user
+            // needed to see was wiped before it could ever be rendered, so a
+            // failed delete failed SILENTLY. This must not regress.
+            val repo =
+                FakeProductRepository().apply {
+                    items.add(ProductDto(1, "Milk", 2, 1))
+                    failDelete = true
+                }
+            val vm = viewModel(products = repo)
+            vm.load(householdId = 1, shelfId = 1)
+
+            vm.delete(productId = 1)
+
+            assertNotNull(vm.state.value.error)
+        }
+
+    @Test
     fun undo_delete_restores_the_batch_and_clears_it() =
         runTest {
             val repo = FakeProductRepository().apply { items.add(ProductDto(1, "Milk", 2, 1)) }

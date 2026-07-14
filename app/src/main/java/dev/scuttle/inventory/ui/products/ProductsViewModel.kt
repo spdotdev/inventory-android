@@ -231,7 +231,13 @@ class ProductsViewModel
                         hierarchyStore.refresh()
                     }.onFailure { error ->
                         _state.update { it.copy(error = error.toUserMessage("Failed to delete product.")) }
-                        refresh()
+                        // Revert the optimistic removal WITHOUT going through refresh()'s
+                        // shared launch() helper: that helper resets error = null the
+                        // instant its coroutine starts, wiping the message just set above
+                        // before the user ever sees it — a failed delete would fail
+                        // silently. refreshSilent() reloads the list without touching
+                        // error/loading, exactly what a revert-only reload needs here.
+                        refreshSilent()
                     }
             }
         }
