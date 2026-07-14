@@ -258,7 +258,15 @@ class StorageOverviewViewModel
             // vanished from under the user never gets a delete request for an
             // id that no longer exists.
             val ids = state.locations.filter { it.id in state.selected }.map { it.id }
-            if (ids.isEmpty()) return
+            if (ids.isEmpty()) {
+                // Every selected location vanished from the live list (someone else
+                // deleted them first) between requestDelete()'s refresh and this
+                // call. There is nothing left to delete — close the dialog and exit
+                // edit mode the same way a successful/failed delete below does, or
+                // the dialog is stuck open with a Confirm button that does nothing.
+                closeDeleteFlow()
+                return
+            }
 
             // ONE batch id for the whole gesture. Deleting three locations is
             // three requests; if each minted its own id they would land in
@@ -299,18 +307,22 @@ class StorageOverviewViewModel
                     hierarchyStore.refresh()
                 }
 
-                _state.update {
-                    it.copy(
-                        editMode = false,
-                        selected = emptySet(),
-                        pendingDelete = null,
-                        moveTargets = emptyList(),
-                    )
-                }
+                closeDeleteFlow()
 
                 failure?.let { throw it }
             }
         }
+
+        /** Shared by confirmDelete()'s vanished-selection guard and its normal completion. */
+        private fun closeDeleteFlow() =
+            _state.update {
+                it.copy(
+                    editMode = false,
+                    selected = emptySet(),
+                    pendingDelete = null,
+                    moveTargets = emptyList(),
+                )
+            }
 
         fun cancelDelete() = _state.update { it.copy(pendingDelete = null, moveTargets = emptyList()) }
 

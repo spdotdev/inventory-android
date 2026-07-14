@@ -43,11 +43,17 @@ data class UpdateShelfRequest(
     val name: String,
 )
 
-// No property defaults: the app's Json has encodeDefaults=false, so a defaulted
-// field is OMITTED from the body — and the server 422s without deletion_batch_id.
+// `deletion_batch_id` has NO default: the app's Json has encodeDefaults=false, so a
+// defaulted field is OMITTED from the body — and the server 422s without it.
+//
+// `strategy`/`target_shelf_id` DO default to null, on purpose — the mirror image of
+// that same rule. See DeleteLocationRequest (LocationDtos.kt) for the full reasoning,
+// one level up: with explicitNulls=true, a property with no default is ALWAYS encoded
+// even when null, which 422s on the server's requiredIf contract for every strategy
+// except move_products. A `= null` default means a value still equal to it is OMITTED.
 @Serializable
 data class DeleteShelfRequest(
-    val strategy: String?,
-    val target_shelf_id: Long?,
+    val strategy: String? = null,
+    val target_shelf_id: Long? = null,
     val deletion_batch_id: String,
 )

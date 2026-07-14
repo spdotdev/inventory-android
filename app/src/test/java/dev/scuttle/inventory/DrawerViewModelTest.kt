@@ -16,6 +16,7 @@ import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.data.shelf.ShelfRepository
 import dev.scuttle.inventory.ui.app.DrawerViewModel
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -242,6 +243,10 @@ class DrawerViewModelTest {
                 locRepo,
                 FakeShelfRepository(shelvesByLocation),
                 FakeProductRepository(productsByShelf),
+                // A fresh, unconfined test dispatcher — not the production
+                // Dispatchers.IO the 4-arg constructor falls back to (Minor 5,
+                // Task 5/5b review). See TestHierarchy.store()'s own doc comment.
+                UnconfinedTestDispatcher(),
             )
         store.loadFromCache()
         return store to locRepo
@@ -336,6 +341,7 @@ class DrawerViewModelTest {
                     FakeLocationRepository(),
                     FakeShelfRepository(),
                     FakeProductRepository(),
+                    UnconfinedTestDispatcher(),
                 )
             val vm = viewModel(store, FakeLocationRepository())
 
@@ -529,6 +535,50 @@ class DrawerViewModelTest {
             assertEquals(repo.batchIdsUsed.first(), vm.state.value.lastBatchId)
             assertNull(vm.state.value.pendingDelete)
             assertNull(vm.actionError.value)
+        }
+
+    @Test
+    fun confirming_delete_refreshes_the_hierarchy_store() =
+        runTest {
+            // Minor 3 (Task 5/5b review): mutating `store.refresh()` in
+            // confirmDelete to Unit leaves the suite green — the drawer/home
+            // would still render a location the server just deleted. The
+            // cached snapshot (loadFromCache, synchronous, reads
+            // FakeLocationRepository's FROZEN `cached` map) still has it;
+            // only a REAL store.refresh() (async, reads the mutable `live`
+            // map deleteWithStrategy() actually writes to) can make it
+            // disappear from HierarchyStore's own `entries`.
+            val repo =
+                FakeLocationRepository(
+                    mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge", shelf_count = 0, product_count = 0))),
+                )
+            val (store, _) = makeStore(households = listOf(HouseholdDto(1, "Home", "AAAA")), locationRepo = repo)
+            val vm = viewModel(store, repo)
+            vm.requestDelete(householdId = 1, locationId = 10)
+            // The cached snapshot still shows "Fridge" — this is what loadFromCache
+            // (called once, synchronously, when makeStore() built the store) produced.
+            assertTrue(
+                store.state.value.entries
+                    .first()
+                    .locations
+                    .any { it.name == "Fridge" },
+            )
+
+            vm.confirmDelete(LocationDeleteStrategy.DELETE_CONTENTS, targetId = null)
+
+            val refreshed =
+                store.state.first {
+                    it.entries
+                        .first()
+                        .locations
+                        .none { l -> l.name == "Fridge" }
+                }
+            assertTrue(
+                refreshed.entries
+                    .first()
+                    .locations
+                    .isEmpty(),
+            )
         }
 
     @Test

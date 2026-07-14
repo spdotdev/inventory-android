@@ -51,11 +51,21 @@ data class UpdateLocationRequest(
     val type: String,
 )
 
-// No property defaults: the app's Json has encodeDefaults=false, so a defaulted
-// field is OMITTED from the body — and the server 422s without deletion_batch_id.
+// `deletion_batch_id` has NO default: the app's Json has encodeDefaults=false, so a
+// defaulted field is OMITTED from the body — and the server 422s without it.
+//
+// `strategy`/`target_location_id` DO default to null, on purpose — the mirror image
+// of that same rule. The app's Json also has explicitNulls=true, so a property with
+// NO default is ALWAYS encoded, even when it holds null: a strategy-less delete would
+// put {"strategy":null,"target_location_id":null,...} on the wire. The server's
+// `Rule::requiredIf` validates a present-but-null key as a type error (not "absent"),
+// so that 422s on every delete except `move_contents` (see DeleteLocationRequest.php).
+// Giving both a `= null` default means a value still equal to that default is OMITTED
+// (encodeDefaults=false), matching what the server's requiredIf contract expects; a
+// real strategy/target is not equal to the default, so it's still encoded as before.
 @Serializable
 data class DeleteLocationRequest(
-    val strategy: String?,
-    val target_location_id: Long?,
+    val strategy: String? = null,
+    val target_location_id: Long? = null,
     val deletion_batch_id: String,
 )

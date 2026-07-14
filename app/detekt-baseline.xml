@@ -9,14 +9,14 @@
     <ID>ConstructorParameterNaming:ErrorDtos.kt$ClientErrorRequest$val error_code: String</ID>
     <ID>ConstructorParameterNaming:HouseholdDtos.kt$HouseholdDto$val join_code: String</ID>
     <ID>ConstructorParameterNaming:LocationDtos.kt$DeleteLocationRequest$val deletion_batch_id: String</ID>
-    <ID>ConstructorParameterNaming:LocationDtos.kt$DeleteLocationRequest$val target_location_id: Long?</ID>
+    <ID>ConstructorParameterNaming:LocationDtos.kt$DeleteLocationRequest$val target_location_id: Long? = null</ID>
     <ID>ConstructorParameterNaming:LocationDtos.kt$LocationDto$val product_count: Int = 0</ID>
     <ID>ConstructorParameterNaming:LocationDtos.kt$LocationDto$val shelf_count: Int = 0</ID>
     <ID>ConstructorParameterNaming:SearchDtos.kt$SearchResultDto$val household_id: Long? = null</ID>
     <ID>ConstructorParameterNaming:SearchDtos.kt$SearchResultDto$val location_id: Long? = null</ID>
     <ID>ConstructorParameterNaming:SearchDtos.kt$SearchResultDto$val shelf_id: Long? = null</ID>
     <ID>ConstructorParameterNaming:ShelfDtos.kt$DeleteShelfRequest$val deletion_batch_id: String</ID>
-    <ID>ConstructorParameterNaming:ShelfDtos.kt$DeleteShelfRequest$val target_shelf_id: Long?</ID>
+    <ID>ConstructorParameterNaming:ShelfDtos.kt$DeleteShelfRequest$val target_shelf_id: Long? = null</ID>
     <ID>ConstructorParameterNaming:ShelfDtos.kt$ShelfDto$val is_system: Boolean = false</ID>
     <ID>ConstructorParameterNaming:ShelfDtos.kt$ShelfDto$val location_id: Long</ID>
     <ID>ConstructorParameterNaming:ShelfDtos.kt$ShelfDto$val product_count: Int = 0</ID>

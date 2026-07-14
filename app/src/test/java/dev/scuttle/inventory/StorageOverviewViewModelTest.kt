@@ -10,6 +10,7 @@ import dev.scuttle.inventory.data.household.HouseholdRepository
 import dev.scuttle.inventory.data.location.LocationRepository
 import dev.scuttle.inventory.ui.storage.StorageOverviewViewModel
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -18,6 +19,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import java.io.IOException
 
 class StorageOverviewViewModelTest {
     @get:Rule
@@ -60,12 +62,22 @@ class StorageOverviewViewModelTest {
             return dto
         }
 
+        /**
+         * Models the REAL server, not a convenient fiction: Laravel's
+         * DeleteLocationRequest::rules() requires `deletion_batch_id`
+         * unconditionally, so a bodyless DELETE 422s every single time,
+         * strategy or no strategy (see inventory-laravel's
+         * DeleteLocationRequest.php, and DrawerViewModelTest's equivalent
+         * fake — same fix, same reasoning). A fake whose plain delete()
+         * quietly removed the row would be exactly the kind of lying fake
+         * that shipped Task 4's crash: it would make a regression back to
+         * `repository.delete(...)` instead of `deleteWithStrategy(...)` look
+         * green here while the real endpoint rejects it.
+         */
         override suspend fun delete(
             householdId: Long,
             locationId: Long,
-        ) {
-            items.removeIf { it.id == locationId }
-        }
+        ): Unit = throw IOException("422: The deletion batch id field is required.")
 
         override suspend fun rename(
             householdId: Long,
@@ -135,6 +147,30 @@ class StorageOverviewViewModelTest {
         override fun getCached(): List<HouseholdDto>? = null
 
         override suspend fun list(): List<HouseholdDto> = emptyList()
+
+        override suspend fun create(name: String) = throw NotImplementedError()
+
+        override suspend fun join(code: String) = throw NotImplementedError()
+
+        override suspend fun leave(householdId: Long) = Unit
+    }
+
+    /**
+     * Used only by the `*_refreshes_the_hierarchy_store` tests below (Minor 3,
+     * Task 5/5b review): each call to [list] is numbered, so a test can wait for
+     * a SPECIFIC call to have landed in [HierarchyStore.state] — proving that
+     * exact `hierarchyStore.refresh()` call site fired, rather than merely that
+     * SOME earlier refresh happened to already leave `entries` non-empty.
+     */
+    private class CountingHouseholdRepository : HouseholdRepository {
+        var listCalls = 0
+
+        override fun getCached(): List<HouseholdDto>? = null
+
+        override suspend fun list(): List<HouseholdDto> {
+            listCalls++
+            return listOf(HouseholdDto(1, "Home-$listCalls", "AAAA-1111"))
+        }
 
         override suspend fun create(name: String) = throw NotImplementedError()
 
@@ -719,6 +755,39 @@ class StorageOverviewViewModelTest {
         }
 
     @Test
+    fun confirming_delete_when_every_selected_location_has_vanished_closes_the_dialog() =
+        runTest {
+            // Minor 6 (Task 5/5b review): the sibling case to the test above, where
+            // ALL selected locations (not just some) vanished from the live list.
+            // confirmDelete() used to return early right there, leaving pendingDelete
+            // non-null — the dialog stayed open with a Confirm button that no longer
+            // did anything, and edit mode/selection were never cleared either.
+            val repo = FakeLocationRepository().apply { items.add(LocationDto(1, "Top", "freezer", 0)) }
+            val vm = viewModel(repo)
+            vm.load(householdId = 1)
+            vm.enterEditMode()
+            vm.toggleSelection(1L)
+            vm.requestDelete()
+            assertNotNull(vm.state.value.pendingDelete)
+
+            // The only selected location disappears server-side (another device)
+            // while the dialog is open; a refresh updates state.locations but never
+            // touches state.selected.
+            repo.items.removeIf { it.id == 1L }
+            vm.refresh()
+
+            vm.confirmDelete(LocationDeleteStrategy.DELETE_CONTENTS, targetId = null)
+
+            assertTrue("nothing left to delete — no request should fire", repo.batchIdsUsed.isEmpty())
+            assertNull("the dialog must close, not hang open with a dead Confirm button", vm.state.value.pendingDelete)
+            assertFalse(vm.state.value.editMode)
+            assertTrue(
+                vm.state.value.selected
+                    .isEmpty(),
+            )
+        }
+
+    @Test
     fun undo_delete_restores_the_batch_and_clears_it() =
         runTest {
             val repo = FakeLocationRepository().apply { items.add(LocationDto(1, "Top", "freezer", 0)) }
@@ -792,5 +861,107 @@ class StorageOverviewViewModelTest {
                     .isEmpty(),
             )
             assertNull(vm.state.value.pendingDelete)
+        }
+
+    // --- hierarchyStore.refresh() coverage (Minor 3, Task 5/5b review) ---------
+    //
+    // Mutating any of these calls to Unit left the whole suite green before this:
+    // a deleted/created/renamed/reordered/undone location would silently keep
+    // rendering on Home/the drawer until a manual pull-to-refresh. Each test below
+    // waits on HierarchyStore's own `state` (built from a real HierarchyStore, not
+    // a fake) for the numbered household CountingHouseholdRepository.list() mints,
+    // so a test can only pass once the SPECIFIC `hierarchyStore.refresh()` call
+    // site under test has actually fired and its result has landed.
+
+    @Test
+    fun create_refreshes_the_hierarchy_store() =
+        runTest {
+            val householdRepo = CountingHouseholdRepository()
+            val store = TestHierarchy.store(householdRepo)
+            val vm = viewModel(hierarchyStore = store)
+            vm.load(householdId = 1)
+            vm.onNewNameChange("Pantry")
+
+            vm.create()
+
+            val refreshed = store.state.first { it.entries.any { e -> e.name == "Home-1" } }
+            assertTrue(refreshed.entries.any { it.name == "Home-1" })
+        }
+
+    @Test
+    fun rename_refreshes_the_hierarchy_store() =
+        runTest {
+            val repo = FakeLocationRepository().apply { items.add(LocationDto(1, "Freezr", "freezer", 0)) }
+            val householdRepo = CountingHouseholdRepository()
+            val store = TestHierarchy.store(householdRepo)
+            val vm = viewModel(repo, hierarchyStore = store)
+            vm.load(householdId = 1)
+
+            vm.rename(1L, "Freezer", "freezer")
+
+            val refreshed = store.state.first { it.entries.any { e -> e.name == "Home-1" } }
+            assertTrue(refreshed.entries.any { it.name == "Home-1" })
+        }
+
+    @Test
+    fun reordering_refreshes_the_hierarchy_store() =
+        runTest {
+            val repo =
+                FakeLocationRepository().apply {
+                    items.add(LocationDto(1, "Top", "freezer", 0))
+                    items.add(LocationDto(2, "Middle", "fridge", 1))
+                }
+            val householdRepo = CountingHouseholdRepository()
+            val store = TestHierarchy.store(householdRepo)
+            val vm = viewModel(repo, hierarchyStore = store)
+            vm.load(householdId = 1)
+
+            vm.moveDown(1L)
+
+            val refreshed = store.state.first { it.entries.any { e -> e.name == "Home-1" } }
+            assertTrue(refreshed.entries.any { it.name == "Home-1" })
+        }
+
+    @Test
+    fun confirming_a_delete_refreshes_the_hierarchy_store() =
+        runTest {
+            val repo = FakeLocationRepository().apply { items.add(LocationDto(1, "Top", "freezer", 0)) }
+            val householdRepo = CountingHouseholdRepository()
+            val store = TestHierarchy.store(householdRepo)
+            val vm = viewModel(repo, hierarchyStore = store)
+            vm.load(householdId = 1)
+            vm.enterEditMode()
+            vm.toggleSelection(1L)
+            vm.requestDelete()
+
+            vm.confirmDelete(LocationDeleteStrategy.DELETE_CONTENTS, targetId = null)
+
+            val refreshed = store.state.first { it.entries.any { e -> e.name == "Home-1" } }
+            assertTrue(refreshed.entries.any { it.name == "Home-1" })
+        }
+
+    @Test
+    fun undo_delete_refreshes_the_hierarchy_store() =
+        runTest {
+            // Isolates undoDelete()'s OWN refresh call from confirmDelete()'s (which
+            // also refreshes, on the same success path, just before this runs): the
+            // counting repo mints a distinctly-named household per call, so this can
+            // only pass once a SECOND refresh — undo's — has landed.
+            val repo = FakeLocationRepository().apply { items.add(LocationDto(1, "Top", "freezer", 0)) }
+            val householdRepo = CountingHouseholdRepository()
+            val store = TestHierarchy.store(householdRepo)
+            val vm = viewModel(repo, hierarchyStore = store)
+            vm.load(householdId = 1)
+            vm.enterEditMode()
+            vm.toggleSelection(1L)
+            vm.requestDelete()
+            vm.confirmDelete(LocationDeleteStrategy.DELETE_CONTENTS, targetId = null)
+            // Absorb confirmDelete's own refresh (call #1) before testing undo's.
+            store.state.first { it.entries.any { e -> e.name == "Home-1" } }
+
+            vm.undoDelete()
+
+            val refreshed = store.state.first { it.entries.any { e -> e.name == "Home-2" } }
+            assertTrue(refreshed.entries.any { it.name == "Home-2" })
         }
 }
