@@ -200,25 +200,44 @@ class ShelvesViewModel
 
             val reordered = current.toMutableList().apply { add(target, removeAt(index)) }
 
+            // Captured BEFORE the optimistic frame overwrites state, so a
+            // rejected reorder has something faithful to snap back to.
+            val preMove = _state.value.shelves
+
             // Optimistic: the row visibly moves on tap. The server call rewrites
             // every position in one transaction, so a failure snaps the whole list
             // back rather than leaving it half-sorted.
             _state.update { it.copy(shelves = reordered + systemShelves) }
 
             launchLoading {
-                // The COMPLETE ordered id list, system shelf excluded — a partial
-                // list produces duplicate positions server-side, and the server
-                // does not want the system shelf in the payload at all.
-                val server = repository.reorder(h, l, reordered.map { it.id })
-                // The server's response is the FULL shelf list for this location,
-                // is_system included (PATCH .../shelves/reorder ends with `return
-                // $this->index(...)`). Appending our own local systemShelves on
-                // top of that would duplicate the system shelf's id, and the list
-                // view's LazyColumn keys itemsIndexed by shelf.id — a duplicate
-                // key throws IllegalArgumentException on every reorder. Strip any
-                // system shelf(s) the server sent back before adding ours.
-                _state.update { it.copy(shelves = orderShelves(server.filterNot { s -> s.is_system } + systemShelves)) }
-                hierarchyStore.refresh()
+                // The COMPLETE ordered id list, system shelf excluded — a
+                // partial list produces duplicate positions server-side, and
+                // the server does not want the system shelf in the payload at
+                // all.
+                val result = runCatching { repository.reorder(h, l, reordered.map { it.id }) }
+                result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+                if (result.isSuccess) {
+                    // The server's response is the FULL shelf list for this
+                    // location, is_system included (PATCH .../shelves/reorder
+                    // ends with `return $this->index(...)`). Appending our own
+                    // local systemShelves on top of that would duplicate the
+                    // system shelf's id, and the list view's LazyColumn keys
+                    // itemsIndexed by shelf.id — a duplicate key throws
+                    // IllegalArgumentException on every reorder. Strip any
+                    // system shelf(s) the server sent back before adding ours.
+                    val server = result.getOrThrow()
+                    _state.update {
+                        it.copy(shelves = orderShelves(server.filterNot { s -> s.is_system } + systemShelves))
+                    }
+                    hierarchyStore.refresh()
+                } else {
+                    // The write never landed — the optimistic frame is a lie
+                    // about server order. Snap back to what was true before
+                    // this gesture rather than leaving it standing; launchLoading's
+                    // own catch still turns the exception into state.error below.
+                    _state.update { it.copy(shelves = preMove) }
+                    result.exceptionOrNull()?.let { throw it }
+                }
             }
         }
 

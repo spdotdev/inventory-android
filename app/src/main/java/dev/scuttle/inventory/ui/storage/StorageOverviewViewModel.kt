@@ -167,6 +167,11 @@ class StorageOverviewViewModel
 
             val reordered = current.toMutableList().apply { add(target, removeAt(index)) }
 
+            // Captured BEFORE the optimistic frame overwrites state (== `current`,
+            // named separately for clarity at the point it's used below), so a
+            // rejected reorder has something faithful to snap back to.
+            val preMove = current
+
             // Optimistic: the row visibly moves on tap. The server call rewrites
             // every position in one transaction, so a failure snaps the whole list
             // back rather than leaving it half-sorted.
@@ -176,20 +181,30 @@ class StorageOverviewViewModel
                 // The COMPLETE ordered id list — a partial list produces duplicate
                 // positions server-side (LocationController::reorder rejects any
                 // list that isn't exactly every live location in this household).
-                val server = repository.reorder(id, reordered.map { it.id })
-                // The server's response IS the full, current location list for
-                // this household (PATCH .../locations/reorder ends with `return
-                // $this->index(...)`, same shape as the shelves endpoint). Replace
-                // local state with it directly — do NOT merge/append anything
-                // else on top of it, or a location ends up listed twice and the
-                // list's LazyColumn (keyed by location.id) crashes on the
-                // duplicate key. (This is the exact bug Task 4 shipped for
-                // shelves, at the level above: there it was re-merging a local
-                // systemShelves copy onto a response that already contained it;
-                // here there is no system entry, so the fix is simply "replace,
-                // never merge.")
-                _state.update { it.copy(locations = orderLocations(server)) }
-                hierarchyStore.refresh()
+                val result = runCatching { repository.reorder(id, reordered.map { it.id }) }
+                result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+                if (result.isSuccess) {
+                    // The server's response IS the full, current location list for
+                    // this household (PATCH .../locations/reorder ends with `return
+                    // $this->index(...)`, same shape as the shelves endpoint). Replace
+                    // local state with it directly — do NOT merge/append anything
+                    // else on top of it, or a location ends up listed twice and the
+                    // list's LazyColumn (keyed by location.id) crashes on the
+                    // duplicate key. (This is the exact bug Task 4 shipped for
+                    // shelves, at the level above: there it was re-merging a local
+                    // systemShelves copy onto a response that already contained it;
+                    // here there is no system entry, so the fix is simply "replace,
+                    // never merge.")
+                    _state.update { it.copy(locations = orderLocations(result.getOrThrow())) }
+                    hierarchyStore.refresh()
+                } else {
+                    // The write never landed — the optimistic frame is a lie about
+                    // server order. Snap back to what was true before this gesture
+                    // rather than leaving it standing; launchLoading's own catch
+                    // still turns the exception into state.error below.
+                    _state.update { it.copy(locations = preMove) }
+                    result.exceptionOrNull()?.let { throw it }
+                }
             }
         }
 

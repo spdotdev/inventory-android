@@ -18,6 +18,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import java.io.IOException
 
 class ShelvesViewModelTest {
     @get:Rule
@@ -80,12 +81,17 @@ class ShelvesViewModelTest {
 
         var reorderGate: CompletableDeferred<Unit>? = null
 
+        // Simulates a rejected reorder (offline, or another member's concurrent
+        // edit triggering a 422) — the request never lands server-side at all.
+        var failReorder = false
+
         override suspend fun reorder(
             householdId: Long,
             locationId: Long,
             ids: List<Long>,
         ): List<ShelfDto> {
             reorderGate?.await()
+            if (failReorder) throw IOException("reorder failed")
             lastReorderIds = ids
             // Only positions of the given ids change...
             ids.forEachIndexed { i, id ->
@@ -392,6 +398,35 @@ class ShelvesViewModelTest {
                 vm.state.value.shelves
                     .map { it.name },
             )
+        }
+
+    @Test
+    fun a_rejected_reorder_snaps_the_list_back_to_the_pre_move_order() =
+        runTest {
+            // Blocker 1 (final review): the server call rewrites every position
+            // in one transaction, so a REJECTED reorder (offline, or another
+            // member's concurrent edit 422ing this one) must not leave the
+            // optimistic frame standing — the list would silently lie about
+            // server order for the rest of the screen visit otherwise.
+            val repo =
+                FakeShelfRepository().apply {
+                    items.add(ShelfDto(1, "Top", 0, 1L))
+                    items.add(ShelfDto(2, "Middle", 1, 1L))
+                    items.add(ShelfDto(3, "Bottom", 2, 1L))
+                    items.add(ShelfDto(4, "Unsorted", 3, 1L, is_system = true))
+                    failReorder = true
+                }
+            val vm = viewModel(repo)
+            vm.load(householdId = 1, locationId = 1)
+
+            vm.moveUp(3L)
+
+            assertEquals(
+                listOf("Top", "Middle", "Bottom", "Unsorted"),
+                vm.state.value.shelves
+                    .map { it.name },
+            )
+            assertNotNull(vm.state.value.error)
         }
 
     @Test
