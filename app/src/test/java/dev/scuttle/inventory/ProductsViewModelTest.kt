@@ -303,7 +303,12 @@ class ProductsViewModelTest {
             vm.startMove(productId = 1)
             val targets = vm.state.value.moveTargets
             assertEquals(1, targets.size) // current shelf (1) excluded, only shelf 2 remains
-            assertEquals("Chest › Bottom", targets.first().label)
+            // Raw fields, not a pre-baked label: the ViewModel has no locale-correct
+            // way to localize a system shelf's name itself (final review, ALSO FIX)
+            // — the composable that renders this list does that at render time.
+            assertEquals("Chest", targets.first().locationName)
+            assertEquals("Bottom", targets.first().shelfName)
+            assertFalse(targets.first().isSystemShelf)
 
             vm.confirmMove(targetShelfId = targets.first().shelfId)
 
@@ -313,6 +318,38 @@ class ProductsViewModelTest {
                     .isEmpty(),
             ) // moved off this shelf
             assertEquals(null, vm.state.value.movingProductId)
+        }
+
+    @Test
+    fun start_move_flags_the_unsorted_shelf_as_a_system_target() =
+        runTest {
+            // ALSO FIX (final review): the Unsorted shelf is a legitimate move target
+            // (moving a product off its current shelf into the household's holding
+            // shelf), so it must appear in this list — but MoveTarget must carry
+            // isSystemShelf=true for it so the composable renders the LOCALIZED
+            // "Unsorted" label instead of the server's raw literal name.
+            val products = FakeProductRepository().apply { items.add(ProductDto(1, "Peas", 2, 1)) }
+            val locations = FakeLocationRepository(listOf(LocationDto(10, "Chest", "freezer")))
+            val shelves =
+                FakeShelfRepository(
+                    mapOf(
+                        10L to
+                            listOf(
+                                ShelfDto(1, "Top", 0, 10L),
+                                ShelfDto(2, "Unsorted", 1, 10L, is_system = true),
+                            ),
+                    ),
+                )
+            val vm = viewModel(products, locations, shelves)
+            vm.load(householdId = 1, shelfId = 1)
+
+            vm.startMove(productId = 1)
+
+            val target =
+                vm.state.value.moveTargets
+                    .first { it.shelfId == 2L }
+            assertTrue(target.isSystemShelf)
+            assertEquals("Unsorted", target.shelfName)
         }
 
     @Test

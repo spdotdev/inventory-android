@@ -13,6 +13,7 @@ import dev.scuttle.inventory.data.location.LocationRepository
 import dev.scuttle.inventory.ui.common.orderByPosition
 import dev.scuttle.inventory.ui.hierarchy.DeletePlan
 import dev.scuttle.inventory.ui.hierarchy.MoveTarget
+import dev.scuttle.inventory.ui.hierarchy.UndoOutcome
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -49,6 +50,12 @@ data class StorageOverviewUiState(
     val moveTargets: List<MoveTarget> = emptyList(),
     /** The batch just deleted, for the Undo snackbar. Cleared once consumed. */
     val lastBatchId: String? = null,
+    /**
+     * One-shot result of the last undoDelete() call — null while none is pending.
+     * The screen turns this into the matching localized snackbar (delete_undone /
+     * delete_undo_failed) and calls [StorageOverviewViewModel.consumeUndoResult].
+     */
+    val undoResult: UndoOutcome? = null,
 )
 
 // The method count is the required surface for this screen (edit mode, reorder,
@@ -345,14 +352,26 @@ class StorageOverviewViewModel
             val id = householdId ?: return
             val batchId = _state.value.lastBatchId ?: return
             launchLoading {
-                restoreRepository.restore(id, batchId)
-                _state.update { it.copy(lastBatchId = null) }
-                refresh()
-                hierarchyStore.refresh()
+                // A 409 here means the batch was already restored (another device,
+                // a double-tap) or permanently removed past the undo window — NOT
+                // a generic failure, so it does not rethrow into launchLoading's
+                // catch-all (state.error would otherwise show "Something went
+                // wrong." instead of the specific message the screen shows below).
+                val result = runCatching { restoreRepository.restore(id, batchId) }
+                result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+                if (result.isSuccess) {
+                    _state.update { it.copy(lastBatchId = null, undoResult = UndoOutcome.SUCCESS) }
+                    refresh()
+                    hierarchyStore.refresh()
+                } else {
+                    _state.update { it.copy(undoResult = UndoOutcome.FAILURE) }
+                }
             }
         }
 
         fun consumeLastBatch() = _state.update { it.copy(lastBatchId = null) }
+
+        fun consumeUndoResult() = _state.update { it.copy(undoResult = null) }
 
         /** The one hierarchy ordering rule (Task 2): manual position, name tie-break. */
         private fun orderLocations(locations: List<LocationDto>): List<LocationDto> =

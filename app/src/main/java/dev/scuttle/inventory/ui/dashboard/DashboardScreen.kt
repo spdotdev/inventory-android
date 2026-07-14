@@ -52,6 +52,7 @@ import dev.scuttle.inventory.data.LowStockItem
 import dev.scuttle.inventory.ui.common.HouseholdOption
 import dev.scuttle.inventory.ui.common.HouseholdPickerSheet
 import dev.scuttle.inventory.ui.common.LiveStatusText
+import dev.scuttle.inventory.ui.common.shelfDisplayName
 import dev.scuttle.inventory.ui.theme.FrostCard
 import dev.scuttle.inventory.ui.theme.HouseholdAvatar
 
@@ -251,7 +252,7 @@ fun DashboardScreen(
                     )
                     state.favoriteShelves.forEach { entry ->
                         FavoriteRow(
-                            name = entry.shelf.name,
+                            name = shelfDisplayName(entry.shelf),
                             household = badgeFor(entry.householdId),
                             onClick = { onOpenLocation(entry.householdId, entry.shelf.location_id) },
                         )

@@ -78,8 +78,10 @@ import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.dto.ShelfDto
 import dev.scuttle.inventory.ui.app.DrawerViewModel
 import dev.scuttle.inventory.ui.common.LiveStatusText
+import dev.scuttle.inventory.ui.common.shelfDisplayName
 import dev.scuttle.inventory.ui.hierarchy.DeleteStrategyDialog
 import dev.scuttle.inventory.ui.hierarchy.EditableRow
+import dev.scuttle.inventory.ui.hierarchy.UndoOutcome
 import dev.scuttle.inventory.ui.hierarchy.shelfStrategyOptions
 import dev.scuttle.inventory.ui.products.ProductsPane
 import dev.scuttle.inventory.ui.products.ProductsViewModel
@@ -111,6 +113,20 @@ fun LocationDetailScreen(
     val currentShelfId = state.shelves.getOrNull(currentPage)?.id
     val nonSystemShelfCount = state.shelves.count { !it.is_system }
 
+    // The location's own name for the top-bar title (ALSO FIX, final review): this
+    // screen used to render the generic "Shelves" title always, even though the
+    // location itself became renamable this branch. drawerViewModel already holds
+    // every household's locations (it's what got the user here in the first
+    // place), so no extra network call is needed — just fall back to the generic
+    // title for the brief window before that data has loaded.
+    val drawerState by drawerViewModel.state.collectAsState()
+    val locationName =
+        drawerState.entries
+            .firstOrNull { it.id == householdId }
+            ?.locations
+            ?.firstOrNull { it.id == locationId }
+            ?.name
+
     var showAddShelfSheet by rememberSaveable { mutableStateOf(false) }
     var showAddProductSheet by rememberSaveable { mutableStateOf(false) }
     var productsRefreshKey by remember { mutableIntStateOf(0) }
@@ -141,7 +157,7 @@ fun LocationDetailScreen(
                     if (state.editMode && state.selected.isNotEmpty()) {
                         Text(stringResource(R.string.location_selected_count, state.selected.size))
                     } else {
-                        Text(stringResource(R.string.location_shelves_title))
+                        Text(locationName ?: stringResource(R.string.location_shelves_title))
                     }
                 },
                 navigationIcon = {
@@ -269,7 +285,7 @@ fun LocationDetailScreen(
                     ) {
                         itemsIndexed(state.shelves, key = { _, shelf -> shelf.id }) { index, shelf ->
                             EditableRow(
-                                name = shelf.name,
+                                name = shelfDisplayName(shelf),
                                 editMode = state.editMode,
                                 isSystem = shelf.is_system,
                                 selected = shelf.id in state.selected,
@@ -307,7 +323,7 @@ fun LocationDetailScreen(
                             // 1.4.1) and TalkBack announces "<shelf>, has missing items" (W9).
                             val warningCd =
                                 if (tabHasWarning) {
-                                    stringResource(R.string.location_shelf_missing_cd, shelf.name)
+                                    stringResource(R.string.location_shelf_missing_cd, shelfDisplayName(shelf))
                                 } else {
                                     null
                                 }
@@ -326,7 +342,7 @@ fun LocationDetailScreen(
                                             },
                                     ) {
                                         Text(
-                                            shelf.name,
+                                            shelfDisplayName(shelf),
                                             color =
                                                 if (tabHasWarning) {
                                                     MaterialTheme.colorScheme.error
@@ -404,6 +420,23 @@ fun LocationDetailScreen(
         } else {
             shelvesViewModel.consumeLastBatch()
         }
+    }
+
+    // The undo OUTCOME, as its own one-shot snackbar — distinct from the "deleted,
+    // [Undo]" snackbar above. A 409 here (already restored elsewhere, or past the
+    // undo window) used to fall through to a generic error; this shows the specific
+    // message instead (final review, ALSO FIX).
+    val undoneMessage = stringResource(R.string.delete_undone)
+    val undoFailedMessage = stringResource(R.string.delete_undo_failed)
+    LaunchedEffect(state.undoResult) {
+        val message =
+            when (state.undoResult) {
+                UndoOutcome.SUCCESS -> undoneMessage
+                UndoOutcome.FAILURE -> undoFailedMessage
+                null -> return@LaunchedEffect
+            }
+        snackbarHostState.showSnackbar(message)
+        shelvesViewModel.consumeUndoResult()
     }
 
     renamingShelf?.let { shelf ->

@@ -15,6 +15,7 @@ import dev.scuttle.inventory.data.product.ProductEdit
 import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.data.shelf.ShelfRepository
 import dev.scuttle.inventory.ui.app.DrawerViewModel
+import dev.scuttle.inventory.ui.hierarchy.UndoOutcome
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -640,6 +641,50 @@ class DrawerViewModelTest {
             assertEquals(1L, restore.lastHouseholdId)
             assertEquals(batchId, restore.lastBatchId)
             assertNull(vm.state.value.lastBatchId)
+            // ALSO FIX (final review): a successful undo sets undoResult so the
+            // screen can show the "Restored." snackbar (delete_undone).
+            assertEquals(UndoOutcome.SUCCESS, vm.state.value.undoResult)
+        }
+
+    @Test
+    fun a_failed_undo_sets_the_failure_result_instead_of_a_generic_action_error() =
+        runTest {
+            // ALSO FIX (final review): a 409 from the restore endpoint (already
+            // restored elsewhere, or past the undo window) used to fall through to
+            // the generic actionError/"Failed to undo delete." — undoResult now
+            // carries the specific outcome instead, and actionError stays unset
+            // so the screen doesn't show BOTH messages.
+            val repo = FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge"))))
+            val restore = FakeRestoreRepository()
+            val (store, _) = makeStore(households = listOf(HouseholdDto(1, "Home", "AAAA")), locationRepo = repo)
+            val vm = viewModel(store, repo, restore)
+            vm.requestDelete(householdId = 1, locationId = 10)
+            vm.confirmDelete(LocationDeleteStrategy.DELETE_CONTENTS, targetId = null)
+            restore.fail = true
+
+            vm.undoDelete()
+
+            assertEquals(UndoOutcome.FAILURE, vm.state.value.undoResult)
+            assertNull(vm.actionError.value)
+            // The batch id survives a failed undo — nothing was actually restored.
+            assertNotNull(vm.state.value.lastBatchId)
+        }
+
+    @Test
+    fun consume_undo_result_clears_it() =
+        runTest {
+            val repo = FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge"))))
+            val restore = FakeRestoreRepository()
+            val (store, _) = makeStore(households = listOf(HouseholdDto(1, "Home", "AAAA")), locationRepo = repo)
+            val vm = viewModel(store, repo, restore)
+            vm.requestDelete(householdId = 1, locationId = 10)
+            vm.confirmDelete(LocationDeleteStrategy.DELETE_CONTENTS, targetId = null)
+            vm.undoDelete()
+            assertNotNull(vm.state.value.undoResult)
+
+            vm.consumeUndoResult()
+
+            assertNull(vm.state.value.undoResult)
         }
 
     @Test

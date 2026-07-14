@@ -59,6 +59,7 @@ import dev.scuttle.inventory.data.dto.ProductDto
 import dev.scuttle.inventory.ui.common.SnackbarErrorEffect
 import dev.scuttle.inventory.ui.common.SortMenu
 import dev.scuttle.inventory.ui.common.SortOrder
+import dev.scuttle.inventory.ui.common.shelfDisplayName
 import dev.scuttle.inventory.ui.theme.FrostCard
 
 /**
@@ -395,7 +396,10 @@ fun ProductsPane(
                         else ->
                             state.moveTargets.forEach { target ->
                                 TextButton(onClick = { viewModel.confirmMove(target.shelfId) }) {
-                                    Text(target.label)
+                                    Text(
+                                        "${target.locationName} › " +
+                                            shelfDisplayName(target.shelfName, target.isSystemShelf),
+                                    )
                                 }
                             }
                     }

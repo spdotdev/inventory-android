@@ -22,9 +22,18 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * A candidate shelf a product could move to. Carries [locationName]/[shelfName] and
+ * [isSystemShelf] raw — rather than a pre-baked label — because this is built inside a
+ * ViewModel, which has no locale-correct way to localize the system ("Unsorted") shelf's
+ * label itself (final review, ALSO FIX). The composable that renders this list builds
+ * the displayed label via `shelfDisplayName(shelfName, isSystemShelf)`.
+ */
 data class MoveTarget(
     val shelfId: Long,
-    val label: String,
+    val locationName: String,
+    val shelfName: String,
+    val isSystemShelf: Boolean,
 )
 
 sealed interface ScanResult {
@@ -251,7 +260,9 @@ class ProductsViewModel
                         val targets = mutableListOf<MoveTarget>()
                         for (location in locationRepository.list(h)) {
                             for (shelf in shelfRepository.list(h, location.id)) {
-                                if (shelf.id != s) targets.add(MoveTarget(shelf.id, "${location.name} › ${shelf.name}"))
+                                if (shelf.id != s) {
+                                    targets.add(MoveTarget(shelf.id, location.name, shelf.name, shelf.is_system))
+                                }
                             }
                         }
                         targets

@@ -69,6 +69,7 @@ import dev.scuttle.inventory.ui.common.ErrorRetry
 import dev.scuttle.inventory.ui.common.storageTypeLabel
 import dev.scuttle.inventory.ui.hierarchy.DeleteStrategyDialog
 import dev.scuttle.inventory.ui.hierarchy.EditableRow
+import dev.scuttle.inventory.ui.hierarchy.UndoOutcome
 import dev.scuttle.inventory.ui.hierarchy.locationStrategyOptions
 import dev.scuttle.inventory.ui.theme.FrostCard
 
@@ -313,6 +314,23 @@ fun StorageOverviewScreen(
         } else {
             viewModel.consumeLastBatch()
         }
+    }
+
+    // The undo OUTCOME, as its own one-shot snackbar — distinct from the "deleted,
+    // [Undo]" snackbar above. A 409 here (already restored elsewhere, or past the
+    // undo window) used to fall through to a generic error; this shows the specific
+    // message instead (final review, ALSO FIX).
+    val undoneMessage = stringResource(R.string.delete_undone)
+    val undoFailedMessage = stringResource(R.string.delete_undo_failed)
+    LaunchedEffect(state.undoResult) {
+        val message =
+            when (state.undoResult) {
+                UndoOutcome.SUCCESS -> undoneMessage
+                UndoOutcome.FAILURE -> undoFailedMessage
+                null -> return@LaunchedEffect
+            }
+        snackbarHostState.showSnackbar(message)
+        viewModel.consumeUndoResult()
     }
 
     renamingLocation?.let { location ->

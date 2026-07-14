@@ -8,6 +8,7 @@ import dev.scuttle.inventory.data.hierarchy.ShelfDeletion
 import dev.scuttle.inventory.data.household.HouseholdRepository
 import dev.scuttle.inventory.data.settings.ShelfViewStore
 import dev.scuttle.inventory.data.shelf.ShelfRepository
+import dev.scuttle.inventory.ui.hierarchy.UndoOutcome
 import dev.scuttle.inventory.ui.shelves.ShelvesViewModel
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.test.runTest
@@ -128,10 +129,15 @@ class ShelvesViewModelTest {
         var lastBatchId: String? = null
         var restoreCalls = 0
 
+        // Simulates a 409 from the restore endpoint (already restored elsewhere,
+        // or permanently removed past the undo window).
+        var fail = false
+
         override suspend fun restore(
             householdId: Long,
             batchId: String,
         ): Int {
+            if (fail) throw IOException("409: already restored")
             lastHouseholdId = householdId
             lastBatchId = batchId
             restoreCalls++
@@ -793,6 +799,54 @@ class ShelvesViewModelTest {
             assertEquals(1L, restore.lastHouseholdId)
             assertEquals(batchId, restore.lastBatchId)
             assertNull(vm.state.value.lastBatchId)
+            // ALSO FIX (final review): a successful undo sets undoResult so the
+            // screen can show the "Restored." snackbar (delete_undone).
+            assertEquals(UndoOutcome.SUCCESS, vm.state.value.undoResult)
+        }
+
+    @Test
+    fun a_failed_undo_sets_the_failure_result_instead_of_a_generic_error() =
+        runTest {
+            // ALSO FIX (final review): a 409 from the restore endpoint (already
+            // restored elsewhere, or past the undo window) used to fall through to
+            // launchLoading's generic "Something went wrong." — undoResult now
+            // carries the specific outcome instead, and the generic error stays
+            // unset so the screen doesn't show BOTH messages.
+            val repo = FakeShelfRepository().apply { items.add(ShelfDto(1, "Top", 0, 1L)) }
+            val restore = FakeRestoreRepository()
+            val vm = viewModel(repo, restoreRepository = restore)
+            vm.load(householdId = 1, locationId = 1)
+            vm.enterEditMode()
+            vm.toggleSelection(1L)
+            vm.requestDelete()
+            vm.confirmDelete(ShelfDeleteStrategy.DELETE_PRODUCTS, targetId = null)
+            restore.fail = true
+
+            vm.undoDelete()
+
+            assertEquals(UndoOutcome.FAILURE, vm.state.value.undoResult)
+            assertNull(vm.state.value.error)
+            // The batch id survives a failed undo — nothing was actually restored.
+            assertNotNull(vm.state.value.lastBatchId)
+        }
+
+    @Test
+    fun consume_undo_result_clears_it() =
+        runTest {
+            val repo = FakeShelfRepository().apply { items.add(ShelfDto(1, "Top", 0, 1L)) }
+            val restore = FakeRestoreRepository()
+            val vm = viewModel(repo, restoreRepository = restore)
+            vm.load(householdId = 1, locationId = 1)
+            vm.enterEditMode()
+            vm.toggleSelection(1L)
+            vm.requestDelete()
+            vm.confirmDelete(ShelfDeleteStrategy.DELETE_PRODUCTS, targetId = null)
+            vm.undoDelete()
+            assertNotNull(vm.state.value.undoResult)
+
+            vm.consumeUndoResult()
+
+            assertNull(vm.state.value.undoResult)
         }
 
     @Test

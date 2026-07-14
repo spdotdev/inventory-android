@@ -12,6 +12,7 @@ import dev.scuttle.inventory.data.hierarchy.RestoreRepository
 import dev.scuttle.inventory.data.location.LocationRepository
 import dev.scuttle.inventory.ui.hierarchy.DeletePlan
 import dev.scuttle.inventory.ui.hierarchy.MoveTarget
+import dev.scuttle.inventory.ui.hierarchy.UndoOutcome
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -45,6 +46,12 @@ data class DrawerUiState(
     val moveTargets: List<MoveTarget> = emptyList(),
     /** The batch just deleted, for the Undo snackbar. Cleared once consumed. */
     val lastBatchId: String? = null,
+    /**
+     * One-shot result of the last undoDelete() call — null while none is pending.
+     * The screen turns this into the matching localized snackbar (delete_undone /
+     * delete_undo_failed) and calls [DrawerViewModel.consumeUndoResult].
+     */
+    val undoResult: UndoOutcome? = null,
 )
 
 /**
@@ -57,6 +64,7 @@ private data class DeleteFlowState(
     val pendingDelete: DeletePlan? = null,
     val moveTargets: List<MoveTarget> = emptyList(),
     val lastBatchId: String? = null,
+    val undoResult: UndoOutcome? = null,
 )
 
 @HiltViewModel
@@ -81,6 +89,7 @@ class DrawerViewModel
                     pendingDelete = del.pendingDelete,
                     moveTargets = del.moveTargets,
                     lastBatchId = del.lastBatchId,
+                    undoResult = del.undoResult,
                 )
             }.stateIn(viewModelScope, SharingStarted.Eagerly, DrawerUiState())
 
@@ -208,15 +217,24 @@ class DrawerViewModel
             if (householdId == null || batchId == null || deleteJob?.isActive == true) return
             deleteJob =
                 viewModelScope.launch {
+                    // A 409 here means the batch was already restored (another
+                    // device, a double-tap) or permanently removed past the undo
+                    // window — NOT a generic action failure, so this does NOT go
+                    // through _actionError/toUserMessage's generic fallback; the
+                    // screen turns undoResult into the specific message instead.
                     runCatching { restoreRepository.restore(householdId, batchId) }
                         .onSuccess {
-                            deleteFlow.update { it.copy(lastBatchId = null) }
+                            deleteFlow.update { it.copy(lastBatchId = null, undoResult = UndoOutcome.SUCCESS) }
                             store.refresh()
-                        }.onFailure { e -> _actionError.value = e.toUserMessage("Failed to undo delete.") }
+                        }.onFailure {
+                            deleteFlow.update { it.copy(undoResult = UndoOutcome.FAILURE) }
+                        }
                 }
         }
 
         fun consumeLastBatch() = deleteFlow.update { it.copy(lastBatchId = null) }
+
+        fun consumeUndoResult() = deleteFlow.update { it.copy(undoResult = null) }
 
         fun consumeActionError() {
             _actionError.value = null
