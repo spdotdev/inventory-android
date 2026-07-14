@@ -71,6 +71,11 @@ class DeleteShelfFlowTest : FlowTestBase() {
             waitForIdle()
 
             // Delete (1) only OPENS the strategy/confirm dialog — it must not delete yet.
+            // requestDelete() refreshes the shelf list first (GET .../shelves) before
+            // building the plan (see ShelvesViewModel.requestDelete's doc) — without
+            // re-registering this route, that second GET falls through to the mock
+            // server's fallback 500 and the dialog never opens.
+            mockServer.route("/households/1/locations/10/shelves", fixture("shelves_two.json"))
             onNodeWithText("Delete (1)").performClick()
             waitForIdle()
             waitUntilAtLeastOneExists(hasText("Delete 1 item(s)?"), timeoutMillis = 3_000)

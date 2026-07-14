@@ -52,6 +52,13 @@ class LeaveHouseholdFlowTest : FlowTestBase() {
             onNodeWithContentDescription("Edit households").performClick()
             waitForIdle()
             onNodeWithContentDescription("Home").performClick()
+            // Every other cross-screen navigation in this suite pairs its click with a
+            // real settle delay (not just waitForIdle()) before asserting on the
+            // destination — this was the one navigation step in this file that didn't,
+            // even though it's a full NavHost route change (Households -> household-edit/1),
+            // same class of transition CreateLocationFlowTest/DeleteLocationFlowTest etc.
+            // give 2s to settle.
+            Thread.sleep(2_000)
             waitForIdle()
 
             // The edit screen's danger zone.
@@ -62,9 +69,13 @@ class LeaveHouseholdFlowTest : FlowTestBase() {
             mockServer.route("/households", fixture("households_office_only.json"))
 
             // Two "Leave" nodes on this screen: [0] = danger-zone button, [1] = the
-            // confirm dialog's button once it opens.
+            // confirm dialog's button once it opens. Material3's AlertDialog opens a
+            // real Android Dialog window (not just a recomposition), which is the one
+            // wait in this file that was budgeted at 3s while every other navigation
+            // wait here gets 5s — bumped to match, since window creation is measurably
+            // slower than an in-place recompose on a loaded CI emulator.
             onAllNodesWithText("Leave")[0].performClick()
-            waitUntilAtLeastOneExists(hasText("Leave Home?"), timeoutMillis = 3_000)
+            waitUntilAtLeastOneExists(hasText("Leave Home?"), timeoutMillis = 5_000)
             onAllNodesWithText("Leave")[1].performClick()
 
             Thread.sleep(2_000)

@@ -55,8 +55,6 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -215,9 +213,23 @@ fun AllStoragesScreen(
                                 modifier =
                                     Modifier
                                         .weight(1f)
-                                        .clickable(role = Role.Button) {
+                                        // Announce the ACTION via onClickLabel rather than
+                                        // replacing the row's semantics wholesale — clearAndSetSemantics
+                                        // used to sit here and discard every descendant's semantics,
+                                        // including the household's own name (Text(entry.name) below),
+                                        // so TalkBack lost "Home" entirely and it also silently broke
+                                        // every onNodeWithText/hasText("Home") flow test that navigates
+                                        // by tapping through the household name (regression, final
+                                        // review 2026-07-14). onClickLabel keeps the name readable —
+                                        // TalkBack now announces "Home, button, collapse group" — while
+                                        // still exposing the collapse/expand action distinctly from a
+                                        // plain click.
+                                        .clickable(
+                                            role = Role.Button,
+                                            onClickLabel = toggleCollapsedCd,
+                                        ) {
                                             localViewModel.toggleCollapsed(entry.id)
-                                        }.clearAndSetSemantics { contentDescription = toggleCollapsedCd },
+                                        },
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Icon(
