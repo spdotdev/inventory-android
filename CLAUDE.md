@@ -103,15 +103,28 @@ Navigation: Household → Storage overview → Shelves (tabs *or* list) → Prod
 bottom bar (**Dashboard / Storage / Scan / Missing / More**) is the app's only
 navigation surface — there is no drawer. **Households** left the bar: it's a
 tenant-management screen reached under **More**, which absorbed Settings *and*
-households. **Search** lost its tab; it's reached via a top-bar icon on every
-household-scoped screen (Dashboard, Storage overview, Home, Missing items). Households
-and Search each keep their own small gear-icon shortcut back to Settings, since neither
-sits on the bottom bar itself — that's the only place a gear icon survives, not "every
-screen" as before this branch. The centre **Scan** tab always opens the scanner in
-LOOKUP mode (hands the scanned code to Search, pre-filled and already run); opening the
-scanner from a shelves screen is ADD mode instead — same route, a `ScannerMode` argument
-picks the behavior and delivers the code back to that screen via `savedStateHandle`
-rather than to Search (`MainActivity.kt`: `ScannerMode`, `scanDeliveryActionFor`).
+households. **Search** lost its tab; it's reached via a top-bar icon on Dashboard, Storage overview,
+Home and Missing items. Storage overview is already scoped to one household (its route
+carries `householdId`), so its icon just opens Search directly. Dashboard, Home and
+Missing items are **not** household-scoped — their icon (and Dashboard's products stat
+card) opens Search directly only when the account has exactly one household; with more
+than one it opens a shared household picker (`ui/common/HouseholdPickerSheet.kt`) first,
+same as the centre **Scan** tab's LOOKUP mode below. (Final review, 2026-07-14: every one
+of these hard-coded the *first* household instead, making a second household's search
+reachable only by drilling Home → that household's own "+" icon → Storage overview → its
+search icon — don't reintroduce a bare `entries.firstOrNull()`.) Households and Search
+each keep their own small gear-icon shortcut back to Settings, since neither sits on the
+bottom bar itself — that's the only place a gear icon survives, not "every screen" as
+before this branch. The centre **Scan** tab always opens the scanner in LOOKUP mode
+(hands the scanned code to Search, pre-filled and already run, via the same
+household-count/picker rule above — it has genuinely no household context of its own);
+opening the scanner from a shelves screen is ADD mode instead — same route
+(`Routes.SCANNER`), a `ScannerMode` argument picks the behavior and delivers the code
+back to that screen via `savedStateHandle` rather than to Search (`MainActivity.kt`:
+`ScannerMode`, `scanDeliveryActionFor`). Because both modes share one route, the bottom
+bar's own visibility/selected state for the Scan tab is resolved from the *mode*
+argument, not the route alone — `scannerRouteIsTheBottomBarTab()`; matching the bare
+route would show the bar (with Scan selected) over ADD mode's camera too.
 
 **Editing the hierarchy** lives behind a pencil (edit mode) on the households, locations
 and shelves lists — never inside Settings/More itself. On locations and shelves, edit
@@ -172,6 +185,15 @@ repo's guardrail in sync with `inventory-laravel/CLAUDE.md`'s matching bullet.
   `ktlintCheck` does (`ktlintAndroidTestSourceSetCheck` genuinely runs;
   `detekt`'s own file-count metrics exclude every androidTest file). Don't treat a
   green `detekt` as having checked flow-test code.
+- **An unused string resource breaks no gate — that's exactly how `shelf_unsorted`,
+  `delete_undone` and `delete_undo_failed` shipped dead** (final review, 2026-07-14):
+  each was added alongside a doc comment or a spec line promising it was wired up, and
+  nothing ever called `stringResource()` on it. `StringResourceUsageTest` (JVM suite)
+  now fails if any `values/strings.xml` entry has zero `R.string.<name>` / `@string/<name>`
+  references anywhere in the module — the cheap check that would have caught all three
+  for free. Don't add a string resource in the same commit as "TODO: wire this up
+  later" — wire it in the same commit, or the gate is the only thing that will ever
+  notice it wasn't.
 
 ## Measuring type or layout on a device — read the device's settings first
 Android rewrites text before your measurement ever sees it. **Check these before trusting
