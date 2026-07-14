@@ -16,6 +16,7 @@ import dev.scuttle.inventory.data.settings.FavoritesStore
 import dev.scuttle.inventory.data.settings.HouseholdViewStore
 import dev.scuttle.inventory.data.settings.ShelfViewStore
 import dev.scuttle.inventory.data.shelf.ShelfRepository
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -220,7 +221,7 @@ class SessionCleanerTest {
         val defaultHousehold = RecordingDefaultHouseholdStore()
         val shelfView = RecordingShelfViewStore()
         val householdView = RecordingHouseholdViewStore()
-        val store = HierarchyStore(household, location, shelf, product)
+        val store = HierarchyStore(household, location, shelf, product, UnconfinedTestDispatcher())
 
         SessionCleaner(
             household,

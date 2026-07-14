@@ -17,6 +17,7 @@ import dev.scuttle.inventory.data.shelf.ShelfRepository
 import dev.scuttle.inventory.ui.hierarchy.UndoOutcome
 import dev.scuttle.inventory.ui.products.ProductsViewModel
 import dev.scuttle.inventory.ui.products.ScanResult
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -232,7 +233,7 @@ class ProductsViewModelTest {
         search: FakeSearchRepository = FakeSearchRepository(),
         restoreRepository: RestoreRepository = FakeRestoreRepository(),
     ): ProductsViewModel {
-        val store = HierarchyStore(FakeHouseholdRepository(), locations, shelves, products)
+        val store = HierarchyStore(FakeHouseholdRepository(), locations, shelves, products, UnconfinedTestDispatcher())
         return ProductsViewModel(products, locations, shelves, search, store, restoreRepository)
     }
 

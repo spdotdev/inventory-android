@@ -12,6 +12,7 @@ import dev.scuttle.inventory.data.product.ProductEdit
 import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.data.shelf.ShelfRepository
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -157,6 +158,7 @@ class HierarchyStoreTest {
                     FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge")))),
                     FakeShelfRepository(mapOf(10L to listOf(ShelfDto(100, "Top", 0, 10)))),
                     FakeProductRepository(mapOf(100L to listOf(ProductDto(1, "Milk", 0, 100, is_mandatory = true)))),
+                    UnconfinedTestDispatcher(),
                 )
 
             store.refresh(userInitiated = true)
@@ -179,6 +181,7 @@ class HierarchyStoreTest {
                     FakeLocationRepository(),
                     FakeShelfRepository(),
                     FakeProductRepository(),
+                    UnconfinedTestDispatcher(),
                 )
 
             store.refresh(userInitiated = true)
@@ -203,6 +206,7 @@ class HierarchyStoreTest {
                     ),
                     // The missing mandatory item sits on the SECOND (non-visible) shelf.
                     FakeProductRepository(mapOf(101L to listOf(ProductDto(1, "Milk", 0, 101, is_mandatory = true)))),
+                    UnconfinedTestDispatcher(),
                 )
 
             store.refresh(userInitiated = true)
@@ -220,6 +224,7 @@ class HierarchyStoreTest {
                     FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge")))),
                     FakeShelfRepository(mapOf(10L to listOf(ShelfDto(100, "Top", 0, 10)))),
                     FakeProductRepository(mapOf(100L to listOf(ProductDto(1, "Milk", 3, 100, is_mandatory = true)))),
+                    UnconfinedTestDispatcher(),
                 )
 
             store.refresh(userInitiated = true)
@@ -239,6 +244,7 @@ class HierarchyStoreTest {
                     FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge")))),
                     FakeShelfRepository(mapOf(10L to listOf(ShelfDto(100, "Top", 0, 10)))),
                     FakeProductRepository(mapOf(100L to listOf(ProductDto(1, "Milk", 0, 100, is_mandatory = true)))),
+                    UnconfinedTestDispatcher(),
                 )
             store.refresh(userInitiated = true)
             assertEquals(
@@ -279,6 +285,7 @@ class HierarchyStoreTest {
                                 ),
                         ),
                     ),
+                    UnconfinedTestDispatcher(),
                 )
 
             store.refresh(userInitiated = true)

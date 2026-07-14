@@ -13,6 +13,7 @@ import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.data.settings.FavoritesStore
 import dev.scuttle.inventory.data.shelf.ShelfRepository
 import dev.scuttle.inventory.ui.dashboard.DashboardViewModel
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -176,6 +177,7 @@ class DashboardViewModelTest {
                 FakeLocationRepository(locationsByHousehold),
                 FakeShelfRepository(shelvesByLocation),
                 FakeProductRepository(productsByShelf),
+                UnconfinedTestDispatcher(),
             )
         store.loadFromCache()
         return DashboardViewModel(store, favoritesStore)

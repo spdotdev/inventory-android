@@ -13,6 +13,7 @@ import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.data.shelf.ShelfRepository
 import dev.scuttle.inventory.ui.missing.MissingItemsViewModel
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -156,6 +157,7 @@ class MissingItemsViewModelTest {
                 FakeLocationRepository(locationsByHousehold),
                 FakeShelfRepository(shelvesByLocation),
                 FakeProductRepository(productsByShelf),
+                UnconfinedTestDispatcher(),
             )
         store.loadFromCache()
         return MissingItemsViewModel(store)
@@ -184,6 +186,7 @@ class MissingItemsViewModelTest {
                     FakeLocationRepository(),
                     FakeShelfRepository(),
                     FakeProductRepository(),
+                    UnconfinedTestDispatcher(),
                 )
             val vm = MissingItemsViewModel(store)
 
