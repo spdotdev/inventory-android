@@ -26,6 +26,11 @@ data class HouseholdsUiState(
     // Gates whether tapping a household row navigates to HouseholdEditScreen —
     // mirrors StorageOverviewViewModel/ShelvesViewModel's editMode flag.
     val editMode: Boolean = false,
+    // Flips true once leave() has actually completed server-side. HouseholdEditScreen
+    // waits for this (LaunchedEffect) instead of navigating back the instant Leave is
+    // tapped — same pattern as ProductDetailViewModel.deleted — so its own viewModelScope
+    // coroutine isn't cancelled mid-flight by the navigation it would otherwise trigger.
+    val left: Boolean = false,
 )
 
 @HiltViewModel
@@ -79,7 +84,7 @@ class HouseholdsViewModel
         fun leave(householdId: Long) =
             launchLoading {
                 repository.leave(householdId)
-                _state.update { it.copy(households = repository.list()) }
+                _state.update { it.copy(households = repository.list(), left = true) }
                 hierarchyStore.refresh()
             }
 

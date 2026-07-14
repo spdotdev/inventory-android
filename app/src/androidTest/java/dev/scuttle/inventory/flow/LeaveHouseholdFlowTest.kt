@@ -8,6 +8,7 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -43,20 +44,32 @@ class LeaveHouseholdFlowTest : FlowTestBase() {
 
             waitUntilAtLeastOneExists(hasText("Office"), timeoutMillis = 5_000)
 
-            // Tap Leave on "Home" household (first in list) → confirm dialog
+            // Leave now lives in the household's own edit screen, reached via edit
+            // mode: tap the pencil, then the "Home" row.
+            onNodeWithContentDescription("Edit households").performClick()
+            waitForIdle()
+            onNodeWithContentDescription("Home").performClick()
+            waitForIdle()
+
+            // The edit screen's danger zone.
+            waitUntilAtLeastOneExists(hasText("Danger zone"), timeoutMillis = 5_000)
+
             // Register a specific route for the DELETE so it doesn't consume the /households GET response
             mockServer.route("/households/1/leave", "", code = 204)
             mockServer.route("/households", fixture("households_office_only.json"))
+
+            // Two "Leave" nodes on this screen: [0] = danger-zone button, [1] = the
+            // confirm dialog's button once it opens.
             onAllNodesWithText("Leave")[0].performClick()
-            waitForIdle()
-            // Dialog "Leave Home?" → 3 Leave nodes: [0]=Home btn, [1]=Office btn, [2]=dialog confirm
             waitUntilAtLeastOneExists(hasText("Leave Home?"), timeoutMillis = 3_000)
-            onAllNodesWithText("Leave")[2].performClick()
+            onAllNodesWithText("Leave")[1].performClick()
 
             Thread.sleep(2_000)
             waitForIdle()
-            // After leaving Home, the list refreshed. Office is the only remaining household.
-            // "Leave Home?" dialog is gone and Office's Leave button is the only one shown.
+
+            // leave() only navigates back once it actually completes server-side
+            // (HouseholdsUiState.left) — back on the households list, "Home" is
+            // gone and "Office" is the only household left.
             onNodeWithText("Leave Home?").assertDoesNotExist()
             onAllNodesWithText("Office")[0].assertIsDisplayed()
         }

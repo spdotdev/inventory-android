@@ -227,4 +227,21 @@ class HouseholdsViewModelTest {
                     .name,
             )
         }
+
+    @Test
+    fun leave_sets_the_left_flag_so_the_edit_screen_can_navigate_back() =
+        runTest {
+            // HouseholdEditScreen waits for this flag (rather than navigating back
+            // immediately on tap) so the leave() coroutine — running in the edit
+            // screen's OWN ViewModel instance, scoped to its own back-stack entry —
+            // isn't cancelled mid-flight by the navigation it would otherwise
+            // trigger before the network call completes.
+            val repo = FakeHouseholdRepository()
+            val viewModel = HouseholdsViewModel(repo, TestHierarchy.store(repo))
+            assertFalse(viewModel.state.value.left)
+
+            viewModel.leave(householdId = 1)
+
+            assertTrue(viewModel.state.value.left)
+        }
 }

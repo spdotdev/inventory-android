@@ -61,6 +61,7 @@ import dev.scuttle.inventory.ui.auth.AuthViewModel
 import dev.scuttle.inventory.ui.auth.ForgotPasswordScreen
 import dev.scuttle.inventory.ui.dashboard.DashboardScreen
 import dev.scuttle.inventory.ui.home.AllStoragesScreen
+import dev.scuttle.inventory.ui.households.HouseholdEditScreen
 import dev.scuttle.inventory.ui.households.HouseholdsScreen
 import dev.scuttle.inventory.ui.invite.InviteScreen
 import dev.scuttle.inventory.ui.location.LocationDetailScreen
@@ -137,6 +138,7 @@ private object Routes {
     const val SCANNER = "scanner"
     const val DASHBOARD = "dashboard"
     const val HOUSEHOLDS = "households"
+    const val HOUSEHOLD_EDIT = "household-edit/{householdId}"
     const val SETTINGS = "settings"
     const val STORAGE = "storage/{householdId}"
     const val SEARCH = "search/{householdId}"
@@ -144,6 +146,8 @@ private object Routes {
     const val LOCATION = "location/{householdId}/{locationId}"
     const val PRODUCT_DETAIL = "product-detail/{householdId}/{shelfId}/{productId}"
     const val MISSING_ITEMS = "missing-items"
+
+    fun householdEdit(householdId: Long) = "household-edit/$householdId"
 
     fun storage(householdId: Long) = "storage/$householdId"
 
@@ -423,6 +427,18 @@ private fun InventoryNavHost(
                     onBack = { navController.popBackStack() },
                     onOpenSettings = onOpenSettings,
                     onOpenInvite = { id, name -> navController.navigate(Routes.invite(id, name)) },
+                    onEditHousehold = { id -> navController.navigate(Routes.householdEdit(id)) },
+                )
+            }
+
+            composable(
+                route = Routes.HOUSEHOLD_EDIT,
+                arguments = listOf(navArgument("householdId") { type = NavType.LongType }),
+            ) { entry ->
+                val householdId = entry.arguments?.getLong("householdId") ?: return@composable
+                HouseholdEditScreen(
+                    householdId = householdId,
+                    onBack = { navController.popBackStack() },
                 )
             }
 
