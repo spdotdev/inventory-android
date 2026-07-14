@@ -50,6 +50,8 @@ import dev.scuttle.inventory.ui.app.DrawerViewModel
 import dev.scuttle.inventory.ui.auth.AuthScreen
 import dev.scuttle.inventory.ui.auth.AuthViewModel
 import dev.scuttle.inventory.ui.auth.ForgotPasswordScreen
+import dev.scuttle.inventory.ui.common.HouseholdOption
+import dev.scuttle.inventory.ui.common.HouseholdPickerSheet
 import dev.scuttle.inventory.ui.dashboard.DashboardScreen
 import dev.scuttle.inventory.ui.home.AllStoragesScreen
 import dev.scuttle.inventory.ui.households.HouseholdEditScreen
@@ -321,6 +323,12 @@ private fun InventoryNavHost(
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
     val drawerUi by drawerViewModel.state.collectAsState()
+    // Non-null while the Scan tab's LOOKUP mode is waiting on a household pick
+    // (Blocker 2, final review): the scanned code, held until the picker below
+    // resolves it to a household and navigates to Search. The scanner has
+    // genuinely no household context of its own to fall back to — see
+    // ScanDeliveryAction.NavigateToSearch's own handling below.
+    var pendingScanLookupCode by rememberSaveable { mutableStateOf<String?>(null) }
     val bottomTabs =
         listOf(
             BottomTab("dashboard", Routes.DASHBOARD, R.string.nav_dashboard, Icons.Filled.SpaceDashboard),
@@ -374,6 +382,24 @@ private fun InventoryNavHost(
             }
         },
     ) { scaffoldPadding ->
+        pendingScanLookupCode?.let { code ->
+            HouseholdPickerSheet(
+                households = drawerUi.entries.map { HouseholdOption(it.id, it.name) },
+                onDismiss = {
+                    pendingScanLookupCode = null
+                    // Dismissed without picking: nothing left to look up. Back out
+                    // of the scanner instead of stranding the user on the camera.
+                    navController.popBackStack()
+                },
+                onPick = { householdId ->
+                    pendingScanLookupCode = null
+                    navController.navigate(Routes.search(householdId, code)) {
+                        popUpTo(Routes.SCANNER) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+            )
+        }
         NavHost(
             navController = navController,
             startDestination = Routes.AUTH,
@@ -537,7 +563,7 @@ private fun InventoryNavHost(
                     onOpenLocation = { hhId, locId ->
                         navController.navigate(Routes.location(hhId, locId))
                     },
-                    firstHouseholdId = drawerUi.entries.firstOrNull()?.id,
+                    households = drawerUi.entries.map { HouseholdOption(it.id, it.name) },
                     onOpenSearch = { hhId ->
                         navController.navigate(Routes.search(hhId)) { launchSingleTop = true }
                     },
@@ -565,17 +591,29 @@ private fun InventoryNavHost(
                                 navController.popBackStack()
                             }
                             is ScanDeliveryAction.NavigateToSearch -> {
-                                val householdId = drawerUi.entries.firstOrNull()?.id
-                                if (householdId != null) {
-                                    navController.navigate(Routes.search(householdId, action.code)) {
-                                        popUpTo(Routes.SCANNER) { inclusive = true }
-                                        launchSingleTop = true
+                                val entries = drawerUi.entries
+                                when {
+                                    entries.isEmpty() -> {
+                                        // Household-less account: nothing to look up
+                                        // in. Back out of the scanner instead of
+                                        // stranding the user on the camera.
+                                        navController.popBackStack()
                                     }
-                                } else {
-                                    // Household-less account: nothing to look up in.
-                                    // Back out of the scanner instead of stranding the
-                                    // user on the camera.
-                                    navController.popBackStack()
+                                    entries.size == 1 -> {
+                                        navController.navigate(Routes.search(entries.first().id, action.code)) {
+                                            popUpTo(Routes.SCANNER) { inclusive = true }
+                                            launchSingleTop = true
+                                        }
+                                    }
+                                    else -> {
+                                        // More than one household and, unlike
+                                        // Dashboard/Home/Missing items, genuinely no
+                                        // row/context to carry one from — this IS the
+                                        // no-context case (Blocker 2, final review).
+                                        // Ask via the picker rendered above instead of
+                                        // hard-coding the first household.
+                                        pendingScanLookupCode = action.code
+                                    }
                                 }
                             }
                         }

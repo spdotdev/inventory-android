@@ -36,6 +36,9 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -46,6 +49,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.LowStockItem
+import dev.scuttle.inventory.ui.common.HouseholdOption
+import dev.scuttle.inventory.ui.common.HouseholdPickerSheet
 import dev.scuttle.inventory.ui.common.LiveStatusText
 import dev.scuttle.inventory.ui.theme.FrostCard
 import dev.scuttle.inventory.ui.theme.HouseholdAvatar
@@ -74,6 +79,22 @@ fun DashboardScreen(
     // saying so would just be noise (#33).
     val badgeFor: (Long) -> DashboardHousehold? = { householdId ->
         if (state.showHouseholdAttribution) state.householdFor(householdId) else null
+    }
+
+    // Blocker 2 (final review): Dashboard's search entry points (the top-bar icon
+    // and the products stat card below) are both GLOBAL actions — neither is tied
+    // to a specific row/household the way a favorite or a running-low item is — so
+    // there's no context to carry the way there is for a per-row tap. With exactly
+    // one household there's nothing to ask; with more than one, hard-coding the
+    // FIRST (the bug this fixes) silently made every other household's search
+    // unreachable from here. Ask instead via the shared picker.
+    var showHouseholdPicker by rememberSaveable { mutableStateOf(false) }
+    val openSearch: () -> Unit = {
+        if (state.households.size > 1) {
+            showHouseholdPicker = true
+        } else {
+            state.firstHouseholdId?.let(onOpenSearch)
+        }
     }
 
     if (state.hasNoHouseholds && !state.loading) {
@@ -108,7 +129,7 @@ fun DashboardScreen(
                     // icon, per spec — an occasional "where did I put it", not a daily
                     // destination. Guarded the same way the products stat card below
                     // is: nothing to search without at least one household.
-                    IconButton(onClick = { state.firstHouseholdId?.let(onOpenSearch) }) {
+                    IconButton(onClick = openSearch) {
                         Icon(Icons.Default.Search, contentDescription = stringResource(R.string.nav_search))
                     }
                     IconButton(onClick = viewModel::refresh) {
@@ -160,7 +181,7 @@ fun DashboardScreen(
                             label = stringResource(R.string.dashboard_stat_products),
                             value = state.totalProducts.toString(),
                             modifier = Modifier.weight(1f),
-                            onClick = { state.firstHouseholdId?.let(onOpenSearch) },
+                            onClick = openSearch,
                         )
                     }
 
@@ -240,6 +261,17 @@ fun DashboardScreen(
                 Spacer(Modifier.height(24.dp))
             }
         } // end PullToRefreshBox
+    }
+
+    if (showHouseholdPicker) {
+        HouseholdPickerSheet(
+            households = state.households.map { HouseholdOption(it.id, it.name) },
+            onDismiss = { showHouseholdPicker = false },
+            onPick = { householdId ->
+                showHouseholdPicker = false
+                onOpenSearch(householdId)
+            },
+        )
     }
 }
 

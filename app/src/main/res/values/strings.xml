@@ -159,6 +159,7 @@
     <string name="search_field_label">Search products</string>
     <string name="search_no_results">No matches.</string>
     <string name="search_result_qty">Qty: %s</string>
+    <string name="search_choose_household_title">Search which household?</string>
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>

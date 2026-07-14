@@ -63,6 +63,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.ui.app.DrawerViewModel
 import dev.scuttle.inventory.ui.common.ErrorRetry
+import dev.scuttle.inventory.ui.common.HouseholdOption
+import dev.scuttle.inventory.ui.common.HouseholdPickerSheet
 import dev.scuttle.inventory.ui.common.SnackbarErrorEffect
 import dev.scuttle.inventory.ui.common.orderByPosition
 import dev.scuttle.inventory.ui.common.storageTypeLabel
@@ -95,6 +97,25 @@ fun AllStoragesScreen(
     // isn't silent (W10).
     SnackbarErrorEffect(actionError, snackbarHostState, onConsumed = viewModel::consumeActionError)
 
+    // Blocker 2 (final review): this screen's search icon is a single GLOBAL
+    // top-bar action, not tied to any one of the household groups rendered below —
+    // there's no "row tapped" to carry a household from. With exactly one household
+    // there's nothing to ask; with more than one, hard-coding the FIRST (the bug
+    // this fixes) silently made every other household's search reachable only by
+    // drilling into that household's own Storage overview first. Ask via the shared
+    // picker instead.
+    var showHouseholdPicker by rememberSaveable { mutableStateOf(false) }
+    val openSearch: () -> Unit = {
+        if (state.entries.size > 1) {
+            showHouseholdPicker = true
+        } else {
+            state.entries
+                .firstOrNull()
+                ?.id
+                ?.let(onOpenSearch)
+        }
+    }
+
     val statusBarInsets = WindowInsets.statusBars
     Scaffold(
         contentWindowInsets = WindowInsets(0),
@@ -111,16 +132,10 @@ fun AllStoragesScreen(
                         }
                     } else {
                         // Search lost its bottom-nav tab (Task 7) but keeps a top-bar
-                        // icon here, per spec — same guard as Dashboard's: nothing to
-                        // search without at least one household loaded.
-                        IconButton(
-                            onClick = {
-                                state.entries
-                                    .firstOrNull()
-                                    ?.id
-                                    ?.let(onOpenSearch)
-                            },
-                        ) {
+                        // icon here, per spec — opens the household picker with more
+                        // than one household (see openSearch above), navigates
+                        // straight through with exactly one, no-ops with none.
+                        IconButton(onClick = openSearch) {
                             Icon(Icons.Default.Search, contentDescription = stringResource(R.string.nav_search))
                         }
                         if (state.entries.any { it.locations.isNotEmpty() }) {
@@ -377,5 +392,16 @@ fun AllStoragesScreen(
         } else {
             viewModel.consumeLastBatch()
         }
+    }
+
+    if (showHouseholdPicker) {
+        HouseholdPickerSheet(
+            households = state.entries.map { HouseholdOption(it.id, it.name) },
+            onDismiss = { showHouseholdPicker = false },
+            onPick = { householdId ->
+                showHouseholdPicker = false
+                onOpenSearch(householdId)
+            },
+        )
     }
 }

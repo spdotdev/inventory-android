@@ -25,6 +25,9 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -32,6 +35,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.ui.common.ErrorRetry
+import dev.scuttle.inventory.ui.common.HouseholdOption
+import dev.scuttle.inventory.ui.common.HouseholdPickerSheet
 import dev.scuttle.inventory.ui.theme.FrostCard
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -41,12 +46,22 @@ fun MissingItemsScreen(
     onOpenLocation: (householdId: Long, locationId: Long) -> Unit,
     // MissingItemsUiState has no household list of its own (only items, which are
     // empty in the common case this button matters least) — the caller passes the
-    // same "first household" HierarchyStore already resolves for Dashboard/Home.
-    firstHouseholdId: Long? = null,
+    // same household list HierarchyStore already resolves for Dashboard/Home, so
+    // this screen's own search icon can ask (Blocker 2, final review) rather than
+    // silently hard-coding the first one when there's more than one household.
+    households: List<HouseholdOption> = emptyList(),
     onOpenSearch: (householdId: Long) -> Unit = {},
     viewModel: MissingItemsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+    var showHouseholdPicker by rememberSaveable { mutableStateOf(false) }
+    val openSearch: () -> Unit = {
+        if (households.size > 1) {
+            showHouseholdPicker = true
+        } else {
+            households.firstOrNull()?.id?.let(onOpenSearch)
+        }
+    }
 
     val statusBarInsets = WindowInsets.statusBars
     Scaffold(
@@ -65,9 +80,10 @@ fun MissingItemsScreen(
                 },
                 actions = {
                     // Search lost its bottom-nav tab (Task 7) but keeps a top-bar icon
-                    // here, per spec — same "nothing to search without a household"
-                    // guard as Dashboard/Home.
-                    IconButton(onClick = { firstHouseholdId?.let(onOpenSearch) }) {
+                    // here, per spec — opens the household picker with more than one
+                    // household (see openSearch above), navigates straight through
+                    // with exactly one, no-ops with none.
+                    IconButton(onClick = openSearch) {
                         Icon(Icons.Default.Search, contentDescription = stringResource(R.string.nav_search))
                     }
                     if (state.items.isNotEmpty()) {
@@ -149,5 +165,16 @@ fun MissingItemsScreen(
                 }
             }
         }
+    }
+
+    if (showHouseholdPicker) {
+        HouseholdPickerSheet(
+            households = households,
+            onDismiss = { showHouseholdPicker = false },
+            onPick = { householdId ->
+                showHouseholdPicker = false
+                onOpenSearch(householdId)
+            },
+        )
     }
 }
