@@ -7,7 +7,6 @@ import dev.scuttle.inventory.data.dto.LocationResponse
 import dev.scuttle.inventory.data.dto.ReorderRequest
 import dev.scuttle.inventory.data.dto.UpdateLocationRequest
 import retrofit2.http.Body
-import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.HTTP
 import retrofit2.http.PATCH
@@ -38,12 +37,6 @@ interface LocationApi {
         @Path("household") householdId: Long,
         @Body body: ReorderRequest,
     ): LocationListResponse
-
-    @DELETE("households/{household}/locations/{location}")
-    suspend fun delete(
-        @Path("household") householdId: Long,
-        @Path("location") locationId: Long,
-    )
 
     // @DELETE cannot carry a body; @HTTP(hasBody = true) can. The strategy and
     // the batch id have to travel with the request.

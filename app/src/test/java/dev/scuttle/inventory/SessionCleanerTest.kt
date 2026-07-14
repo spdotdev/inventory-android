@@ -51,11 +51,6 @@ class SessionCleanerTest {
             type: String,
         ) = throw NotImplementedError()
 
-        override suspend fun delete(
-            householdId: Long,
-            locationId: Long,
-        ) {}
-
         override fun clear() {
             cleared = true
         }
@@ -79,12 +74,6 @@ class SessionCleanerTest {
             locationId: Long,
             name: String,
         ) = throw NotImplementedError()
-
-        override suspend fun delete(
-            householdId: Long,
-            locationId: Long,
-            shelfId: Long,
-        ) {}
 
         override fun clear() {
             cleared = true

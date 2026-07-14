@@ -36,16 +36,6 @@ class ShelfRepositoryImpl
                 cache[key] = (cache[key] ?: emptyList()) + created
             }
 
-        override suspend fun delete(
-            householdId: Long,
-            locationId: Long,
-            shelfId: Long,
-        ) {
-            api.delete(householdId, locationId, shelfId)
-            val key = householdId to locationId
-            cache[key] = cache[key]?.filter { it.id != shelfId } ?: emptyList()
-        }
-
         override suspend fun rename(
             householdId: Long,
             locationId: Long,

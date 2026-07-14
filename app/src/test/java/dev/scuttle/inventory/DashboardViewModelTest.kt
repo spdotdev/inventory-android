@@ -50,11 +50,6 @@ class DashboardViewModelTest {
             name: String,
             type: String,
         ) = LocationDto(99, name, type)
-
-        override suspend fun delete(
-            householdId: Long,
-            locationId: Long,
-        ) {}
     }
 
     private class FakeShelfRepository(
@@ -75,12 +70,6 @@ class DashboardViewModelTest {
             locationId: Long,
             name: String,
         ) = ShelfDto(99, name, 0, locationId)
-
-        override suspend fun delete(
-            householdId: Long,
-            locationId: Long,
-            shelfId: Long,
-        ) {}
     }
 
     private class FakeProductRepository(

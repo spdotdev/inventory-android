@@ -146,11 +146,6 @@ class ProductsViewModelTest {
             name: String,
             type: String,
         ): LocationDto = LocationDto(99, name, type)
-
-        override suspend fun delete(
-            householdId: Long,
-            locationId: Long,
-        ) {}
     }
 
     private class FakeShelfRepository(
@@ -171,12 +166,6 @@ class ProductsViewModelTest {
             locationId: Long,
             name: String,
         ): ShelfDto = ShelfDto(99, name, 0, locationId)
-
-        override suspend fun delete(
-            householdId: Long,
-            locationId: Long,
-            shelfId: Long,
-        ) {}
     }
 
     private class FakeSearchRepository : SearchRepository {

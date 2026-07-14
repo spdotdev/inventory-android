@@ -65,14 +65,6 @@ class ShelvesViewModelTest {
             return dto
         }
 
-        override suspend fun delete(
-            householdId: Long,
-            locationId: Long,
-            shelfId: Long,
-        ) {
-            items.removeIf { it.id == shelfId }
-        }
-
         override suspend fun rename(
             householdId: Long,
             locationId: Long,

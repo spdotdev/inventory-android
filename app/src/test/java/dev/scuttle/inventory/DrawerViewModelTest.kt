@@ -83,24 +83,6 @@ class DrawerViewModelTest {
             type: String,
         ) = LocationDto(99, name, type)
 
-        /**
-         * Models the REAL server, not a convenient fiction: Laravel's
-         * DeleteLocationRequest::rules() requires `deletion_batch_id`
-         * unconditionally (`'deletion_batch_id' => ['required', 'uuid']` —
-         * see inventory-laravel's DeleteLocationRequest.php), so a bodyless
-         * DELETE 422s every single time, strategy or no strategy. A fake
-         * whose plain delete() quietly removed the row would be exactly the
-         * kind of lying fake that shipped Task 4's crash: it would make a
-         * regression back to `locationRepository.delete(...)` look green
-         * here while the real endpoint rejects it. This is what makes the
-         * tests below DISCRIMINATE: any DrawerViewModel path that reaches
-         * for this method instead of [deleteWithStrategy] fails immediately.
-         */
-        override suspend fun delete(
-            householdId: Long,
-            locationId: Long,
-        ): Unit = throw IOException("422: The deletion batch id field is required.")
-
         override suspend fun deleteWithStrategy(
             householdId: Long,
             locationId: Long,
@@ -151,12 +133,6 @@ class DrawerViewModelTest {
             locationId: Long,
             name: String,
         ) = ShelfDto(99, name, 0, locationId)
-
-        override suspend fun delete(
-            householdId: Long,
-            locationId: Long,
-            shelfId: Long,
-        ) {}
     }
 
     private class FakeProductRepository(
@@ -511,10 +487,13 @@ class DrawerViewModelTest {
     fun confirming_delete_sends_a_strategy_and_a_client_minted_batch_id_via_delete_with_strategy() =
         runTest {
             // THE regression this task fixes: before it, Home's swipe-to-delete
-            // called the bodyless LocationRepository.delete() — no strategy, no
-            // deletion_batch_id — which this fake's delete() now models as a hard
-            // 422 (see its own doc comment). Reaching for that path instead of
-            // deleteWithStrategy() turns this test red immediately.
+            // called a bodyless LocationRepository.delete() — no strategy, no
+            // deletion_batch_id. That method (and its ShelfRepository twin) has
+            // since been deleted outright (final review, Blocker 3): it had zero
+            // production callers and the server unconditionally 422s a bodyless
+            // delete, so it was a landmine for the next caller to wire one up.
+            // FakeLocationRepository below only implements deleteWithStrategy —
+            // any regression back to a bare delete() call now fails to compile.
             val repo =
                 FakeLocationRepository(
                     mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge", shelf_count = 2, product_count = 5))),

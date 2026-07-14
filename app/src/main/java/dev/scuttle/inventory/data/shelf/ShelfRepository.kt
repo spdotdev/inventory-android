@@ -20,12 +20,6 @@ interface ShelfRepository {
         name: String,
     ): ShelfDto
 
-    suspend fun delete(
-        householdId: Long,
-        locationId: Long,
-        shelfId: Long,
-    )
-
     /**
      * Defaults throw so test fakes only implement what a test actually exercises
      * (same pattern as [clear] and HouseholdRepository.updateTheme). Without

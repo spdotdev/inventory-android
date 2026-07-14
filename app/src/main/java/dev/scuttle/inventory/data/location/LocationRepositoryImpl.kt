@@ -30,14 +30,6 @@ class LocationRepositoryImpl
                 cache[householdId] = (cache[householdId] ?: emptyList()) + created
             }
 
-        override suspend fun delete(
-            householdId: Long,
-            locationId: Long,
-        ) {
-            api.delete(householdId, locationId)
-            cache[householdId] = cache[householdId]?.filter { it.id != locationId } ?: emptyList()
-        }
-
         override suspend fun rename(
             householdId: Long,
             locationId: Long,

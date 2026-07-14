@@ -19,7 +19,6 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
-import java.io.IOException
 
 class StorageOverviewViewModelTest {
     @get:Rule
@@ -61,23 +60,6 @@ class StorageOverviewViewModelTest {
             items.add(dto)
             return dto
         }
-
-        /**
-         * Models the REAL server, not a convenient fiction: Laravel's
-         * DeleteLocationRequest::rules() requires `deletion_batch_id`
-         * unconditionally, so a bodyless DELETE 422s every single time,
-         * strategy or no strategy (see inventory-laravel's
-         * DeleteLocationRequest.php, and DrawerViewModelTest's equivalent
-         * fake — same fix, same reasoning). A fake whose plain delete()
-         * quietly removed the row would be exactly the kind of lying fake
-         * that shipped Task 4's crash: it would make a regression back to
-         * `repository.delete(...)` instead of `deleteWithStrategy(...)` look
-         * green here while the real endpoint rejects it.
-         */
-        override suspend fun delete(
-            householdId: Long,
-            locationId: Long,
-        ): Unit = throw IOException("422: The deletion batch id field is required.")
 
         override suspend fun rename(
             householdId: Long,
@@ -285,11 +267,6 @@ class StorageOverviewViewModelTest {
             gate.await()
             return LocationDto(id = 1, name = name, type = type)
         }
-
-        override suspend fun delete(
-            householdId: Long,
-            locationId: Long,
-        ) = gate.await()
     }
 
     @Test

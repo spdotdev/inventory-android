@@ -29,11 +29,6 @@ object TestHierarchy {
             name: String,
             type: String,
         ) = throw NotImplementedError()
-
-        override suspend fun delete(
-            householdId: Long,
-            locationId: Long,
-        ) {}
     }
 
     private object EmptyShelves : ShelfRepository {
@@ -52,12 +47,6 @@ object TestHierarchy {
             locationId: Long,
             name: String,
         ) = throw NotImplementedError()
-
-        override suspend fun delete(
-            householdId: Long,
-            locationId: Long,
-            shelfId: Long,
-        ) {}
     }
 
     private object EmptyProducts : ProductRepository {
