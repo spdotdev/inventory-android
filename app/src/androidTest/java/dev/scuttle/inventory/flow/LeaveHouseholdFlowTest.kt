@@ -28,6 +28,15 @@ class LeaveHouseholdFlowTest : FlowTestBase() {
         mockServer.route("/households/1/locations", fixture("locations_one.json"))
         mockServer.route("/households/1/locations/10/shelves", fixture("shelves_one.json"))
         mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
+        // households_two.json also carries household 2 ("Office") — HierarchyStore's
+        // full walk fetches ITS locations too. MockWebServerRule dispatches by path
+        // PREFIX only (no method/exact-path awareness), and "/households/2/locations"
+        // is itself a prefix match for the plain "/households" route below, so without
+        // a dedicated route here that background GET steals an entry meant for one of
+        // this test's own explicit "/households" registrations (My households screen /
+        // leave()'s own re-list) — see HouseholdPickerFlowTest / DashboardHouseholdAttributionFlowTest
+        // for the same pattern with the same fixture pair.
+        mockServer.route("/households/2/locations", fixture("locations_empty.json"))
 
         composeRule.apply {
             onNodeWithText("Email").performTextInput("test@example.com")

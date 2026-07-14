@@ -83,6 +83,13 @@ class DeleteShelfFlowTest : FlowTestBase() {
 
             // Only now, confirming inside the dialog, does the DELETE fire.
             mockServer.route("/households/1/locations/10/shelves/100", "", code = 204)
+            // confirmDelete() re-lists the shelves on success (the same call this
+            // file's own class-doc/requestDelete comment already calls out for the
+            // PRE-plan refresh) — without a 4th response queued here, that post-delete
+            // GET falls through to the mock server's fallback 500, confirmDelete()'s
+            // launchLoading swallows it as state.error, and state.shelves is never
+            // updated past its pre-delete value — "Top shelf" would never disappear.
+            mockServer.route("/households/1/locations/10/shelves", fixture("shelves_middle_only.json"))
             onNodeWithTag("delete-strategy-confirm").performClick()
             Thread.sleep(2_000)
             waitForIdle()

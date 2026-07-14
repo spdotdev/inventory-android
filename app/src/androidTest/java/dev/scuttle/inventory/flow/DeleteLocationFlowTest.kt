@@ -117,6 +117,16 @@ class DeleteLocationFlowTest : FlowTestBase() {
         mockServer.enqueue(fixture("auth_login.json"))
         mockServer.route("/households", fixture("households_one.json"))
         mockServer.route("/households/1/locations", fixture("locations_one_with_empty_shelf.json"))
+        // This screen never itself visits LocationDetailScreen, but HierarchyStore's
+        // login-triggered refresh() walks EVERY location's shelves regardless of what
+        // the visible screen does — locations_one_with_empty_shelf.json's shelf_count=3
+        // means Fridge is one such location. Without a route here, that background GET
+        // falls to the mock server's fallback 500, buildFromNetwork() throws, and the
+        // WHOLE refresh aborts before ever publishing entries — so the "Home" wait below
+        // (AllStoragesScreen reads HierarchyStore's cache, no fetch of its own) times out.
+        // The body's actual shelf content is irrelevant here (this test never renders
+        // it) — empty keeps the walk from cascading into per-shelf product fetches too.
+        mockServer.route("/households/1/locations/10/shelves", fixture("shelves_empty.json"))
 
         composeRule.apply {
             onNodeWithText("Email").performTextInput("test@example.com")

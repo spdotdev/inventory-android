@@ -168,6 +168,15 @@ class DeleteShelfStrategyFlowTest : FlowTestBase() {
             onNodeWithText("Keep them here, in Unsorted").assertIsDisplayed()
             onNodeWithText("Delete them too").assertIsDisplayed()
 
+            // The DELETE itself must get its own dedicated route: MockWebServerRule
+            // dispatches by PATH PREFIX only (no method awareness — see its own doc
+            // comment), and "/households/1/locations/10/shelves/100" is a prefix
+            // match for the plain "/households/1/locations/10/shelves" GET route
+            // too. Without this, the DELETE consumes the GET-intended response below
+            // (as a 200 with a shelf-list body), leaving confirmDelete()'s own
+            // post-delete re-list GET with nothing queued — a fallback 500 that
+            // never updates state.shelves, so "Top shelf" never disappears.
+            mockServer.route("/households/1/locations/10/shelves/100", "", code = 204)
             // confirmDelete() re-lists the shelves on success, off the fresh
             // post-delete state — Top shelf gone, Unsorted still there.
             mockServer.route("/households/1/locations/10/shelves", fixture("shelves_unsorted_only.json"))
