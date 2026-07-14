@@ -128,7 +128,9 @@ private data class BottomTab(
     // decide selection/bottom-bar-visibility) because Scan's destination is
     // parameterized (Routes.SCANNER = "scanner?mode={mode}"): [route] has to stay
     // the bare pattern for that match to work, while the tap needs a concrete
-    // `mode` value baked in.
+    // `mode` value baked in. For Scan specifically, matching [route] alone is NOT
+    // enough to decide selection/visibility either — ADD shares the same pattern
+    // (Minor 9, final review) — see [scannerRouteIsTheBottomBarTab].
     val navigateTo: String = route,
 )
 
@@ -190,6 +192,21 @@ fun scanDeliveryActionFor(
         ScannerMode.ADD -> ScanDeliveryAction.DeliverToCaller(code)
         ScannerMode.LOOKUP -> ScanDeliveryAction.NavigateToSearch(code)
     }
+
+/**
+ * Whether the current Routes.SCANNER destination IS the bottom-bar Scan tab's own
+ * destination — true only for LOOKUP, false for ADD and for a null mode (Minor 9,
+ * final review). Routes.SCANNER is one shared route PATTERN ("scanner?mode={mode}")
+ * for two callers with different bottom-bar expectations: LOOKUP is the Scan tab
+ * itself (bar shows, Scan selected); ADD is opened from a shelf screen with no bottom
+ * bar underneath it (bar must not reappear over the camera, Scan must not show
+ * selected). NavController's own `destination.route` is always the bare pattern,
+ * identical for both, so the caller must resolve [mode] from the back stack entry's
+ * own `mode` argument first — see [ScannerMode.from]. Pure so it's unit-testable
+ * without a NavController, mirroring [scanDeliveryActionFor]'s split between pure
+ * decision and NavController side effect.
+ */
+fun scannerRouteIsTheBottomBarTab(mode: ScannerMode?): Boolean = mode == ScannerMode.LOOKUP
 
 private object Routes {
     const val AUTH = "auth"
@@ -322,6 +339,21 @@ private fun InventoryNavHost(
 
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
+    // Routes.SCANNER ("scanner?mode={mode}") is one route PATTERN shared by two
+    // callers with very different bottom-bar expectations (Minor 9, final review):
+    // LOOKUP is the bottom-bar Scan tab itself — the bar should show, with Scan
+    // selected. ADD is opened from a shelf screen with no bottom bar underneath
+    // it — the bar must not reappear over the camera, and Scan must not show
+    // selected (that navigation has nothing to do with the Scan tab). currentRoute
+    // alone can't tell these apart: NavController's own destination.route is
+    // always the bare pattern, identical for both modes. The concrete `mode`
+    // argument is what actually differs — read it from the back stack entry.
+    val currentScannerMode =
+        if (currentRoute == Routes.SCANNER) {
+            ScannerMode.from(backStackEntry?.arguments?.getString("mode"))
+        } else {
+            null
+        }
     val drawerUi by drawerViewModel.state.collectAsState()
     // Non-null while the Scan tab's LOOKUP mode is waiting on a household pick
     // (Blocker 2, final review): the scanned code, held until the picker below
@@ -352,11 +384,26 @@ private fun InventoryNavHost(
     Scaffold(
         contentWindowInsets = WindowInsets(0),
         bottomBar = {
-            if (bottomTabs.any { it.route == currentRoute }) {
+            // On the SCANNER route specifically, only the LOOKUP mode is the
+            // bottom-bar tab's own destination — ADD (opened from a shelf screen)
+            // must not resurrect the bar over the camera. Every other tab keeps
+            // the plain route-pattern match.
+            val showBottomBar =
+                if (currentRoute == Routes.SCANNER) {
+                    scannerRouteIsTheBottomBarTab(currentScannerMode)
+                } else {
+                    bottomTabs.any { it.route == currentRoute }
+                }
+            if (showBottomBar) {
                 NavigationBar {
                     bottomTabs.forEach { tab ->
                         NavigationBarItem(
-                            selected = currentRoute == tab.route,
+                            selected =
+                                if (tab.route == Routes.SCANNER) {
+                                    scannerRouteIsTheBottomBarTab(currentScannerMode)
+                                } else {
+                                    currentRoute == tab.route
+                                },
                             onClick = { navController.navigate(tab.navigateTo, tabNavOptions) },
                             icon = {
                                 if (tab.key == "missing-items" && drawerUi.missingItemCount > 0) {

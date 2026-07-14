@@ -1,6 +1,8 @@
 package dev.scuttle.inventory
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -66,5 +68,35 @@ class ScanDeliveryActionTest {
     @Test
     fun from_defaults_to_add_when_unrecognized() {
         assertEquals(ScannerMode.ADD, ScannerMode.from("bogus"))
+    }
+
+    // --- scannerRouteIsTheBottomBarTab (Minor 9, final review) -----------------
+    //
+    // Routes.SCANNER ("scanner?mode={mode}") is one route PATTERN for two callers:
+    // NavController's own destination.route is identical for both, so the bottom
+    // bar's old `currentRoute == tab.route` check couldn't tell LOOKUP (the Scan
+    // tab's own destination) apart from ADD (opened from a shelf screen, no bottom
+    // bar underneath it) — the bar resurfaced over the camera in ADD mode, with
+    // Scan shown selected. This is the pure decision the bar's visibility/selected
+    // checks are now built from.
+
+    @Test
+    fun lookup_mode_is_the_bottom_bar_tab() {
+        assertTrue(scannerRouteIsTheBottomBarTab(ScannerMode.LOOKUP))
+    }
+
+    @Test
+    fun add_mode_is_not_the_bottom_bar_tab() {
+        // The exact regression: ADD (opened from LocationDetailScreen's scan FAB)
+        // must NOT be treated as the Scan tab's own destination.
+        assertFalse(scannerRouteIsTheBottomBarTab(ScannerMode.ADD))
+    }
+
+    @Test
+    fun a_null_mode_is_not_the_bottom_bar_tab() {
+        // Null means "not currently on the SCANNER route at all" (the caller only
+        // resolves a mode when currentRoute == Routes.SCANNER) — must not default
+        // to true and show the bar on every unrelated screen.
+        assertFalse(scannerRouteIsTheBottomBarTab(null))
     }
 }
