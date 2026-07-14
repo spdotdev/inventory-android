@@ -183,6 +183,50 @@ class DeleteRequestSerializationTest {
         )
     }
 
+    /**
+     * The descriptor-shape test above only pins the serializer's metadata — it
+     * would still pass if `color`/`icon` were given a default that happened not
+     * to break anything else, or if `name` lost its default while every call
+     * site coincidentally still worked in tests that never look at the wire.
+     * That's exactly the gap the doc comment above `assertNoDefaultedProperties`
+     * describes: "pinning" a no-default property as correct without ever
+     * encoding an instance. These two tests encode a real instance the way each
+     * production call site actually builds one (HouseholdsViewModel.update /
+     * updateTheme) and assert the literal bytes for BOTH directions of the
+     * asymmetry, so a regression in either direction shows up here as a diff in
+     * the JSON string, not just in descriptor shape.
+     */
+    @Test
+    fun renaming_a_household_encodes_its_current_theme_instead_of_clearing_it() {
+        // Mirrors the edit screen's Save-name action: color/icon are passed
+        // through as the household's CURRENT keys (not null) because they have
+        // no default and are always encoded — an explicit null here would clear
+        // the theme server-side (`sometimes|nullable`). This is what makes a
+        // rename side-effect-free on the theme.
+        val body =
+            json.encodeToString(
+                UpdateHouseholdRequest(name = "House", color = "teal", icon = "cottage"),
+            )
+
+        assertEquals("""{"name":"House","color":"teal","icon":"cottage"}""", body)
+    }
+
+    @Test
+    fun clearing_the_theme_omits_the_name_key_entirely() {
+        // Mirrors updateTheme()'s call to update(name = null, ...): name's
+        // default drops the key so the server (`sometimes|required`) never sees
+        // an explicit null and never touches the name. If `name` lost its
+        // default, this would encode `"name":null` and 422. If `color`/`icon`
+        // gained a default, this would encode `{}` and silently no-op instead
+        // of clearing the theme.
+        val body =
+            json.encodeToString(
+                UpdateHouseholdRequest(name = null, color = null, icon = null),
+            )
+
+        assertEquals("""{"color":null,"icon":null}""", body)
+    }
+
     private fun assertNoDefaultedProperties(descriptor: SerialDescriptor) {
         for (i in 0 until descriptor.elementsCount) {
             assertFalse(

@@ -134,7 +134,12 @@ class HouseholdsViewModelTest {
 
             viewModel.update(1L, name = "House", color = null, icon = null)
 
-            assertEquals("House", viewModel.state.value.households.first().name)
+            assertEquals(
+                "House",
+                viewModel.state.value.households
+                    .first()
+                    .name,
+            )
         }
 
     @Test
@@ -150,7 +155,9 @@ class HouseholdsViewModelTest {
 
             viewModel.update(1L, name = "House", color = "teal", icon = "cottage")
 
-            val household = viewModel.state.value.households.first()
+            val household =
+                viewModel.state.value.households
+                    .first()
             assertEquals("House", household.name)
             assertEquals("teal", household.color)
             assertEquals("cottage", household.icon)
@@ -169,7 +176,9 @@ class HouseholdsViewModelTest {
 
             viewModel.updateTheme(householdId = 1, color = null, icon = null)
 
-            val household = viewModel.state.value.households.first()
+            val household =
+                viewModel.state.value.households
+                    .first()
             assertEquals("Garage", household.name)
             assertEquals(null, household.color)
             assertEquals(null, household.icon)
