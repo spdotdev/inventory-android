@@ -12,6 +12,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.waitUntilAtLeastOneExists
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -57,10 +58,17 @@ class LeaveHouseholdFlowTest : FlowTestBase() {
             waitUntilAtLeastOneExists(hasText("Office"), timeoutMillis = 5_000)
 
             // Leave now lives in the household's own edit screen, reached via edit
-            // mode: tap the pencil, then the "Home" row.
+            // mode: tap the pencil, then the "Home" row. clickNameArea(), not
+            // performClick(): this row is the same EditableRow-shaped card (leading
+            // avatar/name, trailing "Share"/invite icon button) whose node-CENTER
+            // tap was confirmed (via a printToLog dump of the semantics tree on real
+            // CI hardware, chasing this same-shaped failure on the shelf/location
+            // rows — see FlowTestBase.clickNameArea's doc) to land on trailing
+            // icon-button territory instead of the card's own onClick on some screen
+            // sizes.
             onNodeWithContentDescription("Edit households").performClick()
             waitForIdle()
-            onNodeWithContentDescription("Home").performClick()
+            onNodeWithContentDescription("Home").clickNameArea()
             // Every other cross-screen navigation in this suite pairs its click with a
             // real settle delay (not just waitForIdle()) before asserting on the
             // destination — this was the one navigation step in this file that didn't,
@@ -78,21 +86,27 @@ class LeaveHouseholdFlowTest : FlowTestBase() {
             mockServer.route("/households", fixture("households_office_only.json"))
 
             // Two "Leave" nodes on this screen: [0] = danger-zone button, [1] = the
-            // confirm dialog's button once it opens. Material3's AlertDialog opens a
-            // real Android Dialog window (not just a recomposition), which is the one
-            // wait in this file that was budgeted at 3s while every other navigation
-            // wait here gets 5s — bumped to match, since window creation is measurably
-            // slower than an in-place recompose on a loaded CI emulator.
+            // confirm dialog's button once it opens. HouseholdEditScreen's content
+            // Column is verticalScroll()-able, and the danger zone sits at the very
+            // bottom of it — confirmed via a printToLog dump on real CI hardware
+            // (root count stayed 1, i.e. no dialog ever opened) that on CI's shorter
+            // screen the "Leave" button's own layout bounds sit entirely BELOW the
+            // visible viewport (root 0-640px tall; the button at y=696-736px).
+            // performClick()'s synthetic touch targets the node's on-screen
+            // coordinate, which doesn't exist off-viewport — a silent no-op, same as
+            // MandatoryToggleFlowTest already works around for its own scrolled
+            // content via performScrollTo().
+            onAllNodesWithText("Leave")[0].performScrollTo()
             onAllNodesWithText("Leave")[0].performClick()
-            waitUntilAtLeastOneExists(hasText("Leave Home?"), timeoutMillis = 5_000)
+            waitUntilAtLeastOneExists(hasText("Leave Home?"), timeoutMillis = 8_000)
             onAllNodesWithText("Leave")[1].performClick()
 
             Thread.sleep(2_000)
             waitForIdle()
 
             // leave() only navigates back once it actually completes server-side
-            // (HouseholdsUiState.left) — back on the households list, "Home" is
-            // gone and "Office" is the only household left.
+            // (HouseholdsUiState.leftHouseholdId) — back on the households list,
+            // "Home" is gone and "Office" is the only household left.
             onNodeWithText("Leave Home?").assertDoesNotExist()
             onAllNodesWithText("Office")[0].assertIsDisplayed()
         }

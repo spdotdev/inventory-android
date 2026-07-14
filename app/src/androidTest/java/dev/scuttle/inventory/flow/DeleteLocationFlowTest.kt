@@ -75,9 +75,20 @@ class DeleteLocationFlowTest : FlowTestBase() {
             // Tap the pencil ("Edit storage") → edit mode, replacing the old swipe-to-delete
             onNodeWithContentDescription("Edit storage").performClick()
             waitForIdle()
+            // Wait for the edit-mode row specifically, not just the plain-mode card's
+            // text — StorageOverviewViewModel.load() has the same cached-render +
+            // unsynchronized refreshSilent() split as ShelvesViewModel.load() (see
+            // DeleteShelfFlowTest), so waitForIdle() alone doesn't prove that
+            // in-flight background refresh has landed before the click below fires.
+            waitUntilAtLeastOneExists(hasTestTag("location-row-10"), timeoutMillis = 5_000)
 
-            // Select "Fridge" row → becomes selected
-            onNodeWithText("Fridge").performClick()
+            // Select "Fridge" row → becomes selected. clickNameArea(), not
+            // performClick(): see FlowTestBase.clickNameArea's doc — a node-center
+            // tap on this row lands on the trailing "Edit storage" rename icon
+            // button on some screen sizes (confirmed via a printToLog dump on real
+            // CI hardware), silently opening that dialog instead of toggling
+            // selection.
+            onNodeWithTag("location-row-10").clickNameArea()
             waitForIdle()
 
             // Delete (1) only OPENS the strategy/confirm dialog — it must not delete yet.
@@ -153,7 +164,12 @@ class DeleteLocationFlowTest : FlowTestBase() {
 
             onNodeWithContentDescription("Edit storage").performClick()
             waitForIdle()
-            onNodeWithText("Fridge").performClick()
+            // Wait for the edit-mode row specifically — see the other test in this
+            // file / DeleteShelfFlowTest for the full race this closes.
+            waitUntilAtLeastOneExists(hasTestTag("location-row-10"), timeoutMillis = 5_000)
+            // clickNameArea() — see the other test in this file for why
+            // performClick()'s node-center tap is unsafe on an EditableRow.
+            onNodeWithTag("location-row-10").clickNameArea()
             waitForIdle()
 
             // requestDelete() refreshes the location list first.

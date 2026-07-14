@@ -71,7 +71,16 @@ class DeleteShelfStrategyFlowTest : FlowTestBase() {
             // there is nowhere to move to — guard (a) in DeleteStrategyDialog).
             onNodeWithContentDescription("Edit shelves").performClick()
             waitForIdle()
-            onNodeWithText("Top shelf").performClick()
+            // Wait for the edit-mode LIST row specifically, not just the text (which
+            // also exists on the tab this view just replaced) — see DeleteShelfFlowTest
+            // for the full race this closes.
+            waitUntilAtLeastOneExists(hasTestTag("shelf-row-100"), timeoutMillis = 5_000)
+            // clickNameArea(), not performClick(): see FlowTestBase.clickNameArea's
+            // doc — a node-center tap on this row lands on the trailing "Rename
+            // shelf" icon button on some screen sizes (confirmed via a printToLog
+            // dump on real CI hardware), silently opening that dialog instead of
+            // toggling selection.
+            onNodeWithTag("shelf-row-100").clickNameArea()
             waitForIdle()
 
             // Delete (1) only OPENS the dialog. requestDelete() refreshes the shelf
@@ -146,15 +155,21 @@ class DeleteShelfStrategyFlowTest : FlowTestBase() {
 
             onNodeWithContentDescription("Edit shelves").performClick()
             waitForIdle()
+            // Wait for the edit-mode LIST rows specifically, not just their text
+            // (which also exists on the tabs this view just replaced) — see
+            // DeleteShelfFlowTest for the full race this closes.
+            waitUntilAtLeastOneExists(hasTestTag("shelf-row-900"), timeoutMillis = 5_000)
 
             // Tapping the system shelf must be a no-op selection-wise: the Delete
             // button stays the plain, unselected "Delete" (no count), and disabled.
-            onNodeWithText("Unsorted").performClick()
+            // clickNameArea() — see FlowTestBase's doc for why performClick()'s
+            // node-center tap is unsafe on an EditableRow.
+            onNodeWithTag("shelf-row-900").clickNameArea()
             waitForIdle()
             onNodeWithText("Delete").assertIsDisplayed()
 
             // Now select the real shelf and open the dialog.
-            onNodeWithText("Top shelf").performClick()
+            onNodeWithTag("shelf-row-100").clickNameArea()
             waitForIdle()
             mockServer.route("/households/1/locations/10/shelves", fixture("shelves_with_unsorted.json"))
             onNodeWithText("Delete (1)").performClick()
@@ -221,7 +236,13 @@ class DeleteShelfStrategyFlowTest : FlowTestBase() {
 
             onNodeWithContentDescription("Edit shelves").performClick()
             waitForIdle()
-            onNodeWithText("Top shelf").performClick()
+            // Wait for the edit-mode LIST row specifically, not just the text (which
+            // also exists on the tab this view just replaced) — see DeleteShelfFlowTest
+            // for the full race this closes.
+            waitUntilAtLeastOneExists(hasTestTag("shelf-row-100"), timeoutMillis = 5_000)
+            // clickNameArea() — see FlowTestBase's doc for why performClick()'s
+            // node-center tap is unsafe on an EditableRow.
+            onNodeWithTag("shelf-row-100").clickNameArea()
             waitForIdle()
 
             mockServer.route("/households/1/locations/10/shelves", fixture("shelves_one_with_products.json"))
@@ -291,11 +312,18 @@ class DeleteShelfStrategyFlowTest : FlowTestBase() {
 
             onNodeWithContentDescription("Edit shelves").performClick()
             waitForIdle()
+            // Wait for the edit-mode LIST rows specifically, not just their text
+            // (which also exists on the tabs this view just replaced) — see
+            // DeleteShelfFlowTest for the full race this closes.
+            waitUntilAtLeastOneExists(hasTestTag("shelf-row-100"), timeoutMillis = 5_000)
+            waitUntilAtLeastOneExists(hasTestTag("shelf-row-101"), timeoutMillis = 5_000)
 
-            // Select BOTH shelves — one gesture, two items.
-            onNodeWithText("Top shelf").performClick()
+            // Select BOTH shelves — one gesture, two items. clickNameArea() — see
+            // FlowTestBase's doc for why performClick()'s node-center tap is unsafe
+            // on an EditableRow.
+            onNodeWithTag("shelf-row-100").clickNameArea()
             waitForIdle()
-            onNodeWithText("Middle shelf").performClick()
+            onNodeWithTag("shelf-row-101").clickNameArea()
             waitForIdle()
 
             mockServer.route("/households/1/locations/10/shelves", fixture("shelves_two_with_products.json"))

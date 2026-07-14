@@ -66,8 +66,23 @@ class DeleteShelfFlowTest : FlowTestBase() {
             onNodeWithContentDescription("Edit shelves").performClick()
             waitForIdle()
 
-            // Select "Top shelf" row → becomes selected
-            onNodeWithText("Top shelf").performClick()
+            // Wait for the edit-mode LIST row specifically (shelf-row-100), not just
+            // "Top shelf" text — that text also exists on the tab this view just
+            // replaced, and waitForIdle() alone doesn't prove the tab->list swap has
+            // actually settled before the click below fires.
+            waitUntilAtLeastOneExists(hasTestTag("shelf-row-100"), timeoutMillis = 5_000)
+
+            // Select "Top shelf" row → becomes selected. clickNameArea(), NOT
+            // performClick(): confirmed via a real CI-only failure investigation (a
+            // printToLog dump of the full semantics tree on actual CI hardware) that
+            // performClick()'s node-CENTER tap on this row lands on the trailing
+            // "Rename shelf" icon button instead of the row/checkbox — silently
+            // opening the rename dialog instead of toggling selection, no error
+            // either way. Screen-size/density dependent (the row's geometric center
+            // only overlaps the trailing icon cluster at SOME width/density
+            // combinations), which is why this never once reproduced on a local AVD.
+            // See FlowTestBase.clickNameArea's own doc for the full story.
+            onNodeWithTag("shelf-row-100").clickNameArea()
             waitForIdle()
 
             // Delete (1) only OPENS the strategy/confirm dialog — it must not delete yet.
