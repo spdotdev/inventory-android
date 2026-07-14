@@ -120,19 +120,86 @@ private data class BottomTab(
     val route: String,
     val labelRes: Int,
     val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    // Where a tap on this tab actually navigates. Defaults to [route] — the plain
+    // "this tab IS this destination" case every tab but Scan fits. Kept distinct
+    // from [route] (which is also the pattern matched against currentRoute to
+    // decide selection/bottom-bar-visibility) because Scan's destination is
+    // parameterized (Routes.SCANNER = "scanner?mode={mode}"): [route] has to stay
+    // the bare pattern for that match to work, while the tap needs a concrete
+    // `mode` value baked in.
+    val navigateTo: String = route,
 )
+
+/**
+ * Which caller opened the scanner, carried explicitly as a route argument rather
+ * than inferred from the back stack. Before this, [Routes.SCANNER] had exactly one
+ * delivery contract — write the code to the previous entry's savedStateHandle and
+ * pop — which only makes sense when a shelf screen (LocationDetailScreen) is that
+ * previous entry. Once the bottom-bar Scan tab started opening the same route with
+ * Dashboard/whatever-tab as the previous entry, that contract silently broke: nothing
+ * there reads `scanned_code`, so a bottom-bar scan did nothing. Making the caller's
+ * intent an explicit argument (ADD vs LOOKUP) lets [scanDeliveryActionFor] give each
+ * caller its own, correct behavior instead of guessing from the stack shape.
+ */
+enum class ScannerMode(
+    val argValue: String,
+) {
+    /** Opened from a shelf screen: deliver the code back via savedStateHandle. */
+    ADD("add"),
+
+    /** Opened from the bottom bar, with no shelf context: hand the code to Search. */
+    LOOKUP("lookup"),
+    ;
+
+    companion object {
+        /** Unrecognized or missing values fall back to ADD, the pre-existing behavior
+         * for the route's only caller before LOOKUP existed. */
+        fun from(argValue: String?): ScannerMode = entries.firstOrNull { it.argValue == argValue } ?: ADD
+    }
+}
+
+/** What a freshly-scanned barcode should do next, decided purely from [ScannerMode] — no
+ * NavController involved, so the ADD/LOOKUP branch is unit-testable on its own (see
+ * ScanDeliveryActionTest). Mirrors [authRedirectFor]'s split between pure decision and
+ * NavController side effect below.
+ */
+sealed interface ScanDeliveryAction {
+    /** ADD: deliver [code] to the caller's savedStateHandle and pop back to it — the
+     * "add this to the shelf I came from" contract LocationDetailScreen expects.
+     */
+    data class DeliverToCaller(
+        val code: String,
+    ) : ScanDeliveryAction
+
+    /** LOOKUP: navigate to Search with [code] as the pre-filled, already-run query —
+     * "do I have this, and where did I put it" (the spec's role for Search), and the
+     * only sensible outcome when there's no shelf to add to.
+     */
+    data class NavigateToSearch(
+        val code: String,
+    ) : ScanDeliveryAction
+}
+
+fun scanDeliveryActionFor(
+    mode: ScannerMode,
+    code: String,
+): ScanDeliveryAction =
+    when (mode) {
+        ScannerMode.ADD -> ScanDeliveryAction.DeliverToCaller(code)
+        ScannerMode.LOOKUP -> ScanDeliveryAction.NavigateToSearch(code)
+    }
 
 private object Routes {
     const val AUTH = "auth"
     const val FORGOT_PASSWORD = "forgot-password"
     const val HOME = "home"
-    const val SCANNER = "scanner"
+    const val SCANNER = "scanner?mode={mode}"
     const val DASHBOARD = "dashboard"
     const val HOUSEHOLDS = "households"
     const val HOUSEHOLD_EDIT = "household-edit/{householdId}"
     const val SETTINGS = "settings"
     const val STORAGE = "storage/{householdId}"
-    const val SEARCH = "search/{householdId}"
+    const val SEARCH = "search/{householdId}?query={query}"
     const val INVITE = "invite/{householdId}/{householdName}"
     const val LOCATION = "location/{householdId}/{locationId}"
     const val PRODUCT_DETAIL = "product-detail/{householdId}/{shelfId}/{productId}"
@@ -142,7 +209,17 @@ private object Routes {
 
     fun storage(householdId: Long) = "storage/$householdId"
 
-    fun search(householdId: Long) = "search/$householdId"
+    fun scanner(mode: ScannerMode) = "scanner?mode=${mode.argValue}"
+
+    /**
+     * [query] pre-fills and immediately runs a search (the scan-to-lookup flow) —
+     * left null for every other caller, which just opens Search on an empty query
+     * exactly as before this existed.
+     */
+    fun search(
+        householdId: Long,
+        query: String? = null,
+    ) = "search/$householdId" + if (query != null) "?query=${java.net.URLEncoder.encode(query, "UTF-8")}" else ""
 
     fun invite(
         householdId: Long,
@@ -250,8 +327,15 @@ private fun InventoryNavHost(
             BottomTab("home", Routes.HOME, R.string.nav_storage, Icons.Filled.Home),
             // The centre slot is the primary-ACTION slot. Scanning is a weekly
             // grocery-trip action; search is an occasional "where did I put it",
-            // and it already has a top-bar icon.
-            BottomTab("scanner", Routes.SCANNER, R.string.nav_scan, Icons.Filled.QrCodeScanner),
+            // and it already has a top-bar icon. Opened from here (no shelf
+            // context), the scan resolves to a Search lookup — see ScannerMode.
+            BottomTab(
+                "scanner",
+                Routes.SCANNER,
+                R.string.nav_scan,
+                Icons.Filled.QrCodeScanner,
+                navigateTo = Routes.scanner(ScannerMode.LOOKUP),
+            ),
             BottomTab("missing-items", Routes.MISSING_ITEMS, R.string.nav_missing_items, Icons.Filled.Warning),
             // Not "Settings": it now holds households, join/invite and account.
             BottomTab("more", Routes.SETTINGS, R.string.nav_more, Icons.Filled.MoreHoriz),
@@ -265,7 +349,7 @@ private fun InventoryNavHost(
                     bottomTabs.forEach { tab ->
                         NavigationBarItem(
                             selected = currentRoute == tab.route,
-                            onClick = { navController.navigate(tab.route, tabNavOptions) },
+                            onClick = { navController.navigate(tab.navigateTo, tabNavOptions) },
                             icon = {
                                 if (tab.key == "missing-items" && drawerUi.missingItemCount > 0) {
                                     BadgedBox(badge = { Badge { Text("${drawerUi.missingItemCount}") } }) {
@@ -314,6 +398,9 @@ private fun InventoryNavHost(
                     },
                     onOpenStorage = { hhId ->
                         navController.navigate(Routes.storage(hhId))
+                    },
+                    onOpenSearch = { hhId ->
+                        navController.navigate(Routes.search(hhId)) { launchSingleTop = true }
                     },
                 )
             }
@@ -378,11 +465,20 @@ private fun InventoryNavHost(
 
             composable(
                 route = Routes.SEARCH,
-                arguments = listOf(navArgument("householdId") { type = NavType.LongType }),
+                arguments =
+                    listOf(
+                        navArgument("householdId") { type = NavType.LongType },
+                        navArgument("query") {
+                            type = NavType.StringType
+                            nullable = true
+                            defaultValue = null
+                        },
+                    ),
             ) { entry ->
                 val householdId = entry.arguments?.getLong("householdId") ?: return@composable
                 SearchScreen(
                     householdId = householdId,
+                    initialQuery = entry.arguments?.getString("query"),
                     onBack = { navController.popBackStack() },
                     onOpenSettings = onOpenSettings,
                     onOpenProduct = { hhId, shelfId, productId ->
@@ -429,7 +525,7 @@ private fun InventoryNavHost(
                     onOpenProduct = { hhId, shelfId, productId ->
                         navController.navigate(Routes.productDetail(hhId, shelfId, productId))
                     },
-                    onOpenScanner = { navController.navigate(Routes.SCANNER) },
+                    onOpenScanner = { navController.navigate(Routes.scanner(ScannerMode.ADD)) },
                     scannedCode = scannedCode,
                     onScannedCodeConsumed = { entry.savedStateHandle["scanned_code"] = null },
                 )
@@ -441,14 +537,48 @@ private fun InventoryNavHost(
                     onOpenLocation = { hhId, locId ->
                         navController.navigate(Routes.location(hhId, locId))
                     },
+                    firstHouseholdId = drawerUi.entries.firstOrNull()?.id,
+                    onOpenSearch = { hhId ->
+                        navController.navigate(Routes.search(hhId)) { launchSingleTop = true }
+                    },
                 )
             }
 
-            composable(Routes.SCANNER) {
+            composable(
+                route = Routes.SCANNER,
+                arguments =
+                    listOf(
+                        navArgument("mode") {
+                            type = NavType.StringType
+                            defaultValue = ScannerMode.ADD.argValue
+                        },
+                    ),
+            ) { entry ->
+                val mode = ScannerMode.from(entry.arguments?.getString("mode"))
                 ScannerScreen(
                     onScanned = { code ->
-                        navController.previousBackStackEntry?.savedStateHandle?.set("scanned_code", code)
-                        navController.popBackStack()
+                        when (val action = scanDeliveryActionFor(mode, code)) {
+                            is ScanDeliveryAction.DeliverToCaller -> {
+                                navController.previousBackStackEntry
+                                    ?.savedStateHandle
+                                    ?.set("scanned_code", action.code)
+                                navController.popBackStack()
+                            }
+                            is ScanDeliveryAction.NavigateToSearch -> {
+                                val householdId = drawerUi.entries.firstOrNull()?.id
+                                if (householdId != null) {
+                                    navController.navigate(Routes.search(householdId, action.code)) {
+                                        popUpTo(Routes.SCANNER) { inclusive = true }
+                                        launchSingleTop = true
+                                    }
+                                } else {
+                                    // Household-less account: nothing to look up in.
+                                    // Back out of the scanner instead of stranding the
+                                    // user on the camera.
+                                    navController.popBackStack()
+                                }
+                            }
+                        }
                     },
                     onBack = { navController.popBackStack() },
                 )

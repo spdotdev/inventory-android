@@ -111,4 +111,31 @@ class SearchViewModelTest {
 
             assertEquals("offline", viewModel.state.value.error)
         }
+
+    /**
+     * The scan-to-lookup flow (MainActivity's ScanDeliveryAction.NavigateToSearch)
+     * calls searchFor() with the scanned code so the user lands on an answered
+     * search, not an empty box. Deliberately does NOT call advanceUntilIdle():
+     * onQueryChange's 300ms debounce would leave results empty at this point under
+     * UnconfinedTestDispatcher (delay() only resolves on an explicit advance) —
+     * searchFor has no such delay, so this goes red if searchFor is ever
+     * implemented by routing through onQueryChange instead of running immediately.
+     */
+    @Test
+    fun searchFor_runs_immediately_with_no_debounce() =
+        runTest {
+            val viewModel = SearchViewModel(FakeSearchRepository())
+            viewModel.setHousehold(1)
+
+            viewModel.searchFor("ice")
+
+            assertEquals("ice", viewModel.state.value.query)
+            assertEquals(1, viewModel.state.value.results.size)
+            assertEquals(
+                "Vanilla ice cream",
+                viewModel.state.value.results
+                    .first()
+                    .name,
+            )
+        }
 }

@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -38,6 +39,11 @@ import dev.scuttle.inventory.ui.theme.FrostCard
 fun MissingItemsScreen(
     onBack: () -> Unit,
     onOpenLocation: (householdId: Long, locationId: Long) -> Unit,
+    // MissingItemsUiState has no household list of its own (only items, which are
+    // empty in the common case this button matters least) — the caller passes the
+    // same "first household" HierarchyStore already resolves for Dashboard/Home.
+    firstHouseholdId: Long? = null,
+    onOpenSearch: (householdId: Long) -> Unit = {},
     viewModel: MissingItemsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -58,6 +64,12 @@ fun MissingItemsScreen(
                     }
                 },
                 actions = {
+                    // Search lost its bottom-nav tab (Task 7) but keeps a top-bar icon
+                    // here, per spec — same "nothing to search without a household"
+                    // guard as Dashboard/Home.
+                    IconButton(onClick = { firstHouseholdId?.let(onOpenSearch) }) {
+                        Icon(Icons.Default.Search, contentDescription = stringResource(R.string.nav_search))
+                    }
                     if (state.items.isNotEmpty()) {
                         Icon(
                             imageVector = Icons.Default.Warning,

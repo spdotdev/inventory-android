@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.Card
@@ -67,6 +68,7 @@ fun AllStoragesScreen(
     viewModel: DrawerViewModel,
     onOpenLocation: (householdId: Long, locationId: Long) -> Unit = { _, _ -> },
     onOpenStorage: (householdId: Long) -> Unit = {},
+    onOpenSearch: (householdId: Long) -> Unit = {},
     localViewModel: AllStoragesViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -99,6 +101,19 @@ fun AllStoragesScreen(
                             Text(stringResource(R.string.action_cancel))
                         }
                     } else {
+                        // Search lost its bottom-nav tab (Task 7) but keeps a top-bar
+                        // icon here, per spec — same guard as Dashboard's: nothing to
+                        // search without at least one household loaded.
+                        IconButton(
+                            onClick = {
+                                state.entries
+                                    .firstOrNull()
+                                    ?.id
+                                    ?.let(onOpenSearch)
+                            },
+                        ) {
+                            Icon(Icons.Default.Search, contentDescription = stringResource(R.string.nav_search))
+                        }
                         if (state.entries.any { it.locations.isNotEmpty() }) {
                             IconButton(onClick = { editMode = true }) {
                                 Icon(

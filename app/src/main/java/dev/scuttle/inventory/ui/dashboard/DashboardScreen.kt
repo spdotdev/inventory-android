@@ -17,6 +17,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
@@ -103,6 +104,13 @@ fun DashboardScreen(
                     )
                 },
                 actions = {
+                    // Search lost its bottom-nav tab (Task 7) but keeps this top-bar
+                    // icon, per spec — an occasional "where did I put it", not a daily
+                    // destination. Guarded the same way the products stat card below
+                    // is: nothing to search without at least one household.
+                    IconButton(onClick = { state.firstHouseholdId?.let(onOpenSearch) }) {
+                        Icon(Icons.Default.Search, contentDescription = stringResource(R.string.nav_search))
+                    }
                     IconButton(onClick = viewModel::refresh) {
                         Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.action_refresh))
                     }

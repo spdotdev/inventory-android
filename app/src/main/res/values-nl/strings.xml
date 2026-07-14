@@ -31,7 +31,6 @@
     <string name="nav_dashboard">Dashboard</string>
     <string name="nav_storage">Opslag</string>
     <string name="nav_search">Zoeken</string>
-    <string name="nav_households">Huishoudens</string>
     <string name="nav_missing_items">Ontbrekend</string>
     <string name="nav_scan">Scannen</string>
     <string name="nav_more">Meer</string>
@@ -158,7 +157,6 @@
     <string name="search_field_label">Producten zoeken</string>
     <string name="search_no_results">Geen resultaten.</string>
     <string name="search_result_qty">Aantal: %s</string>
-    <string name="search_choose_household_title">In welk huishouden zoeken?</string>
 
     <!-- Settings -->
     <string name="settings_title">Instellingen</string>
