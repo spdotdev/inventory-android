@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -229,19 +230,24 @@ class HouseholdsViewModelTest {
         }
 
     @Test
-    fun leave_sets_the_left_flag_so_the_edit_screen_can_navigate_back() =
+    fun leave_sets_leftHouseholdId_so_the_edit_screen_can_navigate_back() =
         runTest {
-            // HouseholdEditScreen waits for this flag (rather than navigating back
-            // immediately on tap) so the leave() coroutine — running in the edit
-            // screen's OWN ViewModel instance, scoped to its own back-stack entry —
-            // isn't cancelled mid-flight by the navigation it would otherwise
-            // trigger before the network call completes.
+            // HouseholdEditScreen waits for this (rather than navigating back
+            // immediately on tap) so the leave() coroutine — running in this
+            // ViewModel's own viewModelScope, now shared with HouseholdsScreen across
+            // the whole NavHost (MainActivity hoists one instance) — isn't cancelled
+            // mid-flight by the navigation it would otherwise trigger before the
+            // network call completes. The value is the household's own id, not a
+            // plain boolean, precisely BECAUSE the instance is shared: a boolean
+            // would stay stuck true after the first leave() this session and
+            // auto-navigate back out of the next household-edit visit for any OTHER
+            // household — see the field's own doc comment on HouseholdsUiState.
             val repo = FakeHouseholdRepository()
             val viewModel = HouseholdsViewModel(repo, TestHierarchy.store(repo))
-            assertFalse(viewModel.state.value.left)
+            assertNull(viewModel.state.value.leftHouseholdId)
 
             viewModel.leave(householdId = 1)
 
-            assertTrue(viewModel.state.value.left)
+            assertEquals(1L, viewModel.state.value.leftHouseholdId)
         }
 }

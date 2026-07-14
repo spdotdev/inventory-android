@@ -26,11 +26,25 @@ data class HouseholdsUiState(
     // Gates whether tapping a household row navigates to HouseholdEditScreen —
     // mirrors StorageOverviewViewModel/ShelvesViewModel's editMode flag.
     val editMode: Boolean = false,
-    // Flips true once leave() has actually completed server-side. HouseholdEditScreen
-    // waits for this (LaunchedEffect) instead of navigating back the instant Leave is
-    // tapped — same pattern as ProductDetailViewModel.deleted — so its own viewModelScope
-    // coroutine isn't cancelled mid-flight by the navigation it would otherwise trigger.
-    val left: Boolean = false,
+    // Set to the household's id once leave() has actually completed server-side for
+    // it. HouseholdEditScreen waits for this (LaunchedEffect) instead of navigating
+    // back the instant Leave is tapped — same pattern as ProductDetailViewModel.deleted
+    // — so its own viewModelScope coroutine isn't cancelled mid-flight by the
+    // navigation it would otherwise trigger.
+    //
+    // An id rather than a plain boolean flag is deliberate: this ViewModel is now a
+    // SINGLE instance shared across every visit to HouseholdsScreen and
+    // HouseholdEditScreen for the lifetime of the NavHost (MainActivity hoists it,
+    // same as drawerViewModel — see InventoryNavHost), not a fresh instance per
+    // household-edit visit. A plain boolean would stay stuck `true` after the FIRST
+    // leave() ever completes in this session — LaunchedEffect(state.left) runs on
+    // every fresh composition of HouseholdEditScreen regardless of whether the key's
+    // VALUE actually changed, so a stale `true` would auto-navigate the user back out
+    // of the very next household they open, before they could do anything. Comparing
+    // against the CURRENT screen's own householdId instead makes the check correct
+    // without needing an explicit one-shot "consume" reset call (and without adding a
+    // function this class doesn't have room for under TooManyFunctions).
+    val leftHouseholdId: Long? = null,
 )
 
 @HiltViewModel
@@ -84,7 +98,7 @@ class HouseholdsViewModel
         fun leave(householdId: Long) =
             launchLoading {
                 repository.leave(householdId)
-                _state.update { it.copy(households = repository.list(), left = true) }
+                _state.update { it.copy(households = repository.list(), leftHouseholdId = householdId) }
                 hierarchyStore.refresh()
             }
 

@@ -68,6 +68,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -295,6 +296,11 @@ fun LocationDetailScreen(
                                 // fire their own request immediately — held off while another
                                 // mutation is in flight so two don't race each other.
                                 actionsEnabled = !state.loading,
+                                // A stable, edit-mode-only handle a driving test can wait on
+                                // instead of racing this row's name text against the plain
+                                // tab/pager rendering it replaces (same shape as StorageOverviewScreen's
+                                // location-row-<id>).
+                                modifier = Modifier.testTag("shelf-row-${shelf.id}"),
                                 onClick = {
                                     if (state.editMode) {
                                         shelvesViewModel.toggleSelection(shelf.id)

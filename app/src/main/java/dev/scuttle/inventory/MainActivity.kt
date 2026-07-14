@@ -30,6 +30,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -517,8 +518,30 @@ private fun InventoryNavHost(
                 arguments = listOf(navArgument("householdId") { type = NavType.LongType }),
             ) { entry ->
                 val householdId = entry.arguments?.getLong("householdId") ?: return@composable
+                // Scoped to the HOUSEHOLDS entry's OWN ViewModelStore (not this
+                // destination's) so this resolves to the SAME HouseholdsViewModel
+                // instance HouseholdsScreen is using, rather than each `hiltViewModel()`
+                // default minting its own instance scoped to its own back-stack entry.
+                // Deliberately still lazy — unlike hoisting a default parameter on
+                // InventoryNavHost itself (tried and reverted: that constructs the
+                // ViewModel, and runs its eager init{} network fetch, the instant the
+                // NavHost first composes at app start, before login) — this only
+                // resolves when HOUSEHOLD_EDIT actually composes, which can only
+                // happen once HOUSEHOLDS is already on the back stack. Before this,
+                // navigating list -> edit silently constructed a SECOND
+                // HouseholdsViewModel; its init{} re-ran the same
+                // cached-render-then-refreshSilent() sequence, firing an untracked,
+                // unsynchronized extra GET /households neither screen's caller
+                // expected — exactly the "silent background thing racing a user
+                // gesture" class of bug this branch exists to eliminate (see
+                // ShelvesViewModel.load()'s identical cached/refreshSilent split for
+                // the same shape of hazard). It also meant an edit (rename/re-theme)
+                // made from the edit screen was invisible to the list screen's own
+                // state until that second instance's own network call happened to land.
+                val householdsEntry = remember(entry) { navController.getBackStackEntry(Routes.HOUSEHOLDS) }
                 HouseholdEditScreen(
                     householdId = householdId,
+                    viewModel = hiltViewModel(householdsEntry),
                     onBack = { navController.popBackStack() },
                 )
             }

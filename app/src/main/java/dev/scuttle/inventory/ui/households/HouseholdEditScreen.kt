@@ -75,6 +75,16 @@ private const val MAX_HOUSEHOLD_NAME_LENGTH = 50
  * the household list it loads is process-cached in [dev.scuttle.inventory.data.household.HouseholdRepository],
  * so arriving here from HouseholdsScreen finds the target household already
  * in [dev.scuttle.inventory.ui.households.HouseholdsUiState.households] with no extra round trip.
+ * That "no extra round trip" claim only holds if the CALLER passes the SAME
+ * [viewModel] instance HouseholdsScreen is using — `hiltViewModel()`'s own
+ * default scopes to THIS composable's own back-stack entry, which is a
+ * different [androidx.lifecycle.ViewModelStoreOwner] from HouseholdsScreen's
+ * (they are two separate NavHost destinations). MainActivity's
+ * `InventoryNavHost` hoists one `householdsViewModel` (same pattern as
+ * `drawerViewModel`) and passes it to both screens explicitly for exactly
+ * this reason — leaving the parameter at its default here would silently
+ * mint a second instance, whose own `init` re-runs the cached-render/
+ * refreshSilent() sequence and fires an untracked extra `GET /households`.
  *
  * The colour/icon swatches apply immediately on tap (through [HouseholdsViewModel.updateTheme]),
  * matching direct-manipulation pickers elsewhere; only the name has an explicit Save, because
@@ -92,9 +102,14 @@ fun HouseholdEditScreen(
     val household = state.households.find { it.id == householdId }
 
     // Wait for leave() to actually complete server-side (not just for the tap) before
-    // navigating back — see the doc on HouseholdsUiState.left for why navigating
-    // immediately would risk cancelling the in-flight request.
-    LaunchedEffect(state.left) { if (state.left) onBack() }
+    // navigating back — see the doc on HouseholdsUiState.leftHouseholdId for why
+    // navigating immediately would risk cancelling the in-flight request, and for why
+    // this compares against THIS screen's own householdId rather than a plain
+    // boolean: this ViewModel instance is now SHARED (see the class doc above), so a
+    // boolean would stay stuck true and auto-navigate back out of the very next
+    // household-edit visit, for any OTHER household, before the user could do
+    // anything.
+    LaunchedEffect(state.leftHouseholdId) { if (state.leftHouseholdId == householdId) onBack() }
 
     var name by remember(household?.id) { mutableStateOf(household?.name.orEmpty()) }
     // Kept locally (rather than reading household.color/icon back from state at

@@ -56,6 +56,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -224,6 +225,10 @@ fun StorageOverviewScreen(
                                 // fire their own request immediately — held off while another
                                 // mutation is in flight so two don't race each other.
                                 actionsEnabled = !state.loading,
+                                // A stable, edit-mode-only handle a driving test can wait on
+                                // instead of racing this row's name text against the plain
+                                // (non-edit-mode) list/tab rendering it replaces.
+                                modifier = Modifier.testTag("location-row-${location.id}"),
                                 onClick = { viewModel.toggleSelection(location.id) },
                                 onRename = {
                                     renamingLocation = location

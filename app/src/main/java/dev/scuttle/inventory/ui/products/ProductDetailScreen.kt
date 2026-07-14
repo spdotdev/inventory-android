@@ -151,8 +151,8 @@ fun ProductDetailScreen(
     // restore call's own outcome snackbar — must be shown and resolved HERE,
     // sequentially, before onBack() fires. Firing onBack() first would dispose
     // this screen (and cancel viewModel.undoDelete()'s coroutine, which runs in
-    // the ViewModel's own scope) mid-flight — same hazard HouseholdsUiState.left's
-    // doc comment describes for leave().
+    // the ViewModel's own scope) mid-flight — same hazard HouseholdsUiState.
+    // leftHouseholdId's doc comment describes for leave().
     val undoLabel = stringResource(R.string.delete_undo)
     val productDeletedMessage = stringResource(R.string.product_deleted)
     val undoneMessage = stringResource(R.string.delete_undone)
