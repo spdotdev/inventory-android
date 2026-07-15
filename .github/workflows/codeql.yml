@@ -33,16 +33,44 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      # build-mode: none — CodeQL extracts the Kotlin/Java source directly, with
-      # no compile. The old autobuild step drove `./gradlew ... assemble` under
-      # CodeQL's own JDK/init scripts and reliably failed on this Android/Gradle
-      # project, so the scan never produced results. Source-mode extraction needs
-      # no Gradle, no Android SDK, and no JDK setup here.
+      # Why manual build-mode (not `none`, not `autobuild`):
+      #
+      #  * `build-mode: none` extracts JAVA source only — the java-kotlin
+      #    extractor SKIPS every .kt file without a build, and since this app is
+      #    all Kotlin the database ends up empty and the run fails hard with
+      #    "no source code seen" (gh.io/troubleshooting-code-scanning/
+      #    kotlin-detected-in-no-build). Kotlin extraction REQUIRES a compile.
+      #  * `autobuild` compiles fine but then runs a full `assemble`, which hits
+      #    `:app:validateSigningDebug`. The debug build type is wired to the
+      #    custom `stableDebug` signing config whose keystore
+      #    (~/.android/inventory-debug.jks) is provisioned only by ci.yml /
+      #    release.yml from a secret — absent here, so the build dies before
+      #    analysis and the run is skipped.
+      #
+      # So we trace a compile-ONLY task. `:app:compileDebugKotlin` (with its KSP
+      # predecessor) compiles main + generated Kotlin with full type resolution —
+      # everything CodeQL needs — and never enters the packaging/signing phase,
+      # exactly like ci.yml's ktlint/test jobs that also build without the keystore.
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v6
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
           languages: java-kotlin
-          build-mode: none
+          build-mode: manual
+
+      - name: Compile Kotlin (no packaging, no signing)
+        run: ./gradlew :app:compileDebugKotlin --no-daemon --stacktrace
 
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@v4
