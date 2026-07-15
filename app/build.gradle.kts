@@ -15,6 +15,19 @@ detekt {
     buildUponDefaultConfig = true
     config.setFrom(files("detekt.yml"))
     baseline = file("detekt-baseline.xml")
+    // Plugin default is `src/main/{java,kotlin}` + `src/test/{java,kotlin}` only —
+    // it silently skips src/androidTest, which is where this app's instrumented
+    // flow tests (the destructive-delete safety net) live. Add it explicitly so
+    // detekt actually analyses that source set instead of reporting a false-clean
+    // build.
+    source.setFrom(
+        "src/main/java",
+        "src/main/kotlin",
+        "src/test/java",
+        "src/test/kotlin",
+        "src/androidTest/java",
+        "src/androidTest/kotlin",
+    )
 }
 
 ktlint {
@@ -30,8 +43,8 @@ android {
         applicationId = "dev.scuttle.inventory"
         minSdk = 26
         targetSdk = 36
-        versionCode = 9
-        versionName = "0.1.8"
+        versionCode = 10
+        versionName = "0.1.9"
         testInstrumentationRunner = "dev.scuttle.inventory.HiltTestRunner"
         // Disable Espresso's InputManager.getInstance() call, removed in Android 16 (API 36).
 

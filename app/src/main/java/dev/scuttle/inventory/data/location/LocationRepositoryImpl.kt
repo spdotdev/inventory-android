@@ -2,7 +2,11 @@ package dev.scuttle.inventory.data.location
 
 import dev.scuttle.inventory.data.api.LocationApi
 import dev.scuttle.inventory.data.dto.CreateLocationRequest
+import dev.scuttle.inventory.data.dto.DeleteLocationRequest
 import dev.scuttle.inventory.data.dto.LocationDto
+import dev.scuttle.inventory.data.dto.ReorderRequest
+import dev.scuttle.inventory.data.dto.UpdateLocationRequest
+import dev.scuttle.inventory.data.hierarchy.LocationDeletion
 import javax.inject.Inject
 
 class LocationRepositoryImpl
@@ -26,11 +30,47 @@ class LocationRepositoryImpl
                 cache[householdId] = (cache[householdId] ?: emptyList()) + created
             }
 
-        override suspend fun delete(
+        override suspend fun rename(
             householdId: Long,
             locationId: Long,
+            name: String,
+            type: String,
+        ): LocationDto =
+            api
+                .update(householdId, locationId, UpdateLocationRequest(name = name, type = type))
+                .data
+                .also { updated ->
+                    // On a cache miss, leave the cache absent rather than fabricating a
+                    // 1-element list — getCached() returning null means "go fetch", and a
+                    // bogus single-location cache would lie about every other location in
+                    // this household until the next full refresh.
+                    cache[householdId]?.let { cached ->
+                        cache[householdId] = cached.map { if (it.id == locationId) updated else it }
+                    }
+                }
+
+        override suspend fun reorder(
+            householdId: Long,
+            ids: List<Long>,
+        ): List<LocationDto> =
+            api.reorder(householdId, ReorderRequest(ids)).data.also {
+                cache[householdId] = it
+            }
+
+        override suspend fun deleteWithStrategy(
+            householdId: Long,
+            locationId: Long,
+            deletion: LocationDeletion,
         ) {
-            api.delete(householdId, locationId)
+            api.delete(
+                householdId,
+                locationId,
+                DeleteLocationRequest(
+                    strategy = deletion.strategy?.wire,
+                    target_location_id = deletion.targetLocationId,
+                    deletion_batch_id = deletion.batchId,
+                ),
+            )
             cache[householdId] = cache[householdId]?.filter { it.id != locationId } ?: emptyList()
         }
 

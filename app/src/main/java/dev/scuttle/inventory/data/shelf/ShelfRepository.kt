@@ -1,6 +1,7 @@
 package dev.scuttle.inventory.data.shelf
 
 import dev.scuttle.inventory.data.dto.ShelfDto
+import dev.scuttle.inventory.data.hierarchy.ShelfDeletion
 
 interface ShelfRepository {
     fun getCached(
@@ -19,11 +20,30 @@ interface ShelfRepository {
         name: String,
     ): ShelfDto
 
-    suspend fun delete(
+    /**
+     * Defaults throw so test fakes only implement what a test actually exercises
+     * (same pattern as [clear] and HouseholdRepository.updateTheme). Without
+     * this, adding a method here breaks every fake in the unit-test suite.
+     */
+    suspend fun rename(
         householdId: Long,
         locationId: Long,
         shelfId: Long,
-    )
+        name: String,
+    ): ShelfDto = throw UnsupportedOperationException("rename not supported")
+
+    suspend fun reorder(
+        householdId: Long,
+        locationId: Long,
+        ids: List<Long>,
+    ): List<ShelfDto> = throw UnsupportedOperationException("reorder not supported")
+
+    suspend fun deleteWithStrategy(
+        householdId: Long,
+        locationId: Long,
+        shelfId: Long,
+        deletion: ShelfDeletion,
+    ): Unit = throw UnsupportedOperationException("deleteWithStrategy not supported")
 
     /** Drop the in-memory cache so one account's data never bleeds into the next session. */
     fun clear() {}

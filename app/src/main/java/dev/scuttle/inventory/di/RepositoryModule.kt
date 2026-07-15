@@ -8,6 +8,8 @@ import dev.scuttle.inventory.data.auth.AuthRepository
 import dev.scuttle.inventory.data.auth.AuthRepositoryImpl
 import dev.scuttle.inventory.data.error.ErrorLogger
 import dev.scuttle.inventory.data.error.ErrorLoggerImpl
+import dev.scuttle.inventory.data.hierarchy.RestoreRepository
+import dev.scuttle.inventory.data.hierarchy.RestoreRepositoryImpl
 import dev.scuttle.inventory.data.household.HouseholdRepository
 import dev.scuttle.inventory.data.household.HouseholdRepositoryImpl
 import dev.scuttle.inventory.data.invite.InviteRepository
@@ -62,4 +64,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindRealtimeGateway(impl: PusherRealtimeGateway): RealtimeGateway
+
+    @Binds
+    @Singleton
+    abstract fun bindRestoreRepository(impl: RestoreRepositoryImpl): RestoreRepository
 }

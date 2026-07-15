@@ -34,12 +34,23 @@ data class JoinHouseholdRequest(
     val code: String,
 )
 
-// No property defaults on purpose: the app's Json has encodeDefaults=false, so a
-// defaulted field would be OMITTED from the body and the server would keep the old
-// value instead of clearing it (same pitfall as UpdateProductRequest). Explicit
-// null = clear back to the derived default.
+// The app's Json has encodeDefaults=false: a property equal to its default is
+// OMITTED from the body. That's normally the wrong default for a request DTO —
+// but `name` here is the deliberate exception, and the asymmetry matters:
+//
+// - `name` DEFAULTS to null on purpose. Laravel's rule is `sometimes|required`:
+//   an ABSENT key passes ("don't touch the name"), but an EXPLICIT null FAILS
+//   validation. A theme-only update must omit `name` entirely, so it needs the
+//   default — encodeDefaults=false then drops it for us. Do not remove this
+//   default; doing so makes every color/icon-only update send `"name":null`
+//   and 422.
+// - `color` / `icon` must stay UN-defaulted. Laravel's rule there is
+//   `sometimes|nullable`: an explicit null is meaningful (clears the theme back
+//   to the derived default), so it must always be encoded, never silently
+//   dropped.
 @Serializable
-data class UpdateHouseholdThemeRequest(
+data class UpdateHouseholdRequest(
+    val name: String? = null,
     val color: String?,
     val icon: String?,
 )

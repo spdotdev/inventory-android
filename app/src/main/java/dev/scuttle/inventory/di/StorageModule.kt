@@ -9,11 +9,15 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import dev.scuttle.inventory.data.settings.DefaultHouseholdStore
 import dev.scuttle.inventory.data.settings.FavoritesStore
+import dev.scuttle.inventory.data.settings.HouseholdViewStore
 import dev.scuttle.inventory.data.settings.LanguageStore
 import dev.scuttle.inventory.data.settings.SharedPrefsDefaultHouseholdStore
 import dev.scuttle.inventory.data.settings.SharedPrefsFavoritesStore
+import dev.scuttle.inventory.data.settings.SharedPrefsHouseholdViewStore
 import dev.scuttle.inventory.data.settings.SharedPrefsLanguageStore
+import dev.scuttle.inventory.data.settings.SharedPrefsShelfViewStore
 import dev.scuttle.inventory.data.settings.SharedPrefsThemeModeStore
+import dev.scuttle.inventory.data.settings.ShelfViewStore
 import dev.scuttle.inventory.data.settings.ThemeModeStore
 import dev.scuttle.inventory.data.storage.EncryptedTokenStore
 import dev.scuttle.inventory.data.storage.TokenStore
@@ -51,6 +55,18 @@ object StorageModule {
     fun provideLanguageStore(
         @ApplicationContext context: Context,
     ): LanguageStore = SharedPrefsLanguageStore(context)
+
+    @Provides
+    @Singleton
+    fun provideShelfViewStore(
+        @ApplicationContext context: Context,
+    ): ShelfViewStore = SharedPrefsShelfViewStore(context)
+
+    @Provides
+    @Singleton
+    fun provideHouseholdViewStore(
+        @ApplicationContext context: Context,
+    ): HouseholdViewStore = SharedPrefsHouseholdViewStore(context)
 
     @Provides
     @Singleton

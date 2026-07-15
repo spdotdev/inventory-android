@@ -13,6 +13,7 @@ import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.data.shelf.ShelfRepository
 import dev.scuttle.inventory.ui.missing.MissingItemsViewModel
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -52,11 +53,6 @@ class MissingItemsViewModelTest {
             name: String,
             type: String,
         ) = LocationDto(99, name, type)
-
-        override suspend fun delete(
-            householdId: Long,
-            locationId: Long,
-        ) {}
     }
 
     private class FakeShelfRepository(
@@ -77,12 +73,6 @@ class MissingItemsViewModelTest {
             locationId: Long,
             name: String,
         ) = ShelfDto(99, name, 0, locationId)
-
-        override suspend fun delete(
-            householdId: Long,
-            locationId: Long,
-            shelfId: Long,
-        ) {}
     }
 
     private class FakeProductRepository(
@@ -142,7 +132,7 @@ class MissingItemsViewModelTest {
             householdId: Long,
             shelfId: Long,
             productId: Long,
-        ) {}
+        ) = "batch"
 
         override suspend fun uploadImage(
             householdId: Long,
@@ -167,6 +157,7 @@ class MissingItemsViewModelTest {
                 FakeLocationRepository(locationsByHousehold),
                 FakeShelfRepository(shelvesByLocation),
                 FakeProductRepository(productsByShelf),
+                UnconfinedTestDispatcher(),
             )
         store.loadFromCache()
         return MissingItemsViewModel(store)
@@ -195,6 +186,7 @@ class MissingItemsViewModelTest {
                     FakeLocationRepository(),
                     FakeShelfRepository(),
                     FakeProductRepository(),
+                    UnconfinedTestDispatcher(),
                 )
             val vm = MissingItemsViewModel(store)
 

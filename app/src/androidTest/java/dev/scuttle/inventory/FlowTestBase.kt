@@ -65,16 +65,31 @@ abstract class FlowTestBase {
             .trim()
 
     /**
-     * Open a product row by tapping its NAME area, not the node center:
-     * performClick's center tap lands on the quantity stepper cluster — a
-     * DISABLED "−" (qty 0) silently swallows the click and the card's
-     * navigation onClick never fires. Humans naturally tap the name, which is
-     * why manual testing never reproduced it (found via the 06a989b layout
-     * shift; nightly-emulator + phone both failed the same way).
+     * Tap a row's NAME/leading area, not its node center: performClick's
+     * center tap lands on whatever trailing interactive cluster the row
+     * carries — a product row's quantity stepper, or (found investigating the
+     * CI-only failures behind DeleteShelfFlowTest/DeleteShelfStrategyFlowTest/
+     * DeleteLocationFlowTest — a printToLog dump of BOTH composition roots on
+     * real CI hardware caught it directly: the "second root" was the Rename
+     * dialog) an `EditableRow`'s trailing rename/reorder icon buttons. Either
+     * way the click lands on a DIFFERENT element than the one under test —
+     * for a disabled "−" (qty 0) it silently swallows the click and the
+     * card's own onClick never fires; for EditableRow it fires `onRename`
+     * instead of toggling selection, with no error either way. This is
+     * screen-size/density dependent (the row's geometric center only
+     * overlaps the trailing cluster at SOME width/density combinations),
+     * which is exactly why it reproduced deterministically on CI's emulator
+     * profile and never once locally across dozens of runs on a
+     * higher-resolution AVD. Humans naturally tap the name/leading text,
+     * which is why manual testing never catches it either (originally found
+     * for products via the 06a989b layout shift; nightly-emulator + phone
+     * both failed the same way).
      *
-     * The name is the card's top line since #31 (it used to be its left column),
-     * so aim high rather than left — the stepper now owns the lower half at
-     * every horizontal offset.
+     * The name/leading content sits at the row's top-left-ish region for
+     * every row shape this app has (a product card's name is its top line
+     * since #31; an EditableRow's checkbox/text lead the row on the left),
+     * so one fixed offset works for both — trailing content always owns the
+     * right side and/or lower half instead.
      */
     protected fun androidx.compose.ui.test.SemanticsNodeInteraction.clickNameArea() =
         performTouchInput { click(percentOffset(0.15f, 0.2f)) }

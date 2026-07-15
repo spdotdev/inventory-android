@@ -6,6 +6,8 @@ import dev.scuttle.inventory.data.location.LocationRepository
 import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.data.settings.DefaultHouseholdStore
 import dev.scuttle.inventory.data.settings.FavoritesStore
+import dev.scuttle.inventory.data.settings.HouseholdViewStore
+import dev.scuttle.inventory.data.settings.ShelfViewStore
 import dev.scuttle.inventory.data.shelf.ShelfRepository
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -19,6 +21,12 @@ import javax.inject.Singleton
  * calls `loadFromCache()`, which repopulates synchronously from the stale caches
  * before the network returns. In-memory/prefs only, so it respects the
  * always-online, no-local-DB rule.
+ *
+ * One constructor parameter per thing to clear is this class's entire job — it
+ * is a pure fan-out, not a design smell to split up; splitting it would need an
+ * artificial "clearable" abstraction (and Hilt multibinding) for no real benefit.
+ * (LongParameterList is baselined in detekt-baseline.xml, same mechanism as the
+ * other long-parameter-list Composables in this codebase.)
  */
 @Singleton
 class SessionCleaner
@@ -31,6 +39,8 @@ class SessionCleaner
         private val hierarchyStore: HierarchyStore,
         private val favoritesStore: FavoritesStore,
         private val defaultHouseholdStore: DefaultHouseholdStore,
+        private val shelfViewStore: ShelfViewStore,
+        private val householdViewStore: HouseholdViewStore,
     ) {
         fun clear() {
             householdRepository.clear()
@@ -40,5 +50,7 @@ class SessionCleaner
             hierarchyStore.clear()
             favoritesStore.clear()
             defaultHouseholdStore.clear()
+            shelfViewStore.clear()
+            householdViewStore.clear()
         }
     }

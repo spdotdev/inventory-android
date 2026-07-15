@@ -65,6 +65,17 @@ class SearchViewModel
             searchJob = viewModelScope.launch { doSearch() }
         }
 
+        /**
+         * Applies [query] as the current search text and runs it immediately —
+         * for callers (the scan-to-lookup flow) that already have the exact term
+         * to search, not keystrokes to debounce like [onQueryChange]'s 300ms wait.
+         */
+        fun searchFor(query: String) {
+            searchJob?.cancel()
+            _state.update { it.copy(query = query, error = null) }
+            searchJob = viewModelScope.launch { doSearch() }
+        }
+
         fun setSort(order: SortOrder) = _state.update { it.copy(sort = order) }
 
         private suspend fun doSearch() {

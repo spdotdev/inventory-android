@@ -7,43 +7,35 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.MoreHoriz
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.SpaceDashboard
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavOptionsBuilder
 import androidx.navigation.NavType
@@ -59,8 +51,11 @@ import dev.scuttle.inventory.ui.app.DrawerViewModel
 import dev.scuttle.inventory.ui.auth.AuthScreen
 import dev.scuttle.inventory.ui.auth.AuthViewModel
 import dev.scuttle.inventory.ui.auth.ForgotPasswordScreen
+import dev.scuttle.inventory.ui.common.HouseholdOption
+import dev.scuttle.inventory.ui.common.HouseholdPickerSheet
 import dev.scuttle.inventory.ui.dashboard.DashboardScreen
 import dev.scuttle.inventory.ui.home.AllStoragesScreen
+import dev.scuttle.inventory.ui.households.HouseholdEditScreen
 import dev.scuttle.inventory.ui.households.HouseholdsScreen
 import dev.scuttle.inventory.ui.invite.InviteScreen
 import dev.scuttle.inventory.ui.location.LocationDetailScreen
@@ -128,26 +123,123 @@ private data class BottomTab(
     val route: String,
     val labelRes: Int,
     val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    // Where a tap on this tab actually navigates. Defaults to [route] — the plain
+    // "this tab IS this destination" case every tab but Scan fits. Kept distinct
+    // from [route] (which is also the pattern matched against currentRoute to
+    // decide selection/bottom-bar-visibility) because Scan's destination is
+    // parameterized (Routes.SCANNER = "scanner?mode={mode}"): [route] has to stay
+    // the bare pattern for that match to work, while the tap needs a concrete
+    // `mode` value baked in. For Scan specifically, matching [route] alone is NOT
+    // enough to decide selection/visibility either — ADD shares the same pattern
+    // (Minor 9, final review) — see [scannerRouteIsTheBottomBarTab].
+    val navigateTo: String = route,
 )
+
+/**
+ * Which caller opened the scanner, carried explicitly as a route argument rather
+ * than inferred from the back stack. Before this, [Routes.SCANNER] had exactly one
+ * delivery contract — write the code to the previous entry's savedStateHandle and
+ * pop — which only makes sense when a shelf screen (LocationDetailScreen) is that
+ * previous entry. Once the bottom-bar Scan tab started opening the same route with
+ * Dashboard/whatever-tab as the previous entry, that contract silently broke: nothing
+ * there reads `scanned_code`, so a bottom-bar scan did nothing. Making the caller's
+ * intent an explicit argument (ADD vs LOOKUP) lets [scanDeliveryActionFor] give each
+ * caller its own, correct behavior instead of guessing from the stack shape.
+ */
+enum class ScannerMode(
+    val argValue: String,
+) {
+    /** Opened from a shelf screen: deliver the code back via savedStateHandle. */
+    ADD("add"),
+
+    /** Opened from the bottom bar, with no shelf context: hand the code to Search. */
+    LOOKUP("lookup"),
+    ;
+
+    companion object {
+        /** Unrecognized or missing values fall back to ADD, the pre-existing behavior
+         * for the route's only caller before LOOKUP existed. */
+        fun from(argValue: String?): ScannerMode = entries.firstOrNull { it.argValue == argValue } ?: ADD
+    }
+}
+
+/** What a freshly-scanned barcode should do next, decided purely from [ScannerMode] — no
+ * NavController involved, so the ADD/LOOKUP branch is unit-testable on its own (see
+ * ScanDeliveryActionTest). Mirrors [authRedirectFor]'s split between pure decision and
+ * NavController side effect below.
+ */
+sealed interface ScanDeliveryAction {
+    /** ADD: deliver [code] to the caller's savedStateHandle and pop back to it — the
+     * "add this to the shelf I came from" contract LocationDetailScreen expects.
+     */
+    data class DeliverToCaller(
+        val code: String,
+    ) : ScanDeliveryAction
+
+    /** LOOKUP: navigate to Search with [code] as the pre-filled, already-run query —
+     * "do I have this, and where did I put it" (the spec's role for Search), and the
+     * only sensible outcome when there's no shelf to add to.
+     */
+    data class NavigateToSearch(
+        val code: String,
+    ) : ScanDeliveryAction
+}
+
+fun scanDeliveryActionFor(
+    mode: ScannerMode,
+    code: String,
+): ScanDeliveryAction =
+    when (mode) {
+        ScannerMode.ADD -> ScanDeliveryAction.DeliverToCaller(code)
+        ScannerMode.LOOKUP -> ScanDeliveryAction.NavigateToSearch(code)
+    }
+
+/**
+ * Whether the current Routes.SCANNER destination IS the bottom-bar Scan tab's own
+ * destination — true only for LOOKUP, false for ADD and for a null mode (Minor 9,
+ * final review). Routes.SCANNER is one shared route PATTERN ("scanner?mode={mode}")
+ * for two callers with different bottom-bar expectations: LOOKUP is the Scan tab
+ * itself (bar shows, Scan selected); ADD is opened from a shelf screen with no bottom
+ * bar underneath it (bar must not reappear over the camera, Scan must not show
+ * selected). NavController's own `destination.route` is always the bare pattern,
+ * identical for both, so the caller must resolve [mode] from the back stack entry's
+ * own `mode` argument first — see [ScannerMode.from]. Pure so it's unit-testable
+ * without a NavController, mirroring [scanDeliveryActionFor]'s split between pure
+ * decision and NavController side effect.
+ */
+fun scannerRouteIsTheBottomBarTab(mode: ScannerMode?): Boolean = mode == ScannerMode.LOOKUP
 
 private object Routes {
     const val AUTH = "auth"
     const val FORGOT_PASSWORD = "forgot-password"
     const val HOME = "home"
-    const val SCANNER = "scanner"
+    const val SCANNER = "scanner?mode={mode}"
     const val DASHBOARD = "dashboard"
     const val HOUSEHOLDS = "households"
+    const val HOUSEHOLD_EDIT = "household-edit/{householdId}"
     const val SETTINGS = "settings"
     const val STORAGE = "storage/{householdId}"
-    const val SEARCH = "search/{householdId}"
+    const val SEARCH = "search/{householdId}?query={query}"
     const val INVITE = "invite/{householdId}/{householdName}"
     const val LOCATION = "location/{householdId}/{locationId}"
     const val PRODUCT_DETAIL = "product-detail/{householdId}/{shelfId}/{productId}"
     const val MISSING_ITEMS = "missing-items"
 
+    fun householdEdit(householdId: Long) = "household-edit/$householdId"
+
     fun storage(householdId: Long) = "storage/$householdId"
 
-    fun search(householdId: Long) = "search/$householdId"
+    fun scanner(mode: ScannerMode) = "scanner?mode=${mode.argValue}"
+
+    /**
+     * [query] pre-fills and immediately runs a search (the scan-to-lookup flow) —
+     * left null for every other caller, which just opens Search on an empty query
+     * exactly as before this existed.
+     */
+    fun search(
+        householdId: Long,
+        query: String? = null,
+    ) = "search/$householdId" + if (query != null) "?query=${java.net.URLEncoder.encode(query, "UTF-8")}" else ""
 
     fun invite(
         householdId: Long,
@@ -248,59 +340,72 @@ private fun InventoryNavHost(
 
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
+    // Routes.SCANNER ("scanner?mode={mode}") is one route PATTERN shared by two
+    // callers with very different bottom-bar expectations (Minor 9, final review):
+    // LOOKUP is the bottom-bar Scan tab itself — the bar should show, with Scan
+    // selected. ADD is opened from a shelf screen with no bottom bar underneath
+    // it — the bar must not reappear over the camera, and Scan must not show
+    // selected (that navigation has nothing to do with the Scan tab). currentRoute
+    // alone can't tell these apart: NavController's own destination.route is
+    // always the bare pattern, identical for both modes. The concrete `mode`
+    // argument is what actually differs — read it from the back stack entry.
+    val currentScannerMode =
+        if (currentRoute == Routes.SCANNER) {
+            ScannerMode.from(backStackEntry?.arguments?.getString("mode"))
+        } else {
+            null
+        }
     val drawerUi by drawerViewModel.state.collectAsState()
-    var showHouseholdPicker by rememberSaveable { mutableStateOf(false) }
-    val householdPickerSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    // Non-null while the Scan tab's LOOKUP mode is waiting on a household pick
+    // (Blocker 2, final review): the scanned code, held until the picker below
+    // resolves it to a household and navigates to Search. The scanner has
+    // genuinely no household context of its own to fall back to — see
+    // ScanDeliveryAction.NavigateToSearch's own handling below.
+    var pendingScanLookupCode by rememberSaveable { mutableStateOf<String?>(null) }
     val bottomTabs =
         listOf(
             BottomTab("dashboard", Routes.DASHBOARD, R.string.nav_dashboard, Icons.Filled.SpaceDashboard),
             BottomTab("home", Routes.HOME, R.string.nav_storage, Icons.Filled.Home),
-            BottomTab("households", Routes.HOUSEHOLDS, R.string.nav_households, Icons.Filled.People),
+            // The centre slot is the primary-ACTION slot. Scanning is a weekly
+            // grocery-trip action; search is an occasional "where did I put it",
+            // and it already has a top-bar icon. Opened from here (no shelf
+            // context), the scan resolves to a Search lookup — see ScannerMode.
+            BottomTab(
+                "scanner",
+                Routes.SCANNER,
+                R.string.nav_scan,
+                Icons.Filled.QrCodeScanner,
+                navigateTo = Routes.scanner(ScannerMode.LOOKUP),
+            ),
             BottomTab("missing-items", Routes.MISSING_ITEMS, R.string.nav_missing_items, Icons.Filled.Warning),
-            BottomTab("search", Routes.SEARCH, R.string.nav_search, Icons.Filled.Search),
+            // Not "Settings": it now holds households, join/invite and account.
+            BottomTab("more", Routes.SETTINGS, R.string.nav_more, Icons.Filled.MoreHoriz),
         )
     val onOpenSettings: () -> Unit = { navController.navigate(Routes.SETTINGS) { launchSingleTop = true } }
     Scaffold(
         contentWindowInsets = WindowInsets(0),
         bottomBar = {
-            if (bottomTabs.any { it.route == currentRoute }) {
+            // On the SCANNER route specifically, only the LOOKUP mode is the
+            // bottom-bar tab's own destination — ADD (opened from a shelf screen)
+            // must not resurrect the bar over the camera. Every other tab keeps
+            // the plain route-pattern match.
+            val showBottomBar =
+                if (currentRoute == Routes.SCANNER) {
+                    scannerRouteIsTheBottomBarTab(currentScannerMode)
+                } else {
+                    bottomTabs.any { it.route == currentRoute }
+                }
+            if (showBottomBar) {
                 NavigationBar {
                     bottomTabs.forEach { tab ->
                         NavigationBarItem(
-                            selected = currentRoute == tab.route,
-                            // Search needs a householdId to navigate to (or to offer a
-                            // choice of household), which comes from drawerUi.entries —
-                            // loaded asynchronously from HierarchyStore and possibly empty
-                            // for real (a household-less account). Gate the tab on that so
-                            // it's never tappable-but-inert: with nothing loaded yet (or
-                            // ever), the tab shows disabled instead of silently doing
-                            // nothing when tapped. The other four tabs don't depend on
-                            // this data, so they stay always enabled.
-                            enabled = if (tab.key == "search") drawerUi.entries.isNotEmpty() else true,
-                            onClick = {
-                                if (tab.key == "search") {
-                                    val entries = drawerUi.entries
-                                    when {
-                                        entries.size == 1 ->
-                                            // No saveState/restoreState: SEARCH is
-                                            // parameterized (search/{householdId}); a
-                                            // saved back-stack entry would restore
-                                            // verbatim with its OLD householdId, silently
-                                            // ignoring this one.
-                                            navController.navigate(Routes.search(entries.first().id)) {
-                                                popUpTo(Routes.DASHBOARD)
-                                                launchSingleTop = true
-                                            }
-                                        entries.size > 1 -> showHouseholdPicker = true
-                                        // Unreachable via the UI: `enabled` above already
-                                        // keeps the tab untappable when entries is empty.
-                                        // Kept as a defensive no-op, not a real dead end.
-                                        else -> Unit
-                                    }
+                            selected =
+                                if (tab.route == Routes.SCANNER) {
+                                    scannerRouteIsTheBottomBarTab(currentScannerMode)
                                 } else {
-                                    navController.navigate(tab.route, tabNavOptions)
-                                }
-                            },
+                                    currentRoute == tab.route
+                                },
+                            onClick = { navController.navigate(tab.navigateTo, tabNavOptions) },
                             icon = {
                                 if (tab.key == "missing-items" && drawerUi.missingItemCount > 0) {
                                     BadgedBox(badge = { Badge { Text("${drawerUi.missingItemCount}") } }) {
@@ -325,43 +430,23 @@ private fun InventoryNavHost(
             }
         },
     ) { scaffoldPadding ->
-        if (showHouseholdPicker) {
-            ModalBottomSheet(
-                onDismissRequest = { showHouseholdPicker = false },
-                sheetState = householdPickerSheetState,
-            ) {
-                Column(
-                    modifier =
-                        Modifier
-                            .verticalScroll(rememberScrollState())
-                            .navigationBarsPadding(),
-                ) {
-                    Text(
-                        stringResource(R.string.search_choose_household_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(16.dp),
-                    )
-                    drawerUi.entries.forEach { entry ->
-                        NavigationDrawerItem(
-                            label = { Text(entry.name) },
-                            selected = false,
-                            onClick = {
-                                showHouseholdPicker = false
-                                // No saveState/restoreState: SEARCH is parameterized
-                                // (search/{householdId}); a saved back-stack entry would
-                                // restore verbatim with its OLD householdId, silently
-                                // ignoring the household just picked here.
-                                navController.navigate(Routes.search(entry.id)) {
-                                    popUpTo(Routes.DASHBOARD)
-                                    launchSingleTop = true
-                                }
-                            },
-                            modifier =
-                                Modifier.padding(horizontal = 12.dp).testTag("household-picker-${entry.name}"),
-                        )
+        pendingScanLookupCode?.let { code ->
+            HouseholdPickerSheet(
+                households = drawerUi.entries.map { HouseholdOption(it.id, it.name) },
+                onDismiss = {
+                    pendingScanLookupCode = null
+                    // Dismissed without picking: nothing left to look up. Back out
+                    // of the scanner instead of stranding the user on the camera.
+                    navController.popBackStack()
+                },
+                onPick = { householdId ->
+                    pendingScanLookupCode = null
+                    navController.navigate(Routes.search(householdId, code)) {
+                        popUpTo(Routes.SCANNER) { inclusive = true }
+                        launchSingleTop = true
                     }
-                }
-            }
+                },
+            )
         }
         NavHost(
             navController = navController,
@@ -382,19 +467,20 @@ private fun InventoryNavHost(
             composable(Routes.HOME) {
                 AllStoragesScreen(
                     viewModel = drawerViewModel,
-                    onOpenSettings = onOpenSettings,
                     onOpenLocation = { hhId, locId ->
                         navController.navigate(Routes.location(hhId, locId))
                     },
                     onOpenStorage = { hhId ->
                         navController.navigate(Routes.storage(hhId))
                     },
+                    onOpenSearch = { hhId ->
+                        navController.navigate(Routes.search(hhId)) { launchSingleTop = true }
+                    },
                 )
             }
 
             composable(Routes.DASHBOARD) {
                 DashboardScreen(
-                    onOpenSettings = onOpenSettings,
                     onOpenLocation = { hhId, locId ->
                         navController.navigate(Routes.location(hhId, locId))
                     },
@@ -423,6 +509,40 @@ private fun InventoryNavHost(
                     onBack = { navController.popBackStack() },
                     onOpenSettings = onOpenSettings,
                     onOpenInvite = { id, name -> navController.navigate(Routes.invite(id, name)) },
+                    onEditHousehold = { id -> navController.navigate(Routes.householdEdit(id)) },
+                )
+            }
+
+            composable(
+                route = Routes.HOUSEHOLD_EDIT,
+                arguments = listOf(navArgument("householdId") { type = NavType.LongType }),
+            ) { entry ->
+                val householdId = entry.arguments?.getLong("householdId") ?: return@composable
+                // Scoped to the HOUSEHOLDS entry's OWN ViewModelStore (not this
+                // destination's) so this resolves to the SAME HouseholdsViewModel
+                // instance HouseholdsScreen is using, rather than each `hiltViewModel()`
+                // default minting its own instance scoped to its own back-stack entry.
+                // Deliberately still lazy — unlike hoisting a default parameter on
+                // InventoryNavHost itself (tried and reverted: that constructs the
+                // ViewModel, and runs its eager init{} network fetch, the instant the
+                // NavHost first composes at app start, before login) — this only
+                // resolves when HOUSEHOLD_EDIT actually composes, which can only
+                // happen once HOUSEHOLDS is already on the back stack. Before this,
+                // navigating list -> edit silently constructed a SECOND
+                // HouseholdsViewModel; its init{} re-ran the same
+                // cached-render-then-refreshSilent() sequence, firing an untracked,
+                // unsynchronized extra GET /households neither screen's caller
+                // expected — exactly the "silent background thing racing a user
+                // gesture" class of bug this branch exists to eliminate (see
+                // ShelvesViewModel.load()'s identical cached/refreshSilent split for
+                // the same shape of hazard). It also meant an edit (rename/re-theme)
+                // made from the edit screen was invisible to the list screen's own
+                // state until that second instance's own network call happened to land.
+                val householdsEntry = remember(entry) { navController.getBackStackEntry(Routes.HOUSEHOLDS) }
+                HouseholdEditScreen(
+                    householdId = householdId,
+                    viewModel = hiltViewModel(householdsEntry),
+                    onBack = { navController.popBackStack() },
                 )
             }
 
@@ -441,11 +561,20 @@ private fun InventoryNavHost(
 
             composable(
                 route = Routes.SEARCH,
-                arguments = listOf(navArgument("householdId") { type = NavType.LongType }),
+                arguments =
+                    listOf(
+                        navArgument("householdId") { type = NavType.LongType },
+                        navArgument("query") {
+                            type = NavType.StringType
+                            nullable = true
+                            defaultValue = null
+                        },
+                    ),
             ) { entry ->
                 val householdId = entry.arguments?.getLong("householdId") ?: return@composable
                 SearchScreen(
                     householdId = householdId,
+                    initialQuery = entry.arguments?.getString("query"),
                     onBack = { navController.popBackStack() },
                     onOpenSettings = onOpenSettings,
                     onOpenProduct = { hhId, shelfId, productId ->
@@ -492,7 +621,7 @@ private fun InventoryNavHost(
                     onOpenProduct = { hhId, shelfId, productId ->
                         navController.navigate(Routes.productDetail(hhId, shelfId, productId))
                     },
-                    onOpenScanner = { navController.navigate(Routes.SCANNER) },
+                    onOpenScanner = { navController.navigate(Routes.scanner(ScannerMode.ADD)) },
                     scannedCode = scannedCode,
                     onScannedCodeConsumed = { entry.savedStateHandle["scanned_code"] = null },
                 )
@@ -501,18 +630,63 @@ private fun InventoryNavHost(
             composable(Routes.MISSING_ITEMS) {
                 MissingItemsScreen(
                     onBack = { navController.popBackStack() },
-                    onOpenSettings = onOpenSettings,
                     onOpenLocation = { hhId, locId ->
                         navController.navigate(Routes.location(hhId, locId))
+                    },
+                    households = drawerUi.entries.map { HouseholdOption(it.id, it.name) },
+                    onOpenSearch = { hhId ->
+                        navController.navigate(Routes.search(hhId)) { launchSingleTop = true }
                     },
                 )
             }
 
-            composable(Routes.SCANNER) {
+            composable(
+                route = Routes.SCANNER,
+                arguments =
+                    listOf(
+                        navArgument("mode") {
+                            type = NavType.StringType
+                            defaultValue = ScannerMode.ADD.argValue
+                        },
+                    ),
+            ) { entry ->
+                val mode = ScannerMode.from(entry.arguments?.getString("mode"))
                 ScannerScreen(
                     onScanned = { code ->
-                        navController.previousBackStackEntry?.savedStateHandle?.set("scanned_code", code)
-                        navController.popBackStack()
+                        when (val action = scanDeliveryActionFor(mode, code)) {
+                            is ScanDeliveryAction.DeliverToCaller -> {
+                                navController.previousBackStackEntry
+                                    ?.savedStateHandle
+                                    ?.set("scanned_code", action.code)
+                                navController.popBackStack()
+                            }
+                            is ScanDeliveryAction.NavigateToSearch -> {
+                                val entries = drawerUi.entries
+                                when {
+                                    entries.isEmpty() -> {
+                                        // Household-less account: nothing to look up
+                                        // in. Back out of the scanner instead of
+                                        // stranding the user on the camera.
+                                        navController.popBackStack()
+                                    }
+                                    entries.size == 1 -> {
+                                        navController.navigate(Routes.search(entries.first().id, action.code)) {
+                                            popUpTo(Routes.SCANNER) { inclusive = true }
+                                            launchSingleTop = true
+                                        }
+                                    }
+                                    else -> {
+                                        // More than one household and, unlike
+                                        // Dashboard/Home/Missing items, genuinely no
+                                        // row/context to carry one from — this IS the
+                                        // no-context case (Blocker 2, final review).
+                                        // Ask via the picker rendered above instead of
+                                        // hard-coding the first household.
+                                        pendingScanLookupCode = action.code
+                                    }
+                                }
+                            }
+                        }
                     },
                     onBack = { navController.popBackStack() },
                 )

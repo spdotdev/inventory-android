@@ -6,12 +6,14 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.scuttle.inventory.data.HierarchyStore
 import dev.scuttle.inventory.data.dto.ProductDto
 import dev.scuttle.inventory.data.error.toUserMessage
+import dev.scuttle.inventory.data.hierarchy.RestoreRepository
 import dev.scuttle.inventory.data.location.LocationRepository
 import dev.scuttle.inventory.data.product.ProductEdit
 import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.data.search.SearchRepository
 import dev.scuttle.inventory.data.shelf.ShelfRepository
 import dev.scuttle.inventory.ui.common.SortOrder
+import dev.scuttle.inventory.ui.hierarchy.UndoOutcome
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -22,9 +24,18 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * A candidate shelf a product could move to. Carries [locationName]/[shelfName] and
+ * [isSystemShelf] raw — rather than a pre-baked label — because this is built inside a
+ * ViewModel, which has no locale-correct way to localize the system ("Unsorted") shelf's
+ * label itself (final review, ALSO FIX). The composable that renders this list builds
+ * the displayed label via `shelfDisplayName(shelfName, isSystemShelf)`.
+ */
 data class MoveTarget(
     val shelfId: Long,
-    val label: String,
+    val locationName: String,
+    val shelfName: String,
+    val isSystemShelf: Boolean,
 )
 
 sealed interface ScanResult {
@@ -56,6 +67,14 @@ data class ProductsUiState(
     val mandatoryOnly: Boolean = false,
     val outOfStockOnly: Boolean = false,
     val sort: SortOrder = SortOrder.NAME_ASC,
+    /** The batch just deleted, for the Undo snackbar. Cleared once consumed. */
+    val lastBatchId: String? = null,
+    /**
+     * One-shot result of the last undoDelete() call — null while none is pending.
+     * The screen turns this into the matching localized snackbar (delete_undone /
+     * delete_undo_failed) and calls [ProductsViewModel.consumeUndoResult].
+     */
+    val undoResult: UndoOutcome? = null,
 ) {
     /** The products after the user's filter + sort is applied. */
     val visibleProducts: List<ProductDto>
@@ -75,6 +94,7 @@ class ProductsViewModel
         private val shelfRepository: ShelfRepository,
         private val searchRepository: SearchRepository,
         private val hierarchyStore: HierarchyStore,
+        private val restoreRepository: RestoreRepository,
     ) : ViewModel() {
         private var householdId: Long? = null
         private var shelfId: Long? = null
@@ -202,13 +222,50 @@ class ProductsViewModel
             _state.update { it.copy(products = it.products.filterNot { p -> p.id == productId }) }
             viewModelScope.launch {
                 runCatching { productRepository.delete(h, s, productId) }
-                    .onSuccess { hierarchyStore.refresh() }
-                    .onFailure { error ->
+                    .onSuccess { batchId ->
+                        // Product delete is the app's single most frequent destructive
+                        // action — this batch id (server-minted; see
+                        // ProductDeleteResponse) is what makes it Undo-able, same as
+                        // every other delete on this branch.
+                        _state.update { it.copy(lastBatchId = batchId) }
+                        hierarchyStore.refresh()
+                    }.onFailure { error ->
                         _state.update { it.copy(error = error.toUserMessage("Failed to delete product.")) }
-                        refresh()
+                        // Revert the optimistic removal WITHOUT going through refresh()'s
+                        // shared launch() helper: that helper resets error = null the
+                        // instant its coroutine starts, wiping the message just set above
+                        // before the user ever sees it — a failed delete would fail
+                        // silently. refreshSilent() reloads the list without touching
+                        // error/loading, exactly what a revert-only reload needs here.
+                        refreshSilent()
                     }
             }
         }
+
+        fun undoDelete() {
+            val h = householdId ?: return
+            val batchId = _state.value.lastBatchId ?: return
+            viewModelScope.launch {
+                // A 409 here means the batch was already restored (another device, a
+                // double-tap) or permanently removed past the undo window — NOT a
+                // generic failure, so it does not rethrow into launch()'s catch-all
+                // (state.error would otherwise show "Something went wrong." instead
+                // of the specific message the screen shows below).
+                val result = runCatching { restoreRepository.restore(h, batchId) }
+                result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+                if (result.isSuccess) {
+                    _state.update { it.copy(lastBatchId = null, undoResult = UndoOutcome.SUCCESS) }
+                    refresh()
+                    hierarchyStore.refresh()
+                } else {
+                    _state.update { it.copy(undoResult = UndoOutcome.FAILURE) }
+                }
+            }
+        }
+
+        fun consumeLastBatch() = _state.update { it.copy(lastBatchId = null) }
+
+        fun consumeUndoResult() = _state.update { it.copy(undoResult = null) }
 
         fun increment(productId: Long) = mutateOne { h, s -> productRepository.add(h, s, productId, 1) }
 
@@ -251,7 +308,9 @@ class ProductsViewModel
                         val targets = mutableListOf<MoveTarget>()
                         for (location in locationRepository.list(h)) {
                             for (shelf in shelfRepository.list(h, location.id)) {
-                                if (shelf.id != s) targets.add(MoveTarget(shelf.id, "${location.name} › ${shelf.name}"))
+                                if (shelf.id != s) {
+                                    targets.add(MoveTarget(shelf.id, location.name, shelf.name, shelf.is_system))
+                                }
                             }
                         }
                         targets

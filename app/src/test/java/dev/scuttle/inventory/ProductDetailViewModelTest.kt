@@ -3,8 +3,10 @@ package dev.scuttle.inventory
 import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import dev.scuttle.inventory.data.dto.ProductDto
+import dev.scuttle.inventory.data.hierarchy.RestoreRepository
 import dev.scuttle.inventory.data.product.ProductEdit
 import dev.scuttle.inventory.data.product.ProductRepository
+import dev.scuttle.inventory.ui.hierarchy.UndoOutcome
 import dev.scuttle.inventory.ui.products.ProductDetailViewModel
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -14,6 +16,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import java.io.IOException
 
 class ProductDetailViewModelTest {
     @get:Rule
@@ -34,6 +37,7 @@ class ProductDetailViewModelTest {
         var failList = false
         var failUpdate = false
         var failDelete = false
+        var deleteBatchId = "batch-detail"
 
         override fun getCached(
             householdId: Long,
@@ -94,9 +98,10 @@ class ProductDetailViewModelTest {
             householdId: Long,
             shelfId: Long,
             productId: Long,
-        ) {
+        ): String {
             if (failDelete) throw RuntimeException("delete failed")
             items.removeIf { it.id == productId }
+            return deleteBatchId
         }
 
         override suspend fun uploadImage(
@@ -108,11 +113,38 @@ class ProductDetailViewModelTest {
         ): ProductDto = items.first { it.id == productId }
     }
 
+    private class FakeRestoreRepository : RestoreRepository {
+        var lastHouseholdId: Long? = null
+        var lastBatchId: String? = null
+        var restoreCalls = 0
+
+        // Simulates a 409 from the restore endpoint (already restored elsewhere,
+        // or permanently removed past the undo window).
+        var fail = false
+
+        override suspend fun restore(
+            householdId: Long,
+            batchId: String,
+        ): Int {
+            if (fail) throw IOException("409: already restored")
+            lastHouseholdId = householdId
+            lastBatchId = batchId
+            restoreCalls++
+            return 1
+        }
+    }
+
+    private fun viewModel(
+        savedStateHandle: SavedStateHandle = savedState(),
+        repository: ProductRepository = FakeProductRepository(),
+        restoreRepository: RestoreRepository = FakeRestoreRepository(),
+    ): ProductDetailViewModel = ProductDetailViewModel(savedStateHandle, repository, restoreRepository)
+
     @Test
     fun load_finds_product_by_id() =
         runTest {
             val product = ProductDto(id = 42, name = "Milk", quantity = 2, shelf_id = 1)
-            val vm = ProductDetailViewModel(savedState(productId = 42), FakeProductRepository(listOf(product)))
+            val vm = viewModel(savedState(productId = 42), FakeProductRepository(listOf(product)))
 
             assertEquals(
                 "Milk",
@@ -125,7 +157,7 @@ class ProductDetailViewModelTest {
     @Test
     fun load_sets_null_when_product_not_found() =
         runTest {
-            val vm = ProductDetailViewModel(savedState(productId = 99), FakeProductRepository())
+            val vm = viewModel(savedState(productId = 99), FakeProductRepository())
 
             assertNull(vm.state.value.product)
             assertFalse(vm.state.value.loading)
@@ -135,7 +167,7 @@ class ProductDetailViewModelTest {
     fun load_failure_surfaces_error() =
         runTest {
             val repo = FakeProductRepository().apply { failList = true }
-            val vm = ProductDetailViewModel(savedState(), repo)
+            val vm = viewModel(savedState(), repo)
 
             assertNotNull(vm.state.value.error)
             assertFalse(vm.state.value.loading)
@@ -145,7 +177,7 @@ class ProductDetailViewModelTest {
     fun save_updates_product_and_sets_saved() =
         runTest {
             val product = ProductDto(id = 1, name = "Milk", quantity = 2, shelf_id = 1)
-            val vm = ProductDetailViewModel(savedState(), FakeProductRepository(listOf(product)))
+            val vm = viewModel(savedState(), FakeProductRepository(listOf(product)))
 
             vm.save(ProductEdit("Oat Milk", "lactose free", null, isMandatory = true, lowStockThreshold = null))
 
@@ -167,7 +199,7 @@ class ProductDetailViewModelTest {
         runTest {
             val product = ProductDto(id = 1, name = "Milk", quantity = 2, shelf_id = 1)
             val repo = FakeProductRepository(listOf(product)).apply { failUpdate = true }
-            val vm = ProductDetailViewModel(savedState(), repo)
+            val vm = viewModel(savedState(), repo)
 
             vm.save(ProductEdit("Oat Milk", null, null, false, null))
 
@@ -180,7 +212,7 @@ class ProductDetailViewModelTest {
         runTest {
             val product = ProductDto(id = 1, name = "Eggs", quantity = 0, shelf_id = 1, is_mandatory = false)
             val repo = FakeProductRepository(listOf(product))
-            val vm = ProductDetailViewModel(savedState(), repo)
+            val vm = viewModel(savedState(), repo)
 
             vm.save(ProductEdit("Eggs", null, null, isMandatory = true, lowStockThreshold = null))
 
@@ -192,7 +224,7 @@ class ProductDetailViewModelTest {
         runTest {
             val product = ProductDto(id = 1, name = "Milk", quantity = 2, shelf_id = 1)
             val repo = FakeProductRepository(listOf(product))
-            val vm = ProductDetailViewModel(savedState(), repo)
+            val vm = viewModel(savedState(), repo)
 
             vm.delete()
 
@@ -202,11 +234,98 @@ class ProductDetailViewModelTest {
         }
 
     @Test
+    fun delete_captures_the_server_minted_batch_id_for_undo() =
+        runTest {
+            // Product delete is the app's single most frequent destructive action —
+            // this is what makes it Undo-able, mirroring Shelves/Storage/Drawer.
+            // Unlike THOSE deletes, the batch id is server-minted (ProductController::
+            // destroy), not client-minted, so this pins that the VM actually reads it
+            // back off the repository call instead of discarding it (the old bodyless
+            // ProductApi.delete() bug this task exists to fix).
+            val product = ProductDto(id = 1, name = "Milk", quantity = 2, shelf_id = 1)
+            val repo = FakeProductRepository(listOf(product)).apply { deleteBatchId = "server-batch-99" }
+            val vm = viewModel(savedState(), repo)
+
+            vm.delete()
+
+            assertEquals("server-batch-99", vm.state.value.lastBatchId)
+        }
+
+    @Test
+    fun undo_delete_restores_the_batch_and_clears_it() =
+        runTest {
+            val product = ProductDto(id = 1, name = "Milk", quantity = 2, shelf_id = 1)
+            val repo = FakeProductRepository(listOf(product))
+            val restore = FakeRestoreRepository()
+            val vm = viewModel(savedState(), repo, restore)
+            vm.delete()
+            val batchId = vm.state.value.lastBatchId
+            assertNotNull(batchId)
+
+            vm.undoDelete()
+
+            assertEquals(1L, restore.lastHouseholdId)
+            assertEquals(batchId, restore.lastBatchId)
+            assertNull(vm.state.value.lastBatchId)
+            assertEquals(UndoOutcome.SUCCESS, vm.state.value.undoResult)
+        }
+
+    @Test
+    fun a_failed_undo_sets_the_failure_result_instead_of_a_generic_error() =
+        runTest {
+            // A 409 (already restored elsewhere, or past the undo window) must not
+            // fall through to a generic "Something went wrong." error.
+            val product = ProductDto(id = 1, name = "Milk", quantity = 2, shelf_id = 1)
+            val repo = FakeProductRepository(listOf(product))
+            val restore = FakeRestoreRepository().apply { fail = true }
+            val vm = viewModel(savedState(), repo, restore)
+            vm.delete()
+
+            vm.undoDelete()
+
+            assertEquals(UndoOutcome.FAILURE, vm.state.value.undoResult)
+            assertNull(vm.state.value.error)
+            // The batch id survives a failed undo — nothing was actually restored.
+            assertNotNull(vm.state.value.lastBatchId)
+        }
+
+    @Test
+    fun consume_last_batch_clears_it_without_restoring() =
+        runTest {
+            val product = ProductDto(id = 1, name = "Milk", quantity = 2, shelf_id = 1)
+            val repo = FakeProductRepository(listOf(product))
+            val restore = FakeRestoreRepository()
+            val vm = viewModel(savedState(), repo, restore)
+            vm.delete()
+
+            vm.consumeLastBatch()
+
+            assertNull(vm.state.value.lastBatchId)
+            assertEquals(0, restore.restoreCalls)
+        }
+
+    @Test
+    fun consume_undo_result_clears_it() =
+        runTest {
+            val product = ProductDto(id = 1, name = "Milk", quantity = 2, shelf_id = 1)
+            val repo = FakeProductRepository(listOf(product))
+            val restore = FakeRestoreRepository()
+            val vm = viewModel(savedState(), repo, restore)
+            vm.delete()
+            vm.undoDelete()
+            assertNotNull(vm.state.value.undoResult)
+
+            vm.consumeUndoResult()
+
+            assertNull(vm.state.value.undoResult)
+        }
+
+    @Test
     fun delete_failure_surfaces_error() =
         runTest {
             val product = ProductDto(id = 1, name = "Milk", quantity = 2, shelf_id = 1)
             val repo = FakeProductRepository(listOf(product)).apply { failDelete = true }
-            val vm = ProductDetailViewModel(savedState(), repo)
+            val vm = viewModel(savedState(), repo)
 
             vm.delete()
 
@@ -219,7 +338,7 @@ class ProductDetailViewModelTest {
         runTest {
             val product = ProductDto(id = 1, name = "Milk", quantity = 2, shelf_id = 1)
             val repo = FakeProductRepository(listOf(product)).apply { failUpdate = true }
-            val vm = ProductDetailViewModel(savedState(), repo)
+            val vm = viewModel(savedState(), repo)
 
             vm.save(ProductEdit("Oat Milk", null, null, false, null))
             assertNotNull(vm.state.value.error)

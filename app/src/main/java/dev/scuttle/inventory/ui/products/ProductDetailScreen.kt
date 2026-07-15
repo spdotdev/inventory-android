@@ -34,8 +34,10 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -64,6 +66,8 @@ import coil.compose.AsyncImage
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.product.ProductEdit
 import dev.scuttle.inventory.ui.common.SnackbarErrorEffect
+import dev.scuttle.inventory.ui.hierarchy.UndoOutcome
+import kotlinx.coroutines.flow.first
 import java.io.File
 import java.util.UUID
 
@@ -88,9 +92,8 @@ fun ProductDetailScreen(
     val product = state.product
     val context = LocalContext.current
 
-    // Navigate back when saved or deleted
+    // Navigate back when saved
     LaunchedEffect(state.saved) { if (state.saved) onBack() }
-    LaunchedEffect(state.deleted) { if (state.deleted) onBack() }
 
     // Local edit fields — re-seed when product loads from null
     var name by rememberSaveable(product?.id) { mutableStateOf(product?.name ?: "") }
@@ -141,6 +144,42 @@ fun ProductDetailScreen(
     // pull-to-refresh to retry.
     val snackbarHostState = remember { SnackbarHostState() }
     SnackbarErrorEffect(state.error, snackbarHostState, onConsumed = viewModel::consumeError)
+
+    // Delete keeps its confirm dialog below; this is the Undo ON TOP of it. The
+    // screen navigates away on a successful delete (unlike Shelves/Storage/Drawer,
+    // which stay put), so the "deleted, [Undo]" snackbar — and, if tapped, the
+    // restore call's own outcome snackbar — must be shown and resolved HERE,
+    // sequentially, before onBack() fires. Firing onBack() first would dispose
+    // this screen (and cancel viewModel.undoDelete()'s coroutine, which runs in
+    // the ViewModel's own scope) mid-flight — same hazard HouseholdsUiState.
+    // leftHouseholdId's doc comment describes for leave().
+    val undoLabel = stringResource(R.string.delete_undo)
+    val productDeletedMessage = stringResource(R.string.product_deleted)
+    val undoneMessage = stringResource(R.string.delete_undone)
+    val undoFailedMessage = stringResource(R.string.delete_undo_failed)
+    LaunchedEffect(state.deleted) {
+        if (!state.deleted) return@LaunchedEffect
+        val batchId = state.lastBatchId
+        if (batchId != null) {
+            val result =
+                snackbarHostState.showSnackbar(
+                    message = productDeletedMessage,
+                    actionLabel = undoLabel,
+                    duration = SnackbarDuration.Long,
+                )
+            if (result == SnackbarResult.ActionPerformed) {
+                viewModel.undoDelete()
+                val outcome = viewModel.state.first { it.undoResult != null }.undoResult
+                snackbarHostState.showSnackbar(
+                    if (outcome == UndoOutcome.SUCCESS) undoneMessage else undoFailedMessage,
+                )
+                viewModel.consumeUndoResult()
+            } else {
+                viewModel.consumeLastBatch()
+            }
+        }
+        onBack()
+    }
 
     val statusBarInsets = WindowInsets.statusBars
     Scaffold(

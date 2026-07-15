@@ -4,7 +4,7 @@ import dev.scuttle.inventory.data.dto.CreateHouseholdRequest
 import dev.scuttle.inventory.data.dto.HouseholdListResponse
 import dev.scuttle.inventory.data.dto.HouseholdResponse
 import dev.scuttle.inventory.data.dto.JoinHouseholdRequest
-import dev.scuttle.inventory.data.dto.UpdateHouseholdThemeRequest
+import dev.scuttle.inventory.data.dto.UpdateHouseholdRequest
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -14,9 +14,9 @@ import retrofit2.http.Path
 
 interface HouseholdApi {
     @PATCH("households/{household}")
-    suspend fun updateTheme(
+    suspend fun update(
         @Path("household") householdId: Long,
-        @Body body: UpdateHouseholdThemeRequest,
+        @Body body: UpdateHouseholdRequest,
     ): HouseholdResponse
 
     @GET("households")

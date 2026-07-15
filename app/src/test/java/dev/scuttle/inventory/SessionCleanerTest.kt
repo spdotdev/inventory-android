@@ -13,7 +13,10 @@ import dev.scuttle.inventory.data.product.ProductEdit
 import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.data.settings.DefaultHouseholdStore
 import dev.scuttle.inventory.data.settings.FavoritesStore
+import dev.scuttle.inventory.data.settings.HouseholdViewStore
+import dev.scuttle.inventory.data.settings.ShelfViewStore
 import dev.scuttle.inventory.data.shelf.ShelfRepository
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -49,11 +52,6 @@ class SessionCleanerTest {
             type: String,
         ) = throw NotImplementedError()
 
-        override suspend fun delete(
-            householdId: Long,
-            locationId: Long,
-        ) {}
-
         override fun clear() {
             cleared = true
         }
@@ -77,12 +75,6 @@ class SessionCleanerTest {
             locationId: Long,
             name: String,
         ) = throw NotImplementedError()
-
-        override suspend fun delete(
-            householdId: Long,
-            locationId: Long,
-            shelfId: Long,
-        ) {}
 
         override fun clear() {
             cleared = true
@@ -150,7 +142,7 @@ class SessionCleanerTest {
             householdId: Long,
             shelfId: Long,
             productId: Long,
-        ) {}
+        ) = "batch"
 
         override fun clear() {
             cleared = true
@@ -189,6 +181,34 @@ class SessionCleanerTest {
         }
     }
 
+    private class RecordingShelfViewStore : ShelfViewStore {
+        var cleared = false
+
+        override fun isListView() = false
+
+        override fun setListView(listView: Boolean) = Unit
+
+        override fun clear() {
+            cleared = true
+        }
+    }
+
+    private class RecordingHouseholdViewStore : HouseholdViewStore {
+        var cleared = false
+
+        override fun collapsed() = emptySet<Long>()
+
+        override fun toggleCollapsed(id: Long) = Unit
+
+        override fun order() = emptyList<Long>()
+
+        override fun setOrder(ids: List<Long>) = Unit
+
+        override fun clear() {
+            cleared = true
+        }
+    }
+
     @Test
     fun clear_fans_out_to_every_cache_and_store() {
         // X1: session end must wipe ALL per-account singleton state — miss one and
@@ -199,9 +219,21 @@ class SessionCleanerTest {
         val product = RecordingProductRepo()
         val favorites = RecordingFavoritesStore()
         val defaultHousehold = RecordingDefaultHouseholdStore()
-        val store = HierarchyStore(household, location, shelf, product)
+        val shelfView = RecordingShelfViewStore()
+        val householdView = RecordingHouseholdViewStore()
+        val store = HierarchyStore(household, location, shelf, product, UnconfinedTestDispatcher())
 
-        SessionCleaner(household, location, shelf, product, store, favorites, defaultHousehold).clear()
+        SessionCleaner(
+            household,
+            location,
+            shelf,
+            product,
+            store,
+            favorites,
+            defaultHousehold,
+            shelfView,
+            householdView,
+        ).clear()
 
         assertTrue(household.cleared)
         assertTrue(location.cleared)
@@ -209,5 +241,7 @@ class SessionCleanerTest {
         assertTrue(product.cleared)
         assertTrue(favorites.cleared)
         assertTrue(defaultHousehold.cleared)
+        assertTrue(shelfView.cleared)
+        assertTrue(householdView.cleared)
     }
 }

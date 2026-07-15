@@ -34,9 +34,12 @@ class EmptyHouseholdsFlowTest : FlowTestBase() {
             Thread.sleep(3_000)
             waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 5_000)
 
-            // Households tab; HouseholdsViewModel.refresh() → GET /households → empty
+            // Households leaves the bottom bar in favour of Settings ("More") →
+            // "My households"; HouseholdsViewModel.refresh() → GET /households → empty
             mockServer.route("/households", fixture("households_empty.json"))
-            onNodeWithTag("bottom-nav-households").performClick()
+            onNodeWithTag("bottom-nav-more").performClick()
+            waitForIdle()
+            onNodeWithText("My households").performClick()
             waitForIdle()
 
             waitUntilAtLeastOneExists(hasText("No households yet", substring = true), timeoutMillis = 5_000)

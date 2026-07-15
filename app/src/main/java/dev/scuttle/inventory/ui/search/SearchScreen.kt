@@ -43,6 +43,10 @@ import dev.scuttle.inventory.ui.theme.FrostCard
 fun SearchScreen(
     householdId: Long,
     modifier: Modifier = Modifier,
+    // Set by the scan-to-lookup flow (bottom-bar Scan tab, mode=lookup): the
+    // scanned code, pre-filled as the query and run immediately rather than
+    // landing on an empty search box — see MainActivity's ScanDeliveryAction.
+    initialQuery: String? = null,
     onBack: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
     onOpenProduct: (householdId: Long, shelfId: Long, productId: Long) -> Unit = { _, _, _ -> },
@@ -54,6 +58,12 @@ fun SearchScreen(
 
     LaunchedEffect(householdId) {
         viewModel.setHousehold(householdId)
+        // Runs in the same effect as setHousehold, after it: setHousehold on a
+        // new household resets state to a fresh SearchUiState(), which would
+        // wipe an initialQuery applied any earlier.
+        if (!initialQuery.isNullOrBlank()) {
+            viewModel.searchFor(initialQuery)
+        }
     }
 
     LaunchedEffect(Unit) {

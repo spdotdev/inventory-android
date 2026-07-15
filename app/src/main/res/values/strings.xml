@@ -31,8 +31,9 @@
     <string name="nav_dashboard">Dashboard</string>
     <string name="nav_storage">Storage</string>
     <string name="nav_search">Search</string>
-    <string name="nav_households">Households</string>
     <string name="nav_missing_items">Missing</string>
+    <string name="nav_scan">Scan</string>
+    <string name="nav_more">More</string>
     <string name="scanner_title">Scan barcode</string>
     <string name="scanner_permission_denied">Camera permission is needed to scan barcodes. You can still add and edit products manually.</string>
     <string name="location_scan_cd">Scan a barcode</string>
@@ -58,10 +59,10 @@
     <string name="all_storage_stock_warning">⚠ Stock warning</string>
     <string name="all_storage_favorite_add_cd">Add to favorites</string>
     <string name="all_storage_favorite_remove_cd">Remove favorite</string>
+    <string name="all_storage_collapse_household_cd">Collapse %1$s</string>
+    <string name="all_storage_expand_household_cd">Expand %1$s</string>
 
     <!-- Delete dialogs -->
-    <string name="delete_dialog_location_title">Delete \"%s\"?</string>
-    <string name="delete_dialog_location_text">All shelves and products inside will be permanently deleted.</string>
     <string name="delete_dialog_product_title">Delete \"%s\"?</string>
     <string name="delete_dialog_product_text">This product will be permanently removed from the shelf.</string>
 
@@ -71,27 +72,37 @@
     <string name="households_invite_cd">Invite to %s</string>
     <string name="households_leave">Leave</string>
     <string name="households_leave_dialog_title">Leave %s?</string>
-    <string name="households_leave_dialog_text">You\'ll need a new invite to rejoin.</string>
+    <string name="households_leave_dialog_text">You\'ll need a new invite to rejoin. If you\'re the last member, this deletes the household — and everything in it — permanently.</string>
     <string name="households_create_fab_cd">Create household</string>
     <string name="households_field_name">Household name</string>
-    <string name="households_theme_cd">Change look of %s</string>
-    <string name="household_theme_title">Look of %s</string>
+    <string name="households_edit_cd">Edit households</string>
     <string name="household_theme_color_label">Colour</string>
     <string name="household_theme_icon_label">Icon</string>
     <string name="household_theme_default">Default</string>
     <string name="action_save">Save</string>
     <string name="households_create_button">Create</string>
 
+    <!-- Household edit screen -->
+    <string name="household_edit_title">Edit household</string>
+    <string name="household_edit_appearance_label">Appearance</string>
+    <string name="household_edit_danger_zone_title">Danger zone</string>
+    <string name="household_edit_danger_zone_body">Leaving removes your access to this household.</string>
+
     <!-- Location detail / Shelves -->
     <string name="location_shelves_title">Shelves</string>
     <string name="location_selected_count">%d selected</string>
-    <string name="location_delete_shelves_cd">Select shelves to delete</string>
+    <string name="location_edit_shelves_cd">Edit shelves</string>
+    <string name="location_view_toggle_cd">Switch between tab and list view</string>
     <string name="location_add_shelf_cd">Add shelf</string>
     <string name="location_add_product_cd">Add product</string>
     <string name="location_no_shelves">No shelves yet. Tap + in the top bar to add one.</string>
     <string name="location_shelf_missing_cd">%1$s, has missing items</string>
     <string name="location_delete_count_button">Delete (%d)</string>
     <string name="location_delete_button">Delete</string>
+    <string name="shelf_move_up_cd">Move shelf up</string>
+    <string name="shelf_move_down_cd">Move shelf down</string>
+    <string name="shelf_rename_title">Rename shelf</string>
+    <string name="shelves_deleted">Shelves deleted.</string>
 
     <!-- Add shelf sheet -->
     <string name="add_shelf_sheet_title">Add shelf</string>
@@ -177,6 +188,11 @@
     <string name="storage_overview_empty">No storage locations yet. Tap + to add a fridge, freezer or pantry.</string>
     <string name="storage_overview_search_cd">Search products</string>
     <string name="storage_overview_open_cd">Open %s</string>
+    <string name="storage_overview_edit_cd">Edit storage</string>
+    <string name="storage_move_up_cd">Move storage location up</string>
+    <string name="storage_move_down_cd">Move storage location down</string>
+    <string name="storage_edit_title">Edit storage location</string>
+    <string name="locations_deleted">Storage locations deleted.</string>
 
     <!-- Add storage sheet -->
     <string name="add_storage_sheet_title">Add storage</string>
@@ -198,4 +214,18 @@
     <string name="invite_qr_cd">Invite QR code</string>
     <string name="invite_copy_link">Copy link</string>
     <string name="invite_copied">Copied!</string>
+
+    <!-- Delete strategy -->
+    <string name="delete_strategy_title">Delete %1$d item(s)?</string>
+    <string name="delete_strategy_summary">%1$d product(s) are stored inside. What should happen to them?</string>
+    <string name="delete_strategy_move">Move them somewhere else</string>
+    <string name="delete_strategy_unsort">Keep them here, in Unsorted</string>
+    <string name="delete_strategy_delete">Delete them too</string>
+    <string name="delete_strategy_pick_target">Where should they go?</string>
+    <string name="delete_strategy_no_target">There is nowhere else to move them.</string>
+    <string name="delete_undo">Undo</string>
+    <string name="delete_undone">Restored.</string>
+    <string name="delete_undo_failed">Couldn\'t undo — this was already restored or permanently removed.</string>
+    <string name="product_deleted">Product deleted.</string>
+    <string name="shelf_unsorted">Unsorted</string>
 </resources>

@@ -67,11 +67,17 @@ interface ProductRepository {
         mimeType: String,
     ): ProductDto
 
+    /**
+     * Deletes the product and returns the server-minted `deletion_batch_id`
+     * (see [dev.scuttle.inventory.data.dto.ProductDeleteResponse]) so the
+     * caller can offer Undo via [dev.scuttle.inventory.data.hierarchy.RestoreRepository] —
+     * unlike a shelf/location delete, the CLIENT never mints this batch id itself.
+     */
     suspend fun delete(
         householdId: Long,
         shelfId: Long,
         productId: Long,
-    )
+    ): String
 
     /** Drop the in-memory cache so one account's data never bleeds into the next session. */
     fun clear() {}

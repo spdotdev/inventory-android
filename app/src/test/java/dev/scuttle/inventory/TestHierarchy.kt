@@ -10,6 +10,8 @@ import dev.scuttle.inventory.data.location.LocationRepository
 import dev.scuttle.inventory.data.product.ProductEdit
 import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.data.shelf.ShelfRepository
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 
 /**
  * Builds a real [HierarchyStore] over empty location/shelf/product repos for VM
@@ -27,11 +29,6 @@ object TestHierarchy {
             name: String,
             type: String,
         ) = throw NotImplementedError()
-
-        override suspend fun delete(
-            householdId: Long,
-            locationId: Long,
-        ) {}
     }
 
     private object EmptyShelves : ShelfRepository {
@@ -50,12 +47,6 @@ object TestHierarchy {
             locationId: Long,
             name: String,
         ) = throw NotImplementedError()
-
-        override suspend fun delete(
-            householdId: Long,
-            locationId: Long,
-            shelfId: Long,
-        ) {}
     }
 
     private object EmptyProducts : ProductRepository {
@@ -117,9 +108,21 @@ object TestHierarchy {
             householdId: Long,
             shelfId: Long,
             productId: Long,
-        ) {}
+        ) = "batch"
     }
 
-    fun store(householdRepository: HouseholdRepository): HierarchyStore =
-        HierarchyStore(householdRepository, EmptyLocations, EmptyShelves, EmptyProducts)
+    /**
+     * @param dispatcher Defaults to a FRESH, unconfined test dispatcher — never the
+     *   production `Dispatchers.IO` the real HierarchyStore falls back to (Minor 5,
+     *   Task 5/5b review). Tasks 5/5b made every confirm/undo/rename trigger a
+     *   `hierarchyStore.refresh()` under test; a real IO-backed scope outside
+     *   `runTest`'s control can still be mid-flight when a test finishes and
+     *   `Dispatchers.Main` resets, surfacing as an intermittent failure in whatever
+     *   OTHER test runs next. Unconfined runs `refresh()`'s coroutine eagerly on
+     *   the calling thread instead, so nothing is left running once a test ends.
+     */
+    fun store(
+        householdRepository: HouseholdRepository,
+        dispatcher: CoroutineDispatcher = UnconfinedTestDispatcher(),
+    ): HierarchyStore = HierarchyStore(householdRepository, EmptyLocations, EmptyShelves, EmptyProducts, dispatcher)
 }

@@ -18,10 +18,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -40,13 +39,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -54,7 +51,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
-import dev.scuttle.inventory.data.dto.HouseholdDto
 import dev.scuttle.inventory.ui.common.LiveStatusText
 import dev.scuttle.inventory.ui.theme.FrostCard
 import dev.scuttle.inventory.ui.theme.HouseholdAvatar
@@ -66,11 +62,10 @@ fun HouseholdsScreen(
     onBack: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
     onOpenInvite: (householdId: Long, householdName: String) -> Unit = { _, _ -> },
+    onEditHousehold: (householdId: Long) -> Unit = {},
     viewModel: HouseholdsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
-    var confirmLeaveId by remember { mutableStateOf<Long?>(null) }
-    var themePickerFor by remember { mutableStateOf<HouseholdDto?>(null) }
     var showCreateSheet by rememberSaveable { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -84,23 +79,42 @@ fun HouseholdsScreen(
                 windowInsets = statusBarInsets,
                 title = { Text(stringResource(R.string.households_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.action_back),
-                        )
+                    if (state.editMode) {
+                        TextButton(onClick = viewModel::exitEditMode) { Text(stringResource(R.string.action_cancel)) }
+                    } else {
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = stringResource(R.string.action_back),
+                            )
+                        }
                     }
                 },
                 actions = {
-                    IconButton(onClick = onOpenSettings) {
-                        Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.action_settings))
+                    if (!state.editMode) {
+                        IconButton(onClick = onOpenSettings) {
+                            Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.action_settings))
+                        }
+                        if (state.households.isNotEmpty()) {
+                            IconButton(onClick = viewModel::enterEditMode) {
+                                Icon(
+                                    Icons.Default.Edit,
+                                    contentDescription = stringResource(R.string.households_edit_cd),
+                                )
+                            }
+                        }
                     }
                 },
             )
         },
         floatingActionButton = {
-            FloatingActionButton(modifier = Modifier.navigationBarsPadding(), onClick = { showCreateSheet = true }) {
-                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.households_create_fab_cd))
+            if (!state.editMode) {
+                FloatingActionButton(
+                    modifier = Modifier.navigationBarsPadding(),
+                    onClick = { showCreateSheet = true },
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.households_create_fab_cd))
+                }
             }
         },
     ) { padding ->
@@ -135,7 +149,16 @@ fun HouseholdsScreen(
                 }
 
                 state.households.forEach { household ->
+                    // Only edit mode makes the row navigate — outside it, the row is
+                    // inert except for the share/invite icon below, same as before.
+                    val onRowClick: (() -> Unit)? =
+                        if (state.editMode) {
+                            { onEditHousehold(household.id) }
+                        } else {
+                            null
+                        }
                     FrostCard(
+                        onClick = onRowClick,
                         modifier =
                             Modifier
                                 .fillMaxWidth()
@@ -159,23 +182,11 @@ fun HouseholdsScreen(
                                 style = MaterialTheme.typography.bodyLarge,
                                 modifier = Modifier.weight(1f),
                             )
-                            IconButton(
-                                onClick = { themePickerFor = household },
-                                modifier = Modifier.testTag("household-theme-${household.id}"),
-                            ) {
-                                Icon(
-                                    Icons.Default.Palette,
-                                    contentDescription = stringResource(R.string.households_theme_cd, household.name),
-                                )
-                            }
                             IconButton(onClick = { onOpenInvite(household.id, household.name) }) {
                                 Icon(
                                     Icons.Default.Share,
                                     contentDescription = stringResource(R.string.households_invite_cd, household.name),
                                 )
-                            }
-                            TextButton(onClick = { confirmLeaveId = household.id }) {
-                                Text(stringResource(R.string.households_leave), color = MaterialTheme.colorScheme.error)
                             }
                         }
                     }
@@ -230,36 +241,5 @@ fun HouseholdsScreen(
                 }
             }
         }
-    }
-
-    themePickerFor?.let { household ->
-        HouseholdThemeDialog(
-            household = household,
-            onDismiss = { themePickerFor = null },
-            onSave = { color, icon ->
-                viewModel.updateTheme(household.id, color, icon)
-                themePickerFor = null
-            },
-        )
-    }
-
-    confirmLeaveId?.let { id ->
-        val name = state.households.find { it.id == id }?.name ?: "this household"
-        AlertDialog(
-            onDismissRequest = { confirmLeaveId = null },
-            title = { Text(stringResource(R.string.households_leave_dialog_title, name)) },
-            text = { Text(stringResource(R.string.households_leave_dialog_text)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.leave(id)
-                    confirmLeaveId = null
-                }) {
-                    Text(stringResource(R.string.households_leave), color = MaterialTheme.colorScheme.error)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { confirmLeaveId = null }) { Text(stringResource(R.string.action_cancel)) }
-            },
-        )
     }
 }

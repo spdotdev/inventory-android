@@ -8,10 +8,18 @@
     <ID>ConstructorParameterNaming:ErrorDtos.kt$ClientErrorRequest$val device_id: String</ID>
     <ID>ConstructorParameterNaming:ErrorDtos.kt$ClientErrorRequest$val error_code: String</ID>
     <ID>ConstructorParameterNaming:HouseholdDtos.kt$HouseholdDto$val join_code: String</ID>
+    <ID>ConstructorParameterNaming:LocationDtos.kt$DeleteLocationRequest$val deletion_batch_id: String</ID>
+    <ID>ConstructorParameterNaming:LocationDtos.kt$DeleteLocationRequest$val target_location_id: Long? = null</ID>
+    <ID>ConstructorParameterNaming:LocationDtos.kt$LocationDto$val product_count: Int = 0</ID>
+    <ID>ConstructorParameterNaming:LocationDtos.kt$LocationDto$val shelf_count: Int = 0</ID>
     <ID>ConstructorParameterNaming:SearchDtos.kt$SearchResultDto$val household_id: Long? = null</ID>
     <ID>ConstructorParameterNaming:SearchDtos.kt$SearchResultDto$val location_id: Long? = null</ID>
     <ID>ConstructorParameterNaming:SearchDtos.kt$SearchResultDto$val shelf_id: Long? = null</ID>
+    <ID>ConstructorParameterNaming:ShelfDtos.kt$DeleteShelfRequest$val deletion_batch_id: String</ID>
+    <ID>ConstructorParameterNaming:ShelfDtos.kt$DeleteShelfRequest$val target_shelf_id: Long? = null</ID>
+    <ID>ConstructorParameterNaming:ShelfDtos.kt$ShelfDto$val is_system: Boolean = false</ID>
     <ID>ConstructorParameterNaming:ShelfDtos.kt$ShelfDto$val location_id: Long</ID>
+    <ID>ConstructorParameterNaming:ShelfDtos.kt$ShelfDto$val product_count: Int = 0</ID>
     <ID>CyclomaticComplexMethod:AuthScreen.kt$@Composable fun AuthScreen( onForgotPassword: () -&gt; Unit = {}, modifier: Modifier = Modifier, viewModel: AuthViewModel = hiltViewModel(), )</ID>
     <ID>CyclomaticComplexMethod:LocationDetailScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun LocationDetailScreen( householdId: Long, locationId: Long, drawerViewModel: DrawerViewModel, modifier: Modifier = Modifier, onBack: () -&gt; Unit = {}, onOpenDrawer: () -&gt; Unit = {}, onOpenProduct: (householdId: Long, shelfId: Long, productId: Long) -&gt; Unit = { _, _, _ -&gt; }, shelvesViewModel: ShelvesViewModel = hiltViewModel(), )</ID>
     <ID>CyclomaticComplexMethod:ProductDetailScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun ProductDetailScreen( modifier: Modifier = Modifier, onBack: () -&gt; Unit = {}, viewModel: ProductDetailViewModel = hiltViewModel(), )</ID>
@@ -49,7 +57,6 @@
     <ID>EmptyFunctionBlock:TestHierarchy.kt$TestHierarchy.EmptyProducts${}</ID>
     <ID>EmptyFunctionBlock:TestHierarchy.kt$TestHierarchy.EmptyShelves${}</ID>
     <ID>LongMethod:AllStoragesScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun AllStoragesScreen( modifier: Modifier = Modifier, viewModel: DrawerViewModel, onOpenDrawer: () -&gt; Unit = {}, onOpenLocation: (householdId: Long, locationId: Long) -&gt; Unit = { _, _ -&gt; }, onOpenStorage: (householdId: Long) -&gt; Unit = {}, localViewModel: AllStoragesViewModel = hiltViewModel(), )</ID>
-    <ID>LongMethod:AppDrawer.kt$@Composable fun AppDrawer( viewModel: DrawerViewModel, onNavigateHome: () -&gt; Unit, onNavigateDashboard: () -&gt; Unit, onNavigateSearch: (householdId: Long) -&gt; Unit, onNavigateHouseholds: () -&gt; Unit, onNavigateMissingItems: () -&gt; Unit, onNavigateLocation: (householdId: Long, locationId: Long) -&gt; Unit, onNavigateSettings: () -&gt; Unit, )</ID>
     <ID>LongMethod:AuthScreen.kt$@Composable fun AuthScreen( onForgotPassword: () -&gt; Unit = {}, modifier: Modifier = Modifier, viewModel: AuthViewModel = hiltViewModel(), )</ID>
     <ID>LongMethod:DashboardScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun DashboardScreen( modifier: Modifier = Modifier, onOpenDrawer: () -&gt; Unit = {}, onOpenLocation: (householdId: Long, locationId: Long) -&gt; Unit = { _, _ -&gt; }, onOpenHouseholds: () -&gt; Unit = {}, onOpenMissingItems: () -&gt; Unit = {}, viewModel: DashboardViewModel = hiltViewModel(), )</ID>
     <ID>LongMethod:ForgotPasswordScreen.kt$@Composable fun ForgotPasswordScreen( onBack: () -&gt; Unit, modifier: Modifier = Modifier, viewModel: ForgotPasswordViewModel = hiltViewModel(), )</ID>
@@ -65,11 +72,10 @@
     <ID>LongMethod:SettingsScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun SettingsScreen( modifier: Modifier = Modifier, onOpenDrawer: () -&gt; Unit = {}, onSignOut: () -&gt; Unit = {}, onOpenHouseholds: () -&gt; Unit = {}, themeViewModel: ThemeViewModel = hiltViewModel(), languageViewModel: LanguageViewModel = hiltViewModel(), joinViewModel: JoinHouseholdViewModel = hiltViewModel(), )</ID>
     <ID>LongMethod:StorageOverviewScreen.kt$@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class) @Composable fun StorageOverviewScreen( householdId: Long, modifier: Modifier = Modifier, onBack: () -&gt; Unit = {}, onOpenDrawer: () -&gt; Unit = {}, onOpenLocation: (Long) -&gt; Unit = {}, onOpenSearch: () -&gt; Unit = {}, viewModel: StorageOverviewViewModel = hiltViewModel(), )</ID>
     <ID>LongParameterList:AllStoragesScreen.kt$( modifier: Modifier = Modifier, viewModel: DrawerViewModel, onOpenDrawer: () -&gt; Unit = {}, onOpenLocation: (householdId: Long, locationId: Long) -&gt; Unit = { _, _ -&gt; }, onOpenStorage: (householdId: Long) -&gt; Unit = {}, localViewModel: AllStoragesViewModel = hiltViewModel(), )</ID>
-    <ID>LongParameterList:AppDrawer.kt$( viewModel: DrawerViewModel, onNavigateHome: () -&gt; Unit, onNavigateDashboard: () -&gt; Unit, onNavigateSearch: (householdId: Long) -&gt; Unit, onNavigateHouseholds: () -&gt; Unit, onNavigateMissingItems: () -&gt; Unit, onNavigateLocation: (householdId: Long, locationId: Long) -&gt; Unit, onNavigateSettings: () -&gt; Unit, )</ID>
     <ID>LongParameterList:DashboardScreen.kt$( modifier: Modifier = Modifier, onOpenDrawer: () -&gt; Unit = {}, onOpenLocation: (householdId: Long, locationId: Long) -&gt; Unit = { _, _ -&gt; }, onOpenHouseholds: () -&gt; Unit = {}, onOpenMissingItems: () -&gt; Unit = {}, viewModel: DashboardViewModel = hiltViewModel(), )</ID>
     <ID>LongParameterList:LocationDetailScreen.kt$( householdId: Long, locationId: Long, drawerViewModel: DrawerViewModel, modifier: Modifier = Modifier, onBack: () -&gt; Unit = {}, onOpenDrawer: () -&gt; Unit = {}, onOpenProduct: (householdId: Long, shelfId: Long, productId: Long) -&gt; Unit = { _, _, _ -&gt; }, shelvesViewModel: ShelvesViewModel = hiltViewModel(), )</ID>
     <ID>LongParameterList:ProductsPane.kt$( householdId: Long, shelfId: Long, snackbarHostState: SnackbarHostState, modifier: Modifier = Modifier, refreshKey: Int = 0, onOpenProduct: (ProductDto) -&gt; Unit = {}, onWarningChange: (Boolean) -&gt; Unit = {}, viewModel: ProductsViewModel = hiltViewModel(key = "products-$shelfId"), )</ID>
-    <ID>LongParameterList:SessionCleaner.kt$SessionCleaner$( private val householdRepository: HouseholdRepository, private val locationRepository: LocationRepository, private val shelfRepository: ShelfRepository, private val productRepository: ProductRepository, private val hierarchyStore: HierarchyStore, private val favoritesStore: FavoritesStore, private val defaultHouseholdStore: DefaultHouseholdStore, )</ID>
+    <ID>LongParameterList:SessionCleaner.kt$SessionCleaner$( private val householdRepository: HouseholdRepository, private val locationRepository: LocationRepository, private val shelfRepository: ShelfRepository, private val productRepository: ProductRepository, private val hierarchyStore: HierarchyStore, private val favoritesStore: FavoritesStore, private val defaultHouseholdStore: DefaultHouseholdStore, private val shelfViewStore: ShelfViewStore, private val householdViewStore: HouseholdViewStore, )</ID>
     <ID>LongParameterList:SettingsScreen.kt$( modifier: Modifier = Modifier, onOpenDrawer: () -&gt; Unit = {}, onSignOut: () -&gt; Unit = {}, onOpenHouseholds: () -&gt; Unit = {}, themeViewModel: ThemeViewModel = hiltViewModel(), languageViewModel: LanguageViewModel = hiltViewModel(), joinViewModel: JoinHouseholdViewModel = hiltViewModel(), )</ID>
     <ID>LongParameterList:StorageOverviewScreen.kt$( householdId: Long, modifier: Modifier = Modifier, onBack: () -&gt; Unit = {}, onOpenDrawer: () -&gt; Unit = {}, onOpenLocation: (Long) -&gt; Unit = {}, onOpenSearch: () -&gt; Unit = {}, viewModel: StorageOverviewViewModel = hiltViewModel(), )</ID>
     <ID>MagicNumber:AuthInterceptor.kt$AuthInterceptor$401</ID>
@@ -129,7 +135,6 @@
     <ID>MaxLineLength:AllStoragesScreen.kt$Icon(Icons.Default.Add, contentDescription = stringResource(R.string.all_storage_add_location_cd))</ID>
     <ID>MaxLineLength:AllStoragesScreen.kt$containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f)</ID>
     <ID>MaxLineLength:AllStoragesScreen.kt$tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant</ID>
-    <ID>MaxLineLength:AppDrawer.kt$contentDescription = stringResource(R.string.drawer_search_household_cd, entry.name)</ID>
     <ID>MaxLineLength:AuthScreen.kt$Text(text = if (isRegister) stringResource(R.string.auth_create_account) else stringResource(R.string.auth_sign_in))</ID>
     <ID>MaxLineLength:AuthScreen.kt$Text(text = if (isRegister) stringResource(R.string.auth_toggle_to_login) else stringResource(R.string.auth_toggle_to_register))</ID>
     <ID>MaxLineLength:AuthViewModel.kt$AuthViewModel$AuthMode.REGISTER -&gt; repository.register(current.name.trim(), current.email.trim(), current.password)</ID>
@@ -197,12 +202,16 @@
     <ID>TooGenericExceptionThrown:ProductDetailViewModelTest.kt$ProductDetailViewModelTest.FakeProductRepository$throw RuntimeException("save failed")</ID>
     <ID>TooGenericExceptionThrown:ProductsViewModelTest.kt$ProductsViewModelTest.FakeProductRepository$throw RuntimeException("offline")</ID>
     <ID>TooGenericExceptionThrown:SearchViewModelTest.kt$SearchViewModelTest.FakeSearchRepository$throw RuntimeException("offline")</ID>
+    <ID>TooGenericExceptionThrown:ShelvesViewModelTest.kt$ShelvesViewModelTest.FakeShelfRepository$throw RuntimeException("delete failed")</ID>
     <ID>TooGenericExceptionThrown:ShelvesViewModelTest.kt$ShelvesViewModelTest.FakeShelfRepository$throw RuntimeException("offline")</ID>
+    <ID>TooGenericExceptionThrown:StorageOverviewViewModelTest.kt$StorageOverviewViewModelTest.FakeLocationRepository$throw RuntimeException("delete failed")</ID>
     <ID>TooGenericExceptionThrown:StorageOverviewViewModelTest.kt$StorageOverviewViewModelTest.FakeLocationRepository$throw RuntimeException("offline")</ID>
     <ID>TooManyFunctions:AuthViewModel.kt$AuthViewModel : ViewModel</ID>
     <ID>TooManyFunctions:NetworkModule.kt$NetworkModule</ID>
     <ID>TooManyFunctions:ProductRepositoryImpl.kt$ProductRepositoryImpl : ProductRepository</ID>
     <ID>TooManyFunctions:ProductsViewModel.kt$ProductsViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:ShelvesViewModel.kt$ShelvesViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:StorageOverviewViewModel.kt$StorageOverviewViewModel : ViewModel</ID>
     <ID>UnusedParameter:AuthViewModel.kt$AuthViewModel$mode: AuthMode</ID>
     <ID>UnusedParameter:LocationDetailScreen.kt$householdId: Long</ID>
   </CurrentIssues>

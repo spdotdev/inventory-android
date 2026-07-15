@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -38,13 +39,14 @@ class HouseholdsViewModelTest {
             items.removeIf { it.id == householdId }
         }
 
-        override suspend fun updateTheme(
+        override suspend fun update(
             householdId: Long,
+            name: String?,
             color: String?,
             icon: String?,
         ): HouseholdDto {
             val index = items.indexOfFirst { it.id == householdId }
-            items[index] = items[index].copy(color = color, icon = icon)
+            items[index] = items[index].copy(name = name ?: items[index].name, color = color, icon = icon)
             return items[index]
         }
     }
@@ -126,6 +128,78 @@ class HouseholdsViewModelTest {
         }
 
     @Test
+    fun renaming_a_household_updates_it_in_place() =
+        runTest {
+            val repo = FakeHouseholdRepository()
+            val viewModel = HouseholdsViewModel(repo, TestHierarchy.store(repo))
+
+            viewModel.update(1L, name = "House", color = null, icon = null)
+
+            assertEquals(
+                "House",
+                viewModel.state.value.households
+                    .first()
+                    .name,
+            )
+        }
+
+    @Test
+    fun renaming_a_household_preserves_its_existing_theme_when_passed_through() =
+        runTest {
+            // Mirrors HouseholdEditScreen's Save-name action: it passes the
+            // household's currently-known color/icon back through (not null),
+            // because UpdateHouseholdRequest's color/icon have no default and are
+            // ALWAYS encoded on the wire — an explicit null there clears the theme
+            // server-side. A rename must never have that side effect.
+            val repo = FakeHouseholdRepository().apply { items[0] = items[0].copy(color = "teal", icon = "cottage") }
+            val viewModel = HouseholdsViewModel(repo, TestHierarchy.store(repo))
+
+            viewModel.update(1L, name = "House", color = "teal", icon = "cottage")
+
+            val household =
+                viewModel.state.value.households
+                    .first()
+            assertEquals("House", household.name)
+            assertEquals("teal", household.color)
+            assertEquals("cottage", household.icon)
+        }
+
+    @Test
+    fun clearing_the_theme_leaves_the_name_untouched() =
+        runTest {
+            // Mirrors HouseholdEditScreen's appearance swatches / "Default" action,
+            // which calls updateTheme(name = null, ...) — relying on `name`'s
+            // default to omit the key so the server's `sometimes|required` rule
+            // never sees an explicit null (which would 422) and never touches it.
+            val repo = FakeHouseholdRepository()
+            val viewModel = HouseholdsViewModel(repo, TestHierarchy.store(repo))
+            viewModel.updateTheme(householdId = 1, color = "teal", icon = "cottage")
+
+            viewModel.updateTheme(householdId = 1, color = null, icon = null)
+
+            val household =
+                viewModel.state.value.households
+                    .first()
+            assertEquals("Garage", household.name)
+            assertEquals(null, household.color)
+            assertEquals(null, household.icon)
+        }
+
+    @Test
+    fun edit_mode_starts_off_and_toggles_on_enter_and_exit() =
+        runTest {
+            val repo = FakeHouseholdRepository()
+            val viewModel = HouseholdsViewModel(repo, TestHierarchy.store(repo))
+            assertFalse(viewModel.state.value.editMode)
+
+            viewModel.enterEditMode()
+            assertTrue(viewModel.state.value.editMode)
+
+            viewModel.exitEditMode()
+            assertFalse(viewModel.state.value.editMode)
+        }
+
+    @Test
     fun list_failure_surfaces_an_error() =
         runTest {
             val repo = FakeHouseholdRepository().apply { failList = true }
@@ -153,5 +227,27 @@ class HouseholdsViewModelTest {
                     .first()
                     .name,
             )
+        }
+
+    @Test
+    fun leave_sets_leftHouseholdId_so_the_edit_screen_can_navigate_back() =
+        runTest {
+            // HouseholdEditScreen waits for this (rather than navigating back
+            // immediately on tap) so the leave() coroutine — running in this
+            // ViewModel's own viewModelScope, now shared with HouseholdsScreen across
+            // the whole NavHost (MainActivity hoists one instance) — isn't cancelled
+            // mid-flight by the navigation it would otherwise trigger before the
+            // network call completes. The value is the household's own id, not a
+            // plain boolean, precisely BECAUSE the instance is shared: a boolean
+            // would stay stuck true after the first leave() this session and
+            // auto-navigate back out of the next household-edit visit for any OTHER
+            // household — see the field's own doc comment on HouseholdsUiState.
+            val repo = FakeHouseholdRepository()
+            val viewModel = HouseholdsViewModel(repo, TestHierarchy.store(repo))
+            assertNull(viewModel.state.value.leftHouseholdId)
+
+            viewModel.leave(householdId = 1)
+
+            assertEquals(1L, viewModel.state.value.leftHouseholdId)
         }
 }
