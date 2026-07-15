@@ -1,7 +1,6 @@
 package dev.scuttle.inventory.ui.auth
 
 import android.util.Log
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,7 +15,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -225,21 +223,14 @@ fun AuthScreen(
             HorizontalDivider(modifier = Modifier.weight(1f))
         }
 
-        OutlinedButton(
+        GoogleSignInButton(
             onClick = {
                 keyboardController?.hide()
                 launchGoogleSignIn()
             },
             enabled = !state.loading && !state.googleLoading,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            if (state.googleLoading) {
-                CircularProgressIndicator(modifier = Modifier.size(20.dp))
-            } else {
-                Text(text = stringResource(R.string.auth_continue_with_google))
-            }
-        }
+            loading = state.googleLoading,
+        )
 
         TextButton(onClick = viewModel::toggleMode, modifier = Modifier.fillMaxWidth()) {
             Text(
