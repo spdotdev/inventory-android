@@ -148,13 +148,17 @@ No expiry/reminders, recipes, shopping list, offline mode.
 **Phase 2 unlocked 2026-07-10** (user decision) and since shipped: barcode scanning,
 the low-stock "running low" view, filter/sort, household color/icon theming, and the
 live-updates client — see `ROADMAP.md` / `BACKLOG.md`.
-**Roles/permissions: coming (2026-07-13 decision, overrides the earlier refuse-to-add).**
-Owner/Admin/Member is now in scope (Spec 2). The seam already exists server-side: every
-mutating storage-structure route authorizes against `HouseholdPolicy@restructure`,
-which today grants any member (all members stay equal in practice) — roles change that
-one method body, not its call sites. Nothing client-side reads the seam yet: every user
-sees every edit-mode pencil, because `restructure` always returns true today. Keep this
-repo's guardrail in sync with `inventory-laravel/CLAUDE.md`'s matching bullet.
+**Roles/permissions: shipped (2026-07-17).** Owner/Admin/Member. `HouseholdDto` carries
+the caller's own `role`, `can_restructure`, and `can_manage_members` (server-computed —
+never re-derived client-side). Every edit-mode pencil (households/locations/shelves)
+and the household theme-edit fields are gated on `can_restructure`; a Member no longer
+sees an affordance guaranteed to 403 — this is a UI convenience, the server is still the
+real boundary. A **Members** screen (reached from the household edit page) lists the
+roster with role badges; promote/demote/remove are gated on `can_manage_members` and
+never shown on the Owner's own row, which instead offers **Transfer ownership** (Owner
+only) — a household always has exactly one Owner. Leaving as the sole Owner 409s with a
+friendly message asking to transfer first. Keep this repo's guardrail in sync with
+`inventory-laravel/CLAUDE.md`'s matching bullet.
 
 ## Conventions
 - Explicit over magic; SRP; document the *why*.
@@ -232,8 +236,9 @@ scan), CodeQL (SAST) on push/PR + weekly schedule, and dependency review (blocks
 high-severity-vulnerable new dependencies) — see `.github/workflows/`.
 
 ## Status
-Functionally-complete (MVP + Phase 2 + storage-architecture editing), CI-green, running
-against the **production backend at `https://inventory.scuttle.dev/api/v1`**. The
+Functionally-complete (MVP + Phase 2 + storage-architecture editing + household roles),
+CI-green, running against the **production backend at
+`https://inventory.scuttle.dev/api/v1`**. The
 single-activity Compose + Hilt + Retrofit app covers auth (email/password + Google,
 device-smoke-tested), storage overview, shelves (tabs/list toggle), products
 (add/remove/move, detail, image), search, invite (QR/join), More/Settings (theme,
@@ -243,6 +248,9 @@ live updates — with EN + NL localization and the Frost theme. The full hierarc
 (households, locations, shelves) is now editable in place behind a pencil: rename,
 up/down reorder, and delete-through-a-mandatory-strategy-dialog with a
 client-minted `deletion_batch_id` per gesture and snackbar Undo — see "Deletes" above.
+Every member has a role (Owner/Admin/Member); edit-mode pencils and a **Members**
+screen (promote/demote/remove, transfer ownership) gate on the server-computed
+`can_restructure`/`can_manage_members` flags — see "Roles/permissions" above.
 Covered by JVM unit tests + instrumented flow tests (the latter run nightly on an
 emulator in CI; `ktlintCheck` covers `androidTest`, `detekt` currently does not — see
 "Testing lessons"). Distribution is **debug builds only** (tag-driven GitHub prerelease
