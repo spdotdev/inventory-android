@@ -207,6 +207,24 @@ class ProductsViewModelTest {
         override suspend fun leave(householdId: Long) {}
     }
 
+    /** Counts list() calls so a test can prove hierarchyStore.refresh() actually ran. */
+    private class CountingHouseholdRepository : HouseholdRepository {
+        var listCalls = 0
+
+        override fun getCached(): List<HouseholdDto>? = null
+
+        override suspend fun list(): List<HouseholdDto> {
+            listCalls++
+            return emptyList()
+        }
+
+        override suspend fun create(name: String) = throw NotImplementedError()
+
+        override suspend fun join(code: String) = throw NotImplementedError()
+
+        override suspend fun leave(householdId: Long) = Unit
+    }
+
     private class FakeRestoreRepository : RestoreRepository {
         var lastHouseholdId: Long? = null
         var lastBatchId: String? = null
@@ -234,9 +252,18 @@ class ProductsViewModelTest {
         shelves: FakeShelfRepository = FakeShelfRepository(emptyMap()),
         search: FakeSearchRepository = FakeSearchRepository(),
         restoreRepository: RestoreRepository = FakeRestoreRepository(),
-    ): ProductsViewModel {
+    ): ProductsViewModel = viewModelWithStore(products, locations, shelves, search, restoreRepository).first
+
+    /** Same as [viewModel], but also hands back the [HierarchyStore] it was built with. */
+    private fun viewModelWithStore(
+        products: FakeProductRepository = FakeProductRepository(),
+        locations: FakeLocationRepository = FakeLocationRepository(emptyList()),
+        shelves: FakeShelfRepository = FakeShelfRepository(emptyMap()),
+        search: FakeSearchRepository = FakeSearchRepository(),
+        restoreRepository: RestoreRepository = FakeRestoreRepository(),
+    ): Pair<ProductsViewModel, HierarchyStore> {
         val store = HierarchyStore(FakeHouseholdRepository(), locations, shelves, products, UnconfinedTestDispatcher())
-        return ProductsViewModel(products, locations, shelves, search, store, restoreRepository)
+        return ProductsViewModel(products, locations, shelves, search, store, restoreRepository) to store
     }
 
     @Test
@@ -360,6 +387,37 @@ class ProductsViewModelTest {
                     .isEmpty(),
             ) // moved off this shelf
             assertEquals(null, vm.state.value.movingProductId)
+        }
+
+    @Test
+    fun confirm_move_refreshes_the_hierarchy_store() =
+        runTest {
+            // IMPORTANT fix: every other hierarchy mutation refreshes the store
+            // (X4) — move was the one exception, leaving the destination shelf's
+            // (and source shelf's) counts stale on Home/the drawer until a manual
+            // pull-to-refresh.
+            val products = FakeProductRepository().apply { items.add(ProductDto(1, "Peas", 2, 1)) }
+            val locations = FakeLocationRepository(listOf(LocationDto(10, "Chest", "freezer")))
+            val shelves =
+                FakeShelfRepository(mapOf(10L to listOf(ShelfDto(1, "Top", 0, 10L), ShelfDto(2, "Bottom", 1, 10L))))
+            // Bypasses viewModelWithStore() (LongParameterList) to inject a
+            // COUNTING household repo — the store's own householdRepository.list()
+            // call is the one signal that proves hierarchyStore.refresh() actually
+            // ran, matching StorageOverviewViewModelHierarchyRefreshTest's
+            // CountingHouseholdRepository pattern.
+            val households = CountingHouseholdRepository()
+            val store = HierarchyStore(households, locations, shelves, products, UnconfinedTestDispatcher())
+            val vm =
+                ProductsViewModel(products, locations, shelves, FakeSearchRepository(), store, FakeRestoreRepository())
+            vm.load(householdId = 1, shelfId = 1)
+            vm.startMove(productId = 1)
+            val target =
+                vm.state.value.moveTargets
+                    .first()
+
+            vm.confirmMove(targetShelfId = target.shelfId)
+
+            assertEquals(1, households.listCalls)
         }
 
     @Test

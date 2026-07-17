@@ -347,6 +347,11 @@ class ProductsViewModel
                         moveTargets = emptyList(),
                     )
                 }
+                // IMPORTANT fix: every other hierarchy mutation refreshes the store
+                // (X4) — a move was the one exception, so the destination shelf's
+                // product/warning counts (and the source shelf's) stayed stale on
+                // Home/the drawer until a manual pull-to-refresh.
+                hierarchyStore.refresh()
             }
         }
 

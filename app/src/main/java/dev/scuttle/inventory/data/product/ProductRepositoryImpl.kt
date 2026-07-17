@@ -96,9 +96,23 @@ class ProductRepositoryImpl
             targetShelfId: Long,
         ): ProductDto =
             api.move(householdId, shelfId, productId, MoveProductRequest(targetShelfId)).data.also {
-                cache[householdId to shelfId] = cache[householdId to shelfId]?.filter { p ->
-                    p.id != productId
-                } ?: emptyList()
+                cache[householdId to shelfId] =
+                    cache[householdId to shelfId]?.filter { p -> p.id != productId } ?: emptyList()
+                // IMPORTANT fix: the destination shelf's cache entry used to be left
+                // untouched, so a subsequent load() of that shelf (getCached() returning
+                // its now-stale list) never showed the moved product until some OTHER
+                // path happened to overwrite it. The move response (ProductController::
+                // move returns `new ProductResource($product)` with shelf_id already
+                // updated) DOES carry the full moved product, but appending it here would
+                // only be honest when the destination was already cached — every other
+                // cache in this file only ever gets ADDITIVELY patched by a mutation the
+                // user made FROM that shelf's own screen (list() always ran first), so a
+                // partial list was never observable. A move's destination is exactly the
+                // one shelf that can legitimately have NEVER been opened this session, so
+                // appending could plant a "list of 1" that masquerades as the shelf's full
+                // contents. Removing the entry instead makes the next load() re-fetch —
+                // the safe, honest fix either way.
+                cache.remove(householdId to targetShelfId)
             }
 
         override suspend fun uploadImage(
