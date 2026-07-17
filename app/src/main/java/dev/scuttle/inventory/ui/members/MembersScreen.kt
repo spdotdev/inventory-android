@@ -264,6 +264,8 @@ private fun roleLabelRes(role: String): Int =
  * tint — all sourced from the theme so light/dark parity comes for free, never a
  * hardcoded hex.
  */
+private val RoleBadgeShape = RoundedCornerShape(50)
+
 @Composable
 private fun RoleBadge(role: String) {
     val (container, content) =
@@ -276,7 +278,7 @@ private fun RoleBadge(role: String) {
     Surface(
         color = container,
         contentColor = content,
-        shape = RoundedCornerShape(50),
+        shape = RoleBadgeShape,
     ) {
         Text(
             text = stringResource(roleLabelRes(role)),
