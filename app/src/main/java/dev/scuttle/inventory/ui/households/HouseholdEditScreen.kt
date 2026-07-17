@@ -182,11 +182,12 @@ fun HouseholdEditScreen(
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(autoCorrect = false, imeAction = ImeAction.Done),
                             keyboardActions = KeyboardActions(onDone = { saveName() }),
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier.weight(1f).testTag("household-name-field"),
                         )
                         Button(
                             onClick = ::saveName,
                             enabled = name.isNotBlank() && !state.loading,
+                            modifier = Modifier.testTag("household-save-name"),
                         ) {
                             Text(stringResource(R.string.action_save))
                         }
