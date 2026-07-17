@@ -563,9 +563,25 @@ private fun InventoryNavHost(
                 val household = householdsState.households.find { it.id == householdId }
                 MembersScreen(
                     householdId = householdId,
+                    // Fail CLOSED here (not the fail-open convention every other
+                    // restructure-gating site in this branch uses), by deliberate
+                    // choice: unlike hiding a pencil, offering promote/demote/
+                    // remove/transfer to a viewer whose actual role isn't known yet
+                    // (e.g. a cold deep link straight to this screen, before
+                    // `householdsState.households` has loaded) is a worse UX
+                    // surprise than a brief spinner with no controls, and it's
+                    // exactly the class of "offer an action guaranteed to 403"
+                    // this whole fix pass exists to close.
                     viewerRole = household?.role.orEmpty(),
                     canManageMembers = household?.can_manage_members ?: false,
                     onBack = { navController.popBackStack() },
+                    // See MembersScreen's doc comment: transferOwnership() refreshes
+                    // the member list correctly but has no way to refresh this
+                    // screen's own viewerRole/canManageMembers props (sourced from
+                    // HouseholdsViewModel, not MembersUiState). Re-fetching here
+                    // (not just re-reading the already-stale cached state) closes
+                    // that gap to one recomposition instead of leaving it stale.
+                    onOwnershipTransferred = { householdsViewModel.refresh() },
                 )
             }
 

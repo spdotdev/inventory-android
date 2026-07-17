@@ -128,4 +128,48 @@ class MembersViewModelTest {
                     .role,
             )
         }
+
+    /**
+     * Regression test for the "stale viewerRole after transfer-ownership" bug: the
+     * ORIGINAL viewer's own row must never again read as "self" once they've been
+     * demoted by their own transferOwnership() call, even though the member LIST
+     * (correctly) now shows a DIFFERENT member holding "owner". `MembersScreen`
+     * derives isSelf from a `viewerRole` prop this ViewModel doesn't own — what this
+     * ViewModel CAN guarantee is that `ownershipTransferCount` ticks in lockstep
+     * with the (already-correct) member-list refresh, giving the caller a signal to
+     * refresh that stale prop rather than leaving a demoted viewer's UI offering an
+     * action (Transfer ownership) on someone else's row.
+     */
+    @Test
+    fun transferring_ownership_signals_the_caller_to_refresh_viewer_role() =
+        runTest {
+            val repo =
+                FakeMemberRepository().apply {
+                    members.add(MemberDto(1, "Owner", "owner", null))
+                    members.add(MemberDto(2, "Plain", "admin", null))
+                }
+            val viewModel = MembersViewModel(repo)
+            viewModel.load(householdId = 1)
+            assertEquals(0, viewModel.state.value.ownershipTransferCount)
+
+            viewModel.transferOwnership(2L)
+
+            // The signal fired exactly once, alongside the list refresh that already
+            // shows member 2 (not member 1, the original viewer) as "owner" — so a
+            // caller comparing against a STALE viewerRole == "owner" would otherwise
+            // keep matching member 2's row as "self" for member 1's session.
+            assertEquals(1, viewModel.state.value.ownershipTransferCount)
+            assertEquals(
+                "owner",
+                viewModel.state.value.members
+                    .first { it.id == 2L }
+                    .role,
+            )
+            assertEquals(
+                "admin",
+                viewModel.state.value.members
+                    .first { it.id == 1L }
+                    .role,
+            )
+        }
 }

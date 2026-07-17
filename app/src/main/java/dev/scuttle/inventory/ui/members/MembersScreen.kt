@@ -47,6 +47,19 @@ import dev.scuttle.inventory.data.dto.MemberDto
  * `can_manage_members`/`role`, so this screen takes them as parameters rather than
  * re-deriving them). The Owner's own row never shows promote/demote/remove — only a
  * "Transfer ownership" action, and only to the Owner themselves ([viewerRole] == "owner").
+ *
+ * [viewerRole]/[canManageMembers] are sourced from the caller's OWN household state
+ * (`HouseholdsViewModel`, via `MainActivity`), NOT from [MembersUiState] — and that
+ * state does NOT automatically refresh when [MembersViewModel.transferOwnership]
+ * succeeds. The member LIST refreshes correctly (it's re-fetched from the server), but
+ * `viewerRole` would otherwise stay stale at "owner" for the just-demoted viewer, whose
+ * OLD row (now belonging to the new owner) would then wrongly read as "self" — offering
+ * a "Transfer ownership" action guaranteed to 403. There is no client-side "my own user
+ * id" to compare against instead (`UserDto.id` from login is never persisted, and the
+ * members API returns no `is_self`/`user_id` marker — see the final-review fix notes),
+ * so the fix here is [onOwnershipTransferred]: fired the moment a transfer succeeds, in
+ * lockstep with the member-list refresh, so the caller can refresh `viewerRole` at
+ * (near enough) the same time rather than leaving it stale indefinitely.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,6 +69,7 @@ fun MembersScreen(
     canManageMembers: Boolean,
     modifier: Modifier = Modifier,
     onBack: () -> Unit = {},
+    onOwnershipTransferred: () -> Unit = {},
     viewModel: MembersViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -63,6 +77,9 @@ fun MembersScreen(
 
     LaunchedEffect(householdId) { viewModel.load(householdId) }
     LaunchedEffect(state.error) { state.error?.let { snackbarHostState.showSnackbar(it) } }
+    LaunchedEffect(state.ownershipTransferCount) {
+        if (state.ownershipTransferCount > 0) onOwnershipTransferred()
+    }
 
     var confirmRemove by remember { mutableStateOf<MemberDto?>(null) }
     var showTransferPicker by remember { mutableStateOf(false) }

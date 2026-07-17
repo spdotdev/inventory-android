@@ -18,6 +18,16 @@ data class MembersUiState(
     val loading: Boolean = false,
     val members: List<MemberDto> = emptyList(),
     val error: String? = null,
+    // Incremented (never reset) each time transferOwnership() succeeds. The
+    // caller (MembersScreen, via MainActivity) observes this as a one-shot
+    // event to refresh whatever ELSE derives "is the viewer the owner" —
+    // this ViewModel has no notion of the viewer's own user id (see
+    // MembersScreen's viewerRole doc comment), so it can't fix the caller's
+    // stale role itself, but it CAN signal "your role may have just changed"
+    // in lockstep with its own (correctly refreshed) member list, closing the
+    // staleness window to a single recomposition instead of leaving the
+    // caller's prop stale indefinitely.
+    val ownershipTransferCount: Int = 0,
 )
 
 @HiltViewModel
@@ -67,7 +77,12 @@ class MembersViewModel
             val id = householdId ?: return
             launchLoading {
                 repository.transferOwnership(id, userId)
-                _state.update { it.copy(members = repository.list(id)) }
+                _state.update {
+                    it.copy(
+                        members = repository.list(id),
+                        ownershipTransferCount = it.ownershipTransferCount + 1,
+                    )
+                }
             }
         }
 

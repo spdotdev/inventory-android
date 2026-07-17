@@ -11,6 +11,15 @@ data class HouseholdDto(
     // derives a stable default from the id (HouseholdTheme.kt).
     val color: String? = null,
     val icon: String? = null,
+    // Deliberately NO defaults on these three: a cached HouseholdDto decoded against a
+    // PRE-roles backend response (missing these keys) throws MissingFieldException
+    // rather than silently degrading — that's the point, not a bug to "fix" by adding
+    // defaults. A default here (e.g. can_manage_members = false) would let an old
+    // cached/serialized value silently decode as a real (if conservative) permission
+    // flag instead of failing loudly, and this app has no local cache to protect
+    // against anyway (always-online). Safe in practice: the backend already shipped
+    // and deployed roles before this branch merges, so no pre-roles response exists
+    // to hit this in production.
     val role: String,
     val can_restructure: Boolean,
     val can_manage_members: Boolean,
