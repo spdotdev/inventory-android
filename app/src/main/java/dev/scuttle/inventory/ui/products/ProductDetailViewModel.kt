@@ -26,6 +26,10 @@ data class ProductDetailUiState(
     val refreshing: Boolean = false,
     val product: ProductDto? = null,
     val error: String? = null,
+    // Distinct from [error] (mutation failures, shown as a Snackbar): a LOAD
+    // failure needs a PERSISTENT inline idiom, since a missed/dismissed
+    // snackbar would otherwise leave a blank screen with zero explanation (M4).
+    val loadError: String? = null,
     val saved: Boolean = false,
     val deleted: Boolean = false,
     /** The batch just deleted, for the Undo snackbar. Cleared once consumed. */
@@ -67,7 +71,7 @@ class ProductDetailViewModel
 
         init {
             if (householdId == -1L || shelfId == -1L || productId == -1L) {
-                _state.update { it.copy(error = "Invalid navigation — missing product ID.") }
+                _state.update { it.copy(loadError = "Invalid navigation — missing product ID.") }
             } else {
                 load()
             }
@@ -76,7 +80,7 @@ class ProductDetailViewModel
         fun load() {
             if (householdId == -1L || shelfId == -1L || productId == -1L) return
             viewModelScope.launch {
-                _state.update { it.copy(loading = true, refreshing = true, error = null) }
+                _state.update { it.copy(loading = true, refreshing = true, loadError = null) }
                 runCatching { repository.list(householdId, shelfId) }
                     .onSuccess { products ->
                         _state.update {
@@ -94,7 +98,7 @@ class ProductDetailViewModel
                             it.copy(
                                 loading = false,
                                 refreshing = false,
-                                error = e.toUserMessage("Failed to load product."),
+                                loadError = e.toUserMessage("Failed to load product."),
                             )
                         }
                     }

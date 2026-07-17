@@ -58,6 +58,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.dto.ProductDto
+import dev.scuttle.inventory.ui.common.ErrorRetry
 import dev.scuttle.inventory.ui.common.SnackbarErrorEffect
 import dev.scuttle.inventory.ui.common.SortMenu
 import dev.scuttle.inventory.ui.common.SortOrder
@@ -208,8 +209,12 @@ fun ProductsPane(
             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
         }
 
-        // Errors are shown via the Scaffold's Snackbar (SnackbarErrorEffect above),
-        // which TalkBack announces — no sticky, silent inline error text.
+        // Mutation failures (add/remove/move/delete) are shown via the Scaffold's
+        // Snackbar (SnackbarErrorEffect above), which TalkBack announces. A LOAD
+        // failure is different: a missed/dismissed snackbar there would otherwise
+        // leave a blank screen with zero explanation (M4), so it gets its own
+        // persistent inline ErrorRetry instead.
+        state.loadError?.let { ErrorRetry(it, onRetry = viewModel::refresh) }
 
         if (state.products.isNotEmpty()) {
             OutlinedTextField(
@@ -229,7 +234,7 @@ fun ProductsPane(
             )
         }
 
-        if (state.products.isEmpty() && !state.loading) {
+        if (state.products.isEmpty() && !state.loading && state.loadError == null) {
             Text(text = stringResource(R.string.products_pane_empty))
         } else if (state.filteredToEmpty) {
             Text(text = stringResource(R.string.products_pane_no_match))

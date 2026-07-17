@@ -54,7 +54,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
-import dev.scuttle.inventory.ui.common.LiveStatusText
+import dev.scuttle.inventory.ui.common.ErrorRetry
 import dev.scuttle.inventory.ui.theme.FrostCard
 import dev.scuttle.inventory.ui.theme.householdAccentsByKey
 import dev.scuttle.inventory.ui.theme.householdIconsByKey
@@ -164,7 +164,7 @@ fun HouseholdEditScreen(
                         .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(24.dp),
             ) {
-                state.error?.let { LiveStatusText(it) }
+                state.error?.let { ErrorRetry(it, onRetry = viewModel::refresh) }
 
                 // Rename + theme are restructure-scoped (HouseholdPolicy's doc comment
                 // describes both as Owner/Admin actions): a Member sees the name as

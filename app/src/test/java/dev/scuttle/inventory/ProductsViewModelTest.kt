@@ -648,24 +648,48 @@ class ProductsViewModelTest {
         }
 
     @Test
-    fun list_failure_surfaces_an_error() =
+    fun list_failure_surfaces_a_load_error() =
         runTest {
+            // A LOAD failure (M4) is distinct from a mutation [error]: it needs to be
+            // PERSISTENT (never a transient Snackbar the user might miss), so it's its
+            // own field the screen renders as ErrorRetry.
             val repo = FakeProductRepository().apply { failList = true }
             val vm = viewModel(products = repo)
 
             vm.load(householdId = 1, shelfId = 1)
 
-            assertEquals("offline", vm.state.value.error)
+            assertEquals("offline", vm.state.value.loadError)
+            assertNull(vm.state.value.error)
             assertFalse(vm.state.value.loading)
+        }
+
+    @Test
+    fun refreshing_after_a_load_failure_clears_the_load_error_on_success() =
+        runTest {
+            val repo = FakeProductRepository().apply { failList = true }
+            val vm = viewModel(products = repo)
+            vm.load(householdId = 1, shelfId = 1)
+            assertEquals("offline", vm.state.value.loadError)
+
+            repo.failList = false
+            vm.refresh()
+
+            assertNull(vm.state.value.loadError)
         }
 
     @Test
     fun consumeError_clears_the_error_after_it_is_shown() =
         runTest {
-            val repo = FakeProductRepository().apply { failList = true }
+            // Uses a mutation failure (delete), not a load failure: consumeError() only
+            // ever governs [error] (the Snackbar-driven mutation field) — see the
+            // load/loadError split documented on ProductsUiState.
+            val repo = FakeProductRepository().apply { items.add(ProductDto(1, "Milk", 2, 1)) }
             val vm = viewModel(products = repo)
             vm.load(householdId = 1, shelfId = 1)
-            assertEquals("offline", vm.state.value.error)
+            repo.failDelete = true
+
+            vm.delete(productId = 1)
+            assertNotNull(vm.state.value.error)
 
             // After the Snackbar has surfaced it, the error is consumed so it doesn't re-fire.
             vm.consumeError()

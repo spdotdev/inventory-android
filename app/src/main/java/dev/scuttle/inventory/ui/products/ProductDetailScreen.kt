@@ -65,6 +65,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.product.ProductEdit
+import dev.scuttle.inventory.ui.common.ErrorRetry
 import dev.scuttle.inventory.ui.common.SnackbarErrorEffect
 import dev.scuttle.inventory.ui.hierarchy.UndoOutcome
 import kotlinx.coroutines.flow.first
@@ -243,7 +244,10 @@ fun ProductDetailScreen(
             ) {
                 if (state.loading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
 
-                // Errors are shown via the Scaffold's Snackbar (SnackbarErrorEffect above).
+                // Mutation errors are shown via the Scaffold's Snackbar (SnackbarErrorEffect
+                // above); a LOAD failure gets its own persistent inline ErrorRetry (M4) so a
+                // missed/dismissed snackbar doesn't leave a blank screen.
+                state.loadError?.let { ErrorRetry(it, onRetry = viewModel::load) }
 
                 // Image section
                 Box(

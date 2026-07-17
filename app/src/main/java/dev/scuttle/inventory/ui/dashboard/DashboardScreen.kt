@@ -50,9 +50,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.LowStockItem
+import dev.scuttle.inventory.ui.common.ErrorRetry
 import dev.scuttle.inventory.ui.common.HouseholdOption
 import dev.scuttle.inventory.ui.common.HouseholdPickerSheet
-import dev.scuttle.inventory.ui.common.LiveStatusText
 import dev.scuttle.inventory.ui.common.shelfDisplayName
 import dev.scuttle.inventory.ui.theme.FrostCard
 import dev.scuttle.inventory.ui.theme.HouseholdAvatar
@@ -166,7 +166,7 @@ fun DashboardScreen(
                     LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                 }
 
-                state.error?.let { LiveStatusText(it) }
+                state.error?.let { ErrorRetry(it, onRetry = viewModel::refresh) }
 
                 // Stat cards. The caption belongs to the row, so they're grouped in
                 // their own Column rather than taking the page's 16dp rhythm.

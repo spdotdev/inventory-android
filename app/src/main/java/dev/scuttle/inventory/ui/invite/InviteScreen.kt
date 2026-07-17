@@ -37,7 +37,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import dev.scuttle.inventory.R
-import dev.scuttle.inventory.ui.common.LiveStatusText
+import dev.scuttle.inventory.ui.common.ErrorRetry
 import dev.scuttle.inventory.ui.theme.SpaceMono
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -87,7 +87,7 @@ fun InviteScreen(
         }
 
         state.error?.let {
-            LiveStatusText(it)
+            ErrorRetry(it, onRetry = { viewModel.load(householdId) })
         }
 
         if (state.code.isNotEmpty()) {

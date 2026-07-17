@@ -56,6 +56,10 @@ data class ProductsUiState(
     val newName: String = "",
     val suggestions: List<String> = emptyList(),
     val error: String? = null,
+    // Distinct from [error] (mutation failures, shown as a Snackbar): a LOAD
+    // failure needs a PERSISTENT inline idiom, since a missed/dismissed
+    // snackbar would otherwise leave a blank screen with zero explanation (M4).
+    val loadError: String? = null,
     val movingProductId: Long? = null,
     val moveTargets: List<MoveTarget> = emptyList(),
     // Outcome of the last barcode scan, consumed by the UI as a one-shot snackbar.
@@ -167,9 +171,18 @@ class ProductsViewModel
         fun refresh() {
             val h = householdId ?: return
             val s = shelfId ?: return
-            launch {
-                val products = productRepository.list(h, s)
-                _state.update { it.copy(products = products) }
+            viewModelScope.launch {
+                _state.update { it.copy(loading = true, loadError = null) }
+                val result = runCatching { productRepository.list(h, s) }
+                result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+                _state.update { state ->
+                    result.fold(
+                        onSuccess = { products -> state.copy(loading = false, products = products) },
+                        onFailure = { e ->
+                            state.copy(loading = false, loadError = e.toUserMessage("Failed to load products."))
+                        },
+                    )
+                }
             }
         }
 

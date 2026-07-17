@@ -49,6 +49,7 @@ import com.journeyapps.barcodescanner.ScanOptions
 import dev.scuttle.inventory.BuildConfig
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.settings.AppLanguage
+import dev.scuttle.inventory.ui.common.ErrorRetry
 import dev.scuttle.inventory.ui.common.LiveStatusText
 import dev.scuttle.inventory.ui.theme.ThemeMode
 
@@ -146,7 +147,7 @@ fun SettingsScreen(
 
             Text(text = stringResource(R.string.settings_join_section), style = MaterialTheme.typography.titleMedium)
             joinState.error?.let {
-                LiveStatusText(it)
+                ErrorRetry(it, onRetry = joinViewModel::join)
             }
             if (joinState.success) {
                 val successMessage =

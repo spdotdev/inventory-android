@@ -35,7 +35,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
-import dev.scuttle.inventory.ui.common.LiveStatusText
+import dev.scuttle.inventory.ui.common.ErrorRetry
 import dev.scuttle.inventory.ui.common.SortMenu
 import dev.scuttle.inventory.ui.theme.FrostCard
 
@@ -113,7 +113,7 @@ fun SearchScreen(
         }
 
         state.error?.let {
-            LiveStatusText(it)
+            ErrorRetry(it, onRetry = viewModel::search)
         }
 
         if (state.query.isNotBlank() && state.results.isEmpty() && !state.loading) {

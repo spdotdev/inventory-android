@@ -169,7 +169,7 @@ class ProductDetailViewModelTest {
             val repo = FakeProductRepository().apply { failList = true }
             val vm = viewModel(savedState(), repo)
 
-            assertNotNull(vm.state.value.error)
+            assertNotNull(vm.state.value.loadError)
             assertFalse(vm.state.value.loading)
         }
 

@@ -51,7 +51,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
-import dev.scuttle.inventory.ui.common.LiveStatusText
+import dev.scuttle.inventory.ui.common.ErrorRetry
 import dev.scuttle.inventory.ui.theme.FrostCard
 import dev.scuttle.inventory.ui.theme.HouseholdAvatar
 
@@ -138,7 +138,7 @@ fun HouseholdsScreen(
                 Spacer(Modifier.height(4.dp))
 
                 state.error?.let {
-                    LiveStatusText(it)
+                    ErrorRetry(it, onRetry = viewModel::refresh)
                 }
 
                 if (state.households.isEmpty() && !state.loading) {

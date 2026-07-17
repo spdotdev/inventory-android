@@ -78,7 +78,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.dto.ShelfDto
 import dev.scuttle.inventory.ui.app.DrawerViewModel
-import dev.scuttle.inventory.ui.common.LiveStatusText
+import dev.scuttle.inventory.ui.common.ErrorRetry
 import dev.scuttle.inventory.ui.common.shelfDisplayName
 import dev.scuttle.inventory.ui.hierarchy.DeleteStrategyDialog
 import dev.scuttle.inventory.ui.hierarchy.EditableRow
@@ -258,7 +258,7 @@ fun LocationDetailScreen(
                 }
 
                 state.error?.let {
-                    LiveStatusText(it, modifier = Modifier.padding(16.dp))
+                    ErrorRetry(it, onRetry = shelvesViewModel::refresh, modifier = Modifier.padding(16.dp))
                 }
 
                 if (state.shelves.isEmpty()) {
