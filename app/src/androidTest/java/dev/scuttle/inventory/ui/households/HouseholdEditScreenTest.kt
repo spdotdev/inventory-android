@@ -7,6 +7,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import dev.scuttle.inventory.data.HierarchyStore
 import dev.scuttle.inventory.data.dto.HouseholdDto
 import dev.scuttle.inventory.data.dto.LocationDto
@@ -146,18 +147,23 @@ class HouseholdEditScreenTest {
         ) = "batch"
     }
 
-    private fun household(canRestructure: Boolean) =
-        HouseholdDto(
-            id = 1,
-            name = "Garage",
-            join_code = "AAAA-1111",
-            role = if (canRestructure) "admin" else "member",
-            can_restructure = canRestructure,
-            can_manage_members = canRestructure,
-        )
+    private fun household(
+        canRestructure: Boolean,
+        role: String = if (canRestructure) "admin" else "member",
+    ) = HouseholdDto(
+        id = 1,
+        name = "Garage",
+        join_code = "AAAA-1111",
+        role = role,
+        can_restructure = canRestructure,
+        can_manage_members = canRestructure,
+    )
 
-    private fun render(canRestructure: Boolean) {
-        val repository = FakeHouseholdRepository(household(canRestructure))
+    private fun render(
+        canRestructure: Boolean,
+        role: String = if (canRestructure) "admin" else "member",
+    ) {
+        val repository = FakeHouseholdRepository(household(canRestructure, role))
         val hierarchyStore =
             HierarchyStore(repository, EmptyLocations, EmptyShelves, EmptyProducts, Dispatchers.Main)
         val viewModel = HouseholdsViewModel(repository, hierarchyStore)
@@ -190,5 +196,25 @@ class HouseholdEditScreenTest {
         composeRule.onNodeWithTag("theme-icon-home").assertIsDisplayed()
 
         composeRule.onNodeWithText("Garage").assertIsDisplayed()
+    }
+
+    @Test
+    fun an_owner_tapping_leave_sees_the_transfer_ownership_dialog_not_the_leave_confirm() {
+        render(canRestructure = true, role = "owner")
+
+        composeRule.onNodeWithText("Leave").performClick()
+
+        composeRule.onNodeWithText("You're the owner").assertIsDisplayed()
+        composeRule.onNodeWithText("Open members").assertIsDisplayed()
+        composeRule.onNodeWithText("Leave Garage?").assertDoesNotExist()
+    }
+
+    @Test
+    fun a_non_owner_tapping_leave_sees_the_normal_leave_confirm_dialog() {
+        render(canRestructure = false, role = "member")
+
+        composeRule.onNodeWithText("Leave").performClick()
+
+        composeRule.onNodeWithText("Leave Garage?").assertIsDisplayed()
     }
 }

@@ -120,6 +120,7 @@ fun HouseholdEditScreen(
     var selectedColor by remember(household?.id) { mutableStateOf(household?.color) }
     var selectedIcon by remember(household?.id) { mutableStateOf(household?.icon) }
     var confirmLeave by remember { mutableStateOf(false) }
+    var confirmTransferFirst by remember { mutableStateOf(false) }
     val keyboardController = LocalSoftwareKeyboardController.current
 
     fun saveName() {
@@ -319,7 +320,17 @@ fun HouseholdEditScreen(
                         // (all members are equal). That arrives with roles (Spec 2), and
                         // this danger zone is where it will land.
                         Button(
-                            onClick = { confirmLeave = true },
+                            onClick = {
+                                // A sole Owner leaving 409s server-side (a household always
+                                // has exactly one Owner) — steer them to Transfer ownership
+                                // first instead of opening a confirm dialog that would just
+                                // fail. Every other role keeps the normal leave-confirm flow.
+                                if (household.role == "owner") {
+                                    confirmTransferFirst = true
+                                } else {
+                                    confirmLeave = true
+                                }
+                            },
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                         ) {
                             Text(stringResource(R.string.households_leave))
@@ -345,6 +356,25 @@ fun HouseholdEditScreen(
             },
             dismissButton = {
                 TextButton(onClick = { confirmLeave = false }) { Text(stringResource(R.string.action_cancel)) }
+            },
+        )
+    }
+
+    if (confirmTransferFirst) {
+        AlertDialog(
+            onDismissRequest = { confirmTransferFirst = false },
+            title = { Text(stringResource(R.string.household_edit_owner_leave_title)) },
+            text = { Text(stringResource(R.string.household_edit_owner_leave_body)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmTransferFirst = false
+                    onOpenMembers()
+                }) {
+                    Text(stringResource(R.string.household_edit_owner_leave_action))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmTransferFirst = false }) { Text(stringResource(R.string.action_cancel)) }
             },
         )
     }

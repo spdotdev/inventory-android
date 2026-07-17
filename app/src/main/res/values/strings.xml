@@ -88,6 +88,9 @@
     <string name="household_edit_danger_zone_title">Danger zone</string>
     <string name="household_edit_danger_zone_body">Leaving removes your access to this household.</string>
     <string name="household_edit_members_title">Members</string>
+    <string name="household_edit_owner_leave_title">You\'re the owner</string>
+    <string name="household_edit_owner_leave_body">Transfer ownership to another member before leaving.</string>
+    <string name="household_edit_owner_leave_action">Open members</string>
 
     <!-- Members -->
     <string name="members_title">Members</string>
