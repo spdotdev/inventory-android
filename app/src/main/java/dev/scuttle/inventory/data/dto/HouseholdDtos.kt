@@ -11,6 +11,9 @@ data class HouseholdDto(
     // derives a stable default from the id (HouseholdTheme.kt).
     val color: String? = null,
     val icon: String? = null,
+    val role: String,
+    val can_restructure: Boolean,
+    val can_manage_members: Boolean,
 )
 
 // Laravel API Resources wrap payloads in a `data` envelope.

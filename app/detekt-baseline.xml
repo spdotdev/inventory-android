@@ -7,11 +7,15 @@
     <ID>ConstructorParameterNaming:ErrorDtos.kt$ClientErrorRequest$val app_version: String? = null</ID>
     <ID>ConstructorParameterNaming:ErrorDtos.kt$ClientErrorRequest$val device_id: String</ID>
     <ID>ConstructorParameterNaming:ErrorDtos.kt$ClientErrorRequest$val error_code: String</ID>
+    <ID>ConstructorParameterNaming:HouseholdDtos.kt$HouseholdDto$val can_manage_members: Boolean</ID>
+    <ID>ConstructorParameterNaming:HouseholdDtos.kt$HouseholdDto$val can_restructure: Boolean</ID>
     <ID>ConstructorParameterNaming:HouseholdDtos.kt$HouseholdDto$val join_code: String</ID>
     <ID>ConstructorParameterNaming:LocationDtos.kt$DeleteLocationRequest$val deletion_batch_id: String</ID>
     <ID>ConstructorParameterNaming:LocationDtos.kt$DeleteLocationRequest$val target_location_id: Long? = null</ID>
     <ID>ConstructorParameterNaming:LocationDtos.kt$LocationDto$val product_count: Int = 0</ID>
     <ID>ConstructorParameterNaming:LocationDtos.kt$LocationDto$val shelf_count: Int = 0</ID>
+    <ID>ConstructorParameterNaming:MemberDtos.kt$MemberDto$val joined_at: String?</ID>
+    <ID>ConstructorParameterNaming:MemberDtos.kt$TransferOwnershipRequest$val user_id: Long</ID>
     <ID>ConstructorParameterNaming:SearchDtos.kt$SearchResultDto$val household_id: Long? = null</ID>
     <ID>ConstructorParameterNaming:SearchDtos.kt$SearchResultDto$val location_id: Long? = null</ID>
     <ID>ConstructorParameterNaming:SearchDtos.kt$SearchResultDto$val shelf_id: Long? = null</ID>
@@ -210,6 +214,7 @@
     <ID>TooManyFunctions:NetworkModule.kt$NetworkModule</ID>
     <ID>TooManyFunctions:ProductRepositoryImpl.kt$ProductRepositoryImpl : ProductRepository</ID>
     <ID>TooManyFunctions:ProductsViewModel.kt$ProductsViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:RepositoryModule.kt$RepositoryModule</ID>
     <ID>TooManyFunctions:ShelvesViewModel.kt$ShelvesViewModel : ViewModel</ID>
     <ID>TooManyFunctions:StorageOverviewViewModel.kt$StorageOverviewViewModel : ViewModel</ID>
     <ID>UnusedParameter:AuthViewModel.kt$AuthViewModel$mode: AuthMode</ID>
