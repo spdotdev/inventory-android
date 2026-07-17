@@ -129,6 +129,61 @@ class MembersViewModelTest {
             )
         }
 
+    @Test
+    fun promoting_a_member_emits_a_role_change_event_with_the_inverse_role() =
+        runTest {
+            val repo =
+                FakeMemberRepository().apply {
+                    members.add(MemberDto(1, "Owner", "owner", null))
+                    members.add(MemberDto(2, "Plain", "member", null))
+                }
+            val viewModel = MembersViewModel(repo)
+            viewModel.load(householdId = 1)
+
+            viewModel.promote(2L)
+
+            val event = viewModel.state.value.roleChangeEvent
+            assertEquals(2L, event?.userId)
+            assertEquals("admin", event?.newRole)
+            assertEquals("member", event?.previousRole)
+        }
+
+    @Test
+    fun undoing_a_role_change_reverts_to_the_previous_role_without_emitting_a_new_event() =
+        runTest {
+            val repo =
+                FakeMemberRepository().apply {
+                    members.add(MemberDto(1, "Owner", "owner", null))
+                    members.add(MemberDto(2, "Plain", "member", null))
+                }
+            val viewModel = MembersViewModel(repo)
+            viewModel.load(householdId = 1)
+            viewModel.promote(2L)
+            val event = viewModel.state.value.roleChangeEvent!!
+
+            viewModel.undoRoleChange(event)
+
+            assertEquals("member", viewModel.state.value.members.first { it.id == 2L }.role)
+            assertEquals(event, viewModel.state.value.roleChangeEvent)
+        }
+
+    @Test
+    fun consuming_the_role_change_event_clears_it() =
+        runTest {
+            val repo =
+                FakeMemberRepository().apply {
+                    members.add(MemberDto(1, "Owner", "owner", null))
+                    members.add(MemberDto(2, "Plain", "member", null))
+                }
+            val viewModel = MembersViewModel(repo)
+            viewModel.load(householdId = 1)
+            viewModel.promote(2L)
+
+            viewModel.consumeRoleChangeEvent()
+
+            assertEquals(null, viewModel.state.value.roleChangeEvent)
+        }
+
     /**
      * Regression test for the "stale viewerRole after transfer-ownership" bug: the
      * ORIGINAL viewer's own row must never again read as "self" once they've been

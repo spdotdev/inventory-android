@@ -22,6 +22,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -34,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -74,11 +76,31 @@ fun MembersScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
 
     LaunchedEffect(householdId) { viewModel.load(householdId) }
     LaunchedEffect(state.error) { state.error?.let { snackbarHostState.showSnackbar(it) } }
     LaunchedEffect(state.ownershipTransferCount) {
         if (state.ownershipTransferCount > 0) onOwnershipTransferred()
+    }
+    val undoLabel = stringResource(R.string.delete_undo)
+    LaunchedEffect(state.roleChangeEvent) {
+        val event = state.roleChangeEvent ?: return@LaunchedEffect
+        val message =
+            if (event.newRole == "admin") {
+                context.getString(R.string.members_now_admin, event.memberName)
+            } else {
+                context.getString(R.string.members_now_member, event.memberName)
+            }
+        val result =
+            snackbarHostState.showSnackbar(
+                message = message,
+                actionLabel = undoLabel,
+            )
+        if (result == SnackbarResult.ActionPerformed) {
+            viewModel.undoRoleChange(event)
+        }
+        viewModel.consumeRoleChangeEvent()
     }
 
     var confirmRemove by remember { mutableStateOf<MemberDto?>(null) }

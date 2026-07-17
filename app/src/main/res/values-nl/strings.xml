@@ -106,6 +106,8 @@
     <string name="members_transfer_ownership">Eigenaarschap overdragen</string>
     <string name="members_self_suffix">%s (jij)</string>
     <string name="members_transfer_ownership_pick">Wie moet de nieuwe eigenaar worden?</string>
+    <string name="members_now_admin">%s is nu beheerder</string>
+    <string name="members_now_member">%s is nu lid</string>
 
     <!-- Location detail / Shelves -->
     <string name="location_shelves_title">Planken</string>

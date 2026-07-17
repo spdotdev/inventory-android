@@ -106,6 +106,8 @@
     <string name="members_transfer_ownership">Transfer ownership</string>
     <string name="members_self_suffix">%s (you)</string>
     <string name="members_transfer_ownership_pick">Who should become the new owner?</string>
+    <string name="members_now_admin">%s is now an admin</string>
+    <string name="members_now_member">%s is now a member</string>
 
     <!-- Location detail / Shelves -->
     <string name="location_shelves_title">Shelves</string>

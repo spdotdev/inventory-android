@@ -28,6 +28,19 @@ data class MembersUiState(
     // staleness window to a single recomposition instead of leaving the
     // caller's prop stale indefinitely.
     val ownershipTransferCount: Int = 0,
+    // One-shot event: set the moment a promote/demote lands, cleared once the
+    // screen has shown its snackbar (consumeRoleChangeEvent). Carries what the
+    // snackbar needs (who, new role, and the role to revert to on Undo) rather
+    // than just a counter like [ownershipTransferCount] — Undo needs the actual
+    // previous role, not merely a "something changed" signal.
+    val roleChangeEvent: RoleChangeEvent? = null,
+)
+
+data class RoleChangeEvent(
+    val userId: Long,
+    val memberName: String,
+    val newRole: String,
+    val previousRole: String,
 )
 
 @HiltViewModel
@@ -48,22 +61,42 @@ class MembersViewModel
             }
         }
 
-        fun promote(userId: Long) = setRole(userId, "admin")
+        fun promote(userId: Long) = setRole(userId, "admin", emitEvent = true)
 
-        fun demote(userId: Long) = setRole(userId, "member")
+        fun demote(userId: Long) = setRole(userId, "member", emitEvent = true)
+
+        /**
+         * Applies the inverse role change from a [RoleChangeEvent] shown as an Undo
+         * action on the promote/demote snackbar (M1). Does not itself emit a new
+         * [RoleChangeEvent] — Undo is a correction, not a fresh action the user
+         * should be offered a snackbar+Undo for in turn.
+         */
+        fun undoRoleChange(event: RoleChangeEvent) = setRole(event.userId, event.previousRole, emitEvent = false)
 
         private fun setRole(
             userId: Long,
             role: String,
+            emitEvent: Boolean,
         ) {
             val id = householdId ?: return
+            val previousRole = _state.value.members.firstOrNull { it.id == userId }?.role
             launchLoading {
                 val updated = repository.updateRole(id, userId, role)
                 _state.update { state ->
-                    state.copy(members = state.members.map { if (it.id == userId) updated else it })
+                    state.copy(
+                        members = state.members.map { if (it.id == userId) updated else it },
+                        roleChangeEvent =
+                            if (emitEvent && previousRole != null) {
+                                RoleChangeEvent(userId, updated.name, role, previousRole)
+                            } else {
+                                state.roleChangeEvent
+                            },
+                    )
                 }
             }
         }
+
+        fun consumeRoleChangeEvent() = _state.update { it.copy(roleChangeEvent = null) }
 
         fun remove(userId: Long) {
             val id = householdId ?: return
