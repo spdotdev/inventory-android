@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.ui.common.LiveStatusText
+import dev.scuttle.inventory.ui.theme.FrostCard
 import dev.scuttle.inventory.ui.theme.householdAccentsByKey
 import dev.scuttle.inventory.ui.theme.householdIconsByKey
 import dev.scuttle.inventory.ui.theme.householdTheme
@@ -287,12 +288,11 @@ fun HouseholdEditScreen(
                 // Viewing the roster is a plain membership action, not a restructure
                 // one (per the backend spec) — every member sees this row, unlike the
                 // name/theme controls above which are gated on can_restructure.
-                Card(modifier = Modifier.fillMaxWidth()) {
+                FrostCard(modifier = Modifier.fillMaxWidth(), onClick = onOpenMembers) {
                     Row(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .clickable(onClick = onOpenMembers)
                                 .testTag("household-open-members")
                                 .padding(16.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
