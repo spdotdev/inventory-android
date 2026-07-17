@@ -96,6 +96,7 @@ fun HouseholdEditScreen(
     householdId: Long,
     modifier: Modifier = Modifier,
     onBack: () -> Unit = {},
+    onOpenMembers: () -> Unit = {},
     viewModel: HouseholdsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -272,6 +273,26 @@ fun HouseholdEditScreen(
                         style = MaterialTheme.typography.headlineSmall,
                         modifier = Modifier.fillMaxWidth(),
                     )
+                }
+
+                // Viewing the roster is a plain membership action, not a restructure
+                // one (per the backend spec) — every member sees this row, unlike the
+                // name/theme controls above which are gated on can_restructure.
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable(onClick = onOpenMembers)
+                                .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = stringResource(R.string.household_edit_members_cd),
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                    }
                 }
 
                 // Semantically-coloured card (error tint): stays on plain Card, not

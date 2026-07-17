@@ -57,8 +57,10 @@ import dev.scuttle.inventory.ui.dashboard.DashboardScreen
 import dev.scuttle.inventory.ui.home.AllStoragesScreen
 import dev.scuttle.inventory.ui.households.HouseholdEditScreen
 import dev.scuttle.inventory.ui.households.HouseholdsScreen
+import dev.scuttle.inventory.ui.households.HouseholdsViewModel
 import dev.scuttle.inventory.ui.invite.InviteScreen
 import dev.scuttle.inventory.ui.location.LocationDetailScreen
+import dev.scuttle.inventory.ui.members.MembersScreen
 import dev.scuttle.inventory.ui.missing.MissingItemsScreen
 import dev.scuttle.inventory.ui.products.ProductDetailScreen
 import dev.scuttle.inventory.ui.scanner.ScannerScreen
@@ -217,6 +219,7 @@ private object Routes {
     const val DASHBOARD = "dashboard"
     const val HOUSEHOLDS = "households"
     const val HOUSEHOLD_EDIT = "household-edit/{householdId}"
+    const val MEMBERS = "members/{householdId}"
     const val SETTINGS = "settings"
     const val STORAGE = "storage/{householdId}"
     const val SEARCH = "search/{householdId}?query={query}"
@@ -226,6 +229,8 @@ private object Routes {
     const val MISSING_ITEMS = "missing-items"
 
     fun householdEdit(householdId: Long) = "household-edit/$householdId"
+
+    fun members(householdId: Long) = "members/$householdId"
 
     fun storage(householdId: Long) = "storage/$householdId"
 
@@ -542,6 +547,24 @@ private fun InventoryNavHost(
                 HouseholdEditScreen(
                     householdId = householdId,
                     viewModel = hiltViewModel(householdsEntry),
+                    onBack = { navController.popBackStack() },
+                    onOpenMembers = { navController.navigate(Routes.members(householdId)) },
+                )
+            }
+
+            composable(
+                route = Routes.MEMBERS,
+                arguments = listOf(navArgument("householdId") { type = NavType.LongType }),
+            ) { entry ->
+                val householdId = entry.arguments?.getLong("householdId") ?: return@composable
+                val householdsEntry = remember(entry) { navController.getBackStackEntry(Routes.HOUSEHOLDS) }
+                val householdsViewModel: HouseholdsViewModel = hiltViewModel(householdsEntry)
+                val householdsState by householdsViewModel.state.collectAsState()
+                val household = householdsState.households.find { it.id == householdId }
+                MembersScreen(
+                    householdId = householdId,
+                    viewerRole = household?.role.orEmpty(),
+                    canManageMembers = household?.can_manage_members ?: false,
                     onBack = { navController.popBackStack() },
                 )
             }
