@@ -163,7 +163,12 @@ class MembersViewModelTest {
 
             viewModel.undoRoleChange(event)
 
-            assertEquals("member", viewModel.state.value.members.first { it.id == 2L }.role)
+            assertEquals(
+                "member",
+                viewModel.state.value.members
+                    .first { it.id == 2L }
+                    .role,
+            )
             assertEquals(event, viewModel.state.value.roleChangeEvent)
         }
 

@@ -79,7 +79,10 @@ class MembersViewModel
             emitEvent: Boolean,
         ) {
             val id = householdId ?: return
-            val previousRole = _state.value.members.firstOrNull { it.id == userId }?.role
+            val previousRole =
+                _state.value.members
+                    .firstOrNull { it.id == userId }
+                    ?.role
             launchLoading {
                 val updated = repository.updateRole(id, userId, role)
                 _state.update { state ->

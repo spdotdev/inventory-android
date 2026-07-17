@@ -10,10 +10,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -23,6 +23,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -41,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.dto.MemberDto
+import dev.scuttle.inventory.ui.theme.FrostCard
 
 /**
  * Roster for one household: name + role badge per member, with promote/demote/remove
@@ -138,7 +140,7 @@ fun MembersScreen(
                     // viewer-user-id needs to be threaded through just to detect that.
                     val isSelf = isOwnerRow && viewerRole == "owner"
 
-                    Card(modifier = Modifier.fillMaxWidth()) {
+                    FrostCard(modifier = Modifier.fillMaxWidth()) {
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(16.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -158,10 +160,7 @@ fun MembersScreen(
                                     member.name
                                 }
                             Text(text = displayName, modifier = Modifier.weight(1f))
-                            Text(
-                                text = stringResource(roleLabelRes(member.role)),
-                                style = MaterialTheme.typography.labelLarge,
-                            )
+                            RoleBadge(role = member.role)
                         }
 
                         if (isOwnerRow) {
@@ -256,3 +255,33 @@ private fun roleLabelRes(role: String): Int =
         "admin" -> R.string.role_admin
         else -> R.string.role_member
     }
+
+/**
+ * Small tinted-chip role indicator (M3): a plain `Text` label made Owner/Admin/Member
+ * scan identically in the roster, so each role gets its own container tint — Owner uses
+ * the Frost icy-blue accent (`colorScheme.primary`, matching frost-app.html's accent
+ * usage elsewhere), Admin a secondary-container tint, Member a neutral surface-variant
+ * tint — all sourced from the theme so light/dark parity comes for free, never a
+ * hardcoded hex.
+ */
+@Composable
+private fun RoleBadge(role: String) {
+    val (container, content) =
+        when (role) {
+            "owner" -> MaterialTheme.colorScheme.primary.copy(alpha = 0.18f) to MaterialTheme.colorScheme.primary
+            "admin" ->
+                MaterialTheme.colorScheme.secondaryContainer to MaterialTheme.colorScheme.onSecondaryContainer
+            else -> MaterialTheme.colorScheme.surfaceVariant to MaterialTheme.colorScheme.onSurfaceVariant
+        }
+    Surface(
+        color = container,
+        contentColor = content,
+        shape = RoundedCornerShape(50),
+    ) {
+        Text(
+            text = stringResource(roleLabelRes(role)),
+            style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+        )
+    }
+}
