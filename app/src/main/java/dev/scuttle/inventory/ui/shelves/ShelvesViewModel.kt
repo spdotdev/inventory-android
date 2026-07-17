@@ -16,6 +16,7 @@ import dev.scuttle.inventory.ui.hierarchy.DeletePlan
 import dev.scuttle.inventory.ui.hierarchy.MoveTarget
 import dev.scuttle.inventory.ui.hierarchy.UndoOutcome
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -82,6 +83,19 @@ class ShelvesViewModel
     ) : ViewModel() {
         private var householdId: Long? = null
         private var locationId: Long? = null
+
+        // Re-entrancy guards (final review, stability audit): a rapid double-tap
+        // used to launch a second coroutine on top of the first, and that second
+        // move's success could then be clobbered when the FIRST call's failure
+        // path (still in flight) restored a `preMove` snapshot captured before
+        // the second call ever ran. Serializing per-operation — skip a new call
+        // while its predecessor is still active — makes that interleaving
+        // structurally impossible; a dropped rapid second tap is preferable to a
+        // corrupted order (up/down buttons, not a text field, so nothing typed
+        // is ever lost). moveJob and deleteJob are deliberately separate: a
+        // reorder in flight has no reason to block a delete gesture or vice versa.
+        private var moveJob: Job? = null
+        private var deleteJob: Job? = null
 
         private val _state = MutableStateFlow(ShelvesUiState(listView = shelfViewStore.isListView()))
         val state: StateFlow<ShelvesUiState> = _state.asStateFlow()
@@ -218,7 +232,11 @@ class ShelvesViewModel
         ) {
             val h = householdId
             val l = locationId
-            if (h == null || l == null) return
+            // Serialized: skip a new move while one is still in flight rather than
+            // let a second tap's coroutine interleave with the first's (see the
+            // field's own doc comment on moveJob). Merged into this same check
+            // (rather than its own early return) to stay under ReturnCount's limit.
+            if (h == null || l == null || moveJob?.isActive == true) return
             // The system shelf is never part of the manual drag order and never
             // travels in the reorder payload — see reorder() below.
             val current = _state.value.shelves.filterNot { it.is_system }
@@ -229,8 +247,9 @@ class ShelvesViewModel
 
             val reordered = current.toMutableList().apply { add(target, removeAt(index)) }
 
-            // Captured BEFORE the optimistic frame overwrites state, so a
-            // rejected reorder has something faithful to snap back to.
+            // Captured BEFORE the optimistic frame overwrites state — used only as
+            // a last-resort fallback below if the server can't even be reached to
+            // resync.
             val preMove = _state.value.shelves
 
             // Optimistic: the row visibly moves on tap. The server call rewrites
@@ -238,36 +257,44 @@ class ShelvesViewModel
             // back rather than leaving it half-sorted.
             _state.update { it.copy(shelves = reordered + systemShelves) }
 
-            launchLoading {
-                // The COMPLETE ordered id list, system shelf excluded — a
-                // partial list produces duplicate positions server-side, and
-                // the server does not want the system shelf in the payload at
-                // all.
-                val result = runCatching { repository.reorder(h, l, reordered.map { it.id }) }
-                result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
-                if (result.isSuccess) {
-                    // The server's response is the FULL shelf list for this
-                    // location, is_system included (PATCH .../shelves/reorder
-                    // ends with `return $this->index(...)`). Appending our own
-                    // local systemShelves on top of that would duplicate the
-                    // system shelf's id, and the list view's LazyColumn keys
-                    // itemsIndexed by shelf.id — a duplicate key throws
-                    // IllegalArgumentException on every reorder. Strip any
-                    // system shelf(s) the server sent back before adding ours.
-                    val server = result.getOrThrow()
-                    _state.update {
-                        it.copy(shelves = orderShelves(server.filterNot { s -> s.is_system } + systemShelves))
+            moveJob =
+                launchLoading {
+                    // The COMPLETE ordered id list, system shelf excluded — a
+                    // partial list produces duplicate positions server-side, and
+                    // the server does not want the system shelf in the payload at
+                    // all.
+                    val result = runCatching { repository.reorder(h, l, reordered.map { it.id }) }
+                    result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+                    if (result.isSuccess) {
+                        // The server's response is the FULL shelf list for this
+                        // location, is_system included (PATCH .../shelves/reorder
+                        // ends with `return $this->index(...)`). Appending our own
+                        // local systemShelves on top of that would duplicate the
+                        // system shelf's id, and the list view's LazyColumn keys
+                        // itemsIndexed by shelf.id — a duplicate key throws
+                        // IllegalArgumentException on every reorder. Strip any
+                        // system shelf(s) the server sent back before adding ours.
+                        val server = result.getOrThrow()
+                        _state.update {
+                            it.copy(shelves = orderShelves(server.filterNot { s -> s.is_system } + systemShelves))
+                        }
+                        hierarchyStore.refresh()
+                    } else {
+                        // The write never landed — the optimistic frame is a lie
+                        // about server order. Re-sync from the server rather than
+                        // blindly restoring the `preMove` snapshot: with concurrent
+                        // moves now structurally impossible (the guard above),
+                        // preMove can't have gone stale from another LOCAL mutation
+                        // — but a resync still reflects whatever the server
+                        // actually has, rather than a client-side guess frozen at
+                        // this gesture's start, so it stays the more honest
+                        // recovery. Fall back to preMove only if the resync itself
+                        // can't reach the server either.
+                        val resynced = runCatching { orderShelves(repository.list(h, l)) }.getOrNull()
+                        _state.update { it.copy(shelves = resynced ?: preMove) }
+                        result.exceptionOrNull()?.let { throw it }
                     }
-                    hierarchyStore.refresh()
-                } else {
-                    // The write never landed — the optimistic frame is a lie
-                    // about server order. Snap back to what was true before
-                    // this gesture rather than leaving it standing; launchLoading's
-                    // own catch still turns the exception into state.error below.
-                    _state.update { it.copy(shelves = preMove) }
-                    result.exceptionOrNull()?.let { throw it }
                 }
-            }
         }
 
         /**
@@ -329,7 +356,7 @@ class ShelvesViewModel
         ) {
             val h = householdId
             val l = locationId
-            if (h == null || l == null) return
+            if (h == null || l == null || deleteJob?.isActive == true) return
             val state = _state.value
             // Same filter requestDelete() applies (and, by the time the dialog is
             // open, requestDelete() has already refreshed state.shelves): only ids
@@ -344,74 +371,79 @@ class ShelvesViewModel
             // and Undo would restore only one of them.
             val batchId = UUID.randomUUID().toString()
 
-            launchLoading {
-                val succeeded = mutableListOf<Long>()
-                var failure: Throwable? = null
-                for (id in ids) {
-                    val result =
-                        runCatching {
-                            repository.deleteWithStrategy(h, l, id, ShelfDeletion(batchId, strategy, targetId))
+            deleteJob =
+                launchLoading {
+                    val succeeded = mutableListOf<Long>()
+                    var failure: Throwable? = null
+                    for (id in ids) {
+                        val result =
+                            runCatching {
+                                repository.deleteWithStrategy(h, l, id, ShelfDeletion(batchId, strategy, targetId))
+                            }
+                        result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+                        if (result.isSuccess) {
+                            succeeded += id
+                        } else {
+                            // Stop at the first failure: whatever already landed
+                            // server-side must still be reflected and made Undo-able,
+                            // but nothing past the failure was attempted, so there is
+                            // nothing more to reconcile for those ids.
+                            failure = result.exceptionOrNull()
+                            break
                         }
-                    result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
-                    if (result.isSuccess) {
-                        succeeded += id
-                    } else {
-                        // Stop at the first failure: whatever already landed
-                        // server-side must still be reflected and made Undo-able,
-                        // but nothing past the failure was attempted, so there is
-                        // nothing more to reconcile for those ids.
-                        failure = result.exceptionOrNull()
-                        break
                     }
-                }
 
-                if (succeeded.isNotEmpty()) {
-                    // A partial batch already changed the server's truth (and a
-                    // MOVE/UNSORT strategy can shift another shelf's product_count
-                    // too), so reconcile with a real refresh rather than a local
-                    // filter — and surface Undo for whatever actually landed.
-                    val fresh = orderShelves(repository.list(h, l))
-                    _state.update { it.copy(shelves = fresh, lastBatchId = batchId) }
-                    hierarchyStore.refresh()
-                }
+                    if (succeeded.isNotEmpty()) {
+                        // A partial batch already changed the server's truth (and a
+                        // MOVE/UNSORT strategy can shift another shelf's product_count
+                        // too), so reconcile with a real refresh rather than a local
+                        // filter — and surface Undo for whatever actually landed.
+                        val fresh = orderShelves(repository.list(h, l))
+                        _state.update { it.copy(shelves = fresh, lastBatchId = batchId) }
+                        hierarchyStore.refresh()
+                    }
 
-                // Cancel and Delete must leave the screen in the same shape: exit
-                // edit mode and restore the pre-edit view either way.
-                _state.update {
-                    it.copy(
-                        editMode = false,
-                        listView = viewBeforeEdit,
-                        selected = emptySet(),
-                        pendingDelete = null,
-                        moveTargets = emptyList(),
-                    )
-                }
+                    // Cancel and Delete must leave the screen in the same shape: exit
+                    // edit mode and restore the pre-edit view either way.
+                    _state.update {
+                        it.copy(
+                            editMode = false,
+                            listView = viewBeforeEdit,
+                            selected = emptySet(),
+                            pendingDelete = null,
+                            moveTargets = emptyList(),
+                        )
+                    }
 
-                failure?.let { throw it }
-            }
+                    failure?.let { throw it }
+                }
         }
 
         fun cancelDelete() = _state.update { it.copy(pendingDelete = null, moveTargets = emptyList()) }
 
         fun undoDelete() {
             val h = householdId ?: return
-            val batchId = _state.value.lastBatchId ?: return
-            launchLoading {
-                // A 409 here means the batch was already restored (another device,
-                // a double-tap) or permanently removed past the undo window — NOT
-                // a generic failure, so it does not rethrow into launchLoading's
-                // catch-all (state.error would otherwise show "Something went
-                // wrong." instead of the specific message the screen shows below).
-                val result = runCatching { restoreRepository.restore(h, batchId) }
-                result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
-                if (result.isSuccess) {
-                    _state.update { it.copy(lastBatchId = null, undoResult = UndoOutcome.SUCCESS) }
-                    refresh()
-                    hierarchyStore.refresh()
-                } else {
-                    _state.update { it.copy(undoResult = UndoOutcome.FAILURE) }
+            val batchId = _state.value.lastBatchId
+            // Merged with the batchId-null check (rather than its own early
+            // return) to stay under ReturnCount's limit.
+            if (batchId == null || deleteJob?.isActive == true) return
+            deleteJob =
+                launchLoading {
+                    // A 409 here means the batch was already restored (another device,
+                    // a double-tap) or permanently removed past the undo window — NOT
+                    // a generic failure, so it does not rethrow into launchLoading's
+                    // catch-all (state.error would otherwise show "Something went
+                    // wrong." instead of the specific message the screen shows below).
+                    val result = runCatching { restoreRepository.restore(h, batchId) }
+                    result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+                    if (result.isSuccess) {
+                        _state.update { it.copy(lastBatchId = null, undoResult = UndoOutcome.SUCCESS) }
+                        refresh()
+                        hierarchyStore.refresh()
+                    } else {
+                        _state.update { it.copy(undoResult = UndoOutcome.FAILURE) }
+                    }
                 }
-            }
         }
 
         fun consumeLastBatch() = _state.update { it.copy(lastBatchId = null) }
@@ -441,7 +473,7 @@ class ShelvesViewModel
         private fun launchLoading(
             refreshing: Boolean = false,
             block: suspend () -> Unit,
-        ) {
+        ): Job =
             viewModelScope.launch {
                 _state.update { it.copy(loading = true, refreshing = refreshing, error = null) }
                 val result = runCatching { block() }
@@ -459,5 +491,4 @@ class ShelvesViewModel
                     )
                 }
             }
-        }
     }
