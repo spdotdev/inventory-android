@@ -5,12 +5,15 @@ import dev.scuttle.inventory.data.household.HouseholdRepository
 import dev.scuttle.inventory.ui.households.HouseholdsViewModel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import retrofit2.HttpException
+import retrofit2.Response
 
 class HouseholdsViewModelTest {
     @get:Rule
@@ -29,6 +32,7 @@ class HouseholdsViewModelTest {
                 ),
             )
         var failList = false
+        var leaveThrows: Throwable? = null
 
         override fun getCached(): List<HouseholdDto>? = null
 
@@ -54,6 +58,7 @@ class HouseholdsViewModelTest {
         override suspend fun join(code: String): HouseholdDto = items.first()
 
         override suspend fun leave(householdId: Long) {
+            leaveThrows?.let { throw it }
             items.removeIf { it.id == householdId }
         }
 
@@ -306,5 +311,22 @@ class HouseholdsViewModelTest {
             viewModel.leave(householdId = 1)
 
             assertEquals(1L, viewModel.state.value.leftHouseholdId)
+        }
+
+    @Test
+    fun leaving_as_the_sole_owner_surfaces_a_friendly_409_message() =
+        runTest {
+            val repo =
+                FakeHouseholdRepository().apply {
+                    leaveThrows = HttpException(Response.error<Unit>(409, "".toResponseBody(null)))
+                }
+            val viewModel = HouseholdsViewModel(repo, TestHierarchy.store(repo))
+
+            viewModel.leave(householdId = 1)
+
+            assertEquals(
+                "You're the only owner — transfer ownership before leaving this household.",
+                viewModel.state.value.error,
+            )
         }
 }
