@@ -2,6 +2,7 @@ package dev.scuttle.inventory
 
 import android.net.Uri
 import dev.scuttle.inventory.data.HierarchyStore
+import dev.scuttle.inventory.data.auth.AuthRepository
 import dev.scuttle.inventory.data.dto.LocationDto
 import dev.scuttle.inventory.data.dto.ProductDto
 import dev.scuttle.inventory.data.dto.ShelfDto
@@ -11,6 +12,8 @@ import dev.scuttle.inventory.data.product.ProductEdit
 import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.data.shelf.ShelfRepository
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 
 /**
@@ -125,4 +128,47 @@ object TestHierarchy {
         householdRepository: HouseholdRepository,
         dispatcher: CoroutineDispatcher = UnconfinedTestDispatcher(),
     ): HierarchyStore = HierarchyStore(householdRepository, EmptyLocations, EmptyShelves, EmptyProducts, dispatcher)
+
+    /**
+     * A minimal, shared [AuthRepository] fake for VMs that only need to observe
+     * [AuthRepository.sessionActive] (e.g. DrawerViewModel's session-reset —
+     * DrawerViewModelTest / DrawerViewModelSessionResetTest). Starts `true`
+     * (authenticated) since that's every existing test's starting condition;
+     * [setActive] simulates a session boundary (logout, 401, or a fresh sign-in).
+     * Every other member is unused by those VMs and throws if ever called.
+     */
+    class FakeAuthRepository : AuthRepository {
+        private val active = MutableStateFlow(true)
+
+        override fun isAuthenticated() = active.value
+
+        override val sessionActive: StateFlow<Boolean> = active
+
+        override suspend fun register(
+            name: String,
+            email: String,
+            password: String,
+        ) = throw NotImplementedError()
+
+        override suspend fun login(
+            email: String,
+            password: String,
+        ) = throw NotImplementedError()
+
+        override suspend fun loginWithGoogle(idToken: String) = throw NotImplementedError()
+
+        override suspend fun loginWithGoogleCode(
+            code: String,
+            codeVerifier: String,
+            redirectUri: String,
+        ) = throw NotImplementedError()
+
+        override suspend fun forgotPassword(email: String) = throw NotImplementedError()
+
+        override suspend fun logout() = throw NotImplementedError()
+
+        fun setActive(value: Boolean) {
+            active.value = value
+        }
+    }
 }

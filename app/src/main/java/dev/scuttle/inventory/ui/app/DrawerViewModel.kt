@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.scuttle.inventory.data.HierarchyStore
 import dev.scuttle.inventory.data.HouseholdWithLocations
+import dev.scuttle.inventory.data.auth.AuthRepository
 import dev.scuttle.inventory.data.error.toUserMessage
 import dev.scuttle.inventory.data.hierarchy.LocationDeleteStrategy
 import dev.scuttle.inventory.data.hierarchy.LocationDeletion
@@ -74,6 +75,7 @@ class DrawerViewModel
         private val store: HierarchyStore,
         private val locationRepository: LocationRepository,
         private val restoreRepository: RestoreRepository,
+        private val authRepository: AuthRepository,
     ) : ViewModel() {
         private val deleteFlow = MutableStateFlow(DeleteFlowState())
 
@@ -109,6 +111,33 @@ class DrawerViewModel
         // would never show it.
         private val _actionError = MutableStateFlow<String?>(null)
         val actionError: StateFlow<String?> = _actionError.asStateFlow()
+
+        init {
+            // CRITICAL fix: this VM is resolved once against the Activity's
+            // ViewModelStoreOwner (MainActivity's InventoryNavHost) and survives a
+            // logout→login in the same process — SessionCleaner.clear() only
+            // reaches Hilt @Singletons, not ViewModels. Without this, a pending
+            // delete-strategy dialog or "Deleted · Undo" snackbar minted under one
+            // account (carrying its household/location/batch ids) would still be
+            // showing for the NEXT signed-in account, and confirming/undoing it
+            // would fire API calls against the old ids under the new token.
+            // authRepository.sessionActive flips on every session boundary (logout,
+            // a mid-session 401, and the token being set for a fresh login) — react
+            // to every emission, including the first (current-value) one, since a
+            // reset at VM-creation time on already-empty state is a harmless no-op.
+            viewModelScope.launch {
+                authRepository.sessionActive.collect { resetTransientDeleteState() }
+            }
+        }
+
+        private fun resetTransientDeleteState() {
+            deleteJob?.cancel()
+            deleteJob = null
+            pendingHouseholdId = null
+            pendingLocationId = null
+            lastBatchHouseholdId = null
+            deleteFlow.update { DeleteFlowState() }
+        }
 
         fun refresh() = store.refresh(userInitiated = true)
 

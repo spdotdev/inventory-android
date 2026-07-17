@@ -60,6 +60,7 @@
     <ID>EmptyFunctionBlock:TestHierarchy.kt$TestHierarchy.EmptyLocations${}</ID>
     <ID>EmptyFunctionBlock:TestHierarchy.kt$TestHierarchy.EmptyProducts${}</ID>
     <ID>EmptyFunctionBlock:TestHierarchy.kt$TestHierarchy.EmptyShelves${}</ID>
+    <ID>LargeClass:DrawerViewModelTest.kt$DrawerViewModelTest</ID>
     <ID>LongMethod:AllStoragesScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun AllStoragesScreen( modifier: Modifier = Modifier, viewModel: DrawerViewModel, onOpenDrawer: () -&gt; Unit = {}, onOpenLocation: (householdId: Long, locationId: Long) -&gt; Unit = { _, _ -&gt; }, onOpenStorage: (householdId: Long) -&gt; Unit = {}, localViewModel: AllStoragesViewModel = hiltViewModel(), )</ID>
     <ID>LongMethod:AuthScreen.kt$@Composable fun AuthScreen( onForgotPassword: () -&gt; Unit = {}, modifier: Modifier = Modifier, viewModel: AuthViewModel = hiltViewModel(), )</ID>
     <ID>LongMethod:DashboardScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun DashboardScreen( modifier: Modifier = Modifier, onOpenDrawer: () -&gt; Unit = {}, onOpenLocation: (householdId: Long, locationId: Long) -&gt; Unit = { _, _ -&gt; }, onOpenHouseholds: () -&gt; Unit = {}, onOpenMissingItems: () -&gt; Unit = {}, viewModel: DashboardViewModel = hiltViewModel(), )</ID>

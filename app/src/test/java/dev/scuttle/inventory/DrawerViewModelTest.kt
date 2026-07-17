@@ -2,6 +2,7 @@ package dev.scuttle.inventory
 
 import android.net.Uri
 import dev.scuttle.inventory.data.HierarchyStore
+import dev.scuttle.inventory.data.auth.AuthRepository
 import dev.scuttle.inventory.data.dto.HouseholdDto
 import dev.scuttle.inventory.data.dto.LocationDto
 import dev.scuttle.inventory.data.dto.ProductDto
@@ -233,7 +234,8 @@ class DrawerViewModelTest {
         store: HierarchyStore,
         locationRepo: LocationRepository,
         restoreRepository: RestoreRepository = FakeRestoreRepository(),
-    ): DrawerViewModel = DrawerViewModel(store, locationRepo, restoreRepository)
+        authRepository: AuthRepository = TestHierarchy.FakeAuthRepository(),
+    ): DrawerViewModel = DrawerViewModel(store, locationRepo, restoreRepository, authRepository)
 
     @Test
     fun refresh_populates_entries_with_locations() =
