@@ -217,4 +217,18 @@ class HouseholdEditScreenTest {
 
         composeRule.onNodeWithText("Leave Garage?").assertIsDisplayed()
     }
+
+    @Test
+    fun a_member_without_restructure_sees_the_readonly_role_hint() {
+        render(canRestructure = false, role = "member")
+
+        composeRule.onNodeWithText("Only the owner and admins can edit this household.").assertIsDisplayed()
+    }
+
+    @Test
+    fun an_admin_with_restructure_does_not_see_the_readonly_role_hint() {
+        render(canRestructure = true, role = "admin")
+
+        composeRule.onNodeWithText("Only the owner and admins can edit this household.").assertDoesNotExist()
+    }
 }

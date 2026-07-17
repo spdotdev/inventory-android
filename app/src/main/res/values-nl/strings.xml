@@ -91,6 +91,7 @@
     <string name="household_edit_owner_leave_title">Je bent de eigenaar</string>
     <string name="household_edit_owner_leave_body">Draag het eigenaarschap over aan een ander lid voordat je vertrekt.</string>
     <string name="household_edit_owner_leave_action">Leden openen</string>
+    <string name="household_edit_readonly_hint">Alleen de eigenaar en beheerders kunnen dit huishouden bewerken.</string>
 
     <!-- Members -->
     <string name="members_title">Leden</string>
@@ -103,6 +104,7 @@
     <string name="members_remove_confirm_title">%1$s verwijderen?</string>
     <string name="members_remove_confirm_body">Ze verliezen direct toegang tot dit huishouden.</string>
     <string name="members_transfer_ownership">Eigenaarschap overdragen</string>
+    <string name="members_self_suffix">%s (jij)</string>
     <string name="members_transfer_ownership_pick">Wie moet de nieuwe eigenaar worden?</string>
 
     <!-- Location detail / Shelves -->

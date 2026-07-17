@@ -122,7 +122,20 @@ fun MembersScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Text(text = member.name, modifier = Modifier.weight(1f))
+                            // "(you)" only for the Owner viewing their own row — see the
+                            // isSelf comment above for why that's the ONLY case this
+                            // screen can derive self-identity at all. Non-owner viewers
+                            // get no suffix on any row: there's no user id to compare
+                            // against (no is_self/user_id from the members API, and
+                            // UserDto.id from login is never persisted), so guessing would
+                            // risk labelling the WRONG member as "(you)".
+                            val displayName =
+                                if (isSelf) {
+                                    stringResource(R.string.members_self_suffix, member.name)
+                                } else {
+                                    member.name
+                                }
+                            Text(text = displayName, modifier = Modifier.weight(1f))
                             Text(
                                 text = stringResource(roleLabelRes(member.role)),
                                 style = MaterialTheme.typography.labelLarge,

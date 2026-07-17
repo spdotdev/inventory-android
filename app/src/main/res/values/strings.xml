@@ -91,6 +91,7 @@
     <string name="household_edit_owner_leave_title">You\'re the owner</string>
     <string name="household_edit_owner_leave_body">Transfer ownership to another member before leaving.</string>
     <string name="household_edit_owner_leave_action">Open members</string>
+    <string name="household_edit_readonly_hint">Only the owner and admins can edit this household.</string>
 
     <!-- Members -->
     <string name="members_title">Members</string>
@@ -103,6 +104,7 @@
     <string name="members_remove_confirm_title">Remove %1$s?</string>
     <string name="members_remove_confirm_body">They\'ll lose access to this household immediately.</string>
     <string name="members_transfer_ownership">Transfer ownership</string>
+    <string name="members_self_suffix">%s (you)</string>
     <string name="members_transfer_ownership_pick">Who should become the new owner?</string>
 
     <!-- Location detail / Shelves -->

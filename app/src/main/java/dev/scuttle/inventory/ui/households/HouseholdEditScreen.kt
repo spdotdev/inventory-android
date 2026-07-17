@@ -274,6 +274,14 @@ fun HouseholdEditScreen(
                         style = MaterialTheme.typography.headlineSmall,
                         modifier = Modifier.fillMaxWidth(),
                     )
+                    // Role gating (can_restructure) is otherwise invisible here — a
+                    // Member just sees fewer controls than an Owner/Admin with no
+                    // explanation why. Shown only in this read-only branch.
+                    Text(
+                        text = stringResource(R.string.household_edit_readonly_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
 
                 // Viewing the roster is a plain membership action, not a restructure
