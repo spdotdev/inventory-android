@@ -18,7 +18,8 @@ class JoinHouseholdViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private class FakeHouseholdRepository(
-        val joined: HouseholdDto = HouseholdDto(2, "Friends", "BBBB"),
+        val joined: HouseholdDto =
+            HouseholdDto(2, "Friends", "BBBB", role = "admin", can_restructure = true, can_manage_members = true),
         var failJoin: Boolean = false,
     ) : HouseholdRepository {
         var joinedWith: String? = null
@@ -135,11 +136,37 @@ class JoinHouseholdViewModelTest {
                 object : HouseholdRepository {
                     override fun getCached(): List<HouseholdDto>? = null
 
-                    override suspend fun list() = listOf(HouseholdDto(2, "Friends", "BBBB"))
+                    override suspend fun list() =
+                        listOf(
+                            HouseholdDto(
+                                2,
+                                "Friends",
+                                "BBBB",
+                                role = "admin",
+                                can_restructure = true,
+                                can_manage_members = true,
+                            ),
+                        )
 
-                    override suspend fun create(name: String) = HouseholdDto(2, "Friends", "BBBB")
+                    override suspend fun create(name: String) =
+                        HouseholdDto(
+                            2,
+                            "Friends",
+                            "BBBB",
+                            role = "admin",
+                            can_restructure = true,
+                            can_manage_members = true,
+                        )
 
-                    override suspend fun join(code: String) = HouseholdDto(2, "Friends", "BBBB")
+                    override suspend fun join(code: String) =
+                        HouseholdDto(
+                            2,
+                            "Friends",
+                            "BBBB",
+                            role = "admin",
+                            can_restructure = true,
+                            can_manage_members = true,
+                        )
 
                     override suspend fun leave(householdId: Long) {}
                 }

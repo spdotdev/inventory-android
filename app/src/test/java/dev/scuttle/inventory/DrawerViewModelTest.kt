@@ -240,7 +240,17 @@ class DrawerViewModelTest {
         runTest {
             val (store, locRepo) =
                 makeStore(
-                    households = listOf(HouseholdDto(1, "Home", "AAAA")),
+                    households =
+                        listOf(
+                            HouseholdDto(
+                                1,
+                                "Home",
+                                "AAAA",
+                                role = "admin",
+                                can_restructure = true,
+                                can_manage_members = true,
+                            ),
+                        ),
                     locationsByHousehold = mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge"))),
                 )
             val vm = viewModel(store, locRepo)
@@ -265,7 +275,17 @@ class DrawerViewModelTest {
         runTest {
             val (store, locRepo) =
                 makeStore(
-                    households = listOf(HouseholdDto(1, "Home", "AAAA")),
+                    households =
+                        listOf(
+                            HouseholdDto(
+                                1,
+                                "Home",
+                                "AAAA",
+                                role = "admin",
+                                can_restructure = true,
+                                can_manage_members = true,
+                            ),
+                        ),
                     locationsByHousehold = mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge"))),
                     shelvesByLocation = mapOf(10L to listOf(ShelfDto(100, "Top", 0, 10))),
                     productsByShelf =
@@ -340,7 +360,21 @@ class DrawerViewModelTest {
                 FakeLocationRepository(
                     mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge", shelf_count = 0, product_count = 3))),
                 )
-            val (store, _) = makeStore(households = listOf(HouseholdDto(1, "Home", "AAAA")), locationRepo = repo)
+            val (store, _) =
+                makeStore(
+                    households =
+                        listOf(
+                            HouseholdDto(
+                                1,
+                                "Home",
+                                "AAAA",
+                                role = "admin",
+                                can_restructure = true,
+                                can_manage_members = true,
+                            ),
+                        ),
+                    locationRepo = repo,
+                )
             val vm = viewModel(store, repo)
 
             vm.requestDelete(householdId = 1, locationId = 10)
@@ -366,7 +400,21 @@ class DrawerViewModelTest {
                 FakeLocationRepository(
                     mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge", shelf_count = 3, product_count = 0))),
                 )
-            val (store, _) = makeStore(households = listOf(HouseholdDto(1, "Home", "AAAA")), locationRepo = repo)
+            val (store, _) =
+                makeStore(
+                    households =
+                        listOf(
+                            HouseholdDto(
+                                1,
+                                "Home",
+                                "AAAA",
+                                role = "admin",
+                                can_restructure = true,
+                                can_manage_members = true,
+                            ),
+                        ),
+                    locationRepo = repo,
+                )
             val vm = viewModel(store, repo)
 
             vm.requestDelete(householdId = 1, locationId = 10)
@@ -391,7 +439,21 @@ class DrawerViewModelTest {
                 FakeLocationRepository(
                     mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge", shelf_count = 0, product_count = 0))),
                 )
-            val (store, _) = makeStore(households = listOf(HouseholdDto(1, "Home", "AAAA")), locationRepo = repo)
+            val (store, _) =
+                makeStore(
+                    households =
+                        listOf(
+                            HouseholdDto(
+                                1,
+                                "Home",
+                                "AAAA",
+                                role = "admin",
+                                can_restructure = true,
+                                can_manage_members = true,
+                            ),
+                        ),
+                    locationRepo = repo,
+                )
             val vm = viewModel(store, repo)
             // state.entries is now a snapshot with shelf_count = 0 — the VM never
             // reloads it as part of requestDelete().
@@ -443,7 +505,25 @@ class DrawerViewModelTest {
                 )
             val (store, _) =
                 makeStore(
-                    households = listOf(HouseholdDto(1, "Home", "AAAA"), HouseholdDto(2, "Cabin", "BBBB")),
+                    households =
+                        listOf(
+                            HouseholdDto(
+                                1,
+                                "Home",
+                                "AAAA",
+                                role = "admin",
+                                can_restructure = true,
+                                can_manage_members = true,
+                            ),
+                            HouseholdDto(
+                                2,
+                                "Cabin",
+                                "BBBB",
+                                role = "admin",
+                                can_restructure = true,
+                                can_manage_members = true,
+                            ),
+                        ),
                     locationRepo = repo,
                 )
             val vm = viewModel(store, repo)
@@ -461,7 +541,21 @@ class DrawerViewModelTest {
     fun deleting_the_only_location_in_a_household_offers_no_move_target() =
         runTest {
             val repo = FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge"))))
-            val (store, _) = makeStore(households = listOf(HouseholdDto(1, "Home", "AAAA")), locationRepo = repo)
+            val (store, _) =
+                makeStore(
+                    households =
+                        listOf(
+                            HouseholdDto(
+                                1,
+                                "Home",
+                                "AAAA",
+                                role = "admin",
+                                can_restructure = true,
+                                can_manage_members = true,
+                            ),
+                        ),
+                    locationRepo = repo,
+                )
             val vm = viewModel(store, repo)
 
             vm.requestDelete(householdId = 1, locationId = 10)
@@ -476,7 +570,21 @@ class DrawerViewModelTest {
     fun requesting_delete_for_a_location_that_no_longer_exists_does_nothing() =
         runTest {
             val repo = FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge"))))
-            val (store, _) = makeStore(households = listOf(HouseholdDto(1, "Home", "AAAA")), locationRepo = repo)
+            val (store, _) =
+                makeStore(
+                    households =
+                        listOf(
+                            HouseholdDto(
+                                1,
+                                "Home",
+                                "AAAA",
+                                role = "admin",
+                                can_restructure = true,
+                                can_manage_members = true,
+                            ),
+                        ),
+                    locationRepo = repo,
+                )
             val vm = viewModel(store, repo)
 
             vm.requestDelete(householdId = 1, locationId = 999)
@@ -499,7 +607,21 @@ class DrawerViewModelTest {
                 FakeLocationRepository(
                     mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge", shelf_count = 2, product_count = 5))),
                 )
-            val (store, _) = makeStore(households = listOf(HouseholdDto(1, "Home", "AAAA")), locationRepo = repo)
+            val (store, _) =
+                makeStore(
+                    households =
+                        listOf(
+                            HouseholdDto(
+                                1,
+                                "Home",
+                                "AAAA",
+                                role = "admin",
+                                can_restructure = true,
+                                can_manage_members = true,
+                            ),
+                        ),
+                    locationRepo = repo,
+                )
             val vm = viewModel(store, repo)
             vm.requestDelete(householdId = 1, locationId = 10)
 
@@ -532,7 +654,21 @@ class DrawerViewModelTest {
                 FakeLocationRepository(
                     mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge", shelf_count = 0, product_count = 0))),
                 )
-            val (store, _) = makeStore(households = listOf(HouseholdDto(1, "Home", "AAAA")), locationRepo = repo)
+            val (store, _) =
+                makeStore(
+                    households =
+                        listOf(
+                            HouseholdDto(
+                                1,
+                                "Home",
+                                "AAAA",
+                                role = "admin",
+                                can_restructure = true,
+                                can_manage_members = true,
+                            ),
+                        ),
+                    locationRepo = repo,
+                )
             val vm = viewModel(store, repo)
             vm.requestDelete(householdId = 1, locationId = 10)
             // The cached snapshot still shows "Fridge" — this is what loadFromCache
@@ -574,7 +710,21 @@ class DrawerViewModelTest {
                             ),
                     ),
                 )
-            val (store, _) = makeStore(households = listOf(HouseholdDto(1, "Home", "AAAA")), locationRepo = repo)
+            val (store, _) =
+                makeStore(
+                    households =
+                        listOf(
+                            HouseholdDto(
+                                1,
+                                "Home",
+                                "AAAA",
+                                role = "admin",
+                                can_restructure = true,
+                                can_manage_members = true,
+                            ),
+                        ),
+                    locationRepo = repo,
+                )
             val vm = viewModel(store, repo)
             vm.requestDelete(householdId = 1, locationId = 10)
 
@@ -587,7 +737,21 @@ class DrawerViewModelTest {
     fun cancel_delete_closes_the_dialog_without_deleting_anything() =
         runTest {
             val repo = FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge"))))
-            val (store, _) = makeStore(households = listOf(HouseholdDto(1, "Home", "AAAA")), locationRepo = repo)
+            val (store, _) =
+                makeStore(
+                    households =
+                        listOf(
+                            HouseholdDto(
+                                1,
+                                "Home",
+                                "AAAA",
+                                role = "admin",
+                                can_restructure = true,
+                                can_manage_members = true,
+                            ),
+                        ),
+                    locationRepo = repo,
+                )
             val vm = viewModel(store, repo)
             vm.requestDelete(householdId = 1, locationId = 10)
 
@@ -612,7 +776,21 @@ class DrawerViewModelTest {
                 FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge")))).apply {
                     failDeleteWithStrategyId = 10L
                 }
-            val (store, _) = makeStore(households = listOf(HouseholdDto(1, "Home", "AAAA")), locationRepo = repo)
+            val (store, _) =
+                makeStore(
+                    households =
+                        listOf(
+                            HouseholdDto(
+                                1,
+                                "Home",
+                                "AAAA",
+                                role = "admin",
+                                can_restructure = true,
+                                can_manage_members = true,
+                            ),
+                        ),
+                    locationRepo = repo,
+                )
             val vm = viewModel(store, repo)
             vm.requestDelete(householdId = 1, locationId = 10)
 
@@ -629,7 +807,21 @@ class DrawerViewModelTest {
         runTest {
             val repo = FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge"))))
             val restore = FakeRestoreRepository()
-            val (store, _) = makeStore(households = listOf(HouseholdDto(1, "Home", "AAAA")), locationRepo = repo)
+            val (store, _) =
+                makeStore(
+                    households =
+                        listOf(
+                            HouseholdDto(
+                                1,
+                                "Home",
+                                "AAAA",
+                                role = "admin",
+                                can_restructure = true,
+                                can_manage_members = true,
+                            ),
+                        ),
+                    locationRepo = repo,
+                )
             val vm = viewModel(store, repo, restore)
             vm.requestDelete(householdId = 1, locationId = 10)
             vm.confirmDelete(LocationDeleteStrategy.DELETE_CONTENTS, targetId = null)
@@ -656,7 +848,21 @@ class DrawerViewModelTest {
             // so the screen doesn't show BOTH messages.
             val repo = FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge"))))
             val restore = FakeRestoreRepository()
-            val (store, _) = makeStore(households = listOf(HouseholdDto(1, "Home", "AAAA")), locationRepo = repo)
+            val (store, _) =
+                makeStore(
+                    households =
+                        listOf(
+                            HouseholdDto(
+                                1,
+                                "Home",
+                                "AAAA",
+                                role = "admin",
+                                can_restructure = true,
+                                can_manage_members = true,
+                            ),
+                        ),
+                    locationRepo = repo,
+                )
             val vm = viewModel(store, repo, restore)
             vm.requestDelete(householdId = 1, locationId = 10)
             vm.confirmDelete(LocationDeleteStrategy.DELETE_CONTENTS, targetId = null)
@@ -675,7 +881,21 @@ class DrawerViewModelTest {
         runTest {
             val repo = FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge"))))
             val restore = FakeRestoreRepository()
-            val (store, _) = makeStore(households = listOf(HouseholdDto(1, "Home", "AAAA")), locationRepo = repo)
+            val (store, _) =
+                makeStore(
+                    households =
+                        listOf(
+                            HouseholdDto(
+                                1,
+                                "Home",
+                                "AAAA",
+                                role = "admin",
+                                can_restructure = true,
+                                can_manage_members = true,
+                            ),
+                        ),
+                    locationRepo = repo,
+                )
             val vm = viewModel(store, repo, restore)
             vm.requestDelete(householdId = 1, locationId = 10)
             vm.confirmDelete(LocationDeleteStrategy.DELETE_CONTENTS, targetId = null)
@@ -692,7 +912,21 @@ class DrawerViewModelTest {
         runTest {
             val repo = FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge"))))
             val restore = FakeRestoreRepository()
-            val (store, _) = makeStore(households = listOf(HouseholdDto(1, "Home", "AAAA")), locationRepo = repo)
+            val (store, _) =
+                makeStore(
+                    households =
+                        listOf(
+                            HouseholdDto(
+                                1,
+                                "Home",
+                                "AAAA",
+                                role = "admin",
+                                can_restructure = true,
+                                can_manage_members = true,
+                            ),
+                        ),
+                    locationRepo = repo,
+                )
             val vm = viewModel(store, repo, restore)
             vm.requestDelete(householdId = 1, locationId = 10)
             vm.confirmDelete(LocationDeleteStrategy.DELETE_CONTENTS, targetId = null)

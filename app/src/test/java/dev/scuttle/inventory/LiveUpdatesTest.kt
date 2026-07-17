@@ -70,7 +70,16 @@ class LiveUpdatesTest {
 
         override suspend fun list(): List<HouseholdDto> {
             listCalls++
-            return listOf(HouseholdDto(id = 1, name = "Home", join_code = "AAAA-1111"))
+            return listOf(
+                HouseholdDto(
+                    id = 1,
+                    name = "Home",
+                    join_code = "AAAA-1111",
+                    role = "admin",
+                    can_restructure = true,
+                    can_manage_members = true,
+                ),
+            )
         }
 
         override suspend fun create(name: String): HouseholdDto = throw NotImplementedError()

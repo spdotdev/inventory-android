@@ -154,7 +154,18 @@ class HierarchyStoreTest {
         runTest {
             val store =
                 HierarchyStore(
-                    FakeHouseholdRepository(listOf(HouseholdDto(1, "Home", "AAAA"))),
+                    FakeHouseholdRepository(
+                        listOf(
+                            HouseholdDto(
+                                1,
+                                "Home",
+                                "AAAA",
+                                role = "admin",
+                                can_restructure = true,
+                                can_manage_members = true,
+                            ),
+                        ),
+                    ),
                     FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge")))),
                     FakeShelfRepository(mapOf(10L to listOf(ShelfDto(100, "Top", 0, 10)))),
                     FakeProductRepository(mapOf(100L to listOf(ProductDto(1, "Milk", 0, 100, is_mandatory = true)))),
@@ -199,7 +210,18 @@ class HierarchyStoreTest {
             // load — a missing mandatory item on any shelf, not only the visible one.
             val store =
                 HierarchyStore(
-                    FakeHouseholdRepository(listOf(HouseholdDto(1, "Home", "AAAA"))),
+                    FakeHouseholdRepository(
+                        listOf(
+                            HouseholdDto(
+                                1,
+                                "Home",
+                                "AAAA",
+                                role = "admin",
+                                can_restructure = true,
+                                can_manage_members = true,
+                            ),
+                        ),
+                    ),
                     FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge")))),
                     FakeShelfRepository(
                         mapOf(10L to listOf(ShelfDto(100, "Top", 0, 10), ShelfDto(101, "Bottom", 1, 10))),
@@ -220,7 +242,18 @@ class HierarchyStoreTest {
         runTest {
             val store =
                 HierarchyStore(
-                    FakeHouseholdRepository(listOf(HouseholdDto(1, "Home", "AAAA"))),
+                    FakeHouseholdRepository(
+                        listOf(
+                            HouseholdDto(
+                                1,
+                                "Home",
+                                "AAAA",
+                                role = "admin",
+                                can_restructure = true,
+                                can_manage_members = true,
+                            ),
+                        ),
+                    ),
                     FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge")))),
                     FakeShelfRepository(mapOf(10L to listOf(ShelfDto(100, "Top", 0, 10)))),
                     FakeProductRepository(mapOf(100L to listOf(ProductDto(1, "Milk", 3, 100, is_mandatory = true)))),
@@ -240,7 +273,18 @@ class HierarchyStoreTest {
             // renders to the next (loadFromCache would otherwise repopulate it).
             val store =
                 HierarchyStore(
-                    FakeHouseholdRepository(listOf(HouseholdDto(1, "Home", "AAAA"))),
+                    FakeHouseholdRepository(
+                        listOf(
+                            HouseholdDto(
+                                1,
+                                "Home",
+                                "AAAA",
+                                role = "admin",
+                                can_restructure = true,
+                                can_manage_members = true,
+                            ),
+                        ),
+                    ),
                     FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge")))),
                     FakeShelfRepository(mapOf(10L to listOf(ShelfDto(100, "Top", 0, 10)))),
                     FakeProductRepository(mapOf(100L to listOf(ProductDto(1, "Milk", 0, 100, is_mandatory = true)))),
@@ -267,7 +311,18 @@ class HierarchyStoreTest {
         runTest {
             val store =
                 HierarchyStore(
-                    FakeHouseholdRepository(listOf(HouseholdDto(1, "Home", "AAAA"))),
+                    FakeHouseholdRepository(
+                        listOf(
+                            HouseholdDto(
+                                1,
+                                "Home",
+                                "AAAA",
+                                role = "admin",
+                                can_restructure = true,
+                                can_manage_members = true,
+                            ),
+                        ),
+                    ),
                     FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge")))),
                     FakeShelfRepository(mapOf(10L to listOf(ShelfDto(100, "Top", 0, 10)))),
                     FakeProductRepository(

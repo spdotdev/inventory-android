@@ -101,7 +101,16 @@ class StorageOverviewViewModelHierarchyRefreshTest {
 
         override suspend fun list(): List<HouseholdDto> {
             listCalls++
-            return listOf(HouseholdDto(1, "Home-$listCalls", "AAAA-1111"))
+            return listOf(
+                HouseholdDto(
+                    1,
+                    "Home-$listCalls",
+                    "AAAA-1111",
+                    role = "admin",
+                    can_restructure = true,
+                    can_manage_members = true,
+                ),
+            )
         }
 
         override suspend fun create(name: String) = throw NotImplementedError()

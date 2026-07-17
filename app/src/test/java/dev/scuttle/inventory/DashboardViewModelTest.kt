@@ -165,7 +165,8 @@ class DashboardViewModelTest {
     }
 
     private fun viewModel(
-        households: List<HouseholdDto> = listOf(HouseholdDto(1, "Home", "AAAA")),
+        households: List<HouseholdDto> =
+            listOf(HouseholdDto(1, "Home", "AAAA", role = "admin", can_restructure = true, can_manage_members = true)),
         locationsByHousehold: Map<Long, List<LocationDto>> = emptyMap(),
         shelvesByLocation: Map<Long, List<ShelfDto>> = emptyMap(),
         productsByShelf: Map<Long, List<ProductDto>> = emptyMap(),
@@ -290,8 +291,24 @@ class DashboardViewModelTest {
                 viewModel(
                     households =
                         listOf(
-                            HouseholdDto(1, "Home", "AAAA", color = "teal", icon = "home"),
-                            HouseholdDto(2, "Beach house", "BBBB"),
+                            HouseholdDto(
+                                1,
+                                "Home",
+                                "AAAA",
+                                color = "teal",
+                                icon = "home",
+                                role = "admin",
+                                can_restructure = true,
+                                can_manage_members = true,
+                            ),
+                            HouseholdDto(
+                                2,
+                                "Beach house",
+                                "BBBB",
+                                role = "admin",
+                                can_restructure = true,
+                                can_manage_members = true,
+                            ),
                         ),
                 )
 
@@ -312,8 +329,22 @@ class DashboardViewModelTest {
                 viewModel(
                     households =
                         listOf(
-                            HouseholdDto(1, "Home", "AAAA"),
-                            HouseholdDto(2, "Beach house", "BBBB"),
+                            HouseholdDto(
+                                1,
+                                "Home",
+                                "AAAA",
+                                role = "admin",
+                                can_restructure = true,
+                                can_manage_members = true,
+                            ),
+                            HouseholdDto(
+                                2,
+                                "Beach house",
+                                "BBBB",
+                                role = "admin",
+                                can_restructure = true,
+                                can_manage_members = true,
+                            ),
                         ),
                     locationsByHousehold =
                         mapOf(
@@ -338,8 +369,22 @@ class DashboardViewModelTest {
                 viewModel(
                     households =
                         listOf(
-                            HouseholdDto(1, "Home", "AAAA"),
-                            HouseholdDto(2, "Empty", "BBBB"),
+                            HouseholdDto(
+                                1,
+                                "Home",
+                                "AAAA",
+                                role = "admin",
+                                can_restructure = true,
+                                can_manage_members = true,
+                            ),
+                            HouseholdDto(
+                                2,
+                                "Empty",
+                                "BBBB",
+                                role = "admin",
+                                can_restructure = true,
+                                can_manage_members = true,
+                            ),
                         ),
                     locationsByHousehold = mapOf(1L to listOf(LocationDto(10, "Bijkeuken", "pantry"))),
                 )
@@ -358,8 +403,22 @@ class DashboardViewModelTest {
                 viewModel(
                     households =
                         listOf(
-                            HouseholdDto(1, "Home", "AAAA"),
-                            HouseholdDto(2, "Beach house", "BBBB"),
+                            HouseholdDto(
+                                1,
+                                "Home",
+                                "AAAA",
+                                role = "admin",
+                                can_restructure = true,
+                                can_manage_members = true,
+                            ),
+                            HouseholdDto(
+                                2,
+                                "Beach house",
+                                "BBBB",
+                                role = "admin",
+                                can_restructure = true,
+                                can_manage_members = true,
+                            ),
                         ),
                     locationsByHousehold =
                         mapOf(

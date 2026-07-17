@@ -198,9 +198,11 @@ class ProductsViewModelTest {
 
         override suspend fun list() = emptyList<HouseholdDto>()
 
-        override suspend fun create(name: String) = HouseholdDto(1, name, "")
+        override suspend fun create(name: String) =
+            HouseholdDto(1, name, "", role = "admin", can_restructure = true, can_manage_members = true)
 
-        override suspend fun join(code: String) = HouseholdDto(1, "", code)
+        override suspend fun join(code: String) =
+            HouseholdDto(1, "", code, role = "admin", can_restructure = true, can_manage_members = true)
 
         override suspend fun leave(householdId: Long) {}
     }

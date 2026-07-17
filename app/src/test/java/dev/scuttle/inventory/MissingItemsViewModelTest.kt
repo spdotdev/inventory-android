@@ -146,7 +146,8 @@ class MissingItemsViewModelTest {
     }
 
     private fun viewModel(
-        households: List<HouseholdDto> = listOf(HouseholdDto(1, "Home", "AAAA")),
+        households: List<HouseholdDto> =
+            listOf(HouseholdDto(1, "Home", "AAAA", role = "admin", can_restructure = true, can_manage_members = true)),
         locationsByHousehold: Map<Long, List<LocationDto>> = emptyMap(),
         shelvesByLocation: Map<Long, List<ShelfDto>> = emptyMap(),
         productsByShelf: Map<Long, List<ProductDto>> = emptyMap(),

@@ -17,7 +17,17 @@ class HouseholdsViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private class FakeHouseholdRepository : HouseholdRepository {
-        val items = mutableListOf(HouseholdDto(id = 1, name = "Garage", join_code = "AAAA-1111"))
+        val items =
+            mutableListOf(
+                HouseholdDto(
+                    id = 1,
+                    name = "Garage",
+                    join_code = "AAAA-1111",
+                    role = "admin",
+                    can_restructure = true,
+                    can_manage_members = true,
+                ),
+            )
         var failList = false
 
         override fun getCached(): List<HouseholdDto>? = null
@@ -28,7 +38,15 @@ class HouseholdsViewModelTest {
         }
 
         override suspend fun create(name: String): HouseholdDto {
-            val dto = HouseholdDto(id = (items.size + 1).toLong(), name = name, join_code = "NEW-0000")
+            val dto =
+                HouseholdDto(
+                    id = (items.size + 1).toLong(),
+                    name = name,
+                    join_code = "NEW-0000",
+                    role = "admin",
+                    can_restructure = true,
+                    can_manage_members = true,
+                )
             items.add(dto)
             return dto
         }
@@ -213,7 +231,16 @@ class HouseholdsViewModelTest {
         runTest {
             val repo =
                 FakeHouseholdRepository().apply {
-                    items.add(HouseholdDto(id = 2, name = "Office", join_code = "BBBB-2222"))
+                    items.add(
+                        HouseholdDto(
+                            id = 2,
+                            name = "Office",
+                            join_code = "BBBB-2222",
+                            role = "admin",
+                            can_restructure = true,
+                            can_manage_members = true,
+                        ),
+                    )
                 }
             val viewModel = HouseholdsViewModel(repo, TestHierarchy.store(repo))
             assertEquals(2, viewModel.state.value.households.size)
