@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -106,6 +107,13 @@ fun MissingItemsScreen(
                     .fillMaxSize()
                     .padding(padding),
         ) {
+            // First-load only — matches StorageOverviewScreen/LocationDetailScreen's
+            // idiom. Guarded by state.items.isEmpty() too so this never reappears on a
+            // background pull-to-refresh once content has loaded once.
+            if (state.loading && state.items.isEmpty()) {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            }
+
             val error = state.error
             if (error != null && state.items.isEmpty()) {
                 // A failed load must not fall through to "all stocked" — for a

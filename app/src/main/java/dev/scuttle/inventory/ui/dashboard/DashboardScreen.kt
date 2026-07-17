@@ -27,6 +27,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -157,6 +158,14 @@ fun DashboardScreen(
                         .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
+                // First-load only — matches StorageOverviewScreen/LocationDetailScreen's
+                // idiom. state.households stays empty only until the initial fetch
+                // resolves, so this never reappears on a pull-to-refresh once content
+                // has loaded once.
+                if (state.loading && state.households.isEmpty()) {
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                }
+
                 state.error?.let { LiveStatusText(it) }
 
                 // Stat cards. The caption belongs to the row, so they're grouped in
