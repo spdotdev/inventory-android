@@ -28,6 +28,12 @@ data class HouseholdWithLocations(
     // reflects a user-chosen theme without a second repository lookup.
     val color: String? = null,
     val icon: String? = null,
+    // Mirrors HouseholdDto.can_restructure so screens that render every
+    // household at once (AllStoragesScreen) can gate a per-row
+    // restructure-capable affordance (e.g. delete) without a second lookup.
+    // Defaults true so a caller that doesn't know the household's role yet
+    // never hides something the server would actually allow.
+    val canRestructure: Boolean = true,
 )
 
 data class LocationStats(
@@ -145,7 +151,7 @@ class HierarchyStore(
                 }
                 locationStats += LocationStats(location, hh.id, count)
             }
-            entries += HouseholdWithLocations(hh.id, hh.name, locations, hh.color, hh.icon)
+            entries += HouseholdWithLocations(hh.id, hh.name, locations, hh.color, hh.icon, hh.can_restructure)
         }
         missingItems.sortWith(compareBy({ it.locationName }, { it.shelfName }, { it.productName }))
         lowStockItems.sortWith(compareBy({ it.locationName }, { it.shelfName }, { it.productName }))
@@ -344,7 +350,7 @@ class HierarchyStore(
                 }
                 locationStats += LocationStats(location, hh.id, locationProductCount)
             }
-            entries += HouseholdWithLocations(hh.id, hh.name, locations, hh.color, hh.icon)
+            entries += HouseholdWithLocations(hh.id, hh.name, locations, hh.color, hh.icon, hh.can_restructure)
         }
 
         missingItems.sortWith(compareBy({ it.locationName }, { it.shelfName }, { it.productName }))
