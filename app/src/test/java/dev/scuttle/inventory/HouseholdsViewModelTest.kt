@@ -34,11 +34,18 @@ class HouseholdsViewModelTest {
         var failList = false
         var leaveThrows: Throwable? = null
 
-        override fun getCached(): List<HouseholdDto>? = null
+        // Mirrors HouseholdRepositoryImpl's own cache (list() populates it) — a
+        // fake that always returns null here would lie about the real contract
+        // HierarchyStore.buildFromNetwork()/HouseholdsViewModel's own
+        // observeHierarchyStore() depend on (see the "fake that lies" testing
+        // lesson in CLAUDE.md).
+        private var cache: List<HouseholdDto>? = null
+
+        override fun getCached(): List<HouseholdDto>? = cache
 
         override suspend fun list(): List<HouseholdDto> {
             if (failList) throw RuntimeException("offline")
-            return items.toList()
+            return items.toList().also { cache = it }
         }
 
         override suspend fun create(name: String): HouseholdDto {
@@ -328,5 +335,40 @@ class HouseholdsViewModelTest {
                 "You're the only owner — transfer ownership before leaving this household.",
                 viewModel.state.value.error,
             )
+        }
+
+    @Test
+    fun a_remote_role_change_reaches_this_vm_once_the_hierarchy_store_refreshes_without_a_manual_refresh() =
+        runTest {
+            // A remote promote/demote/remove arrives as a `household.changed` ping,
+            // which LiveUpdates turns into hierarchyStore.refresh() only — never a
+            // direct call to this VM. HouseholdEditScreen/MembersScreen read
+            // viewerRole/canManageMembers from THIS VM's households, so without
+            // observeHierarchyStore() the affected user's pencils/controls stay
+            // wrong until a manual pull-to-refresh.
+            val repo = FakeHouseholdRepository()
+            val store = TestHierarchy.store(repo)
+            val viewModel = HouseholdsViewModel(repo, store)
+            assertTrue(
+                viewModel.state.value.households
+                    .first()
+                    .can_manage_members,
+            )
+
+            // The server-side role changed through a path this VM never observes —
+            // simulate it by mutating the repo directly, exactly like a promote/
+            // demote call landing on some OTHER device.
+            repo.items[0] =
+                repo.items[0].copy(role = "member", can_restructure = false, can_manage_members = false)
+
+            // The realtime ping: LiveUpdates only ever calls hierarchyStore.refresh().
+            store.refresh()
+
+            val household =
+                viewModel.state.value.households
+                    .first { it.id == 1L }
+            assertEquals("member", household.role)
+            assertFalse(household.can_restructure)
+            assertFalse(household.can_manage_members)
         }
 }

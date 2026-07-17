@@ -65,6 +65,34 @@ class HouseholdsViewModel
             } else {
                 refresh()
             }
+            // A remote promote/demote/remove (or a household's own theme edit made
+            // by someone else) arrives over the socket as a `household.changed`
+            // ping, which LiveUpdates turns into a silent [HierarchyStore.refresh]
+            // only (data/realtime/LiveUpdates.kt). That store refresh's own
+            // `buildFromNetwork()` already calls `repository.list()`, which updates
+            // [HouseholdRepository]'s cache — but nothing previously pulled that
+            // fresh data back into THIS VM's own `households`, which is what
+            // HouseholdEditScreen/MembersScreen actually read `viewerRole`/
+            // `canManageMembers`/`canRestructure` from. Without this, an affected
+            // user's pencils/controls stayed wrong until a manual pull-to-refresh.
+            //
+            // Only applied once the store's own refresh has LANDED (`!loading`) and
+            // only while this VM has no mutation of its own in flight (`!loading`
+            // on `_state`) — a local create()/leave()/update() also triggers
+            // `hierarchyStore.refresh()` as its last step (X4), and that nested
+            // refresh's OWN `loading` transitions fire this same collector;
+            // skipping while `_state.value.loading` is still true (it only flips
+            // back to false once the local mutation's `launchLoading` block
+            // returns, AFTER that nested refresh call) keeps a remote ping from
+            // clobbering the local mutation's own repository.list()-derived result
+            // with a same-or-stale read of the cache mid-mutation.
+            viewModelScope.launch {
+                hierarchyStore.state.collect { hierarchyState ->
+                    if (hierarchyState.loading || _state.value.loading) return@collect
+                    val fresh = repository.getCached() ?: return@collect
+                    _state.update { it.copy(households = fresh) }
+                }
+            }
         }
 
         fun onNewNameChange(value: String) = _state.update { it.copy(newName = value.take(50), error = null) }
