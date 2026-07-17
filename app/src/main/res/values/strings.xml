@@ -188,6 +188,7 @@
     <string name="settings_theme_section">Theme</string>
     <string name="settings_join_section">Join household</string>
     <string name="settings_join_success">Joined successfully!</string>
+    <string name="settings_join_success_member_hint">You\'ve joined as a member — owners and admins manage storage.</string>
     <string name="settings_join_field">Join code</string>
     <string name="settings_join_button">Join</string>
     <string name="settings_scan_qr_button">Scan QR code to join</string>

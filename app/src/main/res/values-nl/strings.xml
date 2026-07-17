@@ -188,6 +188,7 @@
     <string name="settings_theme_section">Thema</string>
     <string name="settings_join_section">Huishouden deelnemen</string>
     <string name="settings_join_success">Succesvol deelgenomen!</string>
+    <string name="settings_join_success_member_hint">Je bent lid geworden — eigenaren en beheerders beheren de opslag.</string>
     <string name="settings_join_field">Deelnamecode</string>
     <string name="settings_join_button">Deelnemen</string>
     <string name="settings_scan_qr_button">QR-code scannen om deel te nemen</string>

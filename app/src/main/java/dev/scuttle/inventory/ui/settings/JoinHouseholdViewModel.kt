@@ -18,6 +18,11 @@ data class JoinUiState(
     val code: String = "",
     val error: String? = null,
     val success: Boolean = false,
+    // The role the caller was granted on the just-joined household (M2), so the
+    // success message can hint at the role model for a brand-new Member — who
+    // joined via code with zero other explanation of what roles mean. Null once
+    // [success] resets (see onCodeChange/join's initial update).
+    val joinedRole: String? = null,
 )
 
 @HiltViewModel
@@ -30,7 +35,8 @@ class JoinHouseholdViewModel
         private val _state = MutableStateFlow(JoinUiState())
         val state: StateFlow<JoinUiState> = _state.asStateFlow()
 
-        fun onCodeChange(value: String) = _state.update { it.copy(code = value, error = null, success = false) }
+        fun onCodeChange(value: String) =
+            _state.update { it.copy(code = value, error = null, success = false, joinedRole = null) }
 
         /** A scanned invite QR carries the invite *link*, so show the user the code inside it (#30). */
         fun onCodeScanned(contents: String) = onCodeChange(parseJoinCode(contents))
@@ -40,14 +46,16 @@ class JoinHouseholdViewModel
             val code = parseJoinCode(_state.value.code)
             if (code.isEmpty()) return
             viewModelScope.launch {
-                _state.update { it.copy(loading = true, error = null, success = false) }
+                _state.update { it.copy(loading = true, error = null, success = false, joinedRole = null) }
                 val result = runCatching { repository.join(code) }
                 // Refresh the drawer/home/dashboard so the joined household appears there
                 // immediately, not just on the next manual pull-to-refresh (X4).
                 if (result.isSuccess) hierarchyStore.refresh()
                 _state.update { state ->
                     result.fold(
-                        onSuccess = { state.copy(loading = false, code = "", success = true) },
+                        onSuccess = { household ->
+                            state.copy(loading = false, code = "", success = true, joinedRole = household.role)
+                        },
                         onFailure = { e -> state.copy(loading = false, error = e.toUserMessage("Failed to join.")) },
                     )
                 }

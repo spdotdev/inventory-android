@@ -98,6 +98,36 @@ class JoinHouseholdViewModelTest {
         }
 
     @Test
+    fun joining_as_admin_does_not_set_a_member_role_hint() =
+        runTest {
+            val vm = JoinHouseholdViewModel(FakeHouseholdRepository(), TestHierarchy.store(FakeHouseholdRepository()))
+            vm.onCodeChange("VALIDCODE")
+            vm.join()
+            assertEquals("admin", vm.state.value.joinedRole)
+        }
+
+    @Test
+    fun joining_as_a_plain_member_records_the_role_for_the_success_hint() =
+        runTest {
+            val repo =
+                FakeHouseholdRepository(
+                    joined =
+                        HouseholdDto(
+                            2,
+                            "Friends",
+                            "BBBB",
+                            role = "member",
+                            can_restructure = false,
+                            can_manage_members = false,
+                        ),
+                )
+            val vm = JoinHouseholdViewModel(repo, TestHierarchy.store(FakeHouseholdRepository()))
+            vm.onCodeChange("VALIDCODE")
+            vm.join()
+            assertEquals("member", vm.state.value.joinedRole)
+        }
+
+    @Test
     fun join_failure_surfaces_error_and_preserves_code() =
         runTest {
             val vm =

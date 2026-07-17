@@ -149,8 +149,15 @@ fun SettingsScreen(
                 LiveStatusText(it)
             }
             if (joinState.success) {
+                val successMessage =
+                    if (joinState.joinedRole == "member") {
+                        stringResource(R.string.settings_join_success) + " " +
+                            stringResource(R.string.settings_join_success_member_hint)
+                    } else {
+                        stringResource(R.string.settings_join_success)
+                    }
                 LiveStatusText(
-                    stringResource(R.string.settings_join_success),
+                    successMessage,
                     color = MaterialTheme.colorScheme.primary,
                 )
             }
