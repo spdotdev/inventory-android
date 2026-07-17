@@ -152,7 +152,7 @@ fun StorageOverviewScreen(
                                 contentDescription = stringResource(R.string.storage_overview_search_cd),
                             )
                         }
-                        if (state.locations.isNotEmpty()) {
+                        if (state.locations.isNotEmpty() && state.canRestructure) {
                             IconButton(onClick = viewModel::enterEditMode) {
                                 Icon(
                                     Icons.Default.Edit,

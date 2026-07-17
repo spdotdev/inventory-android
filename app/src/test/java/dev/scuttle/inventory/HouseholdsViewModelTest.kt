@@ -81,6 +81,36 @@ class HouseholdsViewModelTest {
             assertFalse(state.loading)
         }
 
+    // HouseholdsScreen itself needs no gating: pencil -> edit mode -> row tap into
+    // HouseholdEditScreen stays open to every role, since Leave (not restructure-
+    // gated) lives only behind that path. This test just documents that
+    // can_restructure flows through HouseholdDto -> HouseholdsUiState.households
+    // unmodified, so HouseholdEditScreen (which DOES gate on it) always sees the
+    // real value once it reads `state.households.find { it.id == householdId }`.
+    @Test
+    fun households_carry_can_restructure_through_unmodified() =
+        runTest {
+            val repo =
+                FakeHouseholdRepository().apply {
+                    items.add(
+                        HouseholdDto(
+                            id = 2,
+                            name = "Friends' place",
+                            join_code = "BBBB-2222",
+                            role = "member",
+                            can_restructure = false,
+                            can_manage_members = false,
+                        ),
+                    )
+                }
+            val viewModel = HouseholdsViewModel(repo, TestHierarchy.store(repo))
+
+            val state = viewModel.state.value
+
+            assertTrue(state.households.first { it.id == 1L }.can_restructure)
+            assertFalse(state.households.first { it.id == 2L }.can_restructure)
+        }
+
     @Test
     fun create_adds_a_household_and_clears_the_field() =
         runTest {

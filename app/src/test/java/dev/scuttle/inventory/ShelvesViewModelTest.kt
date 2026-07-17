@@ -1,5 +1,6 @@
 package dev.scuttle.inventory
 
+import dev.scuttle.inventory.data.HierarchyStore
 import dev.scuttle.inventory.data.dto.HouseholdDto
 import dev.scuttle.inventory.data.dto.ShelfDto
 import dev.scuttle.inventory.data.hierarchy.RestoreRepository
@@ -157,10 +158,12 @@ class ShelvesViewModelTest {
         }
     }
 
-    private class FakeHouseholdRepository : HouseholdRepository {
+    private class FakeHouseholdRepository(
+        private val households: List<HouseholdDto> = emptyList(),
+    ) : HouseholdRepository {
         override fun getCached(): List<HouseholdDto>? = null
 
-        override suspend fun list(): List<HouseholdDto> = emptyList()
+        override suspend fun list(): List<HouseholdDto> = households
 
         override suspend fun create(name: String) = throw NotImplementedError()
 
@@ -173,10 +176,8 @@ class ShelvesViewModelTest {
         repo: FakeShelfRepository = FakeShelfRepository(),
         restoreRepository: RestoreRepository = FakeRestoreRepository(),
         shelfViewStore: ShelfViewStore = FakeShelfViewStore(),
-    ): ShelvesViewModel {
-        val hierarchyStore = TestHierarchy.store(FakeHouseholdRepository())
-        return ShelvesViewModel(repo, restoreRepository, shelfViewStore, hierarchyStore)
-    }
+        hierarchyStore: HierarchyStore = TestHierarchy.store(FakeHouseholdRepository()),
+    ): ShelvesViewModel = ShelvesViewModel(repo, restoreRepository, shelfViewStore, hierarchyStore)
 
     @Test
     fun load_populates_shelves() =
@@ -193,6 +194,44 @@ class ShelvesViewModelTest {
                     .first()
                     .name,
             )
+        }
+
+    @Test
+    fun load_reflects_the_household_can_restructure_flag() =
+        runTest {
+            // The top-bar edit pencil (LocationDetailScreen) gates on this — a Member
+            // household (can_restructure = false) must never see it, since every
+            // mutating ShelfController route already 403s them server-side.
+            val householdRepo =
+                FakeHouseholdRepository(
+                    listOf(
+                        HouseholdDto(
+                            1,
+                            "Home",
+                            "AAAA",
+                            role = "member",
+                            can_restructure = false,
+                            can_manage_members = false,
+                        ),
+                    ),
+                )
+            val hierarchyStore = TestHierarchy.store(householdRepo)
+            hierarchyStore.refresh(userInitiated = true)
+            val vm = viewModel(hierarchyStore = hierarchyStore)
+
+            vm.load(householdId = 1, locationId = 1)
+
+            assertFalse(vm.state.value.canRestructure)
+        }
+
+    @Test
+    fun load_defaults_can_restructure_true_when_the_hierarchy_store_has_no_entry() =
+        runTest {
+            val vm = viewModel()
+
+            vm.load(householdId = 1, locationId = 1)
+
+            assertTrue(vm.state.value.canRestructure)
         }
 
     @Test

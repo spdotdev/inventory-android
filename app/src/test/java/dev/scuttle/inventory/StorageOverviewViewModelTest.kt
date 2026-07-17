@@ -136,10 +136,12 @@ class StorageOverviewViewModelTest {
         }
     }
 
-    private class FakeHouseholdRepository : HouseholdRepository {
+    private class FakeHouseholdRepository(
+        private val households: List<HouseholdDto> = emptyList(),
+    ) : HouseholdRepository {
         override fun getCached(): List<HouseholdDto>? = null
 
-        override suspend fun list(): List<HouseholdDto> = emptyList()
+        override suspend fun list(): List<HouseholdDto> = households
 
         override suspend fun create(name: String) = throw NotImplementedError()
 
@@ -169,6 +171,47 @@ class StorageOverviewViewModelTest {
                     .first()
                     .name,
             )
+        }
+
+    @Test
+    fun load_reflects_the_household_can_restructure_flag() =
+        runTest {
+            // The top-bar edit pencil (StorageOverviewScreen) gates on this — a Member
+            // household (can_restructure = false) must never see it, since every
+            // mutating LocationController route already 403s them server-side.
+            val householdRepo =
+                FakeHouseholdRepository(
+                    listOf(
+                        HouseholdDto(
+                            1,
+                            "Home",
+                            "AAAA",
+                            role = "member",
+                            can_restructure = false,
+                            can_manage_members = false,
+                        ),
+                    ),
+                )
+            val hierarchyStore = TestHierarchy.store(householdRepo)
+            hierarchyStore.refresh(userInitiated = true)
+            val vm = viewModel(hierarchyStore = hierarchyStore)
+
+            vm.load(householdId = 1)
+
+            assertFalse(vm.state.value.canRestructure)
+        }
+
+    @Test
+    fun load_defaults_can_restructure_true_when_the_hierarchy_store_has_no_entry() =
+        runTest {
+            // A cold deep link straight into this screen, before the singleton
+            // HierarchyStore has ever loaded this household — must not hide the
+            // pencil the server would actually allow.
+            val vm = viewModel()
+
+            vm.load(householdId = 1)
+
+            assertTrue(vm.state.value.canRestructure)
         }
 
     @Test

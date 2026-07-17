@@ -163,97 +163,114 @@ fun HouseholdEditScreen(
             ) {
                 state.error?.let { LiveStatusText(it) }
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    OutlinedTextField(
-                        value = name,
-                        onValueChange = { name = it.take(MAX_HOUSEHOLD_NAME_LENGTH) },
-                        label = { Text(stringResource(R.string.households_field_name)) },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(autoCorrect = false, imeAction = ImeAction.Done),
-                        keyboardActions = KeyboardActions(onDone = { saveName() }),
-                        modifier = Modifier.weight(1f),
-                    )
-                    Button(
-                        onClick = ::saveName,
-                        enabled = name.isNotBlank() && !state.loading,
+                // Rename + theme are restructure-scoped (HouseholdPolicy's doc comment
+                // describes both as Owner/Admin actions): a Member sees the name as
+                // plain text and no theme swatches at all, matching the client-side
+                // gate already applied to locations/shelves edit mode, ahead of
+                // HouseholdController::update() enforcing it server-side too. Leave
+                // (the danger-zone card below) is NOT gated — it's a plain membership
+                // action, not a restructure one.
+                if (household.can_restructure) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        Text(stringResource(R.string.action_save))
-                    }
-                }
-
-                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Text(
-                        text = stringResource(R.string.household_edit_appearance_label),
-                        style = MaterialTheme.typography.titleMedium,
-                    )
-
-                    Text(
-                        text = stringResource(R.string.household_theme_color_label),
-                        style = MaterialTheme.typography.labelLarge,
-                    )
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        householdAccentsByKey.forEach { (key, accent) ->
-                            Box(
-                                modifier =
-                                    Modifier
-                                        .size(SWATCH_SIZE)
-                                        .clip(CircleShape)
-                                        .background(accent)
-                                        .selectionBorder(selected = selectedColor == key)
-                                        .clickable {
-                                            selectedColor = key
-                                            viewModel.updateTheme(householdId, color = key, icon = selectedIcon)
-                                        }.testTag("theme-color-$key"),
-                            )
+                        OutlinedTextField(
+                            value = name,
+                            onValueChange = { name = it.take(MAX_HOUSEHOLD_NAME_LENGTH) },
+                            label = { Text(stringResource(R.string.households_field_name)) },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(autoCorrect = false, imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(onDone = { saveName() }),
+                            modifier = Modifier.weight(1f),
+                        )
+                        Button(
+                            onClick = ::saveName,
+                            enabled = name.isNotBlank() && !state.loading,
+                        ) {
+                            Text(stringResource(R.string.action_save))
                         }
                     }
 
-                    Text(
-                        text = stringResource(R.string.household_theme_icon_label),
-                        style = MaterialTheme.typography.labelLarge,
-                    )
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        val iconBackground =
-                            householdTheme(householdId, selectedColor).accent.copy(alpha = SWATCH_BACKGROUND_ALPHA)
-                        householdIconsByKey.forEach { (key, image) ->
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier =
-                                    Modifier
-                                        .size(SWATCH_SIZE)
-                                        .clip(CircleShape)
-                                        .background(iconBackground)
-                                        .selectionBorder(selected = selectedIcon == key)
-                                        .clickable {
-                                            selectedIcon = key
-                                            viewModel.updateTheme(householdId, color = selectedColor, icon = key)
-                                        }.testTag("theme-icon-$key"),
-                            ) {
-                                Icon(
-                                    imageVector = image,
-                                    contentDescription = key,
-                                    modifier = Modifier.size(SWATCH_ICON_SIZE),
+                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Text(
+                            text = stringResource(R.string.household_edit_appearance_label),
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+
+                        Text(
+                            text = stringResource(R.string.household_theme_color_label),
+                            style = MaterialTheme.typography.labelLarge,
+                        )
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            householdAccentsByKey.forEach { (key, accent) ->
+                                Box(
+                                    modifier =
+                                        Modifier
+                                            .size(SWATCH_SIZE)
+                                            .clip(CircleShape)
+                                            .background(accent)
+                                            .selectionBorder(selected = selectedColor == key)
+                                            .clickable {
+                                                selectedColor = key
+                                                viewModel.updateTheme(householdId, color = key, icon = selectedIcon)
+                                            }.testTag("theme-color-$key"),
                                 )
                             }
                         }
-                    }
 
-                    TextButton(onClick = {
-                        selectedColor = null
-                        selectedIcon = null
-                        viewModel.updateTheme(householdId, color = null, icon = null)
-                    }) {
-                        Text(stringResource(R.string.household_theme_default))
+                        Text(
+                            text = stringResource(R.string.household_theme_icon_label),
+                            style = MaterialTheme.typography.labelLarge,
+                        )
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            val iconBackground =
+                                householdTheme(householdId, selectedColor)
+                                    .accent
+                                    .copy(alpha = SWATCH_BACKGROUND_ALPHA)
+                            householdIconsByKey.forEach { (key, image) ->
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier =
+                                        Modifier
+                                            .size(SWATCH_SIZE)
+                                            .clip(CircleShape)
+                                            .background(iconBackground)
+                                            .selectionBorder(selected = selectedIcon == key)
+                                            .clickable {
+                                                selectedIcon = key
+                                                viewModel.updateTheme(householdId, color = selectedColor, icon = key)
+                                            }.testTag("theme-icon-$key"),
+                                ) {
+                                    Icon(
+                                        imageVector = image,
+                                        contentDescription = key,
+                                        modifier = Modifier.size(SWATCH_ICON_SIZE),
+                                    )
+                                }
+                            }
+                        }
+
+                        TextButton(onClick = {
+                            selectedColor = null
+                            selectedIcon = null
+                            viewModel.updateTheme(householdId, color = null, icon = null)
+                        }) {
+                            Text(stringResource(R.string.household_theme_default))
+                        }
                     }
+                } else {
+                    Text(
+                        text = household.name,
+                        style = MaterialTheme.typography.headlineSmall,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
                 }
 
                 // Semantically-coloured card (error tint): stays on plain Card, not

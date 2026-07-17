@@ -202,7 +202,7 @@ fun LocationDetailScreen(
                                 contentDescription = stringResource(R.string.location_view_toggle_cd),
                             )
                         }
-                        if (state.shelves.isNotEmpty()) {
+                        if (state.shelves.isNotEmpty() && state.canRestructure) {
                             IconButton(onClick = shelvesViewModel::enterEditMode) {
                                 Icon(
                                     Icons.Default.Edit,

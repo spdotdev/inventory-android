@@ -304,7 +304,7 @@ fun AllStoragesScreen(
                                                 }
                                             }
                                         }
-                                        if (editMode) {
+                                        if (editMode && entry.canRestructure) {
                                             IconButton(
                                                 onClick = { viewModel.requestDelete(entry.id, location.id) },
                                             ) {
@@ -314,7 +314,7 @@ fun AllStoragesScreen(
                                                     tint = MaterialTheme.colorScheme.error,
                                                 )
                                             }
-                                        } else {
+                                        } else if (!editMode) {
                                             IconButton(onClick = { localViewModel.toggleFavorite(location.id) }) {
                                                 Icon(
                                                     if (isFavorite) {
@@ -339,6 +339,9 @@ fun AllStoragesScreen(
                                                 )
                                             }
                                         }
+                                        // editMode && !entry.canRestructure: neither icon renders — a
+                                        // Member's row in edit mode has nothing restructure-capable to
+                                        // offer here, and favorite-toggling belongs to the non-edit view.
                                     }
                                 }
                                 if (hasWarning) {

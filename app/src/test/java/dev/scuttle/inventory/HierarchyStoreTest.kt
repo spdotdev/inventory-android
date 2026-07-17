@@ -181,6 +181,55 @@ class HierarchyStoreTest {
             assertEquals(1, loaded.missingItemCount)
         }
 
+    // AllStoragesScreen's per-location delete icon (Task 9) gates on
+    // entry.canRestructure — this documents that HouseholdDto.can_restructure
+    // survives the HouseholdDto -> HouseholdWithLocations mapping unmodified, per
+    // household, so a Member in one household and Owner in another sees the
+    // correct per-row gate even though the screen has one shared edit-mode
+    // toggle for every household at once.
+    @Test
+    fun refresh_carries_can_restructure_per_household_into_entries() =
+        runTest {
+            val store =
+                HierarchyStore(
+                    FakeHouseholdRepository(
+                        listOf(
+                            HouseholdDto(
+                                1,
+                                "Home",
+                                "AAAA",
+                                role = "admin",
+                                can_restructure = true,
+                                can_manage_members = true,
+                            ),
+                            HouseholdDto(
+                                2,
+                                "Friends' place",
+                                "BBBB",
+                                role = "member",
+                                can_restructure = false,
+                                can_manage_members = false,
+                            ),
+                        ),
+                    ),
+                    FakeLocationRepository(
+                        mapOf(
+                            1L to listOf(LocationDto(10, "Fridge", "fridge")),
+                            2L to listOf(LocationDto(20, "Pantry", "pantry")),
+                        ),
+                    ),
+                    FakeShelfRepository(),
+                    FakeProductRepository(),
+                    UnconfinedTestDispatcher(),
+                )
+
+            store.refresh(userInitiated = true)
+
+            val loaded = store.state.first { !it.loading }
+            assertTrue(loaded.entries.first { it.id == 1L }.canRestructure)
+            assertFalse(loaded.entries.first { it.id == 2L }.canRestructure)
+        }
+
     @Test
     fun refresh_failure_sets_error_and_clears_indicators() =
         runTest {

@@ -39,6 +39,14 @@ data class StorageOverviewUiState(
     val error: String? = null,
     val editMode: Boolean = false,
     val selected: Set<Long> = emptySet(),
+    /**
+     * Mirrors this household's [dev.scuttle.inventory.data.HouseholdWithLocations.canRestructure]
+     * (itself HouseholdDto.can_restructure) — gates the top-bar edit pencil so a
+     * Member never opens rename/reorder/delete affordances every mutating
+     * LocationController route already 403s for them server-side. Defaults true
+     * so the pencil isn't hidden for the one frame before load() resolves it.
+     */
+    val canRestructure: Boolean = true,
     /** Non-null while the delete-strategy dialog is open. */
     val pendingDelete: DeletePlan? = null,
     /**
@@ -77,6 +85,7 @@ class StorageOverviewViewModel
         fun load(householdId: Long) {
             val switched = this.householdId != householdId
             this.householdId = householdId
+            _state.update { it.copy(canRestructure = canRestructureFor(householdId)) }
             if (!switched) {
                 refreshSilent()
                 return
@@ -90,6 +99,18 @@ class StorageOverviewViewModel
                 refresh()
             }
         }
+
+        /**
+         * Reads the household's role gate off [hierarchyStore] — already injected
+         * here for the post-mutation `hierarchyStore.refresh()` calls below, so this
+         * needs no extra repository dependency. Defaults true (never hides a pencil
+         * the server would actually allow) when the store hasn't loaded this
+         * household yet, e.g. a cold deep link straight into this screen.
+         */
+        private fun canRestructureFor(householdId: Long): Boolean =
+            hierarchyStore.state.value.entries
+                .find { it.id == householdId }
+                ?.canRestructure ?: true
 
         fun onNewNameChange(value: String) =
             _state.update { it.copy(newName = value.take(MAX_LOCATION_NAME_LENGTH), error = null) }
