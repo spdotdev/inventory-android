@@ -938,4 +938,188 @@ class DrawerViewModelTest {
             assertNull(vm.state.value.lastBatchId)
             assertEquals(0, restore.restoreCalls)
         }
+
+    // --- M5: AllStorages' checkbox multi-select grammar ---
+
+    private val homeHousehold =
+        HouseholdDto(1, "Home", "AAAA", role = "admin", can_restructure = true, can_manage_members = true)
+    private val cabinHousehold =
+        HouseholdDto(2, "Cabin", "BBBB", role = "admin", can_restructure = true, can_manage_members = true)
+
+    @Test
+    fun enter_edit_mode_starts_with_no_selection() =
+        runTest {
+            val repo = FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge"))))
+            val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
+            val vm = viewModel(store, repo)
+
+            vm.enterEditMode()
+
+            assertTrue(vm.state.value.editMode)
+            assertTrue(
+                vm.state.value.selected
+                    .isEmpty(),
+            )
+        }
+
+    @Test
+    fun toggling_selection_twice_clears_it() =
+        runTest {
+            val repo = FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge"))))
+            val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
+            val vm = viewModel(store, repo)
+            vm.enterEditMode()
+
+            vm.toggleSelection(householdId = 1, locationId = 10)
+            assertEquals(setOf(10L), vm.state.value.selected)
+            assertEquals(1L, vm.state.value.selectedHouseholdId)
+
+            vm.toggleSelection(householdId = 1, locationId = 10)
+            assertTrue(
+                vm.state.value.selected
+                    .isEmpty(),
+            )
+            assertNull(vm.state.value.selectedHouseholdId)
+        }
+
+    @Test
+    fun selecting_a_location_in_a_different_household_starts_a_fresh_selection() =
+        runTest {
+            // AllStorages spans MULTIPLE households (unlike StorageOverviewViewModel,
+            // scoped to one) and a MOVE_CONTENTS target has to live in the SAME
+            // household as what's being deleted, so a selection can never span
+            // households — switching households resets it instead of accumulating.
+            val repo =
+                FakeLocationRepository(
+                    mapOf(
+                        1L to listOf(LocationDto(10, "Fridge", "fridge")),
+                        2L to listOf(LocationDto(20, "Shed", "other")),
+                    ),
+                )
+            val (store, _) = makeStore(households = listOf(homeHousehold, cabinHousehold), locationRepo = repo)
+            val vm = viewModel(store, repo)
+            vm.enterEditMode()
+            vm.toggleSelection(householdId = 1, locationId = 10)
+
+            vm.toggleSelection(householdId = 2, locationId = 20)
+
+            assertEquals(setOf(20L), vm.state.value.selected)
+            assertEquals(2L, vm.state.value.selectedHouseholdId)
+        }
+
+    @Test
+    fun exit_edit_mode_clears_the_selection() =
+        runTest {
+            val repo = FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge"))))
+            val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
+            val vm = viewModel(store, repo)
+            vm.enterEditMode()
+            vm.toggleSelection(householdId = 1, locationId = 10)
+
+            vm.exitEditMode()
+
+            assertFalse(vm.state.value.editMode)
+            assertTrue(
+                vm.state.value.selected
+                    .isEmpty(),
+            )
+            assertNull(vm.state.value.selectedHouseholdId)
+        }
+
+    @Test
+    fun request_delete_selected_builds_an_aggregate_plan_across_the_batch() =
+        runTest {
+            val repo =
+                FakeLocationRepository(
+                    mapOf(
+                        1L to
+                            listOf(
+                                LocationDto(10, "Fridge", "fridge", shelf_count = 2, product_count = 3),
+                                LocationDto(11, "Freezer", "freezer", shelf_count = 1, product_count = 5),
+                                LocationDto(12, "Pantry", "pantry", shelf_count = 0, product_count = 0),
+                            ),
+                    ),
+                )
+            val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
+            val vm = viewModel(store, repo)
+            vm.enterEditMode()
+            vm.toggleSelection(householdId = 1, locationId = 10)
+            vm.toggleSelection(householdId = 1, locationId = 11)
+
+            vm.requestDeleteSelected()
+
+            val plan = vm.state.value.pendingDelete
+            assertEquals(2, plan?.itemCount)
+            assertEquals(8, plan?.productCount)
+            assertEquals(3, plan?.contentCount)
+            // Pantry (unselected) is a valid move target; Fridge/Freezer (being
+            // deleted) are not.
+            assertEquals(
+                listOf(12L),
+                vm.state.value.moveTargets
+                    .map { it.id },
+            )
+        }
+
+    @Test
+    fun confirming_a_batch_delete_removes_every_selected_location_under_one_batch_id() =
+        runTest {
+            val repo =
+                FakeLocationRepository(
+                    mapOf(
+                        1L to
+                            listOf(
+                                LocationDto(10, "Fridge", "fridge", shelf_count = 0, product_count = 0),
+                                LocationDto(11, "Freezer", "freezer", shelf_count = 0, product_count = 0),
+                            ),
+                    ),
+                )
+            val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
+            val vm = viewModel(store, repo)
+            vm.enterEditMode()
+            vm.toggleSelection(householdId = 1, locationId = 10)
+            vm.toggleSelection(householdId = 1, locationId = 11)
+            vm.requestDeleteSelected()
+
+            vm.confirmDelete(strategy = null, targetId = null)
+
+            assertEquals(listOf(10L, 11L), repo.deletedLocationIds)
+            assertEquals(1, repo.batchIdsUsed.toSet().size)
+            assertNotNull(vm.state.value.lastBatchId)
+            // Confirming exits edit mode and clears the selection, same as
+            // ShelvesViewModel/StorageOverviewViewModel's own confirmDelete.
+            assertFalse(vm.state.value.editMode)
+            assertTrue(
+                vm.state.value.selected
+                    .isEmpty(),
+            )
+        }
+
+    @Test
+    fun a_partial_batch_failure_stops_but_keeps_whatever_already_succeeded() =
+        runTest {
+            val repo =
+                FakeLocationRepository(
+                    mapOf(
+                        1L to
+                            listOf(
+                                LocationDto(10, "Fridge", "fridge", shelf_count = 0, product_count = 0),
+                                LocationDto(11, "Freezer", "freezer", shelf_count = 0, product_count = 0),
+                            ),
+                    ),
+                )
+            repo.failDeleteWithStrategyId = 11
+            val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
+            val vm = viewModel(store, repo)
+            vm.enterEditMode()
+            vm.toggleSelection(householdId = 1, locationId = 10)
+            vm.toggleSelection(householdId = 1, locationId = 11)
+            vm.requestDeleteSelected()
+
+            vm.confirmDelete(strategy = null, targetId = null)
+
+            assertEquals(listOf(10L), repo.deletedLocationIds)
+            assertNotNull(vm.state.value.lastBatchId)
+            assertNotNull(vm.actionError.value)
+        }
 }

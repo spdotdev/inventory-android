@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -84,12 +85,12 @@ fun AllStoragesScreen(
     val state by viewModel.state.collectAsState()
     val localState by localViewModel.state.collectAsState()
     val actionError by viewModel.actionError.collectAsState()
-    // Delete now lives behind edit mode: a swipe should not be able to destroy a
-    // fridge full of food. Mirrors StorageOverviewScreen's own edit-mode gate
-    // (Task 5) — kept as plain Compose state here rather than in DrawerViewModel
-    // because it's purely a "which icon does this row show" toggle, not a
-    // network-backed concern the way pendingDelete/moveTargets below are.
-    var editMode by rememberSaveable { mutableStateOf(false) }
+    // M5: edit mode is checkbox multi-select + a single "delete selected" action
+    // opening the DeleteStrategyDialog, matching StorageOverview/LocationDetail's
+    // grammar — previously this screen alone used a single per-row delete button.
+    // The selection itself now lives in DrawerViewModel (state.editMode/selected),
+    // since it's part of the same delete-strategy flow as pendingDelete/moveTargets.
+    val editMode = state.editMode
 
     val snackbarHostState = remember { SnackbarHostState() }
     // Surfaces a failed delete (or a failed undo) as a transient snackbar so it
@@ -123,10 +124,27 @@ fun AllStoragesScreen(
         topBar = {
             TopAppBar(
                 windowInsets = statusBarInsets,
-                title = { Text(stringResource(R.string.all_storage_title)) },
+                title = {
+                    if (editMode && state.selected.isNotEmpty()) {
+                        Text(stringResource(R.string.location_selected_count, state.selected.size))
+                    } else {
+                        Text(stringResource(R.string.all_storage_title))
+                    }
+                },
                 actions = {
                     if (editMode) {
-                        TextButton(onClick = { editMode = false }) {
+                        IconButton(
+                            onClick = viewModel::requestDeleteSelected,
+                            enabled = state.selected.isNotEmpty() && !state.loading,
+                        ) {
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription =
+                                    stringResource(R.string.location_delete_count_button, state.selected.size),
+                                tint = MaterialTheme.colorScheme.error,
+                            )
+                        }
+                        TextButton(onClick = viewModel::exitEditMode) {
                             Text(stringResource(R.string.action_cancel))
                         }
                     } else {
@@ -138,7 +156,7 @@ fun AllStoragesScreen(
                             Icon(Icons.Default.Search, contentDescription = stringResource(R.string.nav_search))
                         }
                         if (state.entries.any { it.locations.isNotEmpty() }) {
-                            IconButton(onClick = { editMode = true }) {
+                            IconButton(onClick = viewModel::enterEditMode) {
                                 Icon(
                                     Icons.Default.Edit,
                                     contentDescription = stringResource(R.string.storage_overview_edit_cd),
@@ -305,15 +323,12 @@ fun AllStoragesScreen(
                                             }
                                         }
                                         if (editMode && entry.canRestructure) {
-                                            IconButton(
-                                                onClick = { viewModel.requestDelete(entry.id, location.id) },
-                                            ) {
-                                                Icon(
-                                                    Icons.Default.Delete,
-                                                    contentDescription = stringResource(R.string.action_delete),
-                                                    tint = MaterialTheme.colorScheme.error,
-                                                )
-                                            }
+                                            Checkbox(
+                                                checked = location.id in state.selected,
+                                                onCheckedChange = {
+                                                    viewModel.toggleSelection(entry.id, location.id)
+                                                },
+                                            )
                                         } else if (!editMode) {
                                             IconButton(onClick = { localViewModel.toggleFavorite(location.id) }) {
                                                 Icon(
@@ -344,9 +359,19 @@ fun AllStoragesScreen(
                                         // offer here, and favorite-toggling belongs to the non-edit view.
                                     }
                                 }
+                                // In edit mode, tapping the row body toggles selection (matching
+                                // StorageOverviewScreen's EditableRow), not navigation — same as
+                                // the checkbox itself; a Member's row (no canRestructure) has no
+                                // selection to toggle, so it keeps navigating even in edit mode.
+                                val rowOnClick =
+                                    if (editMode && entry.canRestructure) {
+                                        { viewModel.toggleSelection(entry.id, location.id) }
+                                    } else {
+                                        { onOpenLocation(entry.id, location.id) }
+                                    }
                                 if (hasWarning) {
                                     Card(
-                                        onClick = { onOpenLocation(entry.id, location.id) },
+                                        onClick = rowOnClick,
                                         modifier =
                                             Modifier.fillMaxWidth().testTag("home-location-${location.name}"),
                                         colors =
@@ -360,7 +385,7 @@ fun AllStoragesScreen(
                                     )
                                 } else {
                                     FrostCard(
-                                        onClick = { onOpenLocation(entry.id, location.id) },
+                                        onClick = rowOnClick,
                                         modifier =
                                             Modifier.fillMaxWidth().testTag("home-location-${location.name}"),
                                         content = { rowContent() },
