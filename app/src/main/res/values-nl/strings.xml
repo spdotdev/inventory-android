@@ -87,7 +87,7 @@
     <string name="household_edit_appearance_label">Uiterlijk</string>
     <string name="household_edit_danger_zone_title">Gevarenzone</string>
     <string name="household_edit_danger_zone_body">Als je het huishouden verlaat, verlies je je toegang ertoe.</string>
-    <string name="household_edit_members_cd">Leden</string>
+    <string name="household_edit_members_title">Leden</string>
 
     <!-- Members -->
     <string name="members_title">Leden</string>

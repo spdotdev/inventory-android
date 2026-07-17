@@ -284,12 +284,13 @@ fun HouseholdEditScreen(
                             Modifier
                                 .fillMaxWidth()
                                 .clickable(onClick = onOpenMembers)
+                                .testTag("household-open-members")
                                 .padding(16.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            text = stringResource(R.string.household_edit_members_cd),
+                            text = stringResource(R.string.household_edit_members_title),
                             style = MaterialTheme.typography.titleMedium,
                         )
                     }

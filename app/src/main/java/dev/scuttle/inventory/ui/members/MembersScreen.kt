@@ -113,7 +113,7 @@ fun MembersScreen(
                         }
 
                         if (isOwnerRow) {
-                            if (isSelf && viewerRole == "owner") {
+                            if (isSelf) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                                     horizontalArrangement = Arrangement.End,
