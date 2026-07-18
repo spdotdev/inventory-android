@@ -389,17 +389,67 @@ class ProductDetailViewModelTest {
             assertEquals(0, repo.removeCalls)
         }
 
+    // H2: a failed +/- mutation no longer surfaces the generic `error` snackbar — it sets the
+    // specific quantityMutationFailed one-shot flag instead (see ProductDetailUiState's doc
+    // comment), and bumps quantityMutationEpoch so the screen's optimistic pendingDelta resets
+    // even though product.quantity — the mutation failed — never changed.
     @Test
-    fun increment_failure_surfaces_error() =
+    fun increment_failure_sets_the_specific_failure_flag_and_bumps_the_epoch() =
         runTest {
             val product = ProductDto(id = 1, name = "Milk", quantity = 2, shelf_id = 1)
             val repo = FakeProductRepository(listOf(product)).apply { failMutate = true }
             val vm = viewModel(savedState(), repo)
+            val epochBefore = vm.state.value.quantityMutationEpoch
 
             vm.increment()
 
-            assertNotNull(vm.state.value.error)
+            assertNull(vm.state.value.error)
+            assertTrue(vm.state.value.quantityMutationFailed)
+            assertEquals(epochBefore + 1, vm.state.value.quantityMutationEpoch)
             assertFalse(vm.state.value.loading)
+        }
+
+    @Test
+    fun decrement_failure_sets_the_specific_failure_flag_and_bumps_the_epoch() =
+        runTest {
+            val product = ProductDto(id = 1, name = "Milk", quantity = 2, shelf_id = 1)
+            val repo = FakeProductRepository(listOf(product)).apply { failMutate = true }
+            val vm = viewModel(savedState(), repo)
+            val epochBefore = vm.state.value.quantityMutationEpoch
+
+            vm.decrement()
+
+            assertNull(vm.state.value.error)
+            assertTrue(vm.state.value.quantityMutationFailed)
+            assertEquals(epochBefore + 1, vm.state.value.quantityMutationEpoch)
+        }
+
+    @Test
+    fun successful_increment_bumps_the_epoch_without_setting_the_failure_flag() =
+        runTest {
+            val product = ProductDto(id = 1, name = "Milk", quantity = 2, shelf_id = 1)
+            val repo = FakeProductRepository(listOf(product))
+            val vm = viewModel(savedState(), repo)
+            val epochBefore = vm.state.value.quantityMutationEpoch
+
+            vm.increment()
+
+            assertEquals(epochBefore + 1, vm.state.value.quantityMutationEpoch)
+            assertFalse(vm.state.value.quantityMutationFailed)
+        }
+
+    @Test
+    fun consumeQuantityMutationFailed_clears_the_one_shot_flag() =
+        runTest {
+            val product = ProductDto(id = 1, name = "Milk", quantity = 2, shelf_id = 1)
+            val repo = FakeProductRepository(listOf(product)).apply { failMutate = true }
+            val vm = viewModel(savedState(), repo)
+            vm.increment()
+            assertTrue(vm.state.value.quantityMutationFailed)
+
+            vm.consumeQuantityMutationFailed()
+
+            assertFalse(vm.state.value.quantityMutationFailed)
         }
 
     @Test

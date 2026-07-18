@@ -197,6 +197,9 @@
     <string name="products_pane_move_button">Move</string>
     <string name="products_pane_move_dialog_title">Move to…</string>
     <string name="products_pane_no_shelves_to_move">No other shelves available. Add more shelves to this location first.</string>
+    <!-- H2: shown instead of the generic mutation-failure snackbar when a quantity +/- fails,
+         so the optimistically-displayed count is explained rather than left wrong-looking. -->
+    <string name="quantity_update_failed">Quantity didn\'t update</string>
     <string name="products_pane_filter_label">Filter products</string>
     <string name="products_pane_filter_mandatory">Mandatory</string>
     <string name="products_pane_filter_out_of_stock">Out of stock</string>

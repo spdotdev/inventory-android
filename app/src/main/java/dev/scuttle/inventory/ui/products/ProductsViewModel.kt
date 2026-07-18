@@ -79,6 +79,19 @@ data class ProductsUiState(
      * delete_undo_failed) and calls [ProductsViewModel.consumeUndoResult].
      */
     val undoResult: UndoOutcome? = null,
+    /**
+     * H2: bumps on every +/- quantity mutation completing, success OR failure. The stepper's
+     * `pendingDelta` (local optimistic count while a mutation is in flight) resets on this in
+     * addition to `product.quantity` changing, so a FAILED mutation — which never changes
+     * `product.quantity` — no longer leaves the wrong optimistic count on screen indefinitely.
+     */
+    val quantityMutationEpoch: Int = 0,
+    /**
+     * One-shot: true right after a +/- quantity mutation failed. The screen shows the specific
+     * `quantity_update_failed` string (not the generic `error` snackbar) and calls
+     * [ProductsViewModel.consumeQuantityMutationFailed].
+     */
+    val quantityMutationFailed: Boolean = false,
 ) {
     /** The products after the user's filter + sort is applied. */
     val visibleProducts: List<ProductDto>
@@ -373,16 +386,43 @@ class ProductsViewModel
             }
         }
 
+        /**
+         * H2: unlike the shared [launch] helper, this doesn't route failures into the generic
+         * `error` snackbar — quantity mutations get their own specific message (see
+         * [ProductsUiState.quantityMutationFailed]) — and it bumps [ProductsUiState.quantityMutationEpoch]
+         * on BOTH success and failure so a failed mutation resets the stepper's optimistic count
+         * too, not just a successful one (which already changes `product.quantity`).
+         */
         private fun mutateOne(block: suspend (Long, Long) -> ProductDto) {
             val h = householdId ?: return
             val s = shelfId ?: return
-            launch {
-                val updated = block(h, s)
+            viewModelScope.launch {
+                _state.update { it.copy(loading = true, error = null) }
+                val result = runCatching { block(h, s) }
+                result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
                 _state.update { state ->
-                    state.copy(products = state.products.map { if (it.id == updated.id) updated else it })
+                    result.fold(
+                        onSuccess = { updated ->
+                            state.copy(
+                                loading = false,
+                                products = state.products.map { if (it.id == updated.id) updated else it },
+                                quantityMutationEpoch = state.quantityMutationEpoch + 1,
+                            )
+                        },
+                        onFailure = {
+                            state.copy(
+                                loading = false,
+                                quantityMutationFailed = true,
+                                quantityMutationEpoch = state.quantityMutationEpoch + 1,
+                            )
+                        },
+                    )
                 }
             }
         }
+
+        /** Clears the one-shot quantity-mutation-failed flag after the UI has shown it. */
+        fun consumeQuantityMutationFailed() = _state.update { it.copy(quantityMutationFailed = false) }
 
         private fun launch(block: suspend () -> Unit) {
             viewModelScope.launch {

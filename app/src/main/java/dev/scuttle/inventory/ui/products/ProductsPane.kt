@@ -128,6 +128,15 @@ fun ProductsPane(
     // or re-announce. Material3's Snackbar is itself a live region (a11y).
     SnackbarErrorEffect(state.error, snackbarHostState, onConsumed = viewModel::consumeError)
 
+    // H2: a failed +/- quantity mutation gets its own specific, localized message instead of
+    // the generic `error` snackbar above — see ProductsUiState.quantityMutationFailed.
+    val quantityUpdateFailedText = stringResource(R.string.quantity_update_failed)
+    SnackbarErrorEffect(
+        error = if (state.quantityMutationFailed) quantityUpdateFailedText else null,
+        snackbarHostState = snackbarHostState,
+        onConsumed = viewModel::consumeQuantityMutationFailed,
+    )
+
     // One-shot scan outcome -> localized transient snackbar, then consumed.
     val scanResult = state.scanResult
     val incrementedText = stringResource(R.string.scan_incremented)
@@ -256,7 +265,11 @@ fun ProductsPane(
                 // quantity arrives, so a released hold never gets stuck showing a
                 // stale locally-guessed number.
                 var pendingDelta by remember(product.id) { mutableStateOf(0) }
-                LaunchedEffect(product.quantity) { pendingDelta = 0 }
+                // H2: also reset on quantityMutationEpoch, not just product.quantity — a FAILED
+                // mutation never changes product.quantity, so without this the wrong optimistic
+                // count stayed on screen indefinitely (only a generic snackbar hinted anything
+                // was wrong).
+                LaunchedEffect(product.quantity, state.quantityMutationEpoch) { pendingDelta = 0 }
                 val displayedQuantity = (product.quantity + pendingDelta).coerceAtLeast(0)
                 val decreaseInteractionSource = remember { MutableInteractionSource() }
                 val increaseInteractionSource = remember { MutableInteractionSource() }

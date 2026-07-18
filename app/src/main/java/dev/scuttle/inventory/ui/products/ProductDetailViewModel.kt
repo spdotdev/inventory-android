@@ -40,6 +40,19 @@ data class ProductDetailUiState(
      * delete_undo_failed) and calls [ProductDetailViewModel.consumeUndoResult].
      */
     val undoResult: UndoOutcome? = null,
+    /**
+     * H2: bumps on every +/- quantity mutation completing, success OR failure — see
+     * `ProductsUiState.quantityMutationEpoch` (ProductsViewModel's equivalent) for why: a
+     * failed mutation never changes `product.quantity`, so the stepper's local optimistic
+     * count needs this second reset signal or it's left wrong on screen indefinitely.
+     */
+    val quantityMutationEpoch: Int = 0,
+    /**
+     * One-shot: true right after a +/- quantity mutation failed. The screen shows the specific
+     * `quantity_update_failed` string instead of the generic `error` snackbar, then calls
+     * [ProductDetailViewModel.consumeQuantityMutationFailed].
+     */
+    val quantityMutationFailed: Boolean = false,
 )
 
 @HiltViewModel
@@ -134,9 +147,22 @@ class ProductDetailViewModel
             viewModelScope.launch {
                 _state.update { it.copy(loading = true, error = null) }
                 runCatching { repository.add(householdId, shelfId, current.id, amount) }
-                    .onSuccess { updated -> _state.update { it.copy(loading = false, product = updated) } }
-                    .onFailure { e ->
-                        _state.update { it.copy(loading = false, error = e.toUserMessage("Something went wrong.")) }
+                    .onSuccess { updated ->
+                        _state.update {
+                            it.copy(loading = false, product = updated, quantityMutationEpoch = it.quantityMutationEpoch + 1)
+                        }
+                    }.onFailure {
+                        // H2: no generic `error` here — the screen shows the specific
+                        // quantity_update_failed string instead, and quantityMutationEpoch
+                        // resets the stepper's optimistic count even though product.quantity
+                        // (which would otherwise be the only reset signal) never changed.
+                        _state.update {
+                            it.copy(
+                                loading = false,
+                                quantityMutationFailed = true,
+                                quantityMutationEpoch = it.quantityMutationEpoch + 1,
+                            )
+                        }
                     }
             }
         }
@@ -148,9 +174,18 @@ class ProductDetailViewModel
             viewModelScope.launch {
                 _state.update { it.copy(loading = true, error = null) }
                 runCatching { repository.remove(householdId, shelfId, current.id, clamped) }
-                    .onSuccess { updated -> _state.update { it.copy(loading = false, product = updated) } }
-                    .onFailure { e ->
-                        _state.update { it.copy(loading = false, error = e.toUserMessage("Something went wrong.")) }
+                    .onSuccess { updated ->
+                        _state.update {
+                            it.copy(loading = false, product = updated, quantityMutationEpoch = it.quantityMutationEpoch + 1)
+                        }
+                    }.onFailure {
+                        _state.update {
+                            it.copy(
+                                loading = false,
+                                quantityMutationFailed = true,
+                                quantityMutationEpoch = it.quantityMutationEpoch + 1,
+                            )
+                        }
                     }
             }
         }
@@ -208,4 +243,7 @@ class ProductDetailViewModel
 
         /** Clears the error after it's been shown once (e.g. surfaced as a Snackbar). */
         fun consumeError() = _state.update { it.copy(error = null) }
+
+        /** Clears the one-shot quantity-mutation-failed flag after the UI has shown it. */
+        fun consumeQuantityMutationFailed() = _state.update { it.copy(quantityMutationFailed = false) }
     }

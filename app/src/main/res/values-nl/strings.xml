@@ -187,6 +187,8 @@
     <string name="products_pane_move_button">Verplaatsen</string>
     <string name="products_pane_move_dialog_title">Verplaatsen naar…</string>
     <string name="products_pane_no_shelves_to_move">Geen andere planken beschikbaar.</string>
+    <!-- H2: shown instead of the generic mutation-failure snackbar when a quantity +/- fails. -->
+    <string name="quantity_update_failed">Aantal is niet bijgewerkt</string>
     <string name="products_pane_filter_label">Producten filteren</string>
     <string name="products_pane_filter_mandatory">Verplicht</string>
     <string name="products_pane_filter_out_of_stock">Niet op voorraad</string>

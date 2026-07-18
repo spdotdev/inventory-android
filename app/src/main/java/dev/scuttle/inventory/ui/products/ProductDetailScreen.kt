@@ -157,6 +157,15 @@ fun ProductDetailScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     SnackbarErrorEffect(state.error, snackbarHostState, onConsumed = viewModel::consumeError)
 
+    // H2: a failed +/- quantity mutation gets its own specific, localized message instead of
+    // the generic `error` snackbar above — see ProductDetailUiState.quantityMutationFailed.
+    val quantityUpdateFailedText = stringResource(R.string.quantity_update_failed)
+    SnackbarErrorEffect(
+        error = if (state.quantityMutationFailed) quantityUpdateFailedText else null,
+        snackbarHostState = snackbarHostState,
+        onConsumed = viewModel::consumeQuantityMutationFailed,
+    )
+
     // Delete keeps its confirm dialog below; this is the Undo ON TOP of it. The
     // screen navigates away on a successful delete (unlike Shelves/Storage/Drawer,
     // which stay put), so the "deleted, [Undo]" snackbar — and, if tapped, the
@@ -368,7 +377,10 @@ fun ProductDetailScreen(
                     // (not one network call per tick) fits the always-online,
                     // server-authoritative model.
                     var pendingDelta by remember(product.id) { mutableStateOf(0) }
-                    LaunchedEffect(product.quantity) { pendingDelta = 0 }
+                    // H2: also reset on quantityMutationEpoch — a FAILED mutation never changes
+                    // product.quantity, so without this the wrong optimistic count stayed on
+                    // screen indefinitely. See ProductDetailUiState.quantityMutationEpoch.
+                    LaunchedEffect(product.quantity, state.quantityMutationEpoch) { pendingDelta = 0 }
                     val displayedQuantity = (product.quantity + pendingDelta).coerceAtLeast(0)
                     val decreaseInteractionSource = remember { MutableInteractionSource() }
                     val increaseInteractionSource = remember { MutableInteractionSource() }

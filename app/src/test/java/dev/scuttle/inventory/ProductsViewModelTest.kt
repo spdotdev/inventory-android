@@ -43,6 +43,9 @@ class ProductsViewModelTest {
         val deletedProductIds = mutableListOf<Long>()
         var failDelete = false
 
+        // H2: lets tests simulate a failed +/- quantity mutation.
+        var failAdjust = false
+
         override fun getCached(
             householdId: Long,
             shelfId: Long,
@@ -145,6 +148,7 @@ class ProductsViewModelTest {
             productId: Long,
             delta: Int,
         ): ProductDto {
+            if (failAdjust) throw IOException("quantity update failed")
             val index = items.indexOfFirst { it.id == productId }
             val updated = items[index].let { it.copy(quantity = (it.quantity + delta).coerceAtLeast(0)) }
             items[index] = updated
@@ -304,6 +308,84 @@ class ProductsViewModelTest {
                     .first()
                     .quantity,
             )
+        }
+
+    @Test
+    fun increment_and_decrement_bump_the_quantity_mutation_epoch_on_success() =
+        runTest {
+            val repo = FakeProductRepository().apply { items.add(ProductDto(1, "Peas", 2, 1)) }
+            val vm = viewModel(products = repo)
+            vm.load(householdId = 1, shelfId = 1)
+            val epochBefore = vm.state.value.quantityMutationEpoch
+
+            vm.increment(1)
+
+            assertEquals(epochBefore + 1, vm.state.value.quantityMutationEpoch)
+            assertFalse(vm.state.value.quantityMutationFailed)
+        }
+
+    // H2: a failed +/- mutation used to leave the stepper's optimistic delta on screen
+    // forever, because it only reset via product.quantity changing — which a failure never
+    // does. quantityMutationEpoch is the second reset signal the screen keys off; it must
+    // bump on failure too, and the screen must get a specific "didn't update" flag rather
+    // than the generic error snackbar.
+    @Test
+    fun a_failed_increment_bumps_the_epoch_and_sets_the_specific_failure_flag() =
+        runTest {
+            val repo =
+                FakeProductRepository().apply {
+                    items.add(ProductDto(1, "Peas", 2, 1))
+                    failAdjust = true
+                }
+            val vm = viewModel(products = repo)
+            vm.load(householdId = 1, shelfId = 1)
+            val epochBefore = vm.state.value.quantityMutationEpoch
+
+            vm.increment(1)
+
+            assertEquals(epochBefore + 1, vm.state.value.quantityMutationEpoch)
+            assertTrue(vm.state.value.quantityMutationFailed)
+            // The quantity itself must NOT have silently changed.
+            assertEquals(2, vm.state.value.products.first().quantity)
+            // No generic error either — the screen shows the specific message instead.
+            assertNull(vm.state.value.error)
+        }
+
+    @Test
+    fun a_failed_decrement_bumps_the_epoch_and_sets_the_specific_failure_flag() =
+        runTest {
+            val repo =
+                FakeProductRepository().apply {
+                    items.add(ProductDto(1, "Peas", 2, 1))
+                    failAdjust = true
+                }
+            val vm = viewModel(products = repo)
+            vm.load(householdId = 1, shelfId = 1)
+            val epochBefore = vm.state.value.quantityMutationEpoch
+
+            vm.decrement(1)
+
+            assertEquals(epochBefore + 1, vm.state.value.quantityMutationEpoch)
+            assertTrue(vm.state.value.quantityMutationFailed)
+            assertEquals(2, vm.state.value.products.first().quantity)
+        }
+
+    @Test
+    fun consumeQuantityMutationFailed_clears_the_one_shot_flag() =
+        runTest {
+            val repo =
+                FakeProductRepository().apply {
+                    items.add(ProductDto(1, "Peas", 2, 1))
+                    failAdjust = true
+                }
+            val vm = viewModel(products = repo)
+            vm.load(householdId = 1, shelfId = 1)
+            vm.increment(1)
+            assertTrue(vm.state.value.quantityMutationFailed)
+
+            vm.consumeQuantityMutationFailed()
+
+            assertFalse(vm.state.value.quantityMutationFailed)
         }
 
     @Test
