@@ -73,6 +73,14 @@ Detailed build order: [`CLAUDE.md`](CLAUDE.md) and [`docs/android-plan.md`](docs
   PATCH bug: cleared fields were omitted from the body and silently kept their old
   server value (UpdateProductRequest now always encodes every field).
 
+### PARITY (from the 2026-07-19 GAP-8 audit)
+- 🔲 **Recently-deleted browser** — the web has a "Recently deleted" list with
+  per-batch restore (`household.blade.php`, `Support\RecentlyDeleted`); the app
+  only has snackbar Undo for its own last gesture. Needs a new API listing
+  endpoint first (`RestoreApi` only has `POST restore/{batch}`), then a screen
+  reachable from the household edit page. Until then there is no cross-hint —
+  the web feature is discoverable there and works on mobile browsers.
+
 ### QUALITY
 - [x] **CI live and green** — wrapper validation + `testDebugUnitTest` + lint pass.
 - [x] **Google Sign-In device smoke-test (release gate)** — passed 2026-07-10 on a
