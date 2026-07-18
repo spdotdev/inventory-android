@@ -162,6 +162,15 @@ fun AuthScreen(
             label = { Text(stringResource(R.string.auth_field_password)) },
             singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
+            // Shown always in REGISTER mode (not only after a 422) so the real
+            // server-side rule (RegisterRequest: 'password' => min:8) is visible
+            // before the user submits and gets rejected (GAP-5 H4).
+            supportingText =
+                if (isRegister) {
+                    { Text(stringResource(R.string.auth_password_requirements)) }
+                } else {
+                    null
+                },
             keyboardOptions =
                 KeyboardOptions(
                     keyboardType = KeyboardType.Password,

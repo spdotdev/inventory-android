@@ -7,6 +7,7 @@
     <string name="auth_field_name">Name</string>
     <string name="auth_field_email">Email</string>
     <string name="auth_field_password">Password</string>
+    <string name="auth_password_requirements">At least 8 characters.</string>
     <string name="auth_divider_or">or</string>
     <string name="auth_continue_with_google">Continue with Google</string>
     <string name="auth_toggle_to_register">New here? Create an account</string>
