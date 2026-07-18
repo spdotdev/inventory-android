@@ -1,5 +1,6 @@
 package dev.scuttle.inventory.ui.households
 
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -48,13 +49,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
+import dev.scuttle.inventory.BuildConfig
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.ui.common.ErrorRetry
 import dev.scuttle.inventory.ui.theme.FrostCard
@@ -68,6 +72,22 @@ private const val SWATCH_BACKGROUND_ALPHA = 0.28f
 
 /** Matches the server-side household name column limit (UpdateHouseholdRequest's `max:50`). */
 private const val MAX_HOUSEHOLD_NAME_LENGTH = 50
+
+/** The API suffix [BuildConfig.BASE_URL] always carries — see [webExportUrl]. */
+private const val API_PATH_SUFFIX = "/api/v1/"
+
+/**
+ * GAP6-M6: household data export exists only on the web
+ * (`/app/households/{id}/export`) — the app never mentions it otherwise. The API and
+ * web app share one domain (see CLAUDE.md "Web Google sign-in"), so the web origin is
+ * derived by stripping [BuildConfig.BASE_URL]'s `/api/v1/` suffix rather than hardcoding
+ * a second host. [baseUrl] is a parameter (not read from BuildConfig directly) so this
+ * is a plain, unit-testable function.
+ */
+internal fun webExportUrl(
+    householdId: Long,
+    baseUrl: String = BuildConfig.BASE_URL,
+): String = baseUrl.removeSuffix(API_PATH_SUFFIX) + "/app/households/$householdId/export"
 
 /**
  * Rename a household, pick its colour/icon (moved out of the old palette-icon
@@ -105,6 +125,7 @@ fun HouseholdEditScreen(
     val state by viewModel.state.collectAsState()
     val household = state.households.find { it.id == householdId }
     var confirmDelete by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     // Wait for leave() to actually complete server-side (not just for the tap) before
     // navigating back — see the doc on HouseholdsUiState.leftHouseholdId for why
@@ -315,6 +336,27 @@ fun HouseholdEditScreen(
                             style = MaterialTheme.typography.titleMedium,
                         )
                     }
+                }
+
+                // GAP6-M6: capability cross-hint — export exists only on the web, and
+                // this is the closest screen to where a user would look for it.
+                // Deliberately NOT in the danger zone below: exporting isn't
+                // destructive, and burying it next to Leave/Delete would mislabel it.
+                // Plain informational text, opens the web export page in the browser.
+                FrostCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        context.startActivity(
+                            Intent(Intent.ACTION_VIEW, webExportUrl(householdId).toUri()),
+                        )
+                    },
+                ) {
+                    Text(
+                        text = stringResource(R.string.household_edit_export_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(16.dp),
+                    )
                 }
 
                 // Semantically-coloured card (error tint): stays on plain Card, not

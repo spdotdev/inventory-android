@@ -137,6 +137,8 @@
     <string name="household_edit_owner_leave_body">Transfer ownership to another member before leaving, or delete the household instead.</string>
     <string name="household_edit_owner_leave_action">Open members</string>
     <string name="household_edit_readonly_hint">Only the owner and admins can edit this household.</string>
+    <!-- GAP6-M6: capability cross-hint — data export exists only on the web app. -->
+    <string name="household_edit_export_hint">Export this household\'s data from the web app.</string>
     <string name="household_delete">Delete household</string>
     <string name="household_delete_dialog_title">Delete %1$s?</string>
     <!-- GAP5-M1: names the scope explicitly (locations/shelves/products, every
