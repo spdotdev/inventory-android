@@ -175,7 +175,7 @@
     <string name="product_detail_field_description">Description</string>
     <string name="product_detail_field_code">Product code / barcode</string>
     <string name="product_detail_mandatory_label">Mandatory on this shelf</string>
-    <string name="product_detail_mandatory_hint">Shows a warning when quantity reaches 0</string>
+    <string name="product_detail_mandatory_hint">At 0, this lands on the Missing list and triggers the dashboard warning</string>
     <string name="product_detail_field_low_stock">Low-stock warning at</string>
     <string name="product_detail_low_stock_hint">Warn when quantity drops to this number or below. Leave empty to disable.</string>
     <string name="product_detail_delete_button">Delete product</string>
