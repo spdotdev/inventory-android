@@ -320,6 +320,17 @@ fun StorageOverviewScreen(
 
     // Undo snackbar. A snackbar with an action, rather than a one-shot error
     // effect (which has no action slot).
+    //
+    // GAP5-L1 (known limitation, deliberately not fixed here): if a dialog is opened
+    // (rename sheet, add sheet, DeleteStrategyDialog above) while this Undo snackbar
+    // is showing, Compose's dialog window sits in its own layer above the Scaffold's
+    // SnackbarHost, so the snackbar can be visually obscured or dismissed-looking
+    // behind it for that dialog's lifetime — Undo still works if tapped through, but
+    // it's not reliably visible. A full fix means either deferring/queuing dialog
+    // opens while an undo snackbar is in flight, or moving the snackbar into the same
+    // window layer as dialogs (a app-wide z-order rework) — disproportionate for this
+    // edge timing case relative to how rarely a user opens another dialog inside the
+    // ~few-second Undo window. Left as documented, not fixed.
     val undoLabel = stringResource(R.string.delete_undo)
     val deletedMessage = stringResource(R.string.locations_deleted)
     LaunchedEffect(state.lastBatchId) {
