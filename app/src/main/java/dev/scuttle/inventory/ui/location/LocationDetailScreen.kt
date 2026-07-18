@@ -25,10 +25,10 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.QrCodeScanner
-import androidx.compose.material.icons.filled.ViewList
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -76,7 +76,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.dto.ShelfDto
 import dev.scuttle.inventory.ui.app.DrawerViewModel
@@ -200,7 +200,12 @@ fun LocationDetailScreen(
                     } else {
                         IconButton(onClick = shelvesViewModel::toggleListView) {
                             Icon(
-                                imageVector = if (state.listView) Icons.Default.TabViewIcon else Icons.Default.ViewList,
+                                imageVector =
+                                    if (state.listView) {
+                                        Icons.Default.TabViewIcon
+                                    } else {
+                                        Icons.AutoMirrored.Filled.ViewList
+                                    },
                                 contentDescription = stringResource(R.string.location_view_toggle_cd),
                             )
                         }
@@ -460,7 +465,7 @@ fun LocationDetailScreen(
                     value = renameText,
                     onValueChange = { renameText = it.take(MAX_SHELF_NAME_LENGTH) },
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(autoCorrect = false, imeAction = ImeAction.Done),
+                    keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, imeAction = ImeAction.Done),
                 )
             },
             confirmButton = {
@@ -502,7 +507,7 @@ fun LocationDetailScreen(
                         onValueChange = shelvesViewModel::onNewNameChange,
                         label = { Text(stringResource(R.string.add_shelf_field_name)) },
                         singleLine = true,
-                        keyboardOptions = KeyboardOptions(autoCorrect = false, imeAction = ImeAction.Done),
+                        keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, imeAction = ImeAction.Done),
                         keyboardActions =
                             KeyboardActions(onDone = {
                                 keyboardController?.hide()
@@ -587,7 +592,7 @@ private fun AddProductSheet(
                         onValueChange = viewModel::onNewNameChange,
                         label = { Text(stringResource(R.string.add_product_field_name)) },
                         singleLine = true,
-                        keyboardOptions = KeyboardOptions(autoCorrect = false, imeAction = ImeAction.Done),
+                        keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, imeAction = ImeAction.Done),
                         keyboardActions =
                             KeyboardActions(onDone = {
                                 keyboardController?.hide()

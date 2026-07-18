@@ -43,7 +43,7 @@ import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.GetCredentialException
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
@@ -140,7 +140,7 @@ fun AuthScreen(
                 keyboardOptions =
                     KeyboardOptions(
                         capitalization = KeyboardCapitalization.Words,
-                        autoCorrect = false,
+                        autoCorrectEnabled = false,
                         imeAction = ImeAction.Next,
                     ),
                 modifier = Modifier.fillMaxWidth(),
@@ -155,7 +155,7 @@ fun AuthScreen(
             keyboardOptions =
                 KeyboardOptions(
                     keyboardType = KeyboardType.Email,
-                    autoCorrect = false,
+                    autoCorrectEnabled = false,
                     imeAction = ImeAction.Next,
                 ),
             modifier = Modifier.fillMaxWidth(),

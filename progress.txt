@@ -1,0 +1,13 @@
+## Codebase Patterns
+- `./gradlew compileDebugKotlin --rerun` with grep for "warning:.*deprecat" is the reliable way to enumerate real Kotlin-compiler deprecation warnings across app/src/main (gradle's own "Deprecated Gradle features" noise is unrelated and always present - filter it out).
+- `./gradlew ktlintFormat` auto-fixes ktlint line-wrap violations introduced by a manual edit faster than hand-formatting.
+- Check a new AndroidX package actually ships in the *currently pinned* dependency version before doing a bare import swap for a "moved to package X" deprecation - `jar tf` on the cached transformed jar under ~/.gradle/caches confirms without bumping the version.
+
+## 2026-07-19 - US-002
+- Enumerated every deprecation warning in app/src/main via compileDebugKotlin. Fixed 5 categories with confirmed same-version drop-in replacements (hiltViewModel import path, LocalLifecycleOwner import path, KeyboardOptions autoCorrect->autoCorrectEnabled rename, Locale(String) -> Locale.Builder, Icons.Filled.ViewList -> Icons.AutoMirrored.Filled.ViewList).
+- Left 3 categories unfixed with notes in prd.json: EncryptedSharedPreferences/MasterKey (androidx.security-crypto has no direct successor, only a full Tink rewrite), LocalClipboardManager (replacement is suspend-based, not a like-for-like swap), ScrollableTabRow/rememberSwipeToDismissBoxState's confirmValueChange (Compose's own docs say no direct equivalent exists).
+- Files changed: MainActivity.kt and 15 other screen files (hiltViewModel import), ScannerScreen.kt (LocalLifecycleOwner import), AuthScreen/HouseholdsScreen/HouseholdEditScreen/SettingsScreen/SearchScreen/LocationDetailScreen/StorageOverviewScreen.kt (autoCorrectEnabled), LocationDetailScreen.kt (ViewList icon).
+- **Learnings for future iterations:**
+  - No regression tests were added for this story - these are compile-time API surface renames with byte-for-byte identical runtime behavior, not logic changes, so nothing new to assert.
+  - Full JVM test suite, ktlintCheck, detekt all green.
+---

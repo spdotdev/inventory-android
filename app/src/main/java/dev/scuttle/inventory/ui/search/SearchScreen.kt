@@ -33,7 +33,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.dto.SearchResultDto
 import dev.scuttle.inventory.ui.common.ErrorRetry
@@ -114,7 +114,7 @@ fun SearchScreen(
             singleLine = true,
             keyboardOptions =
                 KeyboardOptions(
-                    autoCorrect = false,
+                    autoCorrectEnabled = false,
                     imeAction = ImeAction.Search,
                 ),
             keyboardActions =

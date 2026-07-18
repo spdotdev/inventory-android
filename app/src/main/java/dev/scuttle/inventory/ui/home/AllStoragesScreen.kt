@@ -60,7 +60,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.ui.app.DrawerViewModel
 import dev.scuttle.inventory.ui.common.ErrorRetry

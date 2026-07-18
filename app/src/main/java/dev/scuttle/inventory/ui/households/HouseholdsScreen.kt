@@ -50,7 +50,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.ui.common.ErrorRetry
 import dev.scuttle.inventory.ui.theme.FrostCard
@@ -225,7 +225,7 @@ fun HouseholdsScreen(
                     onValueChange = viewModel::onNewNameChange,
                     label = { Text(stringResource(R.string.households_field_name)) },
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(autoCorrect = false, imeAction = ImeAction.Done),
+                    keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, imeAction = ImeAction.Done),
                     keyboardActions =
                         KeyboardActions(onDone = {
                             keyboardController?.hide()

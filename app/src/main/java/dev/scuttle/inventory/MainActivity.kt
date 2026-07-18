@@ -36,7 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavOptionsBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -91,7 +91,11 @@ class MainActivity : ComponentActivity() {
 
     override fun attachBaseContext(newBase: Context) {
         val lang = SharedPrefsLanguageStore(newBase).get()
-        val locale = java.util.Locale(lang.tag)
+        val locale =
+            java.util.Locale
+                .Builder()
+                .setLanguage(lang.tag)
+                .build()
         val config = Configuration(newBase.resources.configuration)
         config.setLocale(locale)
         super.attachBaseContext(newBase.createConfigurationContext(config))

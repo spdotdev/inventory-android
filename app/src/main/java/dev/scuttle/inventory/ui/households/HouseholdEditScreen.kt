@@ -59,7 +59,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.net.toUri
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import dev.scuttle.inventory.BuildConfig
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.ui.common.ErrorRetry
@@ -223,7 +223,7 @@ fun HouseholdEditScreen(
                             onValueChange = { name = it.take(MAX_HOUSEHOLD_NAME_LENGTH) },
                             label = { Text(stringResource(R.string.households_field_name)) },
                             singleLine = true,
-                            keyboardOptions = KeyboardOptions(autoCorrect = false, imeAction = ImeAction.Done),
+                            keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, imeAction = ImeAction.Done),
                             keyboardActions = KeyboardActions(onDone = { saveName() }),
                             modifier = Modifier.weight(1f).testTag("household-name-field"),
                         )

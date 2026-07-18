@@ -63,7 +63,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.dto.LocationDto
 import dev.scuttle.inventory.ui.common.EditModeHintBanner
@@ -426,7 +426,7 @@ fun StorageOverviewScreen(
                         onValueChange = { renameName = it.take(MAX_LOCATION_NAME_LENGTH) },
                         label = { Text(stringResource(R.string.add_storage_name_field)) },
                         singleLine = true,
-                        keyboardOptions = KeyboardOptions(autoCorrect = false, imeAction = ImeAction.Done),
+                        keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, imeAction = ImeAction.Done),
                         modifier = Modifier.weight(1f),
                     )
                     Button(
@@ -482,7 +482,7 @@ fun StorageOverviewScreen(
                         onValueChange = viewModel::onNewNameChange,
                         label = { Text(stringResource(R.string.add_storage_name_field)) },
                         singleLine = true,
-                        keyboardOptions = KeyboardOptions(autoCorrect = false, imeAction = ImeAction.Done),
+                        keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, imeAction = ImeAction.Done),
                         keyboardActions =
                             KeyboardActions(onDone = {
                                 keyboardController?.hide()
