@@ -1,5 +1,6 @@
 package dev.scuttle.inventory.ui.search
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -44,11 +45,23 @@ class SearchViewModel
     constructor(
         private val repository: SearchRepository,
         private val hierarchyStore: HierarchyStore,
+        private val savedState: SavedStateHandle,
     ) : ViewModel() {
         private var householdId: Long? = null
         private var searchJob: Job? = null
 
-        private val _state = MutableStateFlow(SearchUiState())
+        // GAP-8 (process death): the query and its scan-origin flag survive the
+        // process being killed in the background — GAP5-H7 covered back-nav
+        // (ViewModel survives), but a real process death rebuilt an empty
+        // screen. Results are NOT persisted: they re-fetch from the restored
+        // query on the first setHousehold() call (server-authoritative).
+        private val _state =
+            MutableStateFlow(
+                SearchUiState(
+                    query = savedState[KEY_QUERY] ?: "",
+                    scanOriginated = savedState[KEY_SCAN_ORIGINATED] ?: false,
+                ),
+            )
         val state: StateFlow<SearchUiState> = _state.asStateFlow()
 
         init {
@@ -87,11 +100,24 @@ class SearchViewModel
                 if (_state.value.query.isNotBlank()) search()
                 return
             }
+            val firstBind = this.householdId == null
             this.householdId = householdId
+            if (firstBind) {
+                // First bind after (re)construction — includes the
+                // process-death restore path, where the query just came back
+                // from SavedStateHandle. Re-run it instead of resetting, or
+                // the restore would be wiped by the very first bind.
+                if (_state.value.query.isNotBlank()) search()
+                return
+            }
+            savedState[KEY_QUERY] = ""
+            savedState[KEY_SCAN_ORIGINATED] = false
             _state.update { SearchUiState() }
         }
 
         fun onQueryChange(value: String) {
+            savedState[KEY_QUERY] = value
+            savedState[KEY_SCAN_ORIGINATED] = false
             _state.update { it.copy(query = value, errorRes = null, scanOriginated = false) }
             searchJob?.cancel()
             searchJob =
@@ -113,6 +139,8 @@ class SearchViewModel
          */
         fun searchFor(query: String) {
             searchJob?.cancel()
+            savedState[KEY_QUERY] = query
+            savedState[KEY_SCAN_ORIGINATED] = true
             _state.update { it.copy(query = query, errorRes = null, scanOriginated = true) }
             searchJob = viewModelScope.launch { doSearch() }
         }
@@ -138,3 +166,6 @@ class SearchViewModel
             }
         }
     }
+
+private const val KEY_QUERY = "search_query"
+private const val KEY_SCAN_ORIGINATED = "search_scan_originated"

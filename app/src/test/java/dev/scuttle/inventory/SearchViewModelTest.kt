@@ -1,5 +1,6 @@
 package dev.scuttle.inventory
 
+import androidx.lifecycle.SavedStateHandle
 import dev.scuttle.inventory.data.dto.HouseholdDto
 import dev.scuttle.inventory.data.dto.SearchResultDto
 import dev.scuttle.inventory.data.household.HouseholdRepository
@@ -34,10 +35,11 @@ class SearchViewModelTest {
     }
 
     private fun viewModel(repository: SearchRepository) =
-        SearchViewModel(repository, TestHierarchy.store(FakeHouseholdRepository()))
+        SearchViewModel(repository, TestHierarchy.store(FakeHouseholdRepository()), SavedStateHandle())
 
     private class FakeSearchRepository : SearchRepository {
         var failNext = false
+        val queries = mutableListOf<String>()
         val catalog =
             listOf(
                 SearchResultDto(
@@ -56,6 +58,7 @@ class SearchViewModelTest {
             query: String,
         ): List<SearchResultDto> {
             if (failNext) throw RuntimeException("offline")
+            queries += query
             return catalog.filter { it.name.contains(query, ignoreCase = true) }
         }
     }
@@ -185,7 +188,7 @@ class SearchViewModelTest {
             val repo = CountingSearchRepository()
             val householdRepo = FakeHouseholdRepository()
             val store = TestHierarchy.store(householdRepo)
-            val viewModel = SearchViewModel(repo, store)
+            val viewModel = SearchViewModel(repo, store, SavedStateHandle())
             viewModel.setHousehold(1)
             viewModel.searchFor("ice")
             assertEquals(1, repo.calls)
@@ -201,7 +204,7 @@ class SearchViewModelTest {
             val repo = CountingSearchRepository()
             val householdRepo = FakeHouseholdRepository()
             val store = TestHierarchy.store(householdRepo)
-            val viewModel = SearchViewModel(repo, store)
+            val viewModel = SearchViewModel(repo, store, SavedStateHandle())
             viewModel.setHousehold(1)
             assertEquals(0, repo.calls)
 
@@ -218,7 +221,7 @@ class SearchViewModelTest {
             repo.inFlight = gate
             val householdRepo = FakeHouseholdRepository()
             val store = TestHierarchy.store(householdRepo)
-            val viewModel = SearchViewModel(repo, store)
+            val viewModel = SearchViewModel(repo, store, SavedStateHandle())
             viewModel.setHousehold(1)
             viewModel.searchFor("ice")
             // The local search is still suspended awaiting `gate`, so state.loading is true.
@@ -232,5 +235,27 @@ class SearchViewModelTest {
             gate.complete(Unit)
             advanceUntilIdle()
             assertEquals(1, repo.calls)
+        }
+
+    @Test
+    fun the_query_survives_process_death_and_reruns_on_first_bind() =
+        runTest {
+            val saved = SavedStateHandle()
+            val repo = FakeSearchRepository()
+            val first = SearchViewModel(repo, TestHierarchy.store(FakeHouseholdRepository()), saved)
+            first.setHousehold(1)
+            first.searchFor("8712345")
+            advanceUntilIdle()
+
+            // Process death: a NEW ViewModel is built from the same SavedStateHandle.
+            val restored = SearchViewModel(repo, TestHierarchy.store(FakeHouseholdRepository()), saved)
+            assertEquals("8712345", restored.state.value.query)
+            assertTrue(restored.state.value.scanOriginated)
+
+            // The first household bind re-runs the restored query instead of wiping it.
+            restored.setHousehold(1)
+            advanceUntilIdle()
+            assertEquals("8712345", restored.state.value.query)
+            assertTrue(repo.queries.contains("8712345"))
         }
 }
