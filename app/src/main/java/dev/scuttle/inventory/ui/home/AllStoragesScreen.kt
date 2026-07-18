@@ -18,13 +18,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.StarOutline
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -133,21 +134,33 @@ fun AllStoragesScreen(
                         Text(stringResource(R.string.all_storage_title))
                     }
                 },
-                actions = {
+                navigationIcon = {
+                    // Aligned to StorageOverview's edit-mode chrome (GAP5-M4): Cancel
+                    // lives in the navigationIcon slot, not mixed into actions.
                     if (editMode) {
-                        IconButton(
-                            onClick = viewModel::requestDeleteSelected,
-                            enabled = state.selected.isNotEmpty() && !state.loading,
-                        ) {
-                            Icon(
-                                Icons.Default.Delete,
-                                contentDescription =
-                                    stringResource(R.string.location_delete_count_button, state.selected.size),
-                                tint = MaterialTheme.colorScheme.error,
-                            )
-                        }
                         TextButton(onClick = viewModel::exitEditMode) {
                             Text(stringResource(R.string.action_cancel))
+                        }
+                    }
+                },
+                actions = {
+                    if (editMode) {
+                        // Labeled, error-coloured Button showing the count — matches
+                        // StorageOverviewScreen's delete affordance exactly (GAP5-M4);
+                        // this screen used to show an icon-only Delete button instead.
+                        Button(
+                            onClick = viewModel::requestDeleteSelected,
+                            enabled = state.selected.isNotEmpty() && !state.loading,
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                            modifier = Modifier.padding(end = 8.dp),
+                        ) {
+                            Text(
+                                if (state.selected.isEmpty()) {
+                                    stringResource(R.string.location_delete_button)
+                                } else {
+                                    stringResource(R.string.location_delete_count_button, state.selected.size)
+                                },
+                            )
                         }
                     } else {
                         // Search lost its bottom-nav tab (Task 7) but keeps a top-bar
