@@ -217,8 +217,14 @@ fun StorageOverviewScreen(
 
                 // GAP4-L9: first-run hint for the edit-mode pencil, only where the pencil
                 // itself is actually shown (canRestructure) — a Member without it would
-                // see a tip for an affordance they don't have.
-                if (hintVisible && state.canRestructure) {
+                // see a tip for an affordance they don't have. GAP6-M2: also only OUTSIDE
+                // edit mode — the pencil that the hint explains is gone once edit mode is
+                // active, so the banner would otherwise linger next to the checkbox/rename/
+                // reorder UI it introduced, explaining an icon no longer on screen. This is
+                // purely a visibility gate on the existing hintVisible flag — dismissal
+                // semantics (HintsStore: "shown once, ever" until markSeen) are unchanged,
+                // so leaving edit mode without dismissing still re-shows it next visit.
+                if (hintVisible && state.canRestructure && !state.editMode) {
                     EditModeHintBanner(
                         onDismiss = hintViewModel::dismiss,
                         modifier = Modifier.padding(16.dp),
