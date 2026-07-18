@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The encrypted prefs' master key lives in the hardware Keystore and never
+     leaves the device, so a backed-up copy of inventory_secure_prefs can't be
+     decrypted after restore - it would crash the app at launch (BUG-2). The
+     session token is device-bound by design; users just sign in again. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="inventory_secure_prefs.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="inventory_secure_prefs.xml" />
+    </device-transfer>
+</data-extraction-rules>
