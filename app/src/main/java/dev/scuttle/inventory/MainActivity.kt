@@ -226,7 +226,16 @@ private object Routes {
     const val INVITE = "invite/{householdId}/{householdName}"
     const val LOCATION = "location/{householdId}/{locationId}"
     const val PRODUCT_DETAIL = "product-detail/{householdId}/{shelfId}/{productId}"
-    const val MISSING_ITEMS = "missing-items"
+    // GAP4-L8: `fromDrawer` distinguishes the bottom-tab root entry (tab click, no back
+    // arrow — same as every other tab root) from the drawer's missing-items-count deep
+    // link (a genuinely pushed entry, back arrow correct there). Both entries resolve to
+    // the same MISSING_ITEMS route/composable and the same `showBottomBar`/backstack
+    // shape (tab nav uses popUpTo(start){saveState=true}, so `previousBackStackEntry`
+    // can't tell them apart) — same precedent as SCANNER's `?mode=` argument for a
+    // route reached two different ways.
+    const val MISSING_ITEMS = "missing-items?fromDrawer={fromDrawer}"
+
+    fun missingItems(fromDrawer: Boolean = false) = "missing-items?fromDrawer=$fromDrawer"
 
     fun householdEdit(householdId: Long) = "household-edit/$householdId"
 
@@ -382,7 +391,13 @@ private fun InventoryNavHost(
                 Icons.Filled.QrCodeScanner,
                 navigateTo = Routes.scanner(ScannerMode.LOOKUP),
             ),
-            BottomTab("missing-items", Routes.MISSING_ITEMS, R.string.nav_missing_items, Icons.Filled.Warning),
+            BottomTab(
+                "missing-items",
+                Routes.MISSING_ITEMS,
+                R.string.nav_missing_items,
+                Icons.Filled.Warning,
+                navigateTo = Routes.missingItems(fromDrawer = false),
+            ),
             // Not "Settings": it now holds households, join/invite and account.
             BottomTab("more", Routes.SETTINGS, R.string.nav_more, Icons.Filled.MoreHoriz),
         )
@@ -496,7 +511,9 @@ private fun InventoryNavHost(
                         navController.navigate(Routes.search(hhId)) { launchSingleTop = true }
                     },
                     onOpenHouseholds = { navController.navigate(Routes.HOUSEHOLDS, tabNavOptions) },
-                    onOpenMissingItems = { navController.navigate(Routes.MISSING_ITEMS) { launchSingleTop = true } },
+                    onOpenMissingItems = {
+                        navController.navigate(Routes.missingItems(fromDrawer = true)) { launchSingleTop = true }
+                    },
                 )
             }
 
@@ -686,8 +703,13 @@ private fun InventoryNavHost(
                 )
             }
 
-            composable(Routes.MISSING_ITEMS) {
+            composable(
+                Routes.MISSING_ITEMS,
+                arguments = listOf(navArgument("fromDrawer") { type = NavType.BoolType; defaultValue = false }),
+            ) { entry ->
+                val fromDrawer = entry.arguments?.getBoolean("fromDrawer") ?: false
                 MissingItemsScreen(
+                    canNavigateBack = fromDrawer,
                     onBack = { navController.popBackStack() },
                     onOpenLocation = { hhId, locId ->
                         navController.navigate(Routes.location(hhId, locId))

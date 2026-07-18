@@ -45,6 +45,12 @@ import dev.scuttle.inventory.ui.theme.FrostCard
 fun MissingItemsScreen(
     onBack: () -> Unit,
     onOpenLocation: (householdId: Long, locationId: Long) -> Unit,
+    // GAP4-L8: false at the bottom-tab root (matches every other tab root's TopAppBar,
+    // which has no navigationIcon at all) — true only when reached via the drawer's
+    // missing-items-count deep link, a genuinely pushed backstack entry. See
+    // Routes.MISSING_ITEMS's doc comment in MainActivity for why this is an explicit
+    // parameter rather than derived from the backstack.
+    canNavigateBack: Boolean = false,
     // MissingItemsUiState has no household list of its own (only items, which are
     // empty in the common case this button matters least) — the caller passes the
     // same household list HierarchyStore already resolves for Dashboard/Home, so
@@ -72,11 +78,13 @@ fun MissingItemsScreen(
                 windowInsets = statusBarInsets,
                 title = { Text(stringResource(R.string.missing_items_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.action_back),
-                        )
+                    if (canNavigateBack) {
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = stringResource(R.string.action_back),
+                            )
+                        }
                     }
                 },
                 actions = {
