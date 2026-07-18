@@ -2,6 +2,7 @@ package dev.scuttle.inventory.data.household
 
 import dev.scuttle.inventory.data.api.HouseholdApi
 import dev.scuttle.inventory.data.dto.CreateHouseholdRequest
+import dev.scuttle.inventory.data.dto.DeleteHouseholdRequest
 import dev.scuttle.inventory.data.dto.HouseholdDto
 import dev.scuttle.inventory.data.dto.JoinHouseholdRequest
 import dev.scuttle.inventory.data.dto.UpdateHouseholdRequest
@@ -36,6 +37,14 @@ class HouseholdRepositoryImpl
 
         override suspend fun leave(householdId: Long) {
             api.leave(householdId)
+            cache = cache?.filter { it.id != householdId }
+        }
+
+        override suspend fun delete(
+            householdId: Long,
+            nameConfirmation: String,
+        ) {
+            api.delete(householdId, DeleteHouseholdRequest(name = nameConfirmation))
             cache = cache?.filter { it.id != householdId }
         }
 

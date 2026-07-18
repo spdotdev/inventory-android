@@ -46,6 +46,15 @@ data class JoinHouseholdRequest(
     val code: String,
 )
 
+// Deliberately NO default on `name`: this is a typed confirmation, not a
+// patch — the server 422s unless the household's EXACT current name is sent,
+// and encodeDefaults=false would silently drop a defaulted property that
+// happened to equal its default, producing a body the server can never accept.
+@Serializable
+data class DeleteHouseholdRequest(
+    val name: String,
+)
+
 // The app's Json has encodeDefaults=false: a property equal to its default is
 // OMITTED from the body. That's normally the wrong default for a request DTO —
 // but `name` here is the deliberate exception, and the asymmetry matters:

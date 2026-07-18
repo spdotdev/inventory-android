@@ -131,10 +131,9 @@ and shelves lists — never inside Settings/More itself. On locations and shelve
 mode turns each row into a checkbox (multi-select → delete-strategy dialog) plus a
 rename pencil and up/down reorder buttons; the row body itself only toggles selection.
 Households have no multi-select or reorder: edit mode instead makes the row tappable,
-opening a full household edit page (name, colour/icon theme, and a danger zone that
-today only offers "Leave" — household *delete* has no owner yet, see Scope guardrails).
-Deleting a non-empty shelf or location always asks what to do with the contents — see
-"Deletes" above.
+opening a full household edit page (name, colour/icon theme, and a danger zone offering
+"Leave" plus, Owner-only, "Delete household"). Deleting a non-empty shelf or location
+always asks what to do with the contents — see "Deletes" above.
 
 ## Design — B · Frost (D-021)
 - Frosted-glass cards, icy-blue accent **#7dd3fc**, rounded controls, **Plus Jakarta Sans**.
@@ -157,8 +156,15 @@ real boundary. A **Members** screen (reached from the household edit page) lists
 roster with role badges; promote/demote/remove are gated on `can_manage_members` and
 never shown on the Owner's own row, which instead offers **Transfer ownership** (Owner
 only) — a household always has exactly one Owner. Leaving as the sole Owner 409s with a
-friendly message asking to transfer first. Keep this repo's guardrail in sync with
-`inventory-laravel/CLAUDE.md`'s matching bullet.
+friendly message asking to transfer first. **Household delete: shipped (2026-07-18).**
+`DELETE /households/{household}` is Owner-only; the request body must carry
+`{"name": "<exact current name>"}` as a server-verified typed confirmation (422 on
+mismatch, 403 non-owner) — this closes the solo-owner dead end (can't leave, previously
+also couldn't delete). `HouseholdEditScreen`'s danger zone shows "Delete household" only
+when `household.role == "owner"`; its confirm dialog requires typing the exact name
+before the Delete button enables. Reuses `HouseholdsUiState.leftHouseholdId` (see its
+doc comment) as the "household gone, navigate back" signal, same as leave. Keep this
+repo's guardrail in sync with `inventory-laravel/CLAUDE.md`'s matching bullet.
 
 ## Conventions
 - Explicit over magic; SRP; document the *why*.

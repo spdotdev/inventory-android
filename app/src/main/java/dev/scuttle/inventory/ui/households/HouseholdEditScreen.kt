@@ -122,6 +122,8 @@ fun HouseholdEditScreen(
     var selectedIcon by remember(household?.id) { mutableStateOf(household?.icon) }
     var confirmLeave by remember { mutableStateOf(false) }
     var confirmTransferFirst by remember { mutableStateOf(false) }
+    var confirmDelete by remember { mutableStateOf(false) }
+    var deleteNameInput by remember(household?.id) { mutableStateOf("") }
     val keyboardController = LocalSoftwareKeyboardController.current
 
     fun saveName() {
@@ -324,9 +326,6 @@ fun HouseholdEditScreen(
                             text = stringResource(R.string.household_edit_danger_zone_body),
                             color = MaterialTheme.colorScheme.onErrorContainer,
                         )
-                        // No "delete household" here yet — nobody owns a household today
-                        // (all members are equal). That arrives with roles (Spec 2), and
-                        // this danger zone is where it will land.
                         Button(
                             onClick = {
                                 // A sole Owner leaving 409s server-side (a household always
@@ -342,6 +341,22 @@ fun HouseholdEditScreen(
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                         ) {
                             Text(stringResource(R.string.households_leave))
+                        }
+
+                        // Delete closes the solo-owner dead end (previously a stuck
+                        // 409: can't leave, and there was no delete either). Owner-only,
+                        // matching HouseholdController::destroy() server-side.
+                        if (household.role == "owner") {
+                            Button(
+                                onClick = {
+                                    deleteNameInput = ""
+                                    confirmDelete = true
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                                modifier = Modifier.testTag("household-delete-button"),
+                            ) {
+                                Text(stringResource(R.string.household_delete))
+                            }
                         }
                     }
                 }
@@ -383,6 +398,40 @@ fun HouseholdEditScreen(
             },
             dismissButton = {
                 TextButton(onClick = { confirmTransferFirst = false }) { Text(stringResource(R.string.action_cancel)) }
+            },
+        )
+    }
+
+    if (confirmDelete && household != null) {
+        AlertDialog(
+            onDismissRequest = { confirmDelete = false },
+            title = { Text(stringResource(R.string.household_delete_dialog_title, household.name)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(stringResource(R.string.household_delete_dialog_body))
+                    OutlinedTextField(
+                        value = deleteNameInput,
+                        onValueChange = { deleteNameInput = it },
+                        placeholder = { Text(stringResource(R.string.household_delete_field_placeholder)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth().testTag("household-delete-confirm-field"),
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.delete(householdId, deleteNameInput)
+                        confirmDelete = false
+                    },
+                    enabled = deleteNameInput == household.name,
+                    modifier = Modifier.testTag("household-delete-confirm-button"),
+                ) {
+                    Text(stringResource(R.string.household_delete), color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.action_cancel)) }
             },
         )
     }

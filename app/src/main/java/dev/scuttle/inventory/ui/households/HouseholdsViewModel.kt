@@ -130,6 +130,24 @@ class HouseholdsViewModel
                 hierarchyStore.refresh()
             }
 
+        /**
+         * Permanently delete a household (Owner-only; server verifies
+         * [nameConfirmation] against the household's exact current name). Reuses
+         * [HouseholdsUiState.leftHouseholdId] rather than adding a parallel field:
+         * "household gone, navigate back" is exactly the same outcome and the same
+         * replay-safety concern leave() already solves (see that field's doc
+         * comment) — HouseholdEditScreen's existing `LaunchedEffect(state.
+         * leftHouseholdId)` needs no changes at all to also cover delete.
+         */
+        fun delete(
+            householdId: Long,
+            nameConfirmation: String,
+        ) = launchLoading {
+            repository.delete(householdId, nameConfirmation)
+            _state.update { it.copy(households = repository.list(), leftHouseholdId = householdId) }
+            hierarchyStore.refresh()
+        }
+
         fun enterEditMode() = _state.update { it.copy(editMode = true) }
 
         fun exitEditMode() = _state.update { it.copy(editMode = false) }

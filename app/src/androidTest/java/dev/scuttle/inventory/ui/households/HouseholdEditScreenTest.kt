@@ -3,10 +3,13 @@ package dev.scuttle.inventory.ui.households
 import android.net.Uri
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import dev.scuttle.inventory.data.HierarchyStore
 import dev.scuttle.inventory.data.dto.HouseholdDto
 import dev.scuttle.inventory.data.dto.LocationDto
@@ -52,6 +55,11 @@ class HouseholdEditScreenTest {
         override suspend fun join(code: String): HouseholdDto = household
 
         override suspend fun leave(householdId: Long) = Unit
+
+        override suspend fun delete(
+            householdId: Long,
+            nameConfirmation: String,
+        ) = Unit
     }
 
     private object EmptyLocations : LocationRepository {
@@ -215,6 +223,34 @@ class HouseholdEditScreenTest {
         composeRule.onNodeWithText("Leave").performClick()
 
         composeRule.onNodeWithText("Leave Garage?").assertIsDisplayed()
+    }
+
+    @Test
+    fun an_owner_sees_the_delete_household_button() {
+        render(canRestructure = true, role = "owner")
+
+        composeRule.onNodeWithTag("household-delete-button").assertIsDisplayed()
+    }
+
+    @Test
+    fun a_non_owner_does_not_see_the_delete_household_button() {
+        render(canRestructure = true, role = "admin")
+
+        composeRule.onNodeWithTag("household-delete-button").assertDoesNotExist()
+    }
+
+    @Test
+    fun the_delete_dialogs_confirm_button_stays_disabled_until_the_exact_name_is_typed() {
+        render(canRestructure = true, role = "owner")
+        composeRule.onNodeWithTag("household-delete-button").performClick()
+
+        composeRule.onNodeWithTag("household-delete-confirm-button").assertIsNotEnabled()
+
+        composeRule.onNodeWithTag("household-delete-confirm-field").performTextInput("Gara")
+        composeRule.onNodeWithTag("household-delete-confirm-button").assertIsNotEnabled()
+
+        composeRule.onNodeWithTag("household-delete-confirm-field").performTextInput("ge")
+        composeRule.onNodeWithTag("household-delete-confirm-button").assertIsEnabled()
     }
 
     @Test

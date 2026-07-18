@@ -215,6 +215,7 @@
     <ID>TooGenericExceptionThrown:StorageOverviewViewModelTest.kt$StorageOverviewViewModelTest.FakeLocationRepository$throw RuntimeException("offline")</ID>
     <ID>TooManyFunctions:AuthViewModel.kt$AuthViewModel : ViewModel</ID>
     <ID>TooManyFunctions:DrawerViewModel.kt$DrawerViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:HouseholdsViewModel.kt$HouseholdsViewModel : ViewModel</ID>
     <ID>TooManyFunctions:NetworkModule.kt$NetworkModule</ID>
     <ID>TooManyFunctions:ProductRepositoryImpl.kt$ProductRepositoryImpl : ProductRepository</ID>
     <ID>TooManyFunctions:ProductsViewModel.kt$ProductsViewModel : ViewModel</ID>

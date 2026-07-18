@@ -1,5 +1,6 @@
 package dev.scuttle.inventory
 
+import dev.scuttle.inventory.data.dto.DeleteHouseholdRequest
 import dev.scuttle.inventory.data.dto.DeleteLocationRequest
 import dev.scuttle.inventory.data.dto.DeleteShelfRequest
 import dev.scuttle.inventory.data.dto.ReorderRequest
@@ -130,6 +131,22 @@ class DeleteRequestSerializationTest {
     fun delete_shelf_request_deletion_batch_id_is_not_optional() {
         val descriptor = DeleteShelfRequest.serializer().descriptor
         assertFalse(descriptor.isElementOptional(descriptor.getElementIndex("deletion_batch_id")))
+    }
+
+    // --- DeleteHouseholdRequest: a typed confirmation, not a patch — `name` must
+    // ALWAYS be encoded (even if it happened to equal some default), so unlike
+    // Delete{Location,Shelf}Request it has no defaulted properties at all. ------
+
+    @Test
+    fun delete_household_request_has_no_defaulted_properties() {
+        assertNoDefaultedProperties(DeleteHouseholdRequest.serializer().descriptor)
+    }
+
+    @Test
+    fun delete_household_request_encodes_the_exact_name() {
+        val body = json.encodeToString(DeleteHouseholdRequest(name = "Garage"))
+
+        assertEquals("""{"name":"Garage"}""", body)
     }
 
     // --- Other request DTOs: unaffected by the above, still no defaults ------

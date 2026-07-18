@@ -33,6 +33,7 @@ class HouseholdsViewModelTest {
             )
         var failList = false
         var leaveThrows: Throwable? = null
+        var deleteThrows: Throwable? = null
 
         // Mirrors HouseholdRepositoryImpl's own cache (list() populates it) — a
         // fake that always returns null here would lie about the real contract
@@ -66,6 +67,14 @@ class HouseholdsViewModelTest {
 
         override suspend fun leave(householdId: Long) {
             leaveThrows?.let { throw it }
+            items.removeIf { it.id == householdId }
+        }
+
+        override suspend fun delete(
+            householdId: Long,
+            nameConfirmation: String,
+        ) {
+            deleteThrows?.let { throw it }
             items.removeIf { it.id == householdId }
         }
 
@@ -335,6 +344,48 @@ class HouseholdsViewModelTest {
                 "You're the only owner — transfer ownership before leaving this household.",
                 viewModel.state.value.error,
             )
+        }
+
+    @Test
+    fun delete_removes_household_from_list_and_sets_leftHouseholdId() =
+        runTest {
+            // Reuses leftHouseholdId (see HouseholdsViewModel.delete's doc comment)
+            // — the same "household gone, navigate back" signal leave() already
+            // produces, so HouseholdEditScreen's existing LaunchedEffect covers
+            // delete with no changes.
+            val repo =
+                FakeHouseholdRepository().apply {
+                    items.add(
+                        HouseholdDto(
+                            id = 2,
+                            name = "Office",
+                            join_code = "BBBB-2222",
+                            role = "owner",
+                            can_restructure = true,
+                            can_manage_members = true,
+                        ),
+                    )
+                }
+            val viewModel = HouseholdsViewModel(repo, TestHierarchy.store(repo))
+            assertNull(viewModel.state.value.leftHouseholdId)
+
+            viewModel.delete(householdId = 2, nameConfirmation = "Office")
+
+            assertEquals(1, viewModel.state.value.households.size)
+            assertEquals(2L, viewModel.state.value.leftHouseholdId)
+        }
+
+    @Test
+    fun delete_failure_surfaces_an_error_and_leaves_the_household_in_place() =
+        runTest {
+            val repo = FakeHouseholdRepository().apply { deleteThrows = RuntimeException("name mismatch") }
+            val viewModel = HouseholdsViewModel(repo, TestHierarchy.store(repo))
+
+            viewModel.delete(householdId = 1, nameConfirmation = "wrong")
+
+            assertEquals("name mismatch", viewModel.state.value.error)
+            assertEquals(1, viewModel.state.value.households.size)
+            assertNull(viewModel.state.value.leftHouseholdId)
         }
 
     @Test
