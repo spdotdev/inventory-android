@@ -32,6 +32,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
@@ -57,6 +58,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -289,6 +292,39 @@ fun ProductDetailScreen(
                         modifier = Modifier.weight(1f),
                     ) {
                         Text(stringResource(R.string.product_detail_camera))
+                    }
+                }
+
+                // Quantity stepper (GAP-5 H8): the detail screen never showed
+                // product.quantity or offered add/remove before this — visually
+                // mirrors ProductsPane's own row-level stepper (same "−"/"+"
+                // OutlinedButtons), just promoted near the top of this screen.
+                if (product != null) {
+                    val decreaseDesc = stringResource(R.string.products_pane_decrease_cd, product.name)
+                    val increaseDesc = stringResource(R.string.products_pane_increase_cd, product.name)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        OutlinedButton(
+                            onClick = viewModel::decrement,
+                            enabled = !state.loading && product.quantity > 0,
+                            modifier = Modifier.semantics { contentDescription = decreaseDesc },
+                        ) {
+                            Text("−")
+                        }
+                        Text(
+                            text = product.quantity.toString(),
+                            style = MaterialTheme.typography.headlineSmall,
+                        )
+                        OutlinedButton(
+                            onClick = viewModel::increment,
+                            enabled = !state.loading,
+                            modifier = Modifier.semantics { contentDescription = increaseDesc },
+                        ) {
+                            Text("+")
+                        }
                     }
                 }
 

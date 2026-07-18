@@ -204,8 +204,10 @@
     <ID>TooGenericExceptionThrown:HouseholdsViewModelTest.kt$HouseholdsViewModelTest.FakeHouseholdRepository$throw RuntimeException("offline")</ID>
     <ID>TooGenericExceptionThrown:InviteViewModelTest.kt$InviteViewModelTest.FakeInviteRepository$throw RuntimeException("offline")</ID>
     <ID>TooGenericExceptionThrown:JoinHouseholdViewModelTest.kt$JoinHouseholdViewModelTest.FakeHouseholdRepository$throw RuntimeException("Invalid code.")</ID>
+    <ID>TooGenericExceptionThrown:ProductDetailViewModelTest.kt$ProductDetailViewModelTest.FakeProductRepository$throw RuntimeException("add failed")</ID>
     <ID>TooGenericExceptionThrown:ProductDetailViewModelTest.kt$ProductDetailViewModelTest.FakeProductRepository$throw RuntimeException("delete failed")</ID>
     <ID>TooGenericExceptionThrown:ProductDetailViewModelTest.kt$ProductDetailViewModelTest.FakeProductRepository$throw RuntimeException("network error")</ID>
+    <ID>TooGenericExceptionThrown:ProductDetailViewModelTest.kt$ProductDetailViewModelTest.FakeProductRepository$throw RuntimeException("remove failed")</ID>
     <ID>TooGenericExceptionThrown:ProductDetailViewModelTest.kt$ProductDetailViewModelTest.FakeProductRepository$throw RuntimeException("save failed")</ID>
     <ID>TooGenericExceptionThrown:ProductsViewModelTest.kt$ProductsViewModelTest.FakeProductRepository$throw RuntimeException("offline")</ID>
     <ID>TooGenericExceptionThrown:SearchViewModelTest.kt$SearchViewModelTest.FakeSearchRepository$throw RuntimeException("offline")</ID>
