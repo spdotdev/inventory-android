@@ -1008,6 +1008,72 @@ class DrawerViewModelTest {
         }
 
     @Test
+    fun a_cross_household_toggle_fires_the_selection_reset_event_with_the_new_household_name() =
+        runTest {
+            // H3: the cross-household reset used to be silent — the selection
+            // count just changed. It must now fire a one-shot event naming the
+            // household the selection just moved TO, so the screen can show
+            // "Selection cleared — now selecting in {name}".
+            val repo =
+                FakeLocationRepository(
+                    mapOf(
+                        1L to listOf(LocationDto(10, "Fridge", "fridge")),
+                        2L to listOf(LocationDto(20, "Shed", "other")),
+                    ),
+                )
+            val (store, _) = makeStore(households = listOf(homeHousehold, cabinHousehold), locationRepo = repo)
+            val vm = viewModel(store, repo)
+            vm.enterEditMode()
+            vm.toggleSelection(householdId = 1, locationId = 10)
+            assertNull(vm.state.value.selectionResetEvent)
+
+            vm.toggleSelection(householdId = 2, locationId = 20)
+
+            assertEquals("Cabin", vm.state.value.selectionResetEvent)
+        }
+
+    @Test
+    fun a_same_household_toggle_never_fires_the_selection_reset_event() =
+        runTest {
+            val repo =
+                FakeLocationRepository(
+                    mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge"), LocationDto(11, "Freezer", "freezer"))),
+                )
+            val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
+            val vm = viewModel(store, repo)
+            vm.enterEditMode()
+            vm.toggleSelection(householdId = 1, locationId = 10)
+
+            vm.toggleSelection(householdId = 1, locationId = 11)
+            // Deselecting one of the two, still within the same household.
+            vm.toggleSelection(householdId = 1, locationId = 10)
+
+            assertNull(vm.state.value.selectionResetEvent)
+        }
+
+    @Test
+    fun consume_selection_reset_event_clears_it() =
+        runTest {
+            val repo =
+                FakeLocationRepository(
+                    mapOf(
+                        1L to listOf(LocationDto(10, "Fridge", "fridge")),
+                        2L to listOf(LocationDto(20, "Shed", "other")),
+                    ),
+                )
+            val (store, _) = makeStore(households = listOf(homeHousehold, cabinHousehold), locationRepo = repo)
+            val vm = viewModel(store, repo)
+            vm.enterEditMode()
+            vm.toggleSelection(householdId = 1, locationId = 10)
+            vm.toggleSelection(householdId = 2, locationId = 20)
+            assertNotNull(vm.state.value.selectionResetEvent)
+
+            vm.consumeSelectionResetEvent()
+
+            assertNull(vm.state.value.selectionResetEvent)
+        }
+
+    @Test
     fun exit_edit_mode_clears_the_selection() =
         runTest {
             val repo = FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge"))))

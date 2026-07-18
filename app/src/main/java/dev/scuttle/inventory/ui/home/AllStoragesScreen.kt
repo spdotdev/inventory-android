@@ -53,6 +53,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -93,6 +94,7 @@ fun AllStoragesScreen(
     val editMode = state.editMode
 
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
     // Surfaces a failed delete (or a failed undo) as a transient snackbar so it
     // isn't silent (W10).
     SnackbarErrorEffect(actionError, snackbarHostState, onConsumed = viewModel::consumeActionError)
@@ -450,6 +452,19 @@ fun AllStoragesScreen(
             }
         snackbarHostState.showSnackbar(message)
         viewModel.consumeUndoResult()
+    }
+
+    // H3: tapping a row in a DIFFERENT household than the current selection
+    // resets the selection instead of accumulating across households (see
+    // DrawerViewModel.toggleSelection's doc comment) — that used to be silent,
+    // the count just changed. Surface it as a short snackbar naming the new
+    // household.
+    LaunchedEffect(state.selectionResetEvent) {
+        val householdName = state.selectionResetEvent ?: return@LaunchedEffect
+        snackbarHostState.showSnackbar(
+            context.getString(R.string.selection_cleared_switched_household, householdName),
+        )
+        viewModel.consumeSelectionResetEvent()
     }
 
     if (showHouseholdPicker) {

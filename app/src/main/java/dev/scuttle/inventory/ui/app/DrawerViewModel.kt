@@ -65,6 +65,15 @@ data class DrawerUiState(
      */
     val selectedHouseholdId: Long? = null,
     val selected: Set<Long> = emptySet(),
+    /**
+     * One-shot event (H3): set the moment [toggleSelection] resets the selection
+     * because the tapped row belongs to a DIFFERENT household than the current
+     * selection — carries that NEW household's name so the screen can surface
+     * "Selection cleared — now selecting in {name}" instead of letting the
+     * selection count just silently change underneath the user. Cleared via
+     * [DrawerViewModel.consumeSelectionResetEvent] once the screen has shown it.
+     */
+    val selectionResetEvent: String? = null,
 )
 
 /**
@@ -81,6 +90,7 @@ private data class DeleteFlowState(
     val editMode: Boolean = false,
     val selectedHouseholdId: Long? = null,
     val selected: Set<Long> = emptySet(),
+    val selectionResetEvent: String? = null,
 )
 
 @HiltViewModel
@@ -110,6 +120,7 @@ class DrawerViewModel
                     editMode = del.editMode,
                     selectedHouseholdId = del.selectedHouseholdId,
                     selected = del.selected,
+                    selectionResetEvent = del.selectionResetEvent,
                 )
             }.stateIn(viewModelScope, SharingStarted.Eagerly, DrawerUiState())
 
@@ -165,10 +176,14 @@ class DrawerViewModel
         fun refresh() = store.refresh(userInitiated = true)
 
         fun enterEditMode() =
-            deleteFlow.update { it.copy(editMode = true, selectedHouseholdId = null, selected = emptySet()) }
+            deleteFlow.update {
+                it.copy(editMode = true, selectedHouseholdId = null, selected = emptySet(), selectionResetEvent = null)
+            }
 
         fun exitEditMode() =
-            deleteFlow.update { it.copy(editMode = false, selectedHouseholdId = null, selected = emptySet()) }
+            deleteFlow.update {
+                it.copy(editMode = false, selectedHouseholdId = null, selected = emptySet(), selectionResetEvent = null)
+            }
 
         /**
          * Toggles [locationId]'s selection. Selection is scoped to ONE household at a
@@ -176,13 +191,29 @@ class DrawerViewModel
          * location in a DIFFERENT household than the current selection starts a fresh
          * selection there instead of adding to it, since a batch spanning households
          * would have no single household to draw MOVE_CONTENTS targets from.
+         *
+         * H3: that reset used to be silent — the selection count just changed
+         * underneath the user with no explanation. It now also fires
+         * [DeleteFlowState.selectionResetEvent], carrying the NEW household's name
+         * (read from [store]'s own state, which this VM already treats as the
+         * source of truth for household names elsewhere), so the screen can show
+         * "Selection cleared — now selecting in {name}". A same-household toggle
+         * (add/remove one row) does NOT touch the event.
          */
         fun toggleSelection(
             householdId: Long,
             locationId: Long,
         ) = deleteFlow.update { state ->
             if (state.selectedHouseholdId != null && state.selectedHouseholdId != householdId) {
-                state.copy(selectedHouseholdId = householdId, selected = setOf(locationId))
+                val newHouseholdName =
+                    store.state.value.entries
+                        .firstOrNull { it.id == householdId }
+                        ?.name
+                state.copy(
+                    selectedHouseholdId = householdId,
+                    selected = setOf(locationId),
+                    selectionResetEvent = newHouseholdName,
+                )
             } else {
                 val updated =
                     if (locationId in state.selected) state.selected - locationId else state.selected + locationId
@@ -192,6 +223,9 @@ class DrawerViewModel
                 )
             }
         }
+
+        /** Clears the one-shot cross-household reset event once the screen has shown it. */
+        fun consumeSelectionResetEvent() = deleteFlow.update { it.copy(selectionResetEvent = null) }
 
         /**
          * Opens the delete-strategy dialog for ONE location.

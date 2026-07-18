@@ -97,6 +97,9 @@
     <string name="household_delete_dialog_body">Dit verwijdert het huishouden en alles daarin permanent, voor alle leden. Dit kan niet ongedaan worden gemaakt.</string>
     <string name="household_delete_field_placeholder">Typ de naam van het huishouden ter bevestiging</string>
 
+    <!-- H3: cross-household selection reset (AllStoragesScreen) -->
+    <string name="selection_cleared_switched_household">Selectie gewist — je selecteert nu in %1$s</string>
+
     <!-- Members -->
     <string name="members_title">Leden</string>
     <string name="role_owner">Eigenaar</string>
