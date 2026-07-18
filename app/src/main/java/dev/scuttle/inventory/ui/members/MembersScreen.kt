@@ -2,6 +2,7 @@ package dev.scuttle.inventory.ui.members
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,10 +15,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
@@ -39,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
@@ -139,10 +141,17 @@ fun MembersScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
+            // GAP4-L1: top-of-content LinearProgressIndicator, matching StorageOverview's
+            // and LocationDetailScreen's loading idiom — not a centered overlay spinner
+            // that hides an already-loaded (or empty) list behind it.
+            Column(modifier = Modifier.fillMaxSize()) {
+                if (state.loading) {
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                }
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize().padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
                 items(state.members, key = { it.id }) { member ->
                     val isOwnerRow = member.role == "owner"
                     // Exactly one member can hold "owner" at a time, so when the VIEWER
@@ -151,8 +160,15 @@ fun MembersScreen(
                     val isSelf = isOwnerRow && viewerRole == "owner"
 
                     FrostCard(modifier = Modifier.fillMaxWidth()) {
+                        // GAP4-L2: merge just the name + role badge into one focusable
+                        // TalkBack unit ("Jane Doe, Admin" instead of two separate stops)
+                        // — deliberately scoped to this info row, not the whole card, so
+                        // the promote/demote/remove/transfer TextButtons below keep their
+                        // own individual click labels and stay separately focusable.
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(16.dp),
+                            modifier =
+                                Modifier.fillMaxWidth().padding(16.dp)
+                                    .semantics(mergeDescendants = true) {},
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -208,10 +224,7 @@ fun MembersScreen(
                         }
                     }
                 }
-            }
-
-            if (state.loading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
             }
         }
     }
