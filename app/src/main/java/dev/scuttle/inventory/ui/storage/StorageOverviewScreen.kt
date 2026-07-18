@@ -66,6 +66,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.dto.LocationDto
+import dev.scuttle.inventory.ui.common.EditModeHintBanner
+import dev.scuttle.inventory.ui.common.EditModeHintViewModel
 import dev.scuttle.inventory.ui.common.ErrorRetry
 import dev.scuttle.inventory.ui.common.storageTypeLabel
 import dev.scuttle.inventory.ui.hierarchy.DeleteStrategyDialog
@@ -94,8 +96,12 @@ fun StorageOverviewScreen(
     pendingBarcodeCode: String? = null,
     onPendingBarcodeConsumed: () -> Unit = {},
     viewModel: StorageOverviewViewModel = hiltViewModel(),
+    // GAP4-L9: shared across every edit-mode-pencil screen (one HintsStore flag) — see
+    // EditModeHintViewModel's doc comment.
+    hintViewModel: EditModeHintViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+    val hintVisible by hintViewModel.visible.collectAsState()
     var showAddSheet by rememberSaveable { mutableStateOf(false) }
     var renamingLocation by remember { mutableStateOf<LocationDto?>(null) }
     var renameName by remember { mutableStateOf("") }
@@ -203,6 +209,16 @@ fun StorageOverviewScreen(
 
                 state.error?.let {
                     ErrorRetry(message = it, onRetry = viewModel::refresh, modifier = Modifier.padding(16.dp))
+                }
+
+                // GAP4-L9: first-run hint for the edit-mode pencil, only where the pencil
+                // itself is actually shown (canRestructure) — a Member without it would
+                // see a tip for an affordance they don't have.
+                if (hintVisible && state.canRestructure) {
+                    EditModeHintBanner(
+                        onDismiss = hintViewModel::dismiss,
+                        modifier = Modifier.padding(16.dp),
+                    )
                 }
 
                 // Don't show the empty text on a failed load — the ErrorRetry above

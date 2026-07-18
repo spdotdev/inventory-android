@@ -226,6 +226,7 @@ private object Routes {
     const val INVITE = "invite/{householdId}/{householdName}"
     const val LOCATION = "location/{householdId}/{locationId}"
     const val PRODUCT_DETAIL = "product-detail/{householdId}/{shelfId}/{productId}"
+
     // GAP4-L8: `fromDrawer` distinguishes the bottom-tab root entry (tab click, no back
     // arrow — same as every other tab root) from the drawer's missing-items-count deep
     // link (a genuinely pushed entry, back arrow correct there). Both entries resolve to
@@ -705,7 +706,13 @@ private fun InventoryNavHost(
 
             composable(
                 Routes.MISSING_ITEMS,
-                arguments = listOf(navArgument("fromDrawer") { type = NavType.BoolType; defaultValue = false }),
+                arguments =
+                    listOf(
+                        navArgument("fromDrawer") {
+                            type = NavType.BoolType
+                            defaultValue = false
+                        },
+                    ),
             ) { entry ->
                 val fromDrawer = entry.arguments?.getBoolean("fromDrawer") ?: false
                 MissingItemsScreen(

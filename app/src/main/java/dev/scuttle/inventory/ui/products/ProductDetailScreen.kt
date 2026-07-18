@@ -30,10 +30,10 @@ import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -72,6 +72,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImagePainter
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.SubcomposeAsyncImageContent
+import coil.request.ImageRequest
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.product.ProductEdit
 import dev.scuttle.inventory.ui.common.ErrorRetry
@@ -277,7 +278,8 @@ fun ProductDetailScreen(
                         // `error`/`onState` used here) had neither.
                         var imageReloadKey by remember(imageSource) { mutableStateOf(0) }
                         val imageRequest =
-                            coil.request.ImageRequest.Builder(context)
+                            ImageRequest
+                                .Builder(context)
                                 .data(imageSource)
                                 // Bumped on tap-to-retry to bypass Coil's memory/disk cache
                                 // for the SAME model, so a retry actually re-fetches.

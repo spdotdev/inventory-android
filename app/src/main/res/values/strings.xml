@@ -62,6 +62,7 @@
     <string name="action_retry">Retry</string>
     <string name="action_back">Back</string>
     <string name="action_cancel">Cancel</string>
+    <string name="action_dismiss">Dismiss</string>
     <string name="action_delete">Delete</string>
     <string name="action_add">Add</string>
 
@@ -172,6 +173,7 @@
     <string name="product_detail_camera">Camera</string>
     <string name="product_detail_image_cd">Product image</string>
     <string name="product_detail_image_load_failed">Couldn\'t load image · Tap to retry</string>
+    <string name="hint_edit_mode_pencil">Tip: the pencil lets you rename, reorder and delete</string>
     <string name="product_detail_field_name">Name</string>
     <string name="product_detail_field_description">Description</string>
     <string name="product_detail_field_code">Product code / barcode</string>

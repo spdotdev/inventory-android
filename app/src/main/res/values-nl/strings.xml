@@ -59,6 +59,7 @@
     <string name="action_retry">Opnieuw</string>
     <string name="action_back">Terug</string>
     <string name="action_cancel">Annuleren</string>
+    <string name="action_dismiss">Sluiten</string>
     <string name="action_delete">Verwijderen</string>
     <string name="action_add">Toevoegen</string>
 
@@ -163,6 +164,7 @@
     <string name="product_detail_camera">Camera</string>
     <string name="product_detail_image_cd">Productafbeelding</string>
     <string name="product_detail_image_load_failed">Afbeelding laden mislukt · Tik om opnieuw te proberen</string>
+    <string name="hint_edit_mode_pencil">Tip: met het potlood kun je hernoemen, herordenen en verwijderen</string>
     <string name="product_detail_field_name">Naam</string>
     <string name="product_detail_field_description">Omschrijving</string>
     <string name="product_detail_field_code">Productcode / barcode</string>

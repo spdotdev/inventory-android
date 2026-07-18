@@ -152,78 +152,80 @@ fun MembersScreen(
                     modifier = Modifier.fillMaxSize().padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                items(state.members, key = { it.id }) { member ->
-                    val isOwnerRow = member.role == "owner"
-                    // Exactly one member can hold "owner" at a time, so when the VIEWER
-                    // is the owner, the owner row IS the viewer's own row — no separate
-                    // viewer-user-id needs to be threaded through just to detect that.
-                    val isSelf = isOwnerRow && viewerRole == "owner"
+                    items(state.members, key = { it.id }) { member ->
+                        val isOwnerRow = member.role == "owner"
+                        // Exactly one member can hold "owner" at a time, so when the VIEWER
+                        // is the owner, the owner row IS the viewer's own row — no separate
+                        // viewer-user-id needs to be threaded through just to detect that.
+                        val isSelf = isOwnerRow && viewerRole == "owner"
 
-                    FrostCard(modifier = Modifier.fillMaxWidth()) {
-                        // GAP4-L2: merge just the name + role badge into one focusable
-                        // TalkBack unit ("Jane Doe, Admin" instead of two separate stops)
-                        // — deliberately scoped to this info row, not the whole card, so
-                        // the promote/demote/remove/transfer TextButtons below keep their
-                        // own individual click labels and stay separately focusable.
-                        Row(
-                            modifier =
-                                Modifier.fillMaxWidth().padding(16.dp)
-                                    .semantics(mergeDescendants = true) {},
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            // "(you)" only for the Owner viewing their own row — see the
-                            // isSelf comment above for why that's the ONLY case this
-                            // screen can derive self-identity at all. Non-owner viewers
-                            // get no suffix on any row: there's no user id to compare
-                            // against (no is_self/user_id from the members API, and
-                            // UserDto.id from login is never persisted), so guessing would
-                            // risk labelling the WRONG member as "(you)".
-                            val displayName =
+                        FrostCard(modifier = Modifier.fillMaxWidth()) {
+                            // GAP4-L2: merge just the name + role badge into one focusable
+                            // TalkBack unit ("Jane Doe, Admin" instead of two separate stops)
+                            // — deliberately scoped to this info row, not the whole card, so
+                            // the promote/demote/remove/transfer TextButtons below keep their
+                            // own individual click labels and stay separately focusable.
+                            Row(
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp)
+                                        .semantics(mergeDescendants = true) {},
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                // "(you)" only for the Owner viewing their own row — see the
+                                // isSelf comment above for why that's the ONLY case this
+                                // screen can derive self-identity at all. Non-owner viewers
+                                // get no suffix on any row: there's no user id to compare
+                                // against (no is_self/user_id from the members API, and
+                                // UserDto.id from login is never persisted), so guessing would
+                                // risk labelling the WRONG member as "(you)".
+                                val displayName =
+                                    if (isSelf) {
+                                        stringResource(R.string.members_self_suffix, member.name)
+                                    } else {
+                                        member.name
+                                    }
+                                Text(text = displayName, modifier = Modifier.weight(1f))
+                                RoleBadge(role = member.role)
+                            }
+
+                            if (isOwnerRow) {
                                 if (isSelf) {
-                                    stringResource(R.string.members_self_suffix, member.name)
-                                } else {
-                                    member.name
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                                        horizontalArrangement = Arrangement.End,
+                                    ) {
+                                        TextButton(onClick = { showTransferPicker = true }) {
+                                            Text(stringResource(R.string.members_transfer_ownership))
+                                        }
+                                    }
                                 }
-                            Text(text = displayName, modifier = Modifier.weight(1f))
-                            RoleBadge(role = member.role)
-                        }
-
-                        if (isOwnerRow) {
-                            if (isSelf) {
+                            } else if (canManageMembers) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                                     horizontalArrangement = Arrangement.End,
                                 ) {
-                                    TextButton(onClick = { showTransferPicker = true }) {
-                                        Text(stringResource(R.string.members_transfer_ownership))
+                                    if (member.role == "member") {
+                                        TextButton(onClick = { viewModel.promote(member.id) }) {
+                                            Text(stringResource(R.string.members_promote))
+                                        }
+                                    } else {
+                                        TextButton(onClick = { viewModel.demote(member.id) }) {
+                                            Text(stringResource(R.string.members_demote))
+                                        }
                                     }
-                                }
-                            }
-                        } else if (canManageMembers) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-                                horizontalArrangement = Arrangement.End,
-                            ) {
-                                if (member.role == "member") {
-                                    TextButton(onClick = { viewModel.promote(member.id) }) {
-                                        Text(stringResource(R.string.members_promote))
+                                    TextButton(onClick = { confirmRemove = member }) {
+                                        Text(
+                                            stringResource(R.string.members_remove),
+                                            color = MaterialTheme.colorScheme.error,
+                                        )
                                     }
-                                } else {
-                                    TextButton(onClick = { viewModel.demote(member.id) }) {
-                                        Text(stringResource(R.string.members_demote))
-                                    }
-                                }
-                                TextButton(onClick = { confirmRemove = member }) {
-                                    Text(
-                                        stringResource(R.string.members_remove),
-                                        color = MaterialTheme.colorScheme.error,
-                                    )
                                 }
                             }
                         }
                     }
-                }
                 }
             }
         }

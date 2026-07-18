@@ -9,10 +9,12 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import dev.scuttle.inventory.data.settings.DefaultHouseholdStore
 import dev.scuttle.inventory.data.settings.FavoritesStore
+import dev.scuttle.inventory.data.settings.HintsStore
 import dev.scuttle.inventory.data.settings.HouseholdViewStore
 import dev.scuttle.inventory.data.settings.LanguageStore
 import dev.scuttle.inventory.data.settings.SharedPrefsDefaultHouseholdStore
 import dev.scuttle.inventory.data.settings.SharedPrefsFavoritesStore
+import dev.scuttle.inventory.data.settings.SharedPrefsHintsStore
 import dev.scuttle.inventory.data.settings.SharedPrefsHouseholdViewStore
 import dev.scuttle.inventory.data.settings.SharedPrefsLanguageStore
 import dev.scuttle.inventory.data.settings.SharedPrefsShelfViewStore
@@ -55,6 +57,14 @@ object StorageModule {
     fun provideLanguageStore(
         @ApplicationContext context: Context,
     ): LanguageStore = SharedPrefsLanguageStore(context)
+
+    // GAP4-L9: device-scoped like ThemeModeStore/LanguageStore above — see HintsStore's
+    // doc comment for why it's deliberately NOT wired into SessionCleaner.
+    @Provides
+    @Singleton
+    fun provideHintsStore(
+        @ApplicationContext context: Context,
+    ): HintsStore = SharedPrefsHintsStore(context)
 
     @Provides
     @Singleton
