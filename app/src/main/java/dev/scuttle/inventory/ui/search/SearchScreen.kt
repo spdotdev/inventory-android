@@ -35,6 +35,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
+import dev.scuttle.inventory.data.dto.SearchResultDto
 import dev.scuttle.inventory.ui.common.ErrorRetry
 import dev.scuttle.inventory.ui.common.SortMenu
 import dev.scuttle.inventory.ui.theme.FrostCard
@@ -170,13 +171,11 @@ fun SearchScreen(
                     // !isTappable branch below already shows (M9), rather than a raw
                     // separator with no content.
                     val pathText =
-                        result.path.ifBlank {
-                            if (result.location.isBlank() && result.shelf.isBlank()) {
-                                stringResource(R.string.search_result_location_unavailable)
-                            } else {
-                                "${result.location} › ${result.shelf}"
-                            }
-                        }
+                        searchResultPathText(
+                            result = result,
+                            unsortedShelfLabel = stringResource(R.string.shelf_unsorted),
+                            locationUnavailableLabel = stringResource(R.string.search_result_location_unavailable),
+                        )
                     Text(
                         text = pathText,
                         style = MaterialTheme.typography.bodySmall,
@@ -208,3 +207,31 @@ fun SearchScreen(
         }
     }
 }
+
+/**
+ * H4: `shelf_is_system` means [result]'s shelf is the server's "Unsorted" holding shelf, which
+ * the client always localizes — never the server-provided, unlocalized [SearchResultDto.shelf]
+ * literal (same rule as `ShelfDto.is_system` elsewhere). The server's own pre-built
+ * [SearchResultDto.path] string can't be localized by string-replacing a substring inside it,
+ * so when the shelf is the system shelf the path is rebuilt client-side from `location` plus
+ * [unsortedShelfLabel] instead of using `path` at all.
+ *
+ * Pure and Compose-free (the two localized strings are resolved by the caller via
+ * `stringResource()`) so this is unit-testable without any Compose rendering.
+ */
+fun searchResultPathText(
+    result: SearchResultDto,
+    unsortedShelfLabel: String,
+    locationUnavailableLabel: String,
+): String =
+    if (result.shelf_is_system) {
+        if (result.location.isBlank()) unsortedShelfLabel else "${result.location} › $unsortedShelfLabel"
+    } else {
+        result.path.ifBlank {
+            if (result.location.isBlank() && result.shelf.isBlank()) {
+                locationUnavailableLabel
+            } else {
+                "${result.location} › ${result.shelf}"
+            }
+        }
+    }
