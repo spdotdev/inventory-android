@@ -209,6 +209,7 @@
     <string name="search_no_results_add_product_cta">Add a product with this barcode</string>
     <string name="storage_pending_barcode_hint">Barcode ready — open a shelf and add a product to attach it.</string>
     <string name="search_result_qty">Qty: %s</string>
+    <string name="search_result_location_unavailable">Location unavailable</string>
     <string name="search_choose_household_title">Search which household?</string>
 
     <!-- Settings -->

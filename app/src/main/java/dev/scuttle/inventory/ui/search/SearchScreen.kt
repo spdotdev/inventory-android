@@ -39,6 +39,10 @@ import dev.scuttle.inventory.ui.common.ErrorRetry
 import dev.scuttle.inventory.ui.common.SortMenu
 import dev.scuttle.inventory.ui.theme.FrostCard
 
+/** M9: content alpha for a non-tappable search result — see the muted-caption comment below. */
+private const val MUTED_ALPHA = 0.5f
+private const val FULL_ALPHA = 1f
+
 @Composable
 fun SearchScreen(
     householdId: Long,
@@ -146,21 +150,40 @@ fun SearchScreen(
         state.sortedResults.forEach { result ->
             val hhId = result.household_id
             val shelfId = result.shelf_id
+            // M9: a result missing household_id/shelf_id gets no onClick (there's
+            // nowhere to route it), but used to render with identical styling to a
+            // tappable card — nothing signaled "this one doesn't do anything" until
+            // you actually tapped it. Reduced content alpha + an explicit caption
+            // make the non-tappable state visually obvious at a glance.
+            val isTappable = hhId != null && shelfId != null
+            val contentAlpha = if (isTappable) FULL_ALPHA else MUTED_ALPHA
             val content: @Composable () -> Unit = {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text(text = result.name, style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        text = result.name,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = contentAlpha),
+                    )
                     Text(
                         text = result.path.ifBlank { "${result.location} › ${result.shelf}" },
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = contentAlpha),
                     )
                     Text(
                         text = stringResource(R.string.search_result_qty, result.quantity),
                         style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = contentAlpha),
                     )
+                    if (!isTappable) {
+                        Text(
+                            text = stringResource(R.string.search_result_location_unavailable),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.error.copy(alpha = contentAlpha),
+                        )
+                    }
                 }
             }
-            if (hhId != null && shelfId != null) {
+            if (isTappable) {
                 FrostCard(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = { onOpenProduct(hhId, shelfId, result.id) },
