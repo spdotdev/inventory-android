@@ -257,8 +257,12 @@ class ProductsViewModel
                         // Product delete is the app's single most frequent destructive
                         // action — this batch id (server-minted; see
                         // ProductDeleteResponse) is what makes it Undo-able, same as
-                        // every other delete on this branch.
-                        _state.update { it.copy(lastBatchId = batchId) }
+                        // every other delete on this branch. Restore is gated on
+                        // `restructure` server-side while product delete is not, so
+                        // a plain Member's Undo tap is a guaranteed 403 with a
+                        // misleading "already restored" message — never offer it
+                        // (the web gates its Undo flash the same way, GAP-7 #8).
+                        _state.update { it.copy(lastBatchId = if (canRestructureFor(h)) batchId else null) }
                         hierarchyStore.refresh()
                     }.onFailure { error ->
                         _state.update {
@@ -297,6 +301,12 @@ class ProductsViewModel
                 }
             }
         }
+
+        /** Same server-computed gate the edit pencils use (see StorageOverviewViewModel). */
+        private fun canRestructureFor(householdId: Long): Boolean =
+            hierarchyStore.state.value.entries
+                .find { it.id == householdId }
+                ?.canRestructure ?: true
 
         fun consumeLastBatch() = _state.update { it.copy(lastBatchId = null) }
 

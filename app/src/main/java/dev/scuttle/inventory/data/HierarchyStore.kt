@@ -8,6 +8,7 @@ import dev.scuttle.inventory.data.household.HouseholdRepository
 import dev.scuttle.inventory.data.location.LocationRepository
 import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.data.shelf.ShelfRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -266,10 +267,19 @@ class HierarchyStore(
         loadFromCache()
         activeJob =
             scope.launch {
-                runCatching {
-                    val households = householdRepository.list()
-                    buildFromNetwork(households)
-                }.fold(
+                val result =
+                    runCatching {
+                        val households = householdRepository.list()
+                        buildFromNetwork(households)
+                    }
+                // A cancelled refresh must write NOTHING: rethrowing CE keeps a
+                // superseded load from painting a stale error over the newer
+                // load's spinner, and keeps a load cancelled by clear() (logout)
+                // from resurrecting the previous account's hierarchy after the
+                // state was wiped — runCatching alone swallows the CE and falls
+                // straight into fold's writes.
+                result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+                result.fold(
                     // buildFromNetwork returns a fresh state with loading/refreshing at their
                     // false defaults, so both indicators clear on success. Its locationWarnings
                     // are now computed authoritatively from the full server product set (X2),

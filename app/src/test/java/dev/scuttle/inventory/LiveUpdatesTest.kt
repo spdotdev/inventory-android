@@ -26,15 +26,21 @@ class LiveUpdatesTest {
         var disconnectCount = 0
         var lastIds: List<Long> = emptyList()
         var lastOnChanged: (() -> Unit)? = null
+        var lastOnConnected: (() -> Unit)? = null
+        var lastOnAuthFailure: (() -> Unit)? = null
 
         override fun connect(
             token: String,
             householdIds: List<Long>,
             onChanged: () -> Unit,
+            onConnected: () -> Unit,
+            onAuthFailure: () -> Unit,
         ) {
             connectCount++
             lastIds = householdIds
             lastOnChanged = onChanged
+            lastOnConnected = onConnected
+            lastOnAuthFailure = onAuthFailure
         }
 
         override fun disconnect() {
@@ -159,5 +165,53 @@ class LiveUpdatesTest {
             live.setForeground(true)
             advanceUntilIdle()
             assertEquals(1, gateway.connectCount)
+        }
+
+    @Test
+    fun a_reconnect_triggers_a_silent_refresh() =
+        runTest {
+            val gateway = FakeGateway()
+            val repo = CountingHouseholdRepository()
+            val store = TestHierarchy.store(repo)
+            store.refresh()
+            store.state.first { it.entries.isNotEmpty() }
+
+            val tokens = FakeTokenStore(signedIn = true)
+            val live = LiveUpdates(gateway, tokens, store, StandardTestDispatcher(testScheduler))
+            live.start()
+            live.setForeground(true)
+            advanceUntilIdle()
+
+            // Events fired while the socket was down are lost — arriving at
+            // CONNECTED must re-fetch, or data stays stale until a manual pull.
+            val before = repo.listCalls
+            gateway.lastOnConnected!!.invoke()
+            advanceTimeBy(600)
+            advanceUntilIdle()
+            awaitTrue { repo.listCalls > before }
+        }
+
+    @Test
+    fun a_channel_auth_failure_retries_the_connection_after_a_pause() =
+        runTest {
+            val gateway = FakeGateway()
+            val repo = CountingHouseholdRepository()
+            val store = TestHierarchy.store(repo)
+            store.refresh()
+            store.state.first { it.entries.isNotEmpty() }
+
+            val tokens = FakeTokenStore(signedIn = true)
+            val live = LiveUpdates(gateway, tokens, store, StandardTestDispatcher(testScheduler))
+            live.start()
+            live.setForeground(true)
+            advanceUntilIdle()
+            assertEquals(1, gateway.connectCount)
+
+            // A refused /broadcasting/auth used to be swallowed (Unit), killing
+            // live updates for the process lifetime with no retry.
+            gateway.lastOnAuthFailure!!.invoke()
+            advanceTimeBy(6_000)
+            advanceUntilIdle()
+            assertEquals(2, gateway.connectCount)
         }
 }

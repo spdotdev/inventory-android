@@ -15,6 +15,7 @@ import dev.scuttle.inventory.data.location.LocationRepository
 import dev.scuttle.inventory.ui.hierarchy.DeletePlan
 import dev.scuttle.inventory.ui.hierarchy.MoveTarget
 import dev.scuttle.inventory.ui.hierarchy.UndoOutcome
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -287,7 +288,12 @@ class DrawerViewModel
             if (deleteJob?.isActive == true) return
             deleteJob =
                 viewModelScope.launch {
-                    runCatching { locationRepository.list(householdId) }
+                    val listResult = runCatching { locationRepository.list(householdId) }
+                    // Cancelled (session reset mid-flight) must not surface as a
+                    // failure snackbar to whoever is signed in NEXT — same CE
+                    // guard as ShelvesViewModel/StorageOverviewViewModel.
+                    listResult.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+                    listResult
                         .onSuccess { locations ->
                             val selected = locations.filter { it.id in locationIds }
                             if (selected.isEmpty()) return@onSuccess
@@ -347,6 +353,7 @@ class DrawerViewModel
                                     LocationDeletion(batchId, strategy, targetId),
                                 )
                             }
+                        result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
                         if (result.isSuccess) {
                             anySucceeded = true
                         } else {
@@ -403,7 +410,9 @@ class DrawerViewModel
                     // window — NOT a generic action failure, so this does NOT go
                     // through _actionError/toUserMessage's generic fallback; the
                     // screen turns undoResult into the specific message instead.
-                    runCatching { restoreRepository.restore(householdId, batchId) }
+                    val restoreResult = runCatching { restoreRepository.restore(householdId, batchId) }
+                    restoreResult.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+                    restoreResult
                         .onSuccess {
                             deleteFlow.update { it.copy(lastBatchId = null, undoResult = UndoOutcome.SUCCESS) }
                             store.refresh()

@@ -14,12 +14,14 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
 
 private const val PING_DEBOUNCE_MS = 500L
+private const val AUTH_RETRY_DELAY_MS = 5_000L
 
 /**
  * Q-3 live updates: keeps a realtime connection open while the app is in the
@@ -48,6 +50,11 @@ class LiveUpdates(
     private val pings = MutableSharedFlow<Unit>(extraBufferCapacity = 64)
     private val started = AtomicBoolean(false)
 
+    // Bumped (after a delay) on channel-auth failure; part of the combine key,
+    // so each bump forces one reconnect attempt with a freshly-read token.
+    private val reconnectAttempts = MutableStateFlow(0)
+    private val authFailures = MutableSharedFlow<Unit>(extraBufferCapacity = 8)
+
     /** Wired to the single activity's onStart/onStop. */
     fun setForeground(value: Boolean) {
         foreground.value = value
@@ -64,13 +71,25 @@ class LiveUpdates(
                 hierarchyStore.state
                     .map { s -> s.entries.map(HouseholdWithLocations::id).sorted() }
                     .distinctUntilChanged(),
-            ) { fg, authed, ids -> Triple(fg, authed, ids) }
+                reconnectAttempts,
+            ) { fg, authed, ids, attempt -> ConnectKey(fg, authed, ids, attempt) }
                 .distinctUntilChanged()
                 .collect { (fg, authed, ids) ->
                     gateway.disconnect()
                     if (fg && authed && ids.isNotEmpty()) {
                         val token = tokenStore.get() ?: return@collect
-                        gateway.connect(token, ids) { pings.tryEmit(Unit) }
+                        gateway.connect(
+                            token,
+                            ids,
+                            onChanged = { pings.tryEmit(Unit) },
+                            // Anything broadcast while the socket was down
+                            // (backgrounded, network blip mid-auto-reconnect) is
+                            // lost — every arrival at CONNECTED re-fetches, so
+                            // another member's change made while this device was
+                            // away shows up without a manual pull-to-refresh.
+                            onConnected = { pings.tryEmit(Unit) },
+                            onAuthFailure = { authFailures.tryEmit(Unit) },
+                        )
                     }
                 }
         }
@@ -81,5 +100,21 @@ class LiveUpdates(
                 hierarchyStore.refresh()
             }
         }
+        scope.launch {
+            // A refused /broadcasting/auth used to kill live updates for the
+            // whole process lifetime, silently. Retry after a pause with a
+            // freshly-read token (debounce collapses the per-channel burst —
+            // the gateway reports one failure per subscribed household).
+            authFailures.debounce(AUTH_RETRY_DELAY_MS).collect {
+                reconnectAttempts.update { it + 1 }
+            }
+        }
     }
+
+    private data class ConnectKey(
+        val foreground: Boolean,
+        val authed: Boolean,
+        val householdIds: List<Long>,
+        val attempt: Int,
+    )
 }

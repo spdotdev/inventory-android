@@ -252,7 +252,17 @@ class ProductDetailViewModel
                     .onSuccess { batchId ->
                         // batchId is server-minted (ProductDeleteResponse) — captured
                         // here so the screen can offer Undo before it navigates away.
-                        _state.update { it.copy(loading = false, deleted = true, lastBatchId = batchId) }
+                        // Suppressed for plain Members: restore is restructure-gated
+                        // server-side, so their Undo tap is a guaranteed 403 (see
+                        // ProductsViewModel.delete for the full story).
+                        val undoable = canRestructure()
+                        _state.update {
+                            it.copy(
+                                loading = false,
+                                deleted = true,
+                                lastBatchId = if (undoable) batchId else null,
+                            )
+                        }
                     }.onFailure { e ->
                         _state.update {
                             it.copy(
@@ -280,6 +290,12 @@ class ProductDetailViewModel
                 }
             }
         }
+
+        /** Same server-computed gate the edit pencils use (see StorageOverviewViewModel). */
+        private fun canRestructure(): Boolean =
+            hierarchyStore.state.value.entries
+                .find { it.id == householdId }
+                ?.canRestructure ?: true
 
         fun consumeLastBatch() = _state.update { it.copy(lastBatchId = null) }
 
