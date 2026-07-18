@@ -4,6 +4,10 @@
     <!-- Auth -->
     <string name="auth_create_account">Create account</string>
     <string name="auth_sign_in">Sign in</string>
+    <!-- GAP5-M5: a clearer, mode-specific headline (distinct from the submit
+         button's own label) so which mode is active reads at a glance. -->
+    <string name="auth_heading_login">Welcome back</string>
+    <string name="auth_heading_register">Create your account</string>
     <string name="auth_field_name">Name</string>
     <string name="auth_field_email">Email</string>
     <string name="auth_field_password">Password</string>
@@ -11,7 +15,7 @@
     <string name="auth_divider_or">or</string>
     <string name="auth_continue_with_google">Continue with Google</string>
     <string name="auth_toggle_to_register">New here? Create an account</string>
-    <string name="auth_toggle_to_login">Have an account? Sign in</string>
+    <string name="auth_toggle_to_login">Already have an account? Sign in</string>
     <string name="auth_forgot_password">Forgot your password?</string>
 
     <!-- Dashboard -->

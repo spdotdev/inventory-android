@@ -4,8 +4,10 @@ import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
@@ -115,15 +117,17 @@ fun AuthScreen(
                 .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
     ) {
+        // GAP5-M5: a mode-specific headline distinct from the submit button's own
+        // label ("Sign in"/"Create account" below) — states which mode is active
+        // ("Welcome back" vs "Create your account") at a glance, on first load.
         Text(
             text =
                 if (isRegister) {
-                    stringResource(
-                        R.string.auth_create_account,
-                    )
+                    stringResource(R.string.auth_heading_register)
                 } else {
-                    stringResource(R.string.auth_sign_in)
+                    stringResource(R.string.auth_heading_login)
                 },
+            style = MaterialTheme.typography.headlineSmall,
         )
 
         if (isRegister) {
@@ -241,6 +245,10 @@ fun AuthScreen(
             loading = state.googleLoading,
         )
 
+        // GAP5-M5: the mode switch is the more consequential of the two links below
+        // (it changes what the whole screen does), so it gets more visual weight —
+        // titleSmall/onSurface — while forgot-password stays small and muted, and a
+        // spacer separates them so they don't read as one undifferentiated stack.
         TextButton(onClick = viewModel::toggleMode, modifier = Modifier.fillMaxWidth()) {
             Text(
                 text =
@@ -251,12 +259,19 @@ fun AuthScreen(
                     } else {
                         stringResource(R.string.auth_toggle_to_register)
                     },
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurface,
             )
         }
 
         if (!isRegister) {
+            Spacer(Modifier.height(4.dp))
             TextButton(onClick = onForgotPassword, modifier = Modifier.fillMaxWidth()) {
-                Text(text = stringResource(R.string.auth_forgot_password))
+                Text(
+                    text = stringResource(R.string.auth_forgot_password),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
     }

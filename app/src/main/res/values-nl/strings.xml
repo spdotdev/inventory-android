@@ -4,6 +4,8 @@
     <!-- Auth -->
     <string name="auth_create_account">Account aanmaken</string>
     <string name="auth_sign_in">Inloggen</string>
+    <string name="auth_heading_login">Welkom terug</string>
+    <string name="auth_heading_register">Maak je account aan</string>
     <string name="auth_field_name">Naam</string>
     <string name="auth_field_email">E-mail</string>
     <string name="auth_field_password">Wachtwoord</string>
@@ -11,7 +13,7 @@
     <string name="auth_divider_or">of</string>
     <string name="auth_continue_with_google">Doorgaan met Google</string>
     <string name="auth_toggle_to_register">Nieuw hier? Maak een account aan</string>
-    <string name="auth_toggle_to_login">Al een account? Inloggen</string>
+    <string name="auth_toggle_to_login">Heb je al een account? Inloggen</string>
     <string name="auth_forgot_password">Wachtwoord vergeten?</string>
 
     <!-- Dashboard -->
