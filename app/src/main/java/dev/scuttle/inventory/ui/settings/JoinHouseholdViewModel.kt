@@ -7,6 +7,7 @@ import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.HierarchyStore
 import dev.scuttle.inventory.data.error.toUserMessageRes
 import dev.scuttle.inventory.data.household.HouseholdRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -50,6 +51,7 @@ class JoinHouseholdViewModel
             viewModelScope.launch {
                 _state.update { it.copy(loading = true, errorRes = null, success = false, joinedRole = null) }
                 val result = runCatching { repository.join(code) }
+                result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
                 // Refresh the drawer/home/dashboard so the joined household appears there
                 // immediately, not just on the next manual pull-to-refresh (X4).
                 if (result.isSuccess) hierarchyStore.refresh()

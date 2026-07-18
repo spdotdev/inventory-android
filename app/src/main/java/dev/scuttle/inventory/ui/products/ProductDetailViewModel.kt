@@ -113,7 +113,9 @@ class ProductDetailViewModel
             if (householdId == -1L || shelfId == -1L || productId == -1L) return
             viewModelScope.launch {
                 _state.update { it.copy(loading = true, refreshing = true, loadErrorRes = null) }
-                runCatching { repository.list(householdId, shelfId) }
+                val result = runCatching { repository.list(householdId, shelfId) }
+                result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+                result
                     .onSuccess { products ->
                         _state.update {
                             it.copy(
@@ -140,18 +142,22 @@ class ProductDetailViewModel
         fun save(edit: ProductEdit) {
             viewModelScope.launch {
                 _state.update { it.copy(loading = true, errorRes = null) }
-                runCatching {
-                    repository.update(householdId, shelfId, productId, edit)
-                }.onSuccess { updated ->
-                    _state.update { it.copy(loading = false, product = updated, saved = true) }
-                }.onFailure { e ->
-                    _state.update {
-                        it.copy(
-                            loading = false,
-                            errorRes = e.toUserMessageRes(R.string.error_failed_to_save),
-                        )
+                val result =
+                    runCatching {
+                        repository.update(householdId, shelfId, productId, edit)
                     }
-                }
+                result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+                result
+                    .onSuccess { updated ->
+                        _state.update { it.copy(loading = false, product = updated, saved = true) }
+                    }.onFailure { e ->
+                        _state.update {
+                            it.copy(
+                                loading = false,
+                                errorRes = e.toUserMessageRes(R.string.error_failed_to_save),
+                            )
+                        }
+                    }
             }
         }
 
@@ -170,7 +176,9 @@ class ProductDetailViewModel
             if (amount <= 0) return
             viewModelScope.launch {
                 _state.update { it.copy(loading = true, errorRes = null) }
-                runCatching { repository.add(householdId, shelfId, current.id, amount) }
+                val result = runCatching { repository.add(householdId, shelfId, current.id, amount) }
+                result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+                result
                     .onSuccess { updated ->
                         _state.update {
                             it.copy(
@@ -202,7 +210,9 @@ class ProductDetailViewModel
             val clamped = minOf(amount, current.quantity)
             viewModelScope.launch {
                 _state.update { it.copy(loading = true, errorRes = null) }
-                runCatching { repository.remove(householdId, shelfId, current.id, clamped) }
+                val result = runCatching { repository.remove(householdId, shelfId, current.id, clamped) }
+                result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+                result
                     .onSuccess { updated ->
                         _state.update {
                             it.copy(
@@ -230,25 +240,31 @@ class ProductDetailViewModel
         ) {
             viewModelScope.launch {
                 _state.update { it.copy(loading = true, errorRes = null) }
-                runCatching {
-                    repository.uploadImage(householdId, shelfId, productId, imageUri, mimeType)
-                }.onSuccess { updated ->
-                    _state.update { it.copy(loading = false, product = updated) }
-                }.onFailure { e ->
-                    _state.update {
-                        it.copy(
-                            loading = false,
-                            errorRes = e.toUserMessageRes(R.string.error_failed_to_upload_image),
-                        )
+                val result =
+                    runCatching {
+                        repository.uploadImage(householdId, shelfId, productId, imageUri, mimeType)
                     }
-                }
+                result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+                result
+                    .onSuccess { updated ->
+                        _state.update { it.copy(loading = false, product = updated) }
+                    }.onFailure { e ->
+                        _state.update {
+                            it.copy(
+                                loading = false,
+                                errorRes = e.toUserMessageRes(R.string.error_failed_to_upload_image),
+                            )
+                        }
+                    }
             }
         }
 
         fun delete() {
             viewModelScope.launch {
                 _state.update { it.copy(loading = true, errorRes = null) }
-                runCatching { repository.delete(householdId, shelfId, productId) }
+                val result = runCatching { repository.delete(householdId, shelfId, productId) }
+                result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+                result
                     .onSuccess { batchId ->
                         // batchId is server-minted (ProductDeleteResponse) — captured
                         // here so the screen can offer Undo before it navigates away.

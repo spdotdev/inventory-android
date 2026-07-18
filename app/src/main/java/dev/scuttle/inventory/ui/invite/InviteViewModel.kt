@@ -6,6 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.error.toUserMessageRes
 import dev.scuttle.inventory.data.invite.InviteRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -38,6 +39,7 @@ class InviteViewModel
             viewModelScope.launch {
                 _state.update { it.copy(loading = true, errorRes = null) }
                 val result = runCatching { repository.invite(householdId) }
+                result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
                 _state.update { state ->
                     result.fold(
                         onSuccess = { invite -> state.copy(loading = false, code = invite.code, link = invite.link) },

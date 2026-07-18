@@ -237,6 +237,45 @@ class SearchViewModelTest {
             assertEquals(1, repo.calls)
         }
 
+    // US-001: doSearch()'s `runCatching { repository.search(...) }` used to swallow
+    // CancellationException — when the ViewModel's own viewModelScope is cancelled (screen
+    // navigated away from / ViewModel torn down) while a search is in flight, the coroutine
+    // resumes into `result.fold(...)`'s onFailure branch instead of propagating cancellation,
+    // and stamps `errorRes = error_search_failed` onto a StateFlow nothing will ever read
+    // again — exactly the kind of post-cancellation write structured concurrency exists to
+    // prevent. Regression: cancel the ViewModel's own scope (via ViewModelStore.clear(), the
+    // real mechanism Android uses) while doSearch() is suspended, then assert no failure
+    // state was ever written — a fixed doSearch() rethrows CancellationException instead of
+    // folding it into `errorRes`, so a cancelled search leaves errorRes untouched (null).
+    @Test
+    fun cancelling_the_view_model_scope_mid_search_never_writes_an_error() =
+        runTest {
+            val repo = CountingSearchRepository()
+            val gate = CompletableDeferred<Unit>()
+            repo.inFlight = gate
+            val householdRepo = FakeHouseholdRepository()
+            val store = TestHierarchy.store(householdRepo)
+            val viewModel = SearchViewModel(repo, store, SavedStateHandle())
+            val viewModelStore = androidx.lifecycle.ViewModelStore()
+            viewModelStore.put("search", viewModel)
+            viewModel.setHousehold(1)
+
+            // Suspends forever inside repository.search (awaiting `gate`) — never succeeds,
+            // never throws a "real" failure; the only way this coroutine ever resumes is
+            // via cancellation.
+            viewModel.searchFor("first")
+            assertTrue(viewModel.state.value.loading)
+            assertEquals(null, viewModel.state.value.errorRes)
+
+            // The real-world trigger: the screen/ViewModel goes away, cancelling
+            // viewModelScope — NOT a second search superseding the first.
+            viewModelStore.clear()
+            advanceUntilIdle()
+
+            // A cancelled search must never surface as a user-visible error.
+            assertEquals(null, viewModel.state.value.errorRes)
+        }
+
     @Test
     fun the_query_survives_process_death_and_reruns_on_first_bind() =
         runTest {

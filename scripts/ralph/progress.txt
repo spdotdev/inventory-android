@@ -1,0 +1,73 @@
+# Ralph Progress Log
+Started: Sun Jul 19 01:45:12 AM CEST 2026
+---
+
+## Codebase Patterns
+- **CancellationException guard idiom**: this codebase's ViewModels handle mutations via
+  `val result = runCatching { suspendCall() }` followed by `result.exceptionOrNull()?.let { if (it is
+  CancellationException) throw it }` BEFORE reading `result.onSuccess/.onFailure/.fold` into
+  `_state.update`. `runCatching`/`try{}catch(e: Throwable)` both catch `CancellationException` just
+  like any other exception, which breaks structured concurrency if not rethrown: a coroutine cancelled
+  by `viewModelScope` (screen navigated away, ViewModel torn down, or a newer request superseding an
+  older one via `job?.cancel()`) will otherwise still run its failure branch and write stale/wrong
+  error state into a `MutableStateFlow` nobody will read again. Always add the guard immediately after
+  any `runCatching` whose result feeds an `onFailure`/`fold` branch that touches `_state`.
+- **Testing viewModelScope cancellation in JVM unit tests**: use `androidx.lifecycle.ViewModelStore` —
+  `val store = ViewModelStore(); store.put("key", vm); store.clear()` triggers `vm.onCleared()`, which
+  cancels `viewModelScope`'s Job. This is pure-JVM (no Robolectric/instrumented test needed) and is the
+  real mechanism Android uses, so it's a faithful way to regression-test the CancellationException-guard
+  pattern above. Gate the suspend call behind a `CompletableDeferred` that never completes so the
+  coroutine is guaranteed to still be suspended when `store.clear()` fires.
+- **MainDispatcherRule uses `UnconfinedTestDispatcher`**: `viewModelScope.launch { }` runs eagerly/
+  synchronously up to its first suspension point, and `Job.cancel()` resumes a suspended continuation
+  synchronously too. This means a naive "cancel via a second overlapping call" test can be misleading —
+  the second call's own `_state.update` can run immediately after `cancel()` and silently overwrite
+  whatever the first (buggy) coroutine just wrote, making a real bug look green. Prefer cancelling via
+  `ViewModelStore.clear()` (see above) so nothing else touches state afterward, or explicitly assert
+  state at the right point in the sequence rather than only at the end.
+---
+
+## [session 1] - US-001
+- **What was implemented:** Audited every ViewModel's `viewModelScope.launch` blocks and
+  `HierarchyStore`'s own coroutine scope for missing `CancellationException` rethrow / unsafe scope
+  confinement. `HierarchyStore` (data/HierarchyStore.kt) was already correct: own
+  `CoroutineScope(SupervisorJob() + Dispatchers.IO)`, a single tracked `activeJob` cancelled on every
+  new `refresh()` call (so concurrent refreshes can't race the `MutableStateFlow`-backed cache), and an
+  existing CE-rethrow guard before any state write. Found real defects instead in several ViewModels'
+  `runCatching { ... }.onFailure { ... }` / `.fold(..., onFailure = { ... })` chains: they caught
+  `CancellationException` (via `runCatching`'s `catch (e: Throwable)`) without rethrowing it, so a
+  cancelled coroutine (ViewModel torn down mid-request, or a superseded search) would still run its
+  failure branch and write stale error state. Fixed by adding the
+  `result.exceptionOrNull()?.let { if (it is CancellationException) throw it }` guard (already used
+  correctly in DrawerViewModel/ShelvesViewModel/StorageOverviewViewModel/ProductsViewModel/
+  HouseholdsViewModel/MembersViewModel) to every missing call site.
+- **Files changed:**
+  - `app/src/main/java/dev/scuttle/inventory/ui/products/ProductDetailViewModel.kt` (load, save,
+    increment, decrement, uploadImage, delete)
+  - `app/src/main/java/dev/scuttle/inventory/ui/search/SearchViewModel.kt` (doSearch)
+  - `app/src/main/java/dev/scuttle/inventory/ui/settings/JoinHouseholdViewModel.kt` (join)
+  - `app/src/main/java/dev/scuttle/inventory/ui/auth/AuthViewModel.kt` (loginWithGoogle,
+    loginWithGoogleCode, submit)
+  - `app/src/main/java/dev/scuttle/inventory/ui/auth/ForgotPasswordViewModel.kt` (submit)
+  - `app/src/main/java/dev/scuttle/inventory/ui/invite/InviteViewModel.kt` (load)
+  - `app/src/test/java/dev/scuttle/inventory/SearchViewModelTest.kt` — added
+    `cancelling_the_view_model_scope_mid_search_never_writes_an_error`, verified red on the pre-fix
+    code (asserted `errorRes` stayed null, got `error_search_failed` instead) and green after the fix.
+  - `prd.json` — US-001 marked passing with a summary note.
+- **Learnings for future iterations:**
+  - See the two new `## Codebase Patterns` entries above — the CE-guard idiom and how to test
+    viewModelScope cancellation with `ViewModelStore.clear()` under `UnconfinedTestDispatcher`.
+  - A handful of lower-severity call sites (silent/no-op `runCatching` without an `onFailure` branch,
+    e.g. `ProductsViewModel.refreshSilent()`, `StorageOverviewViewModel.refreshSilent()`,
+    `ShelvesViewModel.refreshSilent()`, `HouseholdsViewModel.refreshSilent()`,
+    `ProductsViewModel.delete()`/`startMove()`, `ProductDetailViewModel.delete()` before this fix,
+    `AuthViewModel.signOut()`) were left as-is: they don't write an incorrect *failure* state on
+    cancellation (no `onFailure`/`fold` branch reachable), so the practical risk is low. If picking
+    this up again, adding the same guard there too would be a pure hygiene improvement, not a fix for
+    an observable bug.
+  - Gradle sometimes reports `compileDebugUnitTestKotlin UP-TO-DATE` even after editing a main-source
+    file when only a stash push/pop touched it (no real timestamp/content change from Gradle's
+    perspective in some sequences) — use `--rerun` (and `touch` the changed file if needed) when you
+    need to force a real recompile+retest to confirm a regression test actually goes red on unfixed
+    code.
+---

@@ -1,0 +1,46 @@
+{
+  "project": "inventory-android",
+  "branchName": "main",
+  "description": "Deeper follow-up audit (round 2) after the 2026-07-19 pass that fixed BUG-1..3 (logcat credential leak, backup crash-loop, repository cache race). Scope: quality-tier (P3-P4) and integration/edge-case categories the first pass did not exhaustively sweep - coroutine/ViewModel scope leaks, deprecated APIs, further edge cases in state handling. Each story is find-and-fix within one category, not a fixed bug list: audit that category first, write a failing test per confirmed defect (JVM unit test unless the defect is only observable instrumented), fix minimally, then mark the story passing. If a category turns up nothing after genuine audit effort, mark passes true with notes explaining what was checked and why nothing qualified - do not fabricate a fix.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Coroutine scope leaks and unhandled cancellation in ViewModels/repositories",
+      "description": "As a user navigating rapidly between screens, in-flight coroutines from a destroyed ViewModel must not leak, crash, or silently corrupt state in a still-alive singleton (e.g. HierarchyStore, the repository caches touched by BUG-3).",
+      "acceptanceCriteria": [
+        "Audit every ViewModel's viewModelScope usage and HierarchyStore's coroutine launches for missing CancellationException rethrow or scope confinement",
+        "Any confirmed leak/race gets a regression test and a minimal fix (scope confinement, proper cancellation propagation)",
+        "Full JVM unit test suite, ktlintCheck, and detekt stay clean"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Audited every ViewModel viewModelScope.launch and HierarchyStore/singleton coroutine launches. HierarchyStore itself is safe: own SupervisorJob+Dispatchers.IO scope, single tracked activeJob cancelled per new refresh(), and already rethrows CancellationException before writing state. Found real bugs in the runCatching{}.onFailure/.fold idiom used throughout ViewModels: several call sites caught the Result without checking for CancellationException first, so a coroutine cancelled via viewModelScope (ViewModel torn down / superseded request) would still run its onFailure branch and write stale error state after cancellation - violating structured concurrency. Fixed by adding the same result.exceptionOrNull()?.let { if (it is CancellationException) throw it } guard already used correctly elsewhere (DrawerViewModel, ShelvesViewModel, StorageOverviewViewModel, ProductsViewModel, HouseholdsViewModel, MembersViewModel) to: ProductDetailViewModel (load/save/increment/decrement/uploadImage/delete), SearchViewModel (doSearch), JoinHouseholdViewModel (join), AuthViewModel (loginWithGoogle/loginWithGoogleCode/submit), ForgotPasswordViewModel (submit), InviteViewModel (load). Added a regression test (SearchViewModelTest.cancelling_the_view_model_scope_mid_search_never_writes_an_error) that cancels the ViewModel scope via ViewModelStore.clear() while a search is suspended mid-flight; verified red on the pre-fix code (errorRes got stamped with error_search_failed after cancellation) and green after the fix. Full JVM test suite, ktlintCheck and detekt all pass."
+    },
+    {
+      "id": "US-002",
+      "title": "Deprecated Android/Compose/AndroidX API usage",
+      "description": "As a maintainer targeting compileSdk/targetSdk 36, the app should not call deprecated APIs that will break or warn loudly on the next AGP/Compose upgrade.",
+      "acceptanceCriteria": [
+        "Search for @Deprecated-annotated calls in app/src/main (Compose, AndroidX, OkHttp, Retrofit) and confirm each with the library's current recommended replacement",
+        "Replace confirmed deprecated calls with their supported equivalent, preserving behavior exactly",
+        "Full JVM unit test suite, ktlintCheck, and detekt stay clean"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Null/empty/boundary edge cases in UI state and DTO mapping",
+      "description": "As a user, screens driven by server data (product/shelf/location lists, search results, dashboard stats) must render sane empty/zero/boundary states instead of crashing or showing garbage when the API returns edge-case shapes.",
+      "acceptanceCriteria": [
+        "Audit ViewModels and DTO-to-UI-state mappers for unguarded !! , unsafe casts, or division/index operations on collections that could be empty",
+        "Any confirmed gap gets a regression test and a minimal null-safe/empty-safe fix",
+        "Full JVM unit test suite, ktlintCheck, and detekt stay clean"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

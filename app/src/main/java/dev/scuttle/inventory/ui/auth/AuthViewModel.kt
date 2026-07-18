@@ -6,6 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.auth.AuthRepository
 import dev.scuttle.inventory.data.error.ErrorLogger
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -88,6 +89,7 @@ class AuthViewModel
             viewModelScope.launch {
                 _state.update { it.copy(googleLoading = true, error = null, errorRes = null) }
                 val result = runCatching { repository.loginWithGoogle(idToken) }
+                result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
                 _state.update { state ->
                     result.fold(
                         onSuccess = { state.copy(googleLoading = false, authenticated = true) },
@@ -108,6 +110,7 @@ class AuthViewModel
             viewModelScope.launch {
                 _state.update { it.copy(googleLoading = true, error = null, errorRes = null) }
                 val result = runCatching { repository.loginWithGoogleCode(code, codeVerifier, redirectUri) }
+                result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
                 _state.update { state ->
                     result.fold(
                         onSuccess = { state.copy(googleLoading = false, authenticated = true) },
@@ -165,6 +168,7 @@ class AuthViewModel
                                 )
                         }
                     }
+                result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
                 _state.update { state ->
                     result.fold(
                         onSuccess = { state.copy(loading = false, authenticated = true) },

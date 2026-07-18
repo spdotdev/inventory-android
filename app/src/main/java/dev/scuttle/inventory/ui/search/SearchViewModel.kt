@@ -11,6 +11,7 @@ import dev.scuttle.inventory.data.error.toUserMessageRes
 import dev.scuttle.inventory.data.search.SearchRepository
 import dev.scuttle.inventory.ui.common.SortOrder
 import dev.scuttle.inventory.ui.common.sortedByOrder
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -156,6 +157,7 @@ class SearchViewModel
             }
             _state.update { it.copy(loading = true, errorRes = null) }
             val result = runCatching { repository.search(h, q) }
+            result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
             _state.update { state ->
                 result.fold(
                     onSuccess = { results -> state.copy(loading = false, results = results) },

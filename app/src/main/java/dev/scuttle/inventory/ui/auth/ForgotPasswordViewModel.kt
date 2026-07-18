@@ -6,6 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.auth.AuthRepository
 import dev.scuttle.inventory.data.error.toUserMessageRes
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -44,6 +45,7 @@ class ForgotPasswordViewModel
             viewModelScope.launch {
                 _state.update { it.copy(loading = true, errorRes = null) }
                 val result = runCatching { repository.forgotPassword(email) }
+                result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
                 _state.update { state ->
                     result.fold(
                         onSuccess = { state.copy(loading = false, sent = true) },
