@@ -1,5 +1,6 @@
 package dev.scuttle.inventory
 
+import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.auth.AuthRepository
 import dev.scuttle.inventory.ui.auth.ForgotPasswordViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -60,7 +61,7 @@ class ForgotPasswordViewModelTest {
 
             assertTrue(vm.state.value.sent)
             assertFalse(vm.state.value.loading)
-            assertNull(vm.state.value.error)
+            assertNull(vm.state.value.errorRes)
         }
 
     @Test
@@ -73,10 +74,10 @@ class ForgotPasswordViewModelTest {
 
             assertFalse(vm.state.value.sent)
             assertFalse(vm.state.value.loading)
-            val error = vm.state.value.error
-            assertNotNull(error)
-            // The raw "Unable to resolve host…" must not leak to the user.
-            assertEquals("Something went wrong. Please try again.", error)
+            // The raw "Unable to resolve host…" must not leak to the user —
+            // failures resolve to a localized resource id (GAP-8; the message
+            // itself was hardcoded EN before, invisible to NL users).
+            assertEquals(R.string.error_generic, vm.state.value.errorRes)
         }
 
     @Test
@@ -85,11 +86,11 @@ class ForgotPasswordViewModelTest {
             val vm = ForgotPasswordViewModel(FakeAuthRepository(succeed = false))
             vm.onEmailChange("stan@example.test")
             vm.submit()
-            assertNotNull(vm.state.value.error)
+            assertNotNull(vm.state.value.errorRes)
 
             vm.onEmailChange("stan2@example.test")
 
-            assertNull(vm.state.value.error)
+            assertNull(vm.state.value.errorRes)
             assertEquals("stan2@example.test", vm.state.value.email)
         }
 
@@ -104,7 +105,7 @@ class ForgotPasswordViewModelTest {
             vm.resetToInput()
 
             assertFalse(vm.state.value.sent)
-            assertNull(vm.state.value.error)
+            assertNull(vm.state.value.errorRes)
             // The typed email survives the reset — GAP5-M6 is about fixing a typo,
             // not starting over from a blank field.
             assertEquals("stan@example.test", vm.state.value.email)

@@ -3,7 +3,9 @@ package dev.scuttle.inventory.ui.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.auth.AuthRepository
+import dev.scuttle.inventory.data.error.toUserMessageRes
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,7 +17,7 @@ data class ForgotPasswordUiState(
     val email: String = "",
     val loading: Boolean = false,
     val sent: Boolean = false,
-    val error: String? = null,
+    val errorRes: Int? = null,
 )
 
 @HiltViewModel
@@ -27,7 +29,7 @@ class ForgotPasswordViewModel
         private val _state = MutableStateFlow(ForgotPasswordUiState())
         val state: StateFlow<ForgotPasswordUiState> = _state.asStateFlow()
 
-        fun onEmailChange(value: String) = _state.update { it.copy(email = value, error = null) }
+        fun onEmailChange(value: String) = _state.update { it.copy(email = value, errorRes = null) }
 
         /**
          * GAP5-M6: "Wrong email? Try again" from the sent-state — returns to the
@@ -35,17 +37,19 @@ class ForgotPasswordViewModel
          * still editable, not cleared) since the point is fixing a typo, not
          * starting over from a blank field.
          */
-        fun resetToInput() = _state.update { it.copy(sent = false, error = null) }
+        fun resetToInput() = _state.update { it.copy(sent = false, errorRes = null) }
 
         fun submit() {
             val email = _state.value.email.trim()
             viewModelScope.launch {
-                _state.update { it.copy(loading = true, error = null) }
+                _state.update { it.copy(loading = true, errorRes = null) }
                 val result = runCatching { repository.forgotPassword(email) }
                 _state.update { state ->
                     result.fold(
                         onSuccess = { state.copy(loading = false, sent = true) },
-                        onFailure = { state.copy(loading = false, error = "Something went wrong. Please try again.") },
+                        onFailure = { e ->
+                            state.copy(loading = false, errorRes = e.toUserMessageRes(R.string.error_generic))
+                        },
                     )
                 }
             }

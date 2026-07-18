@@ -1,5 +1,6 @@
 package dev.scuttle.inventory
 
+import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.auth.AuthRepository
 import dev.scuttle.inventory.data.error.ErrorLogger
 import dev.scuttle.inventory.ui.auth.AuthViewModel
@@ -96,7 +97,9 @@ class AuthViewModelTest {
 
             val state = viewModel.state.value
             assertFalse(state.authenticated)
-            assertEquals("Invalid credentials.", state.error)
+            // Localized resource id (GAP-8) — a non-HTTP throwable maps to the
+            // generic auth failure, never a raw exception message.
+            assertEquals(R.string.error_auth_failed, state.errorRes)
         }
 
     @Test
@@ -129,7 +132,7 @@ class AuthViewModelTest {
             val state = viewModel.state.value
             assertFalse(state.authenticated)
             assertFalse(state.googleLoading)
-            assertEquals("Google sign-in failed. Please try again.", state.error)
+            assertEquals(R.string.error_google_signin_failed, state.errorRes)
         }
 
     @Test

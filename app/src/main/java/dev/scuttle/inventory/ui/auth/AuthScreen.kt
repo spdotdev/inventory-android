@@ -191,7 +191,7 @@ fun AuthScreen(
             modifier = Modifier.fillMaxWidth(),
         )
 
-        state.error?.let {
+        (state.errorRes?.let { stringResource(it) } ?: state.error)?.let {
             Text(
                 text = it,
                 color = MaterialTheme.colorScheme.error,

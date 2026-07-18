@@ -96,13 +96,13 @@ fun ForgotPasswordScreen(
                         keyboardController?.hide()
                         viewModel.submit()
                     }),
-                isError = state.error != null,
+                isError = state.errorRes != null,
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            state.error?.let {
+            state.errorRes?.let {
                 Text(
-                    it,
+                    stringResource(it),
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.semantics { liveRegion = LiveRegionMode.Assertive },

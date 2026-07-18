@@ -11,6 +11,10 @@
     <string name="error_invalid_input">Please check your input and try again.</string>
     <string name="error_too_many_requests">Too many requests. Please wait a moment and try again.</string>
     <string name="error_server">Server error. Please try again in a moment.</string>
+    <string name="error_incorrect_credentials">Incorrect email or password.</string>
+    <string name="error_check_details">Please check your details and try again.</string>
+    <string name="error_auth_failed">Authentication failed. Please try again.</string>
+    <string name="error_google_signin_failed">Google sign-in failed. Please try again.</string>
     <string name="error_generic">Something went wrong.</string>
     <string name="error_failed_to_load_products">Failed to load products.</string>
     <string name="error_failed_to_delete_product">Failed to delete product.</string>
