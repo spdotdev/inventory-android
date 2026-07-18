@@ -691,6 +691,11 @@ private fun InventoryNavHost(
             ) { entry ->
                 val mode = ScannerMode.from(entry.arguments?.getString("mode"))
                 ScannerScreen(
+                    mode =
+                        when (mode) {
+                            ScannerMode.LOOKUP -> dev.scuttle.inventory.ui.scanner.ScannerDisplayMode.LOOKUP
+                            ScannerMode.ADD -> dev.scuttle.inventory.ui.scanner.ScannerDisplayMode.ADD
+                        },
                     onScanned = { code ->
                         when (val action = scanDeliveryActionFor(mode, code)) {
                             is ScanDeliveryAction.DeliverToCaller -> {

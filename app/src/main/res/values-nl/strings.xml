@@ -35,7 +35,10 @@
     <string name="nav_missing_items">Ontbrekend</string>
     <string name="nav_scan">Scannen</string>
     <string name="nav_more">Meer</string>
-    <string name="scanner_title">Barcode scannen</string>
+    <string name="scanner_title_lookup">Scannen om te zoeken</string>
+    <string name="scanner_subtitle_lookup">Zoekt dit product op in al je opslag.</string>
+    <string name="scanner_title_add">Scannen om toe te voegen</string>
+    <string name="scanner_subtitle_add">Voegt toe of verhoogt de voorraad op dit schap.</string>
     <string name="scanner_permission_denied">Cameratoegang is nodig om barcodes te scannen. Je kunt producten nog steeds handmatig toevoegen en bewerken.</string>
     <string name="location_scan_cd">Scan een barcode</string>
     <string name="scan_incremented">%s +1</string>

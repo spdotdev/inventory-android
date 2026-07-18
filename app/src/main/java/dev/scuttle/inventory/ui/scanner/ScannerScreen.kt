@@ -71,6 +71,12 @@ import java.util.concurrent.atomic.AtomicBoolean
  * detection; the first barcode with a raw value wins and is delivered once via
  * [onScanned]. The camera is an accelerator, never a requirement — when the
  * permission is denied the screen degrades to an explanation + back navigation.
+ *
+ * [mode] drives the title/subtitle only (GAP-5 H5): before this, the screen
+ * showed one static title regardless of whether scanning here searches
+ * globally (LOOKUP, from the bottom-bar Scan tab) or adds to a specific shelf
+ * (ADD, opened from a shelf screen) — a scan landing "somewhere" with no
+ * indication which was silently disorienting.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -78,6 +84,7 @@ fun ScannerScreen(
     onScanned: (String) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    mode: ScannerDisplayMode = ScannerDisplayMode.ADD,
 ) {
     val context = LocalContext.current
     var hasPermission by remember {
@@ -98,11 +105,26 @@ fun ScannerScreen(
         onDispose {}
     }
 
+    val title =
+        when (mode) {
+            ScannerDisplayMode.LOOKUP -> stringResource(R.string.scanner_title_lookup)
+            ScannerDisplayMode.ADD -> stringResource(R.string.scanner_title_add)
+        }
+    val subtitle =
+        when (mode) {
+            ScannerDisplayMode.LOOKUP -> stringResource(R.string.scanner_subtitle_lookup)
+            ScannerDisplayMode.ADD -> stringResource(R.string.scanner_subtitle_add)
+        }
     Scaffold(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.scanner_title)) },
+                title = {
+                    Column {
+                        Text(title)
+                        Text(subtitle, style = MaterialTheme.typography.bodySmall)
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
