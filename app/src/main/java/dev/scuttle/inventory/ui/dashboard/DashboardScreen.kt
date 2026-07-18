@@ -56,6 +56,7 @@ import dev.scuttle.inventory.ui.common.HouseholdPickerSheet
 import dev.scuttle.inventory.ui.common.shelfDisplayName
 import dev.scuttle.inventory.ui.theme.FrostCard
 import dev.scuttle.inventory.ui.theme.HouseholdAvatar
+import dev.scuttle.inventory.ui.theme.Spacing
 
 /**
  * Distinct from the plain text "Dashboard", which also appears as the bottom-nav
@@ -155,8 +156,8 @@ fun DashboardScreen(
                     Modifier
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState())
-                        .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                        .padding(Spacing.md),
+                verticalArrangement = Arrangement.spacedBy(Spacing.md),
             ) {
                 // First-load only — matches StorageOverviewScreen/LocationDetailScreen's
                 // idiom. state.households stays empty only until the initial fetch
@@ -278,7 +279,7 @@ fun DashboardScreen(
                     }
                 }
 
-                Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(Spacing.lg))
             }
         } // end PullToRefreshBox
     }
@@ -302,7 +303,7 @@ private fun EmptyLocationsCard(onAddLocation: () -> Unit) {
         Column(
             modifier = Modifier.padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(Spacing.sm),
         ) {
             Text(
                 stringResource(R.string.dashboard_empty_locations_title),
@@ -350,7 +351,7 @@ private fun HouseholdBadge(household: DashboardHousehold) {
         householdId = household.id,
         colorKey = household.color,
         iconKey = household.icon,
-        size = 24.dp,
+        size = Spacing.lg,
         contentDescription = household.name,
     )
 }
@@ -366,7 +367,7 @@ private fun FavoriteRow(
         Row(
             modifier =
                 Modifier
-                    .padding(16.dp)
+                    .padding(Spacing.md)
                     .fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -396,7 +397,7 @@ private fun RunningLowCard(
 ) {
     FrostCard(modifier = Modifier.fillMaxWidth()) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(Spacing.md),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             items.forEach { item ->
@@ -445,7 +446,7 @@ private fun MissingItemsCard(
         modifier = Modifier.fillMaxWidth(),
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(Spacing.md),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {

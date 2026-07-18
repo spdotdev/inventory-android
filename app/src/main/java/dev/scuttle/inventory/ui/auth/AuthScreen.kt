@@ -49,6 +49,7 @@ import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import dev.scuttle.inventory.BuildConfig
 import dev.scuttle.inventory.R
+import dev.scuttle.inventory.ui.theme.Spacing
 import kotlinx.coroutines.launch
 
 @Composable
@@ -114,7 +115,7 @@ fun AuthScreen(
             modifier
                 .fillMaxSize()
                 .systemBarsPadding()
-                .padding(24.dp),
+                .padding(Spacing.lg),
         verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
     ) {
         // GAP5-M5: a mode-specific headline distinct from the submit button's own
@@ -224,7 +225,7 @@ fun AuthScreen(
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
             modifier = Modifier.fillMaxWidth(),
         ) {
             HorizontalDivider(modifier = Modifier.weight(1f))
@@ -265,7 +266,7 @@ fun AuthScreen(
         }
 
         if (!isRegister) {
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(Spacing.xs))
             TextButton(onClick = onForgotPassword, modifier = Modifier.fillMaxWidth()) {
                 Text(
                     text = stringResource(R.string.auth_forgot_password),

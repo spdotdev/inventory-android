@@ -70,6 +70,7 @@ import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
 import dev.scuttle.inventory.R
+import dev.scuttle.inventory.ui.theme.Spacing
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -174,8 +175,8 @@ fun ScannerScreen(
                 }
                 permissionDenied ->
                     Column(
-                        modifier = Modifier.fillMaxSize().padding(24.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
+                        modifier = Modifier.fillMaxSize().padding(Spacing.lg),
+                        verticalArrangement = Arrangement.spacedBy(Spacing.md, Alignment.CenterVertically),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Text(
@@ -315,7 +316,7 @@ private fun ScannerOverlay() {
 
     Canvas(modifier = Modifier.fillMaxSize()) {
         val side = size.minDimension * FRAME_SIDE_FRACTION
-        val corner = CornerRadius(24.dp.toPx())
+        val corner = CornerRadius(Spacing.lg.toPx())
         val frame =
             Rect(
                 offset =
@@ -358,7 +359,7 @@ private fun ScannerOverlay() {
         val r = corner.x
         val stroke =
             Stroke(
-                width = 4.dp.toPx(),
+                width = Spacing.xs.toPx(),
                 cap = StrokeCap.Round,
                 join = StrokeJoin.Round,
             )
