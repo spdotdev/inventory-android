@@ -7,6 +7,7 @@ import dev.scuttle.inventory.data.dto.ReorderRequest
 import dev.scuttle.inventory.data.dto.ShelfDto
 import dev.scuttle.inventory.data.dto.UpdateShelfRequest
 import dev.scuttle.inventory.data.hierarchy.ShelfDeletion
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 
 class ShelfRepositoryImpl
@@ -14,7 +15,10 @@ class ShelfRepositoryImpl
     constructor(
         private val api: ShelfApi,
     ) : ShelfRepository {
-        private val cache = mutableMapOf<Pair<Long, Long>, List<ShelfDto>>()
+        // ConcurrentHashMap, not mutableMapOf: this singleton is written from ViewModel
+        // coroutines (Main) and HierarchyStore's IO refresh at the same time; a plain
+        // HashMap corrupts under that interleaving (BUG-3).
+        private val cache = ConcurrentHashMap<Pair<Long, Long>, List<ShelfDto>>()
 
         override fun getCached(
             householdId: Long,

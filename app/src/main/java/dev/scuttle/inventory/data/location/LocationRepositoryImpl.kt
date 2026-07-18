@@ -7,6 +7,7 @@ import dev.scuttle.inventory.data.dto.LocationDto
 import dev.scuttle.inventory.data.dto.ReorderRequest
 import dev.scuttle.inventory.data.dto.UpdateLocationRequest
 import dev.scuttle.inventory.data.hierarchy.LocationDeletion
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 
 class LocationRepositoryImpl
@@ -14,7 +15,10 @@ class LocationRepositoryImpl
     constructor(
         private val api: LocationApi,
     ) : LocationRepository {
-        private val cache = mutableMapOf<Long, List<LocationDto>>()
+        // ConcurrentHashMap, not mutableMapOf: this singleton is written from ViewModel
+        // coroutines (Main) and HierarchyStore's IO refresh at the same time; a plain
+        // HashMap corrupts under that interleaving (BUG-3).
+        private val cache = ConcurrentHashMap<Long, List<LocationDto>>()
 
         override fun getCached(householdId: Long): List<LocationDto>? = cache[householdId]
 

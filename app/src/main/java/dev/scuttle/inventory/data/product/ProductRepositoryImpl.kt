@@ -11,6 +11,7 @@ import dev.scuttle.inventory.data.dto.UpdateProductRequest
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 
 class ProductRepositoryImpl
@@ -19,7 +20,10 @@ class ProductRepositoryImpl
         private val api: ProductApi,
         private val contentResolver: ContentResolver,
     ) : ProductRepository {
-        private val cache = mutableMapOf<Pair<Long, Long>, List<ProductDto>>()
+        // ConcurrentHashMap, not mutableMapOf: this singleton is written from ViewModel
+        // coroutines (Main) and HierarchyStore's IO refresh at the same time; a plain
+        // HashMap corrupts under that interleaving (BUG-3).
+        private val cache = ConcurrentHashMap<Pair<Long, Long>, List<ProductDto>>()
 
         override fun getCached(
             householdId: Long,

@@ -40,7 +40,9 @@ class BackupRulesTest {
         for ((name, xml) in mapOf("data_extraction_rules" to extraction, "full_backup_content" to fullBackup)) {
             assertTrue(
                 "$name must exclude inventory_secure_prefs from sharedpref backup",
-                Regex("""<exclude\s+domain="sharedpref"\s+path="inventory_secure_prefs\.xml"\s*/>""").containsMatchIn(xml),
+                Regex(
+                    """<exclude\s+domain="sharedpref"\s+path="inventory_secure_prefs\.xml"\s*/>""",
+                ).containsMatchIn(xml),
             )
         }
     }
