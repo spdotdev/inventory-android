@@ -7,6 +7,7 @@
     <string name="auth_field_name">Naam</string>
     <string name="auth_field_email">E-mail</string>
     <string name="auth_field_password">Wachtwoord</string>
+    <string name="auth_password_requirements">Minimaal 8 tekens.</string>
     <string name="auth_divider_or">of</string>
     <string name="auth_continue_with_google">Doorgaan met Google</string>
     <string name="auth_toggle_to_register">Nieuw hier? Maak een account aan</string>
@@ -34,7 +35,10 @@
     <string name="nav_missing_items">Ontbrekend</string>
     <string name="nav_scan">Scannen</string>
     <string name="nav_more">Meer</string>
-    <string name="scanner_title">Barcode scannen</string>
+    <string name="scanner_title_lookup">Scannen om te zoeken</string>
+    <string name="scanner_subtitle_lookup">Zoekt dit product op in al je opslag.</string>
+    <string name="scanner_title_add">Scannen om toe te voegen</string>
+    <string name="scanner_subtitle_add">Voegt toe of verhoogt de voorraad op dit schap.</string>
     <string name="scanner_permission_denied">Cameratoegang is nodig om barcodes te scannen. Je kunt producten nog steeds handmatig toevoegen en bewerken.</string>
     <string name="location_scan_cd">Scan een barcode</string>
     <string name="scan_incremented">%s +1</string>
@@ -186,6 +190,8 @@
     <string name="search_back_button">← Opslag</string>
     <string name="search_field_label">Producten zoeken</string>
     <string name="search_no_results">Geen resultaten.</string>
+    <string name="search_no_results_add_product_cta">Product toevoegen met deze barcode</string>
+    <string name="storage_pending_barcode_hint">Barcode klaar — open een schap en voeg een product toe om te koppelen.</string>
     <string name="search_result_qty">Aantal: %s</string>
     <string name="search_choose_household_title">In welk huishouden zoeken?</string>
 

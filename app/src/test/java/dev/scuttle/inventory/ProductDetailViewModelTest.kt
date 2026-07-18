@@ -37,7 +37,10 @@ class ProductDetailViewModelTest {
         var failList = false
         var failUpdate = false
         var failDelete = false
+        var failMutate = false
         var deleteBatchId = "batch-detail"
+        var addCalls = 0
+        var removeCalls = 0
 
         override fun getCached(
             householdId: Long,
@@ -78,14 +81,28 @@ class ProductDetailViewModelTest {
             shelfId: Long,
             productId: Long,
             amount: Int,
-        ): ProductDto = items.first { it.id == productId }
+        ): ProductDto {
+            if (failMutate) throw RuntimeException("add failed")
+            addCalls++
+            val idx = items.indexOfFirst { it.id == productId }
+            val updated = items[idx].copy(quantity = items[idx].quantity + amount)
+            items[idx] = updated
+            return updated
+        }
 
         override suspend fun remove(
             householdId: Long,
             shelfId: Long,
             productId: Long,
             amount: Int,
-        ): ProductDto = items.first { it.id == productId }
+        ): ProductDto {
+            if (failMutate) throw RuntimeException("remove failed")
+            removeCalls++
+            val idx = items.indexOfFirst { it.id == productId }
+            val updated = items[idx].copy(quantity = (items[idx].quantity - amount).coerceAtLeast(0))
+            items[idx] = updated
+            return updated
+        }
 
         override suspend fun move(
             householdId: Long,
@@ -331,6 +348,58 @@ class ProductDetailViewModelTest {
 
             assertFalse(vm.state.value.deleted)
             assertNotNull(vm.state.value.error)
+        }
+
+    @Test
+    fun increment_adds_one_and_updates_state_product() =
+        runTest {
+            val product = ProductDto(id = 1, name = "Milk", quantity = 2, shelf_id = 1)
+            val repo = FakeProductRepository(listOf(product))
+            val vm = viewModel(savedState(), repo)
+
+            vm.increment()
+
+            assertEquals(1, repo.addCalls)
+            assertFalse(vm.state.value.loading)
+            assertNotNull(vm.state.value.product)
+        }
+
+    @Test
+    fun decrement_removes_one_when_quantity_is_positive() =
+        runTest {
+            val product = ProductDto(id = 1, name = "Milk", quantity = 2, shelf_id = 1)
+            val repo = FakeProductRepository(listOf(product))
+            val vm = viewModel(savedState(), repo)
+
+            vm.decrement()
+
+            assertEquals(1, repo.removeCalls)
+            assertFalse(vm.state.value.loading)
+        }
+
+    @Test
+    fun decrement_is_a_no_op_at_zero_quantity() =
+        runTest {
+            val product = ProductDto(id = 1, name = "Milk", quantity = 0, shelf_id = 1)
+            val repo = FakeProductRepository(listOf(product))
+            val vm = viewModel(savedState(), repo)
+
+            vm.decrement()
+
+            assertEquals(0, repo.removeCalls)
+        }
+
+    @Test
+    fun increment_failure_surfaces_error() =
+        runTest {
+            val product = ProductDto(id = 1, name = "Milk", quantity = 2, shelf_id = 1)
+            val repo = FakeProductRepository(listOf(product)).apply { failMutate = true }
+            val vm = viewModel(savedState(), repo)
+
+            vm.increment()
+
+            assertNotNull(vm.state.value.error)
+            assertFalse(vm.state.value.loading)
         }
 
     @Test

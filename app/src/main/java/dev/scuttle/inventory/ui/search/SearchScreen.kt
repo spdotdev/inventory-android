@@ -50,6 +50,10 @@ fun SearchScreen(
     onBack: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
     onOpenProduct: (householdId: Long, shelfId: Long, productId: Long) -> Unit = { _, _, _ -> },
+    // Scan-originated zero-result CTA (GAP-5 H6): "Add a product with this
+    // barcode" hands the household + scanned code back to the caller, which
+    // routes to a place a product can be created carrying that code.
+    onAddProductForCode: (householdId: Long, code: String) -> Unit = { _, _ -> },
     viewModel: SearchViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -66,8 +70,15 @@ fun SearchScreen(
         }
     }
 
+    // Only steal focus (and pop the keyboard) on a genuinely fresh screen — an
+    // empty query is the only reliable local signal for that, since the same
+    // back-stack entry (and its ViewModel/state) survives a push-to-ProductDetail
+    // -then-back round trip; re-focusing on every recomposition would also
+    // re-open the keyboard over an already-populated results list (GAP-5 H7).
     LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
+        if (state.query.isBlank()) {
+            focusRequester.requestFocus()
+        }
     }
 
     Column(
@@ -118,6 +129,14 @@ fun SearchScreen(
 
         if (state.query.isNotBlank() && state.results.isEmpty() && !state.loading) {
             Text(text = stringResource(R.string.search_no_results))
+            // Only for a scan-originated miss (GAP-5 H6): the scanner turned up
+            // nothing to look up, so offer to create a product carrying that same
+            // code instead of leaving the user at a dead end.
+            if (state.scanOriginated) {
+                TextButton(onClick = { onAddProductForCode(householdId, state.query.trim()) }) {
+                    Text(stringResource(R.string.search_no_results_add_product_cta))
+                }
+            }
         }
 
         if (state.results.isNotEmpty()) {

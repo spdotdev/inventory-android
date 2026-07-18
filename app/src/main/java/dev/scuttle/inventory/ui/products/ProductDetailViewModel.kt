@@ -118,6 +118,41 @@ class ProductDetailViewModel
             }
         }
 
+        /**
+         * +1 / -1 stock stepper (GAP-5 H8), mirroring ProductsPane's
+         * increment/decrement — the detail screen never offered this before,
+         * even though it shows product.quantity nowhere either. Uses the same
+         * mutation shape as [save]/[uploadImage] (loading + runCatching, no
+         * launchLoading helper — this class doesn't have one), replacing
+         * [ProductDetailUiState.product] with the server's response so
+         * quantity always reflects the authoritative value, never a locally
+         * guessed one.
+         */
+        fun increment() {
+            val current = _state.value.product ?: return
+            viewModelScope.launch {
+                _state.update { it.copy(loading = true, error = null) }
+                runCatching { repository.add(householdId, shelfId, current.id, 1) }
+                    .onSuccess { updated -> _state.update { it.copy(loading = false, product = updated) } }
+                    .onFailure { e ->
+                        _state.update { it.copy(loading = false, error = e.toUserMessage("Something went wrong.")) }
+                    }
+            }
+        }
+
+        fun decrement() {
+            val current = _state.value.product ?: return
+            if (current.quantity <= 0) return
+            viewModelScope.launch {
+                _state.update { it.copy(loading = true, error = null) }
+                runCatching { repository.remove(householdId, shelfId, current.id, 1) }
+                    .onSuccess { updated -> _state.update { it.copy(loading = false, product = updated) } }
+                    .onFailure { e ->
+                        _state.update { it.copy(loading = false, error = e.toUserMessage("Something went wrong.")) }
+                    }
+            }
+        }
+
         fun uploadImage(
             imageUri: Uri,
             mimeType: String,
