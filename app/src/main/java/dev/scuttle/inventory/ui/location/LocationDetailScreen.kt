@@ -72,6 +72,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -452,7 +454,7 @@ fun LocationDetailScreen(
     renamingShelf?.let { shelf ->
         AlertDialog(
             onDismissRequest = { renamingShelf = null },
-            title = { Text(stringResource(R.string.shelf_rename_title)) },
+            title = { Text(stringResource(R.string.shelf_rename_title), modifier = Modifier.semantics { heading() }) },
             text = {
                 OutlinedTextField(
                     value = renameText,

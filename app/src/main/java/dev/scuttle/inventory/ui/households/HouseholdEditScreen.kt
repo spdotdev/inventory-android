@@ -53,6 +53,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
@@ -174,7 +176,12 @@ fun HouseholdEditScreen(
         topBar = {
             TopAppBar(
                 windowInsets = statusBarInsets,
-                title = { Text(stringResource(R.string.household_edit_title)) },
+                title = {
+                    Text(
+                        stringResource(R.string.household_edit_title),
+                        modifier = Modifier.semantics { heading() },
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
@@ -420,7 +427,18 @@ fun HouseholdEditScreen(
     if (confirmLeave && household != null) {
         AlertDialog(
             onDismissRequest = { confirmLeave = false },
-            title = { Text(stringResource(R.string.households_leave_dialog_title, household.name)) },
+            title = {
+                Text(
+                    stringResource(
+                        R.string.households_leave_dialog_title,
+                        household.name,
+                    ),
+                    modifier =
+                        Modifier.semantics {
+                            heading()
+                        },
+                )
+            },
             text = { Text(stringResource(R.string.households_leave_dialog_text)) },
             confirmButton = {
                 TextButton(onClick = {
@@ -439,7 +457,12 @@ fun HouseholdEditScreen(
     if (confirmTransferFirst) {
         AlertDialog(
             onDismissRequest = { confirmTransferFirst = false },
-            title = { Text(stringResource(R.string.household_edit_owner_leave_title)) },
+            title = {
+                Text(
+                    stringResource(R.string.household_edit_owner_leave_title),
+                    modifier = Modifier.semantics { heading() },
+                )
+            },
             text = { Text(stringResource(R.string.household_edit_owner_leave_body)) },
             confirmButton = {
                 TextButton(onClick = {
@@ -473,7 +496,18 @@ fun HouseholdEditScreen(
                 }
             },
             properties = DialogProperties(dismissOnBackPress = !state.loading, dismissOnClickOutside = !state.loading),
-            title = { Text(stringResource(R.string.household_delete_dialog_title, household.name)) },
+            title = {
+                Text(
+                    stringResource(
+                        R.string.household_delete_dialog_title,
+                        household.name,
+                    ),
+                    modifier =
+                        Modifier.semantics {
+                            heading()
+                        },
+                )
+            },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(stringResource(R.string.household_delete_dialog_body))

@@ -44,6 +44,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -103,7 +105,12 @@ fun DashboardScreen(
     if (state.hasNoHouseholds && !state.loading) {
         AlertDialog(
             onDismissRequest = {},
-            title = { Text(stringResource(R.string.dashboard_welcome_title)) },
+            title = {
+                Text(
+                    stringResource(R.string.dashboard_welcome_title),
+                    modifier = Modifier.semantics { heading() },
+                )
+            },
             text = { Text(stringResource(R.string.dashboard_welcome_text)) },
             confirmButton = {
                 Button(onClick = onOpenHouseholds) { Text(stringResource(R.string.dashboard_create_household)) }

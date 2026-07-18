@@ -40,6 +40,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
@@ -87,7 +89,7 @@ fun SettingsScreen(
         topBar = {
             TopAppBar(
                 windowInsets = statusBarInsets,
-                title = { Text(stringResource(R.string.settings_title)) },
+                title = { Text(stringResource(R.string.settings_title), modifier = Modifier.semantics { heading() }) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
@@ -126,7 +128,11 @@ fun SettingsScreen(
                 }
             }
 
-            Text(text = stringResource(R.string.settings_theme_section), style = MaterialTheme.typography.titleMedium)
+            Text(
+                text = stringResource(R.string.settings_theme_section),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.semantics { heading() },
+            )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 ThemeMode.entries.forEach { option ->
                     FilterChip(
@@ -145,7 +151,11 @@ fun SettingsScreen(
                 }
             }
 
-            Text(text = stringResource(R.string.settings_join_section), style = MaterialTheme.typography.titleMedium)
+            Text(
+                text = stringResource(R.string.settings_join_section),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.semantics { heading() },
+            )
             joinState.errorRes?.let {
                 ErrorRetry(stringResource(it), onRetry = joinViewModel::join)
             }
@@ -220,7 +230,11 @@ fun SettingsScreen(
                 Text(stringResource(R.string.settings_my_households_button))
             }
 
-            Text(text = stringResource(R.string.settings_account_section), style = MaterialTheme.typography.titleMedium)
+            Text(
+                text = stringResource(R.string.settings_account_section),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.semantics { heading() },
+            )
             Button(
                 onClick = { confirmSignOut = true },
                 modifier = Modifier.fillMaxWidth(),
@@ -247,7 +261,12 @@ fun SettingsScreen(
     if (confirmSignOut) {
         AlertDialog(
             onDismissRequest = { confirmSignOut = false },
-            title = { Text(stringResource(R.string.settings_sign_out_dialog_title)) },
+            title = {
+                Text(
+                    stringResource(R.string.settings_sign_out_dialog_title),
+                    modifier = Modifier.semantics { heading() },
+                )
+            },
             text = { Text(stringResource(R.string.settings_sign_out_dialog_text)) },
             confirmButton = {
                 TextButton(onClick = onSignOut) {

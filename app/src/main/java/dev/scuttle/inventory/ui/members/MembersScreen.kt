@@ -40,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -130,7 +131,7 @@ fun MembersScreen(
         topBar = {
             TopAppBar(
                 windowInsets = statusBarInsets,
-                title = { Text(stringResource(R.string.members_title)) },
+                title = { Text(stringResource(R.string.members_title), modifier = Modifier.semantics { heading() }) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
@@ -237,7 +238,12 @@ fun MembersScreen(
     confirmRemove?.let { member ->
         AlertDialog(
             onDismissRequest = { confirmRemove = null },
-            title = { Text(stringResource(R.string.members_remove_confirm_title, member.name)) },
+            title = {
+                Text(
+                    stringResource(R.string.members_remove_confirm_title, member.name),
+                    modifier = Modifier.semantics { heading() },
+                )
+            },
             text = { Text(stringResource(R.string.members_remove_confirm_body)) },
             confirmButton = {
                 TextButton(onClick = {
@@ -256,7 +262,12 @@ fun MembersScreen(
     if (showTransferPicker) {
         AlertDialog(
             onDismissRequest = { showTransferPicker = false },
-            title = { Text(stringResource(R.string.members_transfer_ownership_pick)) },
+            title = {
+                Text(
+                    stringResource(R.string.members_transfer_ownership_pick),
+                    modifier = Modifier.semantics { heading() },
+                )
+            },
             text = {
                 LazyColumn {
                     items(state.members.filter { it.role != "owner" }, key = { it.id }) { member ->

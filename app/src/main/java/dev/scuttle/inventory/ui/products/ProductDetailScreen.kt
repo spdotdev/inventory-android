@@ -63,6 +63,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
@@ -508,7 +509,18 @@ fun ProductDetailScreen(
     if (showDeleteConfirm) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
-            title = { Text(stringResource(R.string.delete_dialog_product_title, product?.name ?: "")) },
+            title = {
+                Text(
+                    stringResource(
+                        R.string.delete_dialog_product_title,
+                        product?.name ?: "",
+                    ),
+                    modifier =
+                        Modifier.semantics {
+                            heading()
+                        },
+                )
+            },
             text = { Text(stringResource(R.string.delete_dialog_product_text)) },
             confirmButton = {
                 Button(

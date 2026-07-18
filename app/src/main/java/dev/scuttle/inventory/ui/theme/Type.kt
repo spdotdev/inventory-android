@@ -33,17 +33,25 @@ val SpaceMono =
         Font(R.font.space_mono_bold, FontWeight.Bold),
     )
 
+// Titles/headlines get EXPLICIT heavier weights than Material's defaults
+// (titleLarge is W400 stock, titleMedium W500): issue #32 follow-up — with the
+// system "Bold text" setting on, font_weight_adjustment (+300, clamped at the
+// family's heaviest cut) collapsed W400 body and W400/500 titles onto the same
+// rendered weight, flattening the hierarchy. W600/700 titles stay one step
+// heavier than body both normally (400 vs 600/700) and under the adjustment
+// (700 vs 800-clamped). This works WITH the accessibility setting, never
+// against it.
 private fun Typography.withFamily(family: FontFamily) =
     copy(
-        displayLarge = displayLarge.copy(fontFamily = family),
-        displayMedium = displayMedium.copy(fontFamily = family),
-        displaySmall = displaySmall.copy(fontFamily = family),
-        headlineLarge = headlineLarge.copy(fontFamily = family),
-        headlineMedium = headlineMedium.copy(fontFamily = family),
-        headlineSmall = headlineSmall.copy(fontFamily = family),
-        titleLarge = titleLarge.copy(fontFamily = family),
-        titleMedium = titleMedium.copy(fontFamily = family),
-        titleSmall = titleSmall.copy(fontFamily = family),
+        displayLarge = displayLarge.copy(fontFamily = family, fontWeight = FontWeight.Bold),
+        displayMedium = displayMedium.copy(fontFamily = family, fontWeight = FontWeight.Bold),
+        displaySmall = displaySmall.copy(fontFamily = family, fontWeight = FontWeight.Bold),
+        headlineLarge = headlineLarge.copy(fontFamily = family, fontWeight = FontWeight.Bold),
+        headlineMedium = headlineMedium.copy(fontFamily = family, fontWeight = FontWeight.Bold),
+        headlineSmall = headlineSmall.copy(fontFamily = family, fontWeight = FontWeight.Bold),
+        titleLarge = titleLarge.copy(fontFamily = family, fontWeight = FontWeight.SemiBold),
+        titleMedium = titleMedium.copy(fontFamily = family, fontWeight = FontWeight.SemiBold),
+        titleSmall = titleSmall.copy(fontFamily = family, fontWeight = FontWeight.SemiBold),
         bodyLarge = bodyLarge.copy(fontFamily = family),
         bodyMedium = bodyMedium.copy(fontFamily = family),
         bodySmall = bodySmall.copy(fontFamily = family),
