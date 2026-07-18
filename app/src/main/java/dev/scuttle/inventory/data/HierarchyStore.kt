@@ -1,8 +1,9 @@
 package dev.scuttle.inventory.data
 
+import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.dto.LocationDto
 import dev.scuttle.inventory.data.dto.ShelfDto
-import dev.scuttle.inventory.data.error.toUserMessage
+import dev.scuttle.inventory.data.error.toUserMessageRes
 import dev.scuttle.inventory.data.household.HouseholdRepository
 import dev.scuttle.inventory.data.location.LocationRepository
 import dev.scuttle.inventory.data.product.ProductRepository
@@ -71,7 +72,8 @@ data class HierarchyState(
     // refresh-button reload, so the pull indicator doesn't spin on a post-mutation
     // silent reload. Drives PullToRefreshBox.isRefreshing (D-008).
     val refreshing: Boolean = false,
-    val error: String? = null,
+    // H3: an R.string.* id, not a raw literal — resolved via stringResource() by callers.
+    val errorRes: Int? = null,
     val entries: List<HouseholdWithLocations> = emptyList(),
     val missingItems: List<MissingItem> = emptyList(),
     val missingItemCount: Int = 0,
@@ -260,7 +262,7 @@ class HierarchyStore(
      */
     fun refresh(userInitiated: Boolean = false) {
         activeJob?.cancel()
-        _state.update { it.copy(loading = true, refreshing = userInitiated, error = null) }
+        _state.update { it.copy(loading = true, refreshing = userInitiated, errorRes = null) }
         loadFromCache()
         activeJob =
             scope.launch {
@@ -277,7 +279,11 @@ class HierarchyStore(
                     onSuccess = { update -> _state.value = update },
                     onFailure = { e ->
                         _state.update {
-                            it.copy(loading = false, refreshing = false, error = e.toUserMessage("Failed to load."))
+                            it.copy(
+                                loading = false,
+                                refreshing = false,
+                                errorRes = e.toUserMessageRes(R.string.error_failed_to_load),
+                            )
                         }
                     },
                 )
@@ -324,7 +330,7 @@ class HierarchyStore(
         households: List<dev.scuttle.inventory.data.dto.HouseholdDto>,
     ): HierarchyState {
         val loading = false
-        val error: String? = null
+        val errorRes: Int? = null
         var totalShelves = 0
         var totalProducts = 0
         var mandatoryWarnings = 0
@@ -358,7 +364,7 @@ class HierarchyStore(
 
         return HierarchyState(
             loading = loading,
-            error = error,
+            errorRes = errorRes,
             entries = entries,
             missingItems = missingItems,
             missingItemCount = mandatoryWarnings,

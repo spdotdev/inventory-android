@@ -3,8 +3,9 @@ package dev.scuttle.inventory.ui.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.HierarchyStore
-import dev.scuttle.inventory.data.error.toUserMessage
+import dev.scuttle.inventory.data.error.toUserMessageRes
 import dev.scuttle.inventory.data.household.HouseholdRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,7 +17,8 @@ import javax.inject.Inject
 data class JoinUiState(
     val loading: Boolean = false,
     val code: String = "",
-    val error: String? = null,
+    // H3: an R.string.* id, not a raw literal — resolved via stringResource() in the composable.
+    val errorRes: Int? = null,
     val success: Boolean = false,
     // The role the caller was granted on the just-joined household (M2), so the
     // success message can hint at the role model for a brand-new Member — who
@@ -36,7 +38,7 @@ class JoinHouseholdViewModel
         val state: StateFlow<JoinUiState> = _state.asStateFlow()
 
         fun onCodeChange(value: String) =
-            _state.update { it.copy(code = value, error = null, success = false, joinedRole = null) }
+            _state.update { it.copy(code = value, errorRes = null, success = false, joinedRole = null) }
 
         /** A scanned invite QR carries the invite *link*, so show the user the code inside it (#30). */
         fun onCodeScanned(contents: String) = onCodeChange(parseJoinCode(contents))
@@ -46,7 +48,7 @@ class JoinHouseholdViewModel
             val code = parseJoinCode(_state.value.code)
             if (code.isEmpty()) return
             viewModelScope.launch {
-                _state.update { it.copy(loading = true, error = null, success = false, joinedRole = null) }
+                _state.update { it.copy(loading = true, errorRes = null, success = false, joinedRole = null) }
                 val result = runCatching { repository.join(code) }
                 // Refresh the drawer/home/dashboard so the joined household appears there
                 // immediately, not just on the next manual pull-to-refresh (X4).
@@ -56,7 +58,9 @@ class JoinHouseholdViewModel
                         onSuccess = { household ->
                             state.copy(loading = false, code = "", success = true, joinedRole = household.role)
                         },
-                        onFailure = { e -> state.copy(loading = false, error = e.toUserMessage("Failed to join.")) },
+                        onFailure = { e ->
+                            state.copy(loading = false, errorRes = e.toUserMessageRes(R.string.error_failed_to_join))
+                        },
                     )
                 }
             }

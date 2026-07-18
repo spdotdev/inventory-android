@@ -3,9 +3,10 @@ package dev.scuttle.inventory.ui.products
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.HierarchyStore
 import dev.scuttle.inventory.data.dto.ProductDto
-import dev.scuttle.inventory.data.error.toUserMessage
+import dev.scuttle.inventory.data.error.toUserMessageRes
 import dev.scuttle.inventory.data.hierarchy.RestoreRepository
 import dev.scuttle.inventory.data.location.LocationRepository
 import dev.scuttle.inventory.data.product.ProductEdit
@@ -55,11 +56,12 @@ data class ProductsUiState(
     val products: List<ProductDto> = emptyList(),
     val newName: String = "",
     val suggestions: List<String> = emptyList(),
-    val error: String? = null,
-    // Distinct from [error] (mutation failures, shown as a Snackbar): a LOAD
+    // H3: an R.string.* id, not a raw literal — resolved via stringResource() in the composable.
+    val errorRes: Int? = null,
+    // Distinct from [errorRes] (mutation failures, shown as a Snackbar): a LOAD
     // failure needs a PERSISTENT inline idiom, since a missed/dismissed
     // snackbar would otherwise leave a blank screen with zero explanation (M4).
-    val loadError: String? = null,
+    val loadErrorRes: Int? = null,
     val movingProductId: Long? = null,
     val moveTargets: List<MoveTarget> = emptyList(),
     // Outcome of the last barcode scan, consumed by the UI as a one-shot snackbar.
@@ -145,7 +147,7 @@ class ProductsViewModel
         }
 
         fun onNewNameChange(value: String) {
-            _state.update { it.copy(newName = value.take(50), error = null) }
+            _state.update { it.copy(newName = value.take(50), errorRes = null) }
             searchJob?.cancel()
             if (value.isBlank()) {
                 _state.update { it.copy(suggestions = emptyList()) }
@@ -171,7 +173,7 @@ class ProductsViewModel
         // --- Local view controls (filter + sort) ---
 
         /** Clears the error after it's been shown once (e.g. surfaced as a Snackbar). */
-        fun consumeError() = _state.update { it.copy(error = null) }
+        fun consumeError() = _state.update { it.copy(errorRes = null) }
 
         fun onFilterQueryChange(value: String) = _state.update { it.copy(filterQuery = value.take(50)) }
 
@@ -185,14 +187,17 @@ class ProductsViewModel
             val h = householdId ?: return
             val s = shelfId ?: return
             viewModelScope.launch {
-                _state.update { it.copy(loading = true, loadError = null) }
+                _state.update { it.copy(loading = true, loadErrorRes = null) }
                 val result = runCatching { productRepository.list(h, s) }
                 result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
                 _state.update { state ->
                     result.fold(
                         onSuccess = { products -> state.copy(loading = false, products = products) },
                         onFailure = { e ->
-                            state.copy(loading = false, loadError = e.toUserMessage("Failed to load products."))
+                            state.copy(
+                                loading = false,
+                                loadErrorRes = e.toUserMessageRes(R.string.error_failed_to_load_products),
+                            )
                         },
                     )
                 }
@@ -256,7 +261,11 @@ class ProductsViewModel
                         _state.update { it.copy(lastBatchId = batchId) }
                         hierarchyStore.refresh()
                     }.onFailure { error ->
-                        _state.update { it.copy(error = error.toUserMessage("Failed to delete product.")) }
+                        _state.update {
+                            it.copy(
+                                errorRes = error.toUserMessageRes(R.string.error_failed_to_delete_product),
+                            )
+                        }
                         // Revert the optimistic removal WITHOUT going through refresh()'s
                         // shared launch() helper: that helper resets error = null the
                         // instant its coroutine starts, wiping the message just set above
@@ -333,7 +342,7 @@ class ProductsViewModel
             val s = shelfId ?: return
             _state.update { it.copy(movingProductId = productId, moveTargets = emptyList()) }
             viewModelScope.launch {
-                _state.update { it.copy(loading = true, error = null) }
+                _state.update { it.copy(loading = true, errorRes = null) }
                 val result =
                     runCatching {
                         val targets = mutableListOf<MoveTarget>()
@@ -352,7 +361,7 @@ class ProductsViewModel
                         onFailure = { e ->
                             state.copy(
                                 loading = false,
-                                error = e.toUserMessage("Couldn't load shelves."),
+                                errorRes = e.toUserMessageRes(R.string.error_failed_to_load_shelves),
                                 movingProductId = null,
                                 moveTargets = emptyList(),
                             )
@@ -397,7 +406,7 @@ class ProductsViewModel
             val h = householdId ?: return
             val s = shelfId ?: return
             viewModelScope.launch {
-                _state.update { it.copy(loading = true, error = null) }
+                _state.update { it.copy(loading = true, errorRes = null) }
                 val result = runCatching { block(h, s) }
                 result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
                 _state.update { state ->
@@ -426,7 +435,7 @@ class ProductsViewModel
 
         private fun launch(block: suspend () -> Unit) {
             viewModelScope.launch {
-                _state.update { it.copy(loading = true, error = null) }
+                _state.update { it.copy(loading = true, errorRes = null) }
                 val result = runCatching { block() }
                 // Re-throw CancellationException so coroutine cancellation is honored
                 result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
@@ -434,7 +443,7 @@ class ProductsViewModel
                     result.fold(
                         onSuccess = { state.copy(loading = false) },
                         onFailure = { error ->
-                            state.copy(loading = false, error = error.toUserMessage("Something went wrong."))
+                            state.copy(loading = false, errorRes = error.toUserMessageRes(R.string.error_generic))
                         },
                     )
                 }

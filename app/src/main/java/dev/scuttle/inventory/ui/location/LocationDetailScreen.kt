@@ -257,14 +257,18 @@ fun LocationDetailScreen(
                     LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                 }
 
-                state.error?.let {
-                    ErrorRetry(it, onRetry = shelvesViewModel::refresh, modifier = Modifier.padding(16.dp))
+                state.errorRes?.let {
+                    ErrorRetry(
+                        stringResource(it),
+                        onRetry = shelvesViewModel::refresh,
+                        modifier = Modifier.padding(16.dp),
+                    )
                 }
 
                 if (state.shelves.isEmpty()) {
                     // Suppress "no shelves yet" on a failed load — the error line above
                     // already explains it; showing both reads as a false empty (W7).
-                    if (!state.loading && state.error == null) {
+                    if (!state.loading && state.errorRes == null) {
                         Text(
                             text = stringResource(R.string.location_no_shelves),
                             modifier = Modifier.padding(16.dp),

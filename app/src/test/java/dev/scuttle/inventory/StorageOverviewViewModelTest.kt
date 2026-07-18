@@ -237,7 +237,7 @@ class StorageOverviewViewModelTest {
 
             vm.load(householdId = 1)
 
-            assertEquals("offline", vm.state.value.error)
+            assertEquals(R.string.error_generic, vm.state.value.errorRes)
         }
 
     /**
@@ -507,7 +507,7 @@ class StorageOverviewViewModelTest {
                 vm.state.value.locations
                     .map { it.name },
             )
-            assertNotNull(vm.state.value.error)
+            assertNotNull(vm.state.value.errorRes)
         }
 
     @Test
@@ -760,7 +760,7 @@ class StorageOverviewViewModelTest {
                     .map { it.id }
                     .toSet(),
             )
-            assertNotNull(vm.state.value.error)
+            assertNotNull(vm.state.value.errorRes)
         }
 
     @Test
@@ -867,7 +867,7 @@ class StorageOverviewViewModelTest {
             vm.undoDelete()
 
             assertEquals(UndoOutcome.FAILURE, vm.state.value.undoResult)
-            assertNull(vm.state.value.error)
+            assertNull(vm.state.value.errorRes)
             // The batch id survives a failed undo — nothing was actually restored.
             assertNotNull(vm.state.value.lastBatchId)
         }

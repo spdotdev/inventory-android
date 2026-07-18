@@ -86,8 +86,8 @@ fun InviteScreen(
             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
         }
 
-        state.error?.let {
-            ErrorRetry(it, onRetry = { viewModel.load(householdId) })
+        state.errorRes?.let {
+            ErrorRetry(stringResource(it), onRetry = { viewModel.load(householdId) })
         }
 
         if (state.code.isNotEmpty()) {

@@ -3,9 +3,10 @@ package dev.scuttle.inventory.ui.households
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.HierarchyStore
 import dev.scuttle.inventory.data.dto.HouseholdDto
-import dev.scuttle.inventory.data.error.toUserMessage
+import dev.scuttle.inventory.data.error.toUserMessageRes
 import dev.scuttle.inventory.data.household.HouseholdRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,7 +23,8 @@ data class HouseholdsUiState(
     val refreshing: Boolean = false,
     val households: List<HouseholdDto> = emptyList(),
     val newName: String = "",
-    val error: String? = null,
+    // H3: an R.string.* id, not a raw literal — resolved via stringResource() in the composable.
+    val errorRes: Int? = null,
     // Gates whether tapping a household row navigates to HouseholdEditScreen —
     // mirrors StorageOverviewViewModel/ShelvesViewModel's editMode flag.
     val editMode: Boolean = false,
@@ -48,14 +50,14 @@ data class HouseholdsUiState(
     /**
      * Delete-specific failure (422 name-race, 403 role-changed-under-you, etc.),
      * shown INSIDE HouseholdEditScreen's confirm-delete dialog rather than as the
-     * screen's top-of-screen [error] — that generic ErrorRetry's own Retry
+     * screen's top-of-screen [errorRes] — that generic ErrorRetry's own Retry
      * re-fetches the household LIST, not the delete, so routing a delete failure
-     * through [error] surfaced as an unrelated banner while the typed
+     * through [errorRes] surfaced as an unrelated banner while the typed
      * confirmation name (and the dialog itself) was already gone (H1). Cleared on
      * dialog dismiss, on retyping the confirmation field, and on the next
      * successful delete() — never on a plain refresh().
      */
-    val deleteError: String? = null,
+    val deleteErrorRes: Int? = null,
 )
 
 @HiltViewModel
@@ -106,7 +108,7 @@ class HouseholdsViewModel
             }
         }
 
-        fun onNewNameChange(value: String) = _state.update { it.copy(newName = value.take(50), error = null) }
+        fun onNewNameChange(value: String) = _state.update { it.copy(newName = value.take(50), errorRes = null) }
 
         fun refresh() =
             launchLoading(refreshing = true) {
@@ -151,7 +153,7 @@ class HouseholdsViewModel
          * leftHouseholdId)` needs no changes at all to also cover delete.
          *
          * Deliberately NOT routed through [launchLoading] (H1): a failure here
-         * must land in [HouseholdsUiState.deleteError], not the generic [error]
+         * must land in [HouseholdsUiState.deleteErrorRes], not the generic [errorRes]
          * field launchLoading writes to — HouseholdEditScreen's confirm-delete
          * dialog stays open for the whole call (gated on `state.loading`, which
          * this still sets/clears identically to launchLoading) and shows
@@ -163,7 +165,7 @@ class HouseholdsViewModel
             nameConfirmation: String,
         ) {
             viewModelScope.launch {
-                _state.update { it.copy(loading = true, deleteError = null) }
+                _state.update { it.copy(loading = true, deleteErrorRes = null) }
                 val result = runCatching { repository.delete(householdId, nameConfirmation) }
                 result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
                 result.fold(
@@ -179,15 +181,15 @@ class HouseholdsViewModel
                     },
                     onFailure = { e ->
                         _state.update {
-                            it.copy(loading = false, deleteError = e.toUserMessage("Something went wrong."))
+                            it.copy(loading = false, deleteErrorRes = e.toUserMessageRes(R.string.error_generic))
                         }
                     },
                 )
             }
         }
 
-        /** Clears a delete-dialog error on dismiss/retype — see [HouseholdsUiState.deleteError]. */
-        fun clearDeleteError() = _state.update { it.copy(deleteError = null) }
+        /** Clears a delete-dialog error on dismiss/retype — see [HouseholdsUiState.deleteErrorRes]. */
+        fun clearDeleteError() = _state.update { it.copy(deleteErrorRes = null) }
 
         fun enterEditMode() = _state.update { it.copy(editMode = true) }
 
@@ -230,7 +232,7 @@ class HouseholdsViewModel
             block: suspend () -> Unit,
         ) {
             viewModelScope.launch {
-                _state.update { it.copy(loading = true, refreshing = refreshing, error = null) }
+                _state.update { it.copy(loading = true, refreshing = refreshing, errorRes = null) }
                 val result = runCatching { block() }
                 result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
                 _state.update { state ->
@@ -240,7 +242,7 @@ class HouseholdsViewModel
                             state.copy(
                                 loading = false,
                                 refreshing = false,
-                                error = e.toUserMessage("Something went wrong."),
+                                errorRes = e.toUserMessageRes(R.string.error_generic),
                             )
                         },
                     )

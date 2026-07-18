@@ -167,7 +167,7 @@ fun DashboardScreen(
                     LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                 }
 
-                state.error?.let { ErrorRetry(it, onRetry = viewModel::refresh) }
+                state.errorRes?.let { ErrorRetry(stringResource(it), onRetry = viewModel::refresh) }
 
                 // M11: distinct from the "no household at all" dialog above — this is
                 // an active household with zero locations. Gated on locationStats

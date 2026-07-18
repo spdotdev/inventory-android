@@ -3,8 +3,9 @@ package dev.scuttle.inventory.ui.search
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.dto.SearchResultDto
-import dev.scuttle.inventory.data.error.toUserMessage
+import dev.scuttle.inventory.data.error.toUserMessageRes
 import dev.scuttle.inventory.data.search.SearchRepository
 import dev.scuttle.inventory.ui.common.SortOrder
 import dev.scuttle.inventory.ui.common.sortedByOrder
@@ -21,7 +22,8 @@ data class SearchUiState(
     val loading: Boolean = false,
     val query: String = "",
     val results: List<SearchResultDto> = emptyList(),
-    val error: String? = null,
+    // H3: an R.string.* id, not a raw literal — resolved via stringResource() in the composable.
+    val errorRes: Int? = null,
     val sort: SortOrder = SortOrder.NAME_ASC,
     // True only when [query] arrived via [SearchViewModel.searchFor] (the
     // scan-to-lookup flow), never from typed input (GAP-5 H6) — gates the
@@ -69,7 +71,7 @@ class SearchViewModel
         }
 
         fun onQueryChange(value: String) {
-            _state.update { it.copy(query = value, error = null, scanOriginated = false) }
+            _state.update { it.copy(query = value, errorRes = null, scanOriginated = false) }
             searchJob?.cancel()
             searchJob =
                 viewModelScope.launch {
@@ -90,7 +92,7 @@ class SearchViewModel
          */
         fun searchFor(query: String) {
             searchJob?.cancel()
-            _state.update { it.copy(query = query, error = null, scanOriginated = true) }
+            _state.update { it.copy(query = query, errorRes = null, scanOriginated = true) }
             searchJob = viewModelScope.launch { doSearch() }
         }
 
@@ -103,12 +105,14 @@ class SearchViewModel
                 _state.update { it.copy(results = emptyList(), loading = false) }
                 return
             }
-            _state.update { it.copy(loading = true, error = null) }
+            _state.update { it.copy(loading = true, errorRes = null) }
             val result = runCatching { repository.search(h, q) }
             _state.update { state ->
                 result.fold(
                     onSuccess = { results -> state.copy(loading = false, results = results) },
-                    onFailure = { error -> state.copy(loading = false, error = error.toUserMessage("Search failed.")) },
+                    onFailure = { error ->
+                        state.copy(loading = false, errorRes = error.toUserMessageRes(R.string.error_search_failed))
+                    },
                 )
             }
         }

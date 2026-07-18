@@ -3,10 +3,11 @@ package dev.scuttle.inventory.ui.app
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.HierarchyStore
 import dev.scuttle.inventory.data.HouseholdWithLocations
 import dev.scuttle.inventory.data.auth.AuthRepository
-import dev.scuttle.inventory.data.error.toUserMessage
+import dev.scuttle.inventory.data.error.toUserMessageRes
 import dev.scuttle.inventory.data.hierarchy.LocationDeleteStrategy
 import dev.scuttle.inventory.data.hierarchy.LocationDeletion
 import dev.scuttle.inventory.data.hierarchy.RestoreRepository
@@ -34,8 +35,8 @@ data class DrawerUiState(
     val refreshing: Boolean = false,
     // Surfaced from HierarchyStore so AllStorages can tell a real network failure
     // apart from a genuinely empty account (W3) — without this a failed load
-    // rendered the "No storages yet" empty state.
-    val error: String? = null,
+    // rendered the "No storages yet" empty state. H3: an R.string.* id, not a raw literal.
+    val errorRes: Int? = null,
     /** Non-null while the delete-strategy dialog is open for a Home location. */
     val pendingDelete: DeletePlan? = null,
     /**
@@ -112,7 +113,7 @@ class DrawerViewModel
                     missingItemCount = s.missingItemCount,
                     loading = s.loading,
                     refreshing = s.refreshing,
-                    error = s.error,
+                    errorRes = s.errorRes,
                     pendingDelete = del.pendingDelete,
                     moveTargets = del.moveTargets,
                     lastBatchId = del.lastBatchId,
@@ -140,11 +141,11 @@ class DrawerViewModel
         private var lastBatchHouseholdId: Long? = null
 
         // One-shot delete failure, surfaced by AllStorages as a snackbar (W10). Kept
-        // separate from the store-derived load `error` above because a delete fails
+        // separate from the store-derived load `errorRes` above because a delete fails
         // while the list is populated — the inline ErrorRetry (empty-state only)
-        // would never show it.
-        private val _actionError = MutableStateFlow<String?>(null)
-        val actionError: StateFlow<String?> = _actionError.asStateFlow()
+        // would never show it. H3: an R.string.* id, not a raw literal.
+        private val _actionErrorRes = MutableStateFlow<Int?>(null)
+        val actionErrorRes: StateFlow<Int?> = _actionErrorRes.asStateFlow()
 
         init {
             // CRITICAL fix: this VM is resolved once against the Activity's
@@ -312,7 +313,10 @@ class DrawerViewModel
                                             .map { l -> MoveTarget(id = l.id, name = l.name) },
                                 )
                             }
-                        }.onFailure { e -> _actionError.value = e.toUserMessage("Failed to delete location.") }
+                        }.onFailure { e ->
+                            _actionErrorRes.value =
+                                e.toUserMessageRes(R.string.error_failed_to_delete_location)
+                        }
                 }
         }
 
@@ -371,7 +375,12 @@ class DrawerViewModel
                     } else {
                         deleteFlow.update { it.copy(pendingDelete = null, moveTargets = emptyList()) }
                     }
-                    failure?.let { _actionError.value = it.toUserMessage("Failed to delete location.") }
+                    failure?.let {
+                        _actionErrorRes.value =
+                            it.toUserMessageRes(
+                                R.string.error_failed_to_delete_location,
+                            )
+                    }
                     pendingHouseholdId = null
                     pendingLocationIds = emptyList()
                 }
@@ -409,7 +418,7 @@ class DrawerViewModel
         fun consumeUndoResult() = deleteFlow.update { it.copy(undoResult = null) }
 
         fun consumeActionError() {
-            _actionError.value = null
+            _actionErrorRes.value = null
         }
 
         fun reportLocationWarning(

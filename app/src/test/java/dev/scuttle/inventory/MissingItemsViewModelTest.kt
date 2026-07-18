@@ -193,8 +193,8 @@ class MissingItemsViewModelTest {
 
             store.refresh(userInitiated = true)
 
-            val failed = vm.state.first { it.error != null }
-            assertNotNull(failed.error)
+            val failed = vm.state.first { it.errorRes != null }
+            assertNotNull(failed.errorRes)
             assertFalse(failed.loading)
             assertTrue(failed.items.isEmpty())
         }

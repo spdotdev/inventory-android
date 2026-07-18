@@ -126,7 +126,12 @@ fun ProductsPane(
     // One-shot action errors (add/remove/move/delete) surface as a transient Snackbar
     // hosted by LocationDetailScreen's Scaffold, then are consumed so they don't re-fire
     // or re-announce. Material3's Snackbar is itself a live region (a11y).
-    SnackbarErrorEffect(state.error, snackbarHostState, onConsumed = viewModel::consumeError)
+    // H3: errorRes is an R.string.* id, not a raw literal — resolved here via stringResource().
+    SnackbarErrorEffect(
+        error = state.errorRes?.let { stringResource(it) },
+        snackbarHostState = snackbarHostState,
+        onConsumed = viewModel::consumeError,
+    )
 
     // H2: a failed +/- quantity mutation gets its own specific, localized message instead of
     // the generic `error` snackbar above — see ProductsUiState.quantityMutationFailed.
@@ -225,7 +230,7 @@ fun ProductsPane(
         // failure is different: a missed/dismissed snackbar there would otherwise
         // leave a blank screen with zero explanation (M4), so it gets its own
         // persistent inline ErrorRetry instead.
-        state.loadError?.let { ErrorRetry(it, onRetry = viewModel::refresh) }
+        state.loadErrorRes?.let { ErrorRetry(stringResource(it), onRetry = viewModel::refresh) }
 
         if (state.products.isNotEmpty()) {
             OutlinedTextField(
@@ -245,7 +250,7 @@ fun ProductsPane(
             )
         }
 
-        if (state.products.isEmpty() && !state.loading && state.loadError == null) {
+        if (state.products.isEmpty() && !state.loading && state.loadErrorRes == null) {
             Text(text = stringResource(R.string.products_pane_empty))
         } else if (state.filteredToEmpty) {
             Text(text = stringResource(R.string.products_pane_no_match))

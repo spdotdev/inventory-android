@@ -109,7 +109,9 @@ class SearchViewModelTest {
             viewModel.onQueryChange("ice")
             advanceUntilIdle()
 
-            assertEquals("offline", viewModel.state.value.error)
+            // H3: toUserMessageRes returns an R.string.* id, not the throwable's raw message —
+            // a generic RuntimeException always resolves to the caller's fallback resource.
+            assertEquals(R.string.error_search_failed, viewModel.state.value.errorRes)
         }
 
     /**

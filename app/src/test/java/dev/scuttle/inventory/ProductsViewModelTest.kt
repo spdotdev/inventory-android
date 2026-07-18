@@ -346,9 +346,14 @@ class ProductsViewModelTest {
             assertEquals(epochBefore + 1, vm.state.value.quantityMutationEpoch)
             assertTrue(vm.state.value.quantityMutationFailed)
             // The quantity itself must NOT have silently changed.
-            assertEquals(2, vm.state.value.products.first().quantity)
+            assertEquals(
+                2,
+                vm.state.value.products
+                    .first()
+                    .quantity,
+            )
             // No generic error either — the screen shows the specific message instead.
-            assertNull(vm.state.value.error)
+            assertNull(vm.state.value.errorRes)
         }
 
     @Test
@@ -367,7 +372,12 @@ class ProductsViewModelTest {
 
             assertEquals(epochBefore + 1, vm.state.value.quantityMutationEpoch)
             assertTrue(vm.state.value.quantityMutationFailed)
-            assertEquals(2, vm.state.value.products.first().quantity)
+            assertEquals(
+                2,
+                vm.state.value.products
+                    .first()
+                    .quantity,
+            )
         }
 
     @Test
@@ -619,7 +629,7 @@ class ProductsViewModelTest {
     @Test
     fun a_failed_delete_surfaces_its_error_instead_of_failing_silently() =
         runTest {
-            // The bug: delete()'s failure branch set state.error, then immediately
+            // The bug: delete()'s failure branch set state.errorRes, then immediately
             // called refresh() to revert the optimistic removal — but refresh()
             // routes through the shared launch() helper, which resets
             // error = null the instant its coroutine starts. The error the user
@@ -635,7 +645,7 @@ class ProductsViewModelTest {
 
             vm.delete(productId = 1)
 
-            assertNotNull(vm.state.value.error)
+            assertNotNull(vm.state.value.errorRes)
         }
 
     @Test
@@ -672,7 +682,7 @@ class ProductsViewModelTest {
             vm.undoDelete()
 
             assertEquals(UndoOutcome.FAILURE, vm.state.value.undoResult)
-            assertNull(vm.state.value.error)
+            assertNull(vm.state.value.errorRes)
             // The batch id survives a failed undo — nothing was actually restored.
             assertNotNull(vm.state.value.lastBatchId)
         }
@@ -740,8 +750,8 @@ class ProductsViewModelTest {
 
             vm.load(householdId = 1, shelfId = 1)
 
-            assertEquals("offline", vm.state.value.loadError)
-            assertNull(vm.state.value.error)
+            assertEquals(R.string.error_failed_to_load_products, vm.state.value.loadErrorRes)
+            assertNull(vm.state.value.errorRes)
             assertFalse(vm.state.value.loading)
         }
 
@@ -751,12 +761,12 @@ class ProductsViewModelTest {
             val repo = FakeProductRepository().apply { failList = true }
             val vm = viewModel(products = repo)
             vm.load(householdId = 1, shelfId = 1)
-            assertEquals("offline", vm.state.value.loadError)
+            assertEquals(R.string.error_failed_to_load_products, vm.state.value.loadErrorRes)
 
             repo.failList = false
             vm.refresh()
 
-            assertNull(vm.state.value.loadError)
+            assertNull(vm.state.value.loadErrorRes)
         }
 
     @Test
@@ -771,10 +781,10 @@ class ProductsViewModelTest {
             repo.failDelete = true
 
             vm.delete(productId = 1)
-            assertNotNull(vm.state.value.error)
+            assertNotNull(vm.state.value.errorRes)
 
             // After the Snackbar has surfaced it, the error is consumed so it doesn't re-fire.
             vm.consumeError()
-            assertNull(vm.state.value.error)
+            assertNull(vm.state.value.errorRes)
         }
 }

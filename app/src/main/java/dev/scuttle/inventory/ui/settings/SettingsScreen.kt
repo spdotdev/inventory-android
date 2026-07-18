@@ -146,8 +146,8 @@ fun SettingsScreen(
             }
 
             Text(text = stringResource(R.string.settings_join_section), style = MaterialTheme.typography.titleMedium)
-            joinState.error?.let {
-                ErrorRetry(it, onRetry = joinViewModel::join)
+            joinState.errorRes?.let {
+                ErrorRetry(stringResource(it), onRetry = joinViewModel::join)
             }
             if (joinState.success) {
                 val successMessage =

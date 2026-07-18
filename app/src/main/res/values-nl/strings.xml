@@ -1,6 +1,30 @@
 <resources>
     <string name="app_name">Inventory</string>
 
+    <!-- H3: shared error mapper — zie values/strings.xml voor de Engelse context. -->
+    <string name="error_network_unreachable">Kan de server niet bereiken. Controleer je verbinding en probeer het opnieuw.</string>
+    <string name="error_session_expired">Je sessie is verlopen. Log opnieuw in.</string>
+    <string name="error_forbidden">Je hebt daar geen toegang toe.</string>
+    <string name="error_not_found">Dit kon niet worden gevonden — het is mogelijk verwijderd.</string>
+    <string name="error_sole_owner_transfer_first">Je bent de enige eigenaar — draag eigenaarschap over voordat je dit huishouden verlaat.</string>
+    <string name="error_invalid_input">Controleer je invoer en probeer het opnieuw.</string>
+    <string name="error_too_many_requests">Te veel verzoeken. Wacht even en probeer het opnieuw.</string>
+    <string name="error_server">Serverfout. Probeer het straks opnieuw.</string>
+    <string name="error_generic">Er is iets misgegaan.</string>
+    <string name="error_failed_to_load_products">Producten laden is mislukt.</string>
+    <string name="error_failed_to_delete_product">Product verwijderen is mislukt.</string>
+    <string name="error_failed_to_load_shelves">Planken laden is mislukt.</string>
+    <string name="error_failed_to_delete_location">Locatie verwijderen is mislukt.</string>
+    <string name="error_failed_to_join">Deelnemen is mislukt.</string>
+    <string name="error_failed_to_load_invite">Uitnodiging laden is mislukt.</string>
+    <string name="error_search_failed">Zoeken is mislukt.</string>
+    <string name="error_failed_to_load">Laden is mislukt.</string>
+    <string name="error_failed_to_load_product">Product laden is mislukt.</string>
+    <string name="error_failed_to_save">Opslaan is mislukt.</string>
+    <string name="error_failed_to_upload_image">Afbeelding uploaden is mislukt.</string>
+    <string name="error_failed_to_delete">Verwijderen is mislukt.</string>
+    <string name="error_invalid_navigation_missing_product_id">Ongeldige navigatie — product-ID ontbreekt.</string>
+
     <!-- Auth -->
     <string name="auth_create_account">Account aanmaken</string>
     <string name="auth_sign_in">Inloggen</string>

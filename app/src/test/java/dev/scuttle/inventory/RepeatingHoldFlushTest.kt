@@ -11,14 +11,13 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-@OptIn(ExperimentalCoroutinesApi::class)
-
 /**
  * H1: `onRelease` must fire with the accumulated tick count whether the hold ends normally
  * (pointer up) or the gesture's coroutine is cancelled out from under it (navigate away,
  * backgrounding, config change). See `ui/common/RepeatingIconButton.kt`'s `awaitHoldAndFlush`
  * doc comment for why this is safe to do from `finally` without `NonCancellable`.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 class RepeatingHoldFlushTest {
     @Test
     fun `onRelease fires once with the accumulated ticks on normal release`() =

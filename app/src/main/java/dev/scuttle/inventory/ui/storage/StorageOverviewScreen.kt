@@ -207,8 +207,12 @@ fun StorageOverviewScreen(
                     LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                 }
 
-                state.error?.let {
-                    ErrorRetry(message = it, onRetry = viewModel::refresh, modifier = Modifier.padding(16.dp))
+                state.errorRes?.let {
+                    ErrorRetry(
+                        message = stringResource(it),
+                        onRetry = viewModel::refresh,
+                        modifier = Modifier.padding(16.dp),
+                    )
                 }
 
                 // GAP4-L9: first-run hint for the edit-mode pencil, only where the pencil
@@ -224,7 +228,7 @@ fun StorageOverviewScreen(
                 // Don't show the empty text on a failed load — the ErrorRetry above
                 // already explains it; "No storages yet" alongside would be a false
                 // "your account is empty" (W7).
-                if (state.locations.isEmpty() && !state.loading && state.error == null) {
+                if (state.locations.isEmpty() && !state.loading && state.errorRes == null) {
                     Text(
                         text = stringResource(R.string.storage_overview_empty),
                         modifier = Modifier.padding(16.dp),

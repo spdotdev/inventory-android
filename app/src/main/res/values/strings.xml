@@ -1,6 +1,31 @@
 <resources>
     <string name="app_name">Inventory</string>
 
+    <!-- H3: shared error mapper (data/error/ErrorMapping.kt) — status-code / network messages,
+         then every per-call-site fallback that used to be a hardcoded EN literal in Kotlin. -->
+    <string name="error_network_unreachable">Can\'t reach the server. Check your connection and try again.</string>
+    <string name="error_session_expired">Your session has expired. Please sign in again.</string>
+    <string name="error_forbidden">You don\'t have access to that.</string>
+    <string name="error_not_found">That could not be found — it may have been removed.</string>
+    <string name="error_sole_owner_transfer_first">You\'re the only owner — transfer ownership before leaving this household.</string>
+    <string name="error_invalid_input">Please check your input and try again.</string>
+    <string name="error_too_many_requests">Too many requests. Please wait a moment and try again.</string>
+    <string name="error_server">Server error. Please try again in a moment.</string>
+    <string name="error_generic">Something went wrong.</string>
+    <string name="error_failed_to_load_products">Failed to load products.</string>
+    <string name="error_failed_to_delete_product">Failed to delete product.</string>
+    <string name="error_failed_to_load_shelves">Couldn\'t load shelves.</string>
+    <string name="error_failed_to_delete_location">Failed to delete location.</string>
+    <string name="error_failed_to_join">Failed to join.</string>
+    <string name="error_failed_to_load_invite">Couldn\'t load the invite.</string>
+    <string name="error_search_failed">Search failed.</string>
+    <string name="error_failed_to_load">Failed to load.</string>
+    <string name="error_failed_to_load_product">Failed to load product.</string>
+    <string name="error_failed_to_save">Failed to save.</string>
+    <string name="error_failed_to_upload_image">Failed to upload image.</string>
+    <string name="error_failed_to_delete">Failed to delete.</string>
+    <string name="error_invalid_navigation_missing_product_id">Invalid navigation — missing product ID.</string>
+
     <!-- Auth -->
     <string name="auth_create_account">Create account</string>
     <string name="auth_sign_in">Sign in</string>

@@ -44,7 +44,7 @@ class JoinHouseholdViewModelTest {
         val vm = JoinHouseholdViewModel(FakeHouseholdRepository(), TestHierarchy.store(FakeHouseholdRepository()))
         vm.onCodeChange("ABC")
         assertEquals("ABC", vm.state.value.code)
-        assertNull(vm.state.value.error)
+        assertNull(vm.state.value.errorRes)
         assertFalse(vm.state.value.success)
     }
 
@@ -93,7 +93,7 @@ class JoinHouseholdViewModelTest {
             vm.join()
             assertTrue(vm.state.value.success)
             assertEquals("", vm.state.value.code)
-            assertNull(vm.state.value.error)
+            assertNull(vm.state.value.errorRes)
             assertFalse(vm.state.value.loading)
         }
 
@@ -138,7 +138,7 @@ class JoinHouseholdViewModelTest {
             vm.onCodeChange("BADCODE")
             vm.join()
             assertFalse(vm.state.value.success)
-            assertNotNull(vm.state.value.error)
+            assertNotNull(vm.state.value.errorRes)
             assertFalse(vm.state.value.loading)
         }
 
@@ -152,9 +152,9 @@ class JoinHouseholdViewModelTest {
                 )
             vm.onCodeChange("BAD")
             vm.join()
-            assertNotNull(vm.state.value.error)
+            assertNotNull(vm.state.value.errorRes)
             vm.onCodeChange("NEW")
-            assertNull(vm.state.value.error)
+            assertNull(vm.state.value.errorRes)
         }
 
     @Test

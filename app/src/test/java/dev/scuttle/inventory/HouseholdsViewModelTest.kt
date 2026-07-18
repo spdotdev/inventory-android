@@ -274,7 +274,7 @@ class HouseholdsViewModelTest {
             val repo = FakeHouseholdRepository().apply { failList = true }
             val viewModel = HouseholdsViewModel(repo, TestHierarchy.store(repo))
 
-            assertEquals("offline", viewModel.state.value.error)
+            assertEquals(R.string.error_generic, viewModel.state.value.errorRes)
         }
 
     @Test
@@ -341,8 +341,8 @@ class HouseholdsViewModelTest {
             viewModel.leave(householdId = 1)
 
             assertEquals(
-                "You're the only owner — transfer ownership before leaving this household.",
-                viewModel.state.value.error,
+                R.string.error_sole_owner_transfer_first,
+                viewModel.state.value.errorRes,
             )
         }
 
@@ -387,8 +387,8 @@ class HouseholdsViewModelTest {
 
             viewModel.delete(householdId = 1, nameConfirmation = "wrong")
 
-            assertEquals("name mismatch", viewModel.state.value.deleteError)
-            assertNull(viewModel.state.value.error)
+            assertEquals(R.string.error_generic, viewModel.state.value.deleteErrorRes)
+            assertNull(viewModel.state.value.errorRes)
             assertEquals(1, viewModel.state.value.households.size)
             assertNull(viewModel.state.value.leftHouseholdId)
             assertFalse(viewModel.state.value.loading)
@@ -413,12 +413,12 @@ class HouseholdsViewModelTest {
                 }
             val viewModel = HouseholdsViewModel(repo, TestHierarchy.store(repo))
             viewModel.delete(householdId = 2, nameConfirmation = "wrong")
-            assertEquals("name mismatch", viewModel.state.value.deleteError)
+            assertEquals(R.string.error_generic, viewModel.state.value.deleteErrorRes)
 
             repo.deleteThrows = null
             viewModel.delete(householdId = 2, nameConfirmation = "Office")
 
-            assertNull(viewModel.state.value.deleteError)
+            assertNull(viewModel.state.value.deleteErrorRes)
             assertEquals(2L, viewModel.state.value.leftHouseholdId)
         }
 
@@ -428,11 +428,11 @@ class HouseholdsViewModelTest {
             val repo = FakeHouseholdRepository().apply { deleteThrows = RuntimeException("name mismatch") }
             val viewModel = HouseholdsViewModel(repo, TestHierarchy.store(repo))
             viewModel.delete(householdId = 1, nameConfirmation = "wrong")
-            assertEquals("name mismatch", viewModel.state.value.deleteError)
+            assertEquals(R.string.error_generic, viewModel.state.value.deleteErrorRes)
 
             viewModel.clearDeleteError()
 
-            assertNull(viewModel.state.value.deleteError)
+            assertNull(viewModel.state.value.deleteErrorRes)
             assertEquals(1, viewModel.state.value.households.size)
         }
 

@@ -86,7 +86,7 @@ fun AllStoragesScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val localState by localViewModel.state.collectAsState()
-    val actionError by viewModel.actionError.collectAsState()
+    val actionErrorRes by viewModel.actionErrorRes.collectAsState()
     // M5: edit mode is checkbox multi-select + a single "delete selected" action
     // opening the DeleteStrategyDialog, matching StorageOverview/LocationDetail's
     // grammar — previously this screen alone used a single per-row delete button.
@@ -98,7 +98,12 @@ fun AllStoragesScreen(
     val context = LocalContext.current
     // Surfaces a failed delete (or a failed undo) as a transient snackbar so it
     // isn't silent (W10).
-    SnackbarErrorEffect(actionError, snackbarHostState, onConsumed = viewModel::consumeActionError)
+    // H3: actionErrorRes is an R.string.* id, not a raw literal — resolved via stringResource().
+    SnackbarErrorEffect(
+        error = actionErrorRes?.let { stringResource(it) },
+        snackbarHostState = snackbarHostState,
+        onConsumed = viewModel::consumeActionError,
+    )
 
     // Blocker 2 (final review): this screen's search icon is a single GLOBAL
     // top-bar action, not tied to any one of the household groups rendered below —
@@ -205,11 +210,11 @@ fun AllStoragesScreen(
             ) {
                 Spacer(Modifier.height(4.dp))
 
-                val error = state.error
-                if (error != null && state.entries.isEmpty()) {
+                val errorRes = state.errorRes
+                if (errorRes != null && state.entries.isEmpty()) {
                     // A load failure must not masquerade as an empty account — show
                     // the error with a retry, not "No storages yet" (W3).
-                    ErrorRetry(message = error, onRetry = { viewModel.refresh() })
+                    ErrorRetry(message = stringResource(errorRes), onRetry = { viewModel.refresh() })
                 } else if (state.entries.isEmpty()) {
                     Text(stringResource(R.string.all_storage_empty))
                 }

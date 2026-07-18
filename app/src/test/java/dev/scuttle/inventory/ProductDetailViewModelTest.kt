@@ -186,7 +186,7 @@ class ProductDetailViewModelTest {
             val repo = FakeProductRepository().apply { failList = true }
             val vm = viewModel(savedState(), repo)
 
-            assertNotNull(vm.state.value.loadError)
+            assertNotNull(vm.state.value.loadErrorRes)
             assertFalse(vm.state.value.loading)
         }
 
@@ -221,7 +221,7 @@ class ProductDetailViewModelTest {
             vm.save(ProductEdit("Oat Milk", null, null, false, null))
 
             assertFalse(vm.state.value.saved)
-            assertNotNull(vm.state.value.error)
+            assertNotNull(vm.state.value.errorRes)
         }
 
     @Test
@@ -301,7 +301,7 @@ class ProductDetailViewModelTest {
             vm.undoDelete()
 
             assertEquals(UndoOutcome.FAILURE, vm.state.value.undoResult)
-            assertNull(vm.state.value.error)
+            assertNull(vm.state.value.errorRes)
             // The batch id survives a failed undo — nothing was actually restored.
             assertNotNull(vm.state.value.lastBatchId)
         }
@@ -347,7 +347,7 @@ class ProductDetailViewModelTest {
             vm.delete()
 
             assertFalse(vm.state.value.deleted)
-            assertNotNull(vm.state.value.error)
+            assertNotNull(vm.state.value.errorRes)
         }
 
     @Test
@@ -403,7 +403,7 @@ class ProductDetailViewModelTest {
 
             vm.increment()
 
-            assertNull(vm.state.value.error)
+            assertNull(vm.state.value.errorRes)
             assertTrue(vm.state.value.quantityMutationFailed)
             assertEquals(epochBefore + 1, vm.state.value.quantityMutationEpoch)
             assertFalse(vm.state.value.loading)
@@ -419,7 +419,7 @@ class ProductDetailViewModelTest {
 
             vm.decrement()
 
-            assertNull(vm.state.value.error)
+            assertNull(vm.state.value.errorRes)
             assertTrue(vm.state.value.quantityMutationFailed)
             assertEquals(epochBefore + 1, vm.state.value.quantityMutationEpoch)
         }
@@ -460,10 +460,10 @@ class ProductDetailViewModelTest {
             val vm = viewModel(savedState(), repo)
 
             vm.save(ProductEdit("Oat Milk", null, null, false, null))
-            assertNotNull(vm.state.value.error)
+            assertNotNull(vm.state.value.errorRes)
 
             // After the Snackbar has shown it, the error is consumed so it doesn't re-fire.
             vm.consumeError()
-            assertNull(vm.state.value.error)
+            assertNull(vm.state.value.errorRes)
         }
 }

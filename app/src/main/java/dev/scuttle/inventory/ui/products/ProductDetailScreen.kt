@@ -155,7 +155,12 @@ fun ProductDetailScreen(
     // then are consumed so they don't re-announce; load errors still let the user
     // pull-to-refresh to retry.
     val snackbarHostState = remember { SnackbarHostState() }
-    SnackbarErrorEffect(state.error, snackbarHostState, onConsumed = viewModel::consumeError)
+    // H3: errorRes is an R.string.* id, not a raw literal — resolved here via stringResource().
+    SnackbarErrorEffect(
+        error = state.errorRes?.let { stringResource(it) },
+        snackbarHostState = snackbarHostState,
+        onConsumed = viewModel::consumeError,
+    )
 
     // H2: a failed +/- quantity mutation gets its own specific, localized message instead of
     // the generic `error` snackbar above — see ProductDetailUiState.quantityMutationFailed.
@@ -267,7 +272,7 @@ fun ProductDetailScreen(
                 // Mutation errors are shown via the Scaffold's Snackbar (SnackbarErrorEffect
                 // above); a LOAD failure gets its own persistent inline ErrorRetry (M4) so a
                 // missed/dismissed snackbar doesn't leave a blank screen.
-                state.loadError?.let { ErrorRetry(it, onRetry = viewModel::load) }
+                state.loadErrorRes?.let { ErrorRetry(stringResource(it), onRetry = viewModel::load) }
 
                 // Image section
                 Box(

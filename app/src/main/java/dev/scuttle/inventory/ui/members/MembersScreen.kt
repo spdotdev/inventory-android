@@ -84,7 +84,10 @@ fun MembersScreen(
     val context = LocalContext.current
 
     LaunchedEffect(householdId) { viewModel.load(householdId) }
-    LaunchedEffect(state.error) { state.error?.let { snackbarHostState.showSnackbar(it) } }
+    // H3: errorRes is an R.string.* id, not a raw literal — resolved here via stringResource()
+    // since LaunchedEffect's suspend body isn't itself a @Composable context.
+    val errorText = state.errorRes?.let { stringResource(it) }
+    LaunchedEffect(errorText) { errorText?.let { snackbarHostState.showSnackbar(it) } }
     LaunchedEffect(state.ownershipTransferCount) {
         if (state.ownershipTransferCount > 0) onOwnershipTransferred()
     }

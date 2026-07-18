@@ -128,8 +128,8 @@ fun SearchScreen(
             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
         }
 
-        state.error?.let {
-            ErrorRetry(it, onRetry = viewModel::search)
+        state.errorRes?.let {
+            ErrorRetry(stringResource(it), onRetry = viewModel::search)
         }
 
         if (state.query.isNotBlank() && state.results.isEmpty() && !state.loading) {

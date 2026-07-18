@@ -45,7 +45,8 @@ data class DashboardUiState(
     val favoriteLocationIds: Set<Long> = emptySet(),
     val favoriteShelfIds: Set<Long> = emptySet(),
     val favoriteShelves: List<ShelfEntry> = emptyList(),
-    val error: String? = null,
+    // H3: an R.string.* id, not a raw literal — resolved via stringResource() by the screen.
+    val errorRes: Int? = null,
 ) {
     /**
      * The dashboard is the one screen that aggregates across households (#33), so it
@@ -105,7 +106,7 @@ class DashboardViewModel
                     favoriteLocationIds = favLocs,
                     favoriteShelfIds = favShelves,
                     favoriteShelves = s.allShelves.filter { it.shelf.id in favShelves },
-                    error = s.error,
+                    errorRes = s.errorRes,
                 )
             }.stateIn(viewModelScope, SharingStarted.Eagerly, DashboardUiState())
 

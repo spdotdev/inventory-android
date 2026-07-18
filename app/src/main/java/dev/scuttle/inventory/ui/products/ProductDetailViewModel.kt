@@ -5,8 +5,9 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.dto.ProductDto
-import dev.scuttle.inventory.data.error.toUserMessage
+import dev.scuttle.inventory.data.error.toUserMessageRes
 import dev.scuttle.inventory.data.hierarchy.RestoreRepository
 import dev.scuttle.inventory.data.product.ProductEdit
 import dev.scuttle.inventory.data.product.ProductRepository
@@ -25,11 +26,12 @@ data class ProductDetailUiState(
     // `loading` alone, so the pull spinner doesn't fire on those mutations.
     val refreshing: Boolean = false,
     val product: ProductDto? = null,
-    val error: String? = null,
-    // Distinct from [error] (mutation failures, shown as a Snackbar): a LOAD
+    // H3: an R.string.* id, not a raw literal — resolved via stringResource() in the composable.
+    val errorRes: Int? = null,
+    // Distinct from [errorRes] (mutation failures, shown as a Snackbar): a LOAD
     // failure needs a PERSISTENT inline idiom, since a missed/dismissed
     // snackbar would otherwise leave a blank screen with zero explanation (M4).
-    val loadError: String? = null,
+    val loadErrorRes: Int? = null,
     val saved: Boolean = false,
     val deleted: Boolean = false,
     /** The batch just deleted, for the Undo snackbar. Cleared once consumed. */
@@ -84,7 +86,7 @@ class ProductDetailViewModel
 
         init {
             if (householdId == -1L || shelfId == -1L || productId == -1L) {
-                _state.update { it.copy(loadError = "Invalid navigation — missing product ID.") }
+                _state.update { it.copy(loadErrorRes = R.string.error_invalid_navigation_missing_product_id) }
             } else {
                 load()
             }
@@ -93,7 +95,7 @@ class ProductDetailViewModel
         fun load() {
             if (householdId == -1L || shelfId == -1L || productId == -1L) return
             viewModelScope.launch {
-                _state.update { it.copy(loading = true, refreshing = true, loadError = null) }
+                _state.update { it.copy(loading = true, refreshing = true, loadErrorRes = null) }
                 runCatching { repository.list(householdId, shelfId) }
                     .onSuccess { products ->
                         _state.update {
@@ -111,7 +113,7 @@ class ProductDetailViewModel
                             it.copy(
                                 loading = false,
                                 refreshing = false,
-                                loadError = e.toUserMessage("Failed to load product."),
+                                loadErrorRes = e.toUserMessageRes(R.string.error_failed_to_load_product),
                             )
                         }
                     }
@@ -120,13 +122,18 @@ class ProductDetailViewModel
 
         fun save(edit: ProductEdit) {
             viewModelScope.launch {
-                _state.update { it.copy(loading = true, error = null) }
+                _state.update { it.copy(loading = true, errorRes = null) }
                 runCatching {
                     repository.update(householdId, shelfId, productId, edit)
                 }.onSuccess { updated ->
                     _state.update { it.copy(loading = false, product = updated, saved = true) }
                 }.onFailure { e ->
-                    _state.update { it.copy(loading = false, error = e.toUserMessage("Failed to save.")) }
+                    _state.update {
+                        it.copy(
+                            loading = false,
+                            errorRes = e.toUserMessageRes(R.string.error_failed_to_save),
+                        )
+                    }
                 }
             }
         }
@@ -145,11 +152,16 @@ class ProductDetailViewModel
             val current = _state.value.product ?: return
             if (amount <= 0) return
             viewModelScope.launch {
-                _state.update { it.copy(loading = true, error = null) }
+                _state.update { it.copy(loading = true, errorRes = null) }
                 runCatching { repository.add(householdId, shelfId, current.id, amount) }
                     .onSuccess { updated ->
                         _state.update {
-                            it.copy(loading = false, product = updated, quantityMutationEpoch = it.quantityMutationEpoch + 1)
+                            it.copy(
+                                loading = false,
+                                product = updated,
+                                quantityMutationEpoch =
+                                    it.quantityMutationEpoch + 1,
+                            )
                         }
                     }.onFailure {
                         // H2: no generic `error` here — the screen shows the specific
@@ -172,11 +184,16 @@ class ProductDetailViewModel
             if (current.quantity <= 0 || amount <= 0) return
             val clamped = minOf(amount, current.quantity)
             viewModelScope.launch {
-                _state.update { it.copy(loading = true, error = null) }
+                _state.update { it.copy(loading = true, errorRes = null) }
                 runCatching { repository.remove(householdId, shelfId, current.id, clamped) }
                     .onSuccess { updated ->
                         _state.update {
-                            it.copy(loading = false, product = updated, quantityMutationEpoch = it.quantityMutationEpoch + 1)
+                            it.copy(
+                                loading = false,
+                                product = updated,
+                                quantityMutationEpoch =
+                                    it.quantityMutationEpoch + 1,
+                            )
                         }
                     }.onFailure {
                         _state.update {
@@ -195,27 +212,37 @@ class ProductDetailViewModel
             mimeType: String,
         ) {
             viewModelScope.launch {
-                _state.update { it.copy(loading = true, error = null) }
+                _state.update { it.copy(loading = true, errorRes = null) }
                 runCatching {
                     repository.uploadImage(householdId, shelfId, productId, imageUri, mimeType)
                 }.onSuccess { updated ->
                     _state.update { it.copy(loading = false, product = updated) }
                 }.onFailure { e ->
-                    _state.update { it.copy(loading = false, error = e.toUserMessage("Failed to upload image.")) }
+                    _state.update {
+                        it.copy(
+                            loading = false,
+                            errorRes = e.toUserMessageRes(R.string.error_failed_to_upload_image),
+                        )
+                    }
                 }
             }
         }
 
         fun delete() {
             viewModelScope.launch {
-                _state.update { it.copy(loading = true, error = null) }
+                _state.update { it.copy(loading = true, errorRes = null) }
                 runCatching { repository.delete(householdId, shelfId, productId) }
                     .onSuccess { batchId ->
                         // batchId is server-minted (ProductDeleteResponse) — captured
                         // here so the screen can offer Undo before it navigates away.
                         _state.update { it.copy(loading = false, deleted = true, lastBatchId = batchId) }
                     }.onFailure { e ->
-                        _state.update { it.copy(loading = false, error = e.toUserMessage("Failed to delete.")) }
+                        _state.update {
+                            it.copy(
+                                loading = false,
+                                errorRes = e.toUserMessageRes(R.string.error_failed_to_delete),
+                            )
+                        }
                     }
             }
         }
@@ -242,7 +269,7 @@ class ProductDetailViewModel
         fun consumeUndoResult() = _state.update { it.copy(undoResult = null) }
 
         /** Clears the error after it's been shown once (e.g. surfaced as a Snackbar). */
-        fun consumeError() = _state.update { it.copy(error = null) }
+        fun consumeError() = _state.update { it.copy(errorRes = null) }
 
         /** Clears the one-shot quantity-mutation-failed flag after the UI has shown it. */
         fun consumeQuantityMutationFailed() = _state.update { it.copy(quantityMutationFailed = false) }

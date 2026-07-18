@@ -137,8 +137,8 @@ fun HouseholdsScreen(
             ) {
                 Spacer(Modifier.height(4.dp))
 
-                state.error?.let {
-                    ErrorRetry(it, onRetry = viewModel::refresh)
+                state.errorRes?.let {
+                    ErrorRetry(stringResource(it), onRetry = viewModel::refresh)
                 }
 
                 if (state.households.isEmpty() && !state.loading) {

@@ -122,8 +122,8 @@ fun MissingItemsScreen(
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
 
-            val error = state.error
-            if (error != null && state.items.isEmpty()) {
+            val errorRes = state.errorRes
+            if (errorRes != null && state.items.isEmpty()) {
                 // A failed load must not fall through to "all stocked" — for a
                 // screen whose whole job is surfacing warnings that's the worst
                 // failure mode. Show the error with a retry instead (W4).
@@ -136,7 +136,7 @@ fun MissingItemsScreen(
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    ErrorRetry(message = error, onRetry = viewModel::refresh)
+                    ErrorRetry(message = stringResource(errorRes), onRetry = viewModel::refresh)
                 }
             } else if (state.items.isEmpty() && !state.loading) {
                 Column(

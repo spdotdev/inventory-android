@@ -175,7 +175,7 @@ class HierarchyStoreTest {
             store.refresh(userInitiated = true)
 
             val loaded = store.state.first { !it.loading }
-            assertNull(loaded.error)
+            assertNull(loaded.errorRes)
             assertFalse(loaded.refreshing)
             assertEquals(1, loaded.entries.size)
             assertEquals(1, loaded.missingItemCount)
@@ -246,8 +246,8 @@ class HierarchyStoreTest {
 
             store.refresh(userInitiated = true)
 
-            val failed = store.state.first { it.error != null }
-            assertNotNull(failed.error)
+            val failed = store.state.first { it.errorRes != null }
+            assertNotNull(failed.errorRes)
             assertFalse(failed.loading)
             assertFalse(failed.refreshing)
         }
@@ -352,7 +352,7 @@ class HierarchyStoreTest {
             val cleared = store.state.value
             assertTrue(cleared.entries.isEmpty())
             assertEquals(0, cleared.missingItemCount)
-            assertNull(cleared.error)
+            assertNull(cleared.errorRes)
         }
 
     @Test

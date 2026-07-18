@@ -176,7 +176,7 @@ fun HouseholdEditScreen(
                         .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(24.dp),
             ) {
-                state.error?.let { ErrorRetry(it, onRetry = viewModel::refresh) }
+                state.errorRes?.let { ErrorRetry(stringResource(it), onRetry = viewModel::refresh) }
 
                 // Rename + theme are restructure-scoped (HouseholdPolicy's doc comment
                 // describes both as Owner/Admin actions): a Member sees the name as
@@ -457,9 +457,9 @@ fun HouseholdEditScreen(
                         },
                         modifier = Modifier.fillMaxWidth().testTag("household-delete-confirm-field"),
                     )
-                    state.deleteError?.let {
+                    state.deleteErrorRes?.let {
                         Text(
-                            text = it,
+                            text = stringResource(it),
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier.testTag("household-delete-error"),

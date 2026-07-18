@@ -39,6 +39,6 @@ class InviteViewModelTest {
 
             viewModel.load(householdId = 1)
 
-            assertEquals("offline", viewModel.state.value.error)
+            assertEquals(R.string.error_failed_to_load_invite, viewModel.state.value.errorRes)
         }
 }

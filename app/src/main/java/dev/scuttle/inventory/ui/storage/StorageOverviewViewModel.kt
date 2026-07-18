@@ -3,9 +3,10 @@ package dev.scuttle.inventory.ui.storage
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.HierarchyStore
 import dev.scuttle.inventory.data.dto.LocationDto
-import dev.scuttle.inventory.data.error.toUserMessage
+import dev.scuttle.inventory.data.error.toUserMessageRes
 import dev.scuttle.inventory.data.hierarchy.LocationDeleteStrategy
 import dev.scuttle.inventory.data.hierarchy.LocationDeletion
 import dev.scuttle.inventory.data.hierarchy.RestoreRepository
@@ -37,7 +38,8 @@ data class StorageOverviewUiState(
     val locations: List<LocationDto> = emptyList(),
     val newName: String = "",
     val newType: String = "freezer",
-    val error: String? = null,
+    // H3: an R.string.* id, not a raw literal — resolved via stringResource() in the composable.
+    val errorRes: Int? = null,
     val editMode: Boolean = false,
     val selected: Set<Long> = emptySet(),
     /**
@@ -123,7 +125,7 @@ class StorageOverviewViewModel
                 ?.canRestructure ?: true
 
         fun onNewNameChange(value: String) =
-            _state.update { it.copy(newName = value.take(MAX_LOCATION_NAME_LENGTH), error = null) }
+            _state.update { it.copy(newName = value.take(MAX_LOCATION_NAME_LENGTH), errorRes = null) }
 
         fun onTypeSelect(type: String) = _state.update { it.copy(newType = type) }
 
@@ -442,7 +444,7 @@ class StorageOverviewViewModel
             block: suspend () -> Unit,
         ): Job =
             viewModelScope.launch {
-                _state.update { it.copy(loading = true, refreshing = refreshing, error = null) }
+                _state.update { it.copy(loading = true, refreshing = refreshing, errorRes = null) }
                 val result = runCatching { block() }
                 result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
                 _state.update { state ->
@@ -452,7 +454,7 @@ class StorageOverviewViewModel
                             state.copy(
                                 loading = false,
                                 refreshing = false,
-                                error = error.toUserMessage("Something went wrong."),
+                                errorRes = error.toUserMessageRes(R.string.error_generic),
                             )
                         },
                     )

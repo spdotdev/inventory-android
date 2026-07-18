@@ -332,7 +332,7 @@ class DrawerViewModelTest {
     @Test
     fun refresh_failure_surfaces_error_and_clears_loading() =
         runTest {
-            // W3: a failed load must reach DrawerUiState.error so AllStorages can show
+            // W3: a failed load must reach DrawerUiState.errorRes so AllStorages can show
             // a retry instead of the "No storages yet" empty state.
             val store =
                 HierarchyStore(
@@ -346,8 +346,8 @@ class DrawerViewModelTest {
 
             store.refresh(userInitiated = true)
 
-            val failed = vm.state.first { it.error != null }
-            assertNotNull(failed.error)
+            val failed = vm.state.first { it.errorRes != null }
+            assertNotNull(failed.errorRes)
             assertFalse(failed.loading)
             assertFalse(failed.refreshing)
             assertTrue(failed.entries.isEmpty())
@@ -638,7 +638,7 @@ class DrawerViewModelTest {
             assertEquals(listOf<Long?>(null), repo.targetIdsUsed)
             assertEquals(repo.batchIdsUsed.first(), vm.state.value.lastBatchId)
             assertNull(vm.state.value.pendingDelete)
-            assertNull(vm.actionError.value)
+            assertNull(vm.actionErrorRes.value)
         }
 
     @Test
@@ -798,7 +798,7 @@ class DrawerViewModelTest {
 
             vm.confirmDelete(LocationDeleteStrategy.DELETE_CONTENTS, targetId = null)
 
-            val message = vm.actionError.first { it != null }
+            val message = vm.actionErrorRes.first { it != null }
             assertNotNull(message)
             assertNull(vm.state.value.pendingDelete)
             assertNull(vm.state.value.lastBatchId)
@@ -873,7 +873,7 @@ class DrawerViewModelTest {
             vm.undoDelete()
 
             assertEquals(UndoOutcome.FAILURE, vm.state.value.undoResult)
-            assertNull(vm.actionError.value)
+            assertNull(vm.actionErrorRes.value)
             // The batch id survives a failed undo — nothing was actually restored.
             assertNotNull(vm.state.value.lastBatchId)
         }
@@ -1186,6 +1186,6 @@ class DrawerViewModelTest {
 
             assertEquals(listOf(10L), repo.deletedLocationIds)
             assertNotNull(vm.state.value.lastBatchId)
-            assertNotNull(vm.actionError.value)
+            assertNotNull(vm.actionErrorRes.value)
         }
 }

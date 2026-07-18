@@ -3,9 +3,10 @@ package dev.scuttle.inventory.ui.shelves
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.HierarchyStore
 import dev.scuttle.inventory.data.dto.ShelfDto
-import dev.scuttle.inventory.data.error.toUserMessage
+import dev.scuttle.inventory.data.error.toUserMessageRes
 import dev.scuttle.inventory.data.hierarchy.RestoreRepository
 import dev.scuttle.inventory.data.hierarchy.ShelfDeleteStrategy
 import dev.scuttle.inventory.data.hierarchy.ShelfDeletion
@@ -35,7 +36,8 @@ data class ShelvesUiState(
     val refreshing: Boolean = false,
     val shelves: List<ShelfDto> = emptyList(),
     val newName: String = "",
-    val error: String? = null,
+    // H3: an R.string.* id, not a raw literal — resolved via stringResource() in the composable.
+    val errorRes: Int? = null,
     val editMode: Boolean = false,
     /**
      * Mirrors this household's HouseholdDto.can_restructure (via
@@ -138,7 +140,7 @@ class ShelvesViewModel
                 ?.canRestructure ?: true
 
         fun onNewNameChange(value: String) =
-            _state.update { it.copy(newName = value.take(MAX_SHELF_NAME_LENGTH), error = null) }
+            _state.update { it.copy(newName = value.take(MAX_SHELF_NAME_LENGTH), errorRes = null) }
 
         fun refresh() {
             val h = householdId ?: return
@@ -475,7 +477,7 @@ class ShelvesViewModel
             block: suspend () -> Unit,
         ): Job =
             viewModelScope.launch {
-                _state.update { it.copy(loading = true, refreshing = refreshing, error = null) }
+                _state.update { it.copy(loading = true, refreshing = refreshing, errorRes = null) }
                 val result = runCatching { block() }
                 result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
                 _state.update { state ->
@@ -485,7 +487,7 @@ class ShelvesViewModel
                             state.copy(
                                 loading = false,
                                 refreshing = false,
-                                error = error.toUserMessage("Something went wrong."),
+                                errorRes = error.toUserMessageRes(R.string.error_generic),
                             )
                         },
                     )

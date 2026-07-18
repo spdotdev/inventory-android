@@ -3,7 +3,8 @@ package dev.scuttle.inventory.ui.invite
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dev.scuttle.inventory.data.error.toUserMessage
+import dev.scuttle.inventory.R
+import dev.scuttle.inventory.data.error.toUserMessageRes
 import dev.scuttle.inventory.data.invite.InviteRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,7 +17,8 @@ data class InviteUiState(
     val loading: Boolean = false,
     val code: String = "",
     val link: String = "",
-    val error: String? = null,
+    // H3: an R.string.* id, not a raw literal — resolved via stringResource() in the composable.
+    val errorRes: Int? = null,
 )
 
 @HiltViewModel
@@ -34,13 +36,16 @@ class InviteViewModel
             if (this.householdId == householdId && _state.value.code.isNotEmpty()) return
             this.householdId = householdId
             viewModelScope.launch {
-                _state.update { it.copy(loading = true, error = null) }
+                _state.update { it.copy(loading = true, errorRes = null) }
                 val result = runCatching { repository.invite(householdId) }
                 _state.update { state ->
                     result.fold(
                         onSuccess = { invite -> state.copy(loading = false, code = invite.code, link = invite.link) },
                         onFailure = { error ->
-                            state.copy(loading = false, error = error.toUserMessage("Couldn't load the invite."))
+                            state.copy(
+                                loading = false,
+                                errorRes = error.toUserMessageRes(R.string.error_failed_to_load_invite),
+                            )
                         },
                     )
                 }

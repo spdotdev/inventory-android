@@ -19,6 +19,7 @@
     <ID>ConstructorParameterNaming:SearchDtos.kt$SearchResultDto$val household_id: Long? = null</ID>
     <ID>ConstructorParameterNaming:SearchDtos.kt$SearchResultDto$val location_id: Long? = null</ID>
     <ID>ConstructorParameterNaming:SearchDtos.kt$SearchResultDto$val shelf_id: Long? = null</ID>
+    <ID>ConstructorParameterNaming:SearchDtos.kt$SearchResultDto$val shelf_is_system: Boolean = false</ID>
     <ID>ConstructorParameterNaming:ShelfDtos.kt$DeleteShelfRequest$val deletion_batch_id: String</ID>
     <ID>ConstructorParameterNaming:ShelfDtos.kt$DeleteShelfRequest$val target_shelf_id: Long? = null</ID>
     <ID>ConstructorParameterNaming:ShelfDtos.kt$ShelfDto$val is_system: Boolean = false</ID>
@@ -219,6 +220,7 @@
     <ID>TooManyFunctions:DrawerViewModel.kt$DrawerViewModel : ViewModel</ID>
     <ID>TooManyFunctions:HouseholdsViewModel.kt$HouseholdsViewModel : ViewModel</ID>
     <ID>TooManyFunctions:NetworkModule.kt$NetworkModule</ID>
+    <ID>TooManyFunctions:ProductDetailViewModel.kt$ProductDetailViewModel : ViewModel</ID>
     <ID>TooManyFunctions:ProductRepositoryImpl.kt$ProductRepositoryImpl : ProductRepository</ID>
     <ID>TooManyFunctions:ProductsViewModel.kt$ProductsViewModel : ViewModel</ID>
     <ID>TooManyFunctions:RepositoryModule.kt$RepositoryModule</ID>

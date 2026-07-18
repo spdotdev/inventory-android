@@ -42,7 +42,13 @@ class SearchResultPathTextTest {
     fun `a system shelf uses the localized unsorted label instead of the server's shelf name`() {
         val text =
             searchResultPathText(
-                result = result(location = "Kitchen", shelf = "Unsorted", path = "Kitchen › Unsorted", shelfIsSystem = true),
+                result =
+                    result(
+                        location = "Kitchen",
+                        shelf = "Unsorted",
+                        path = "Kitchen › Unsorted",
+                        shelfIsSystem = true,
+                    ),
                 unsortedShelfLabel = "Ongesorteerd",
                 locationUnavailableLabel = "Locatie niet beschikbaar",
             )

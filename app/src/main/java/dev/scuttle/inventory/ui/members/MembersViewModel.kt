@@ -3,8 +3,9 @@ package dev.scuttle.inventory.ui.members
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.dto.MemberDto
-import dev.scuttle.inventory.data.error.toUserMessage
+import dev.scuttle.inventory.data.error.toUserMessageRes
 import dev.scuttle.inventory.data.member.MemberRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,7 +18,8 @@ import javax.inject.Inject
 data class MembersUiState(
     val loading: Boolean = false,
     val members: List<MemberDto> = emptyList(),
-    val error: String? = null,
+    // H3: an R.string.* id, not a raw literal — resolved via stringResource() in the composable.
+    val errorRes: Int? = null,
     // Incremented (never reset) each time transferOwnership() succeeds. The
     // caller (MembersScreen, via MainActivity) observes this as a one-shot
     // event to refresh whatever ELSE derives "is the viewer the owner" —
@@ -133,14 +135,14 @@ class MembersViewModel
 
         private fun launchLoading(block: suspend () -> Unit) {
             viewModelScope.launch {
-                _state.update { it.copy(loading = true, error = null) }
+                _state.update { it.copy(loading = true, errorRes = null) }
                 val result = runCatching { block() }
                 result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
                 _state.update { state ->
                     result.fold(
                         onSuccess = { state.copy(loading = false) },
                         onFailure = { e ->
-                            state.copy(loading = false, error = e.toUserMessage("Something went wrong."))
+                            state.copy(loading = false, errorRes = e.toUserMessageRes(R.string.error_generic))
                         },
                     )
                 }

@@ -15,7 +15,8 @@ data class MissingItemsUiState(
     val loading: Boolean = false,
     val refreshing: Boolean = false,
     val items: List<MissingItem> = emptyList(),
-    val error: String? = null,
+    // H3: an R.string.* id, not a raw literal — resolved via stringResource() by the screen.
+    val errorRes: Int? = null,
 )
 
 @HiltViewModel
@@ -31,7 +32,7 @@ class MissingItemsViewModel
                         loading = s.loading,
                         refreshing = s.refreshing,
                         items = s.missingItems,
-                        error = s.error,
+                        errorRes = s.errorRes,
                     )
                 }.stateIn(viewModelScope, SharingStarted.Eagerly, MissingItemsUiState())
 
