@@ -6,10 +6,14 @@ Working agreement for Claude Code. Read before any task. Canonical spec lives in
 `docs/specs/api-contract.md`); Android-specific planning in this repo's own `docs/`.
 
 ## What this is
-The **sole client** for the Inventory product — a native **Android (Kotlin/Compose)**
-app talking to a headless Laravel API at `https://inventory.{domain}/api/v1`. Private,
-multi-user, multi-household inventory. General-purpose; freezer/fridge/pantry are
-*example* storage types, not the brand.
+The **sole `/api/v1` client** for the Inventory product — a native **Android
+(Kotlin/Compose)** app talking to a headless Laravel API at
+`https://inventory.{domain}/api/v1`. Private, multi-user, multi-household inventory.
+General-purpose; freezer/fridge/pantry are *example* storage types, not the brand.
+Since 2026-07-18 the web app (Blade+Alpine in `inventory-laravel`) is a
+**first-class equal surface** with full feature parity — this app's one permanent
+exclusive is **barcode scanning**. Keep capability cross-hints accurate in both
+directions when features move.
 
 ## Stack
 - Kotlin, Jetpack **Compose**, single-activity
