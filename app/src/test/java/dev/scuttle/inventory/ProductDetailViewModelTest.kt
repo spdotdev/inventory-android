@@ -2,12 +2,17 @@ package dev.scuttle.inventory
 
 import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
+import dev.scuttle.inventory.data.HierarchyStore
+import dev.scuttle.inventory.data.dto.HouseholdDto
 import dev.scuttle.inventory.data.dto.ProductDto
 import dev.scuttle.inventory.data.hierarchy.RestoreRepository
+import dev.scuttle.inventory.data.household.HouseholdRepository
 import dev.scuttle.inventory.data.product.ProductEdit
 import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.ui.hierarchy.UndoOutcome
 import dev.scuttle.inventory.ui.products.ProductDetailViewModel
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -151,11 +156,27 @@ class ProductDetailViewModelTest {
         }
     }
 
+    /** Mirrors ProductsViewModelTest's minimal fake — no household data needed by these tests. */
+    private class FakeHouseholdRepository : HouseholdRepository {
+        override fun getCached() = emptyList<HouseholdDto>()
+
+        override suspend fun list() = emptyList<HouseholdDto>()
+
+        override suspend fun create(name: String) =
+            HouseholdDto(1, name, "", role = "admin", can_restructure = true, can_manage_members = true)
+
+        override suspend fun join(code: String) =
+            HouseholdDto(1, "", code, role = "admin", can_restructure = true, can_manage_members = true)
+
+        override suspend fun leave(householdId: Long) = Unit
+    }
+
     private fun viewModel(
         savedStateHandle: SavedStateHandle = savedState(),
         repository: ProductRepository = FakeProductRepository(),
         restoreRepository: RestoreRepository = FakeRestoreRepository(),
-    ): ProductDetailViewModel = ProductDetailViewModel(savedStateHandle, repository, restoreRepository)
+        hierarchyStore: HierarchyStore = TestHierarchy.store(FakeHouseholdRepository()),
+    ): ProductDetailViewModel = ProductDetailViewModel(savedStateHandle, repository, restoreRepository, hierarchyStore)
 
     @Test
     fun load_finds_product_by_id() =
@@ -465,5 +486,138 @@ class ProductDetailViewModelTest {
             // After the Snackbar has shown it, the error is consumed so it doesn't re-fire.
             vm.consumeError()
             assertNull(vm.state.value.errorRes)
+        }
+
+    // GAP6-M1: a remote household.changed ping arrives as hierarchyStore.refresh() only
+    // (LiveUpdates.kt) — ProductDetailViewModel must silently re-fetch this product so
+    // the screen doesn't go stale (e.g. after another member edits/moves it) until a
+    // manual pull-to-refresh.
+    private class CountingProductRepository(
+        items: List<ProductDto> = emptyList(),
+    ) : ProductRepository {
+        val items = items.toMutableList()
+        var listCalls = 0
+        var inFlight: CompletableDeferred<Unit>? = null
+
+        override fun getCached(
+            householdId: Long,
+            shelfId: Long,
+        ): List<ProductDto>? = null
+
+        override suspend fun list(
+            householdId: Long,
+            shelfId: Long,
+        ): List<ProductDto> {
+            listCalls++
+            inFlight?.await()
+            return items.toList()
+        }
+
+        override suspend fun create(
+            householdId: Long,
+            shelfId: Long,
+            name: String,
+            quantity: Int,
+            code: String?,
+        ) = throw NotImplementedError()
+
+        override suspend fun update(
+            householdId: Long,
+            shelfId: Long,
+            productId: Long,
+            edit: ProductEdit,
+        ) = throw NotImplementedError()
+
+        override suspend fun add(
+            householdId: Long,
+            shelfId: Long,
+            productId: Long,
+            amount: Int,
+        ) = throw NotImplementedError()
+
+        override suspend fun remove(
+            householdId: Long,
+            shelfId: Long,
+            productId: Long,
+            amount: Int,
+        ) = throw NotImplementedError()
+
+        override suspend fun move(
+            householdId: Long,
+            shelfId: Long,
+            productId: Long,
+            targetShelfId: Long,
+        ) = throw NotImplementedError()
+
+        override suspend fun uploadImage(
+            householdId: Long,
+            shelfId: Long,
+            productId: Long,
+            imageUri: Uri,
+            mimeType: String,
+        ) = throw NotImplementedError()
+
+        override suspend fun delete(
+            householdId: Long,
+            shelfId: Long,
+            productId: Long,
+        ) = throw NotImplementedError()
+    }
+
+    // NOTE: init both calls load() directly AND subscribes to hierarchyStore.state, whose
+    // initial (already-current) value replays immediately under UnconfinedTestDispatcher —
+    // so a fresh VM makes 2 list() calls at construction, not 1 (both no-ops here, matching
+    // HouseholdsViewModel's own observeHierarchyStore() init-time behavior).
+    @Test
+    fun a_hierarchy_store_refresh_re_fetches_the_product() =
+        runTest {
+            val product = ProductDto(id = 1, name = "Milk", quantity = 2, shelf_id = 1)
+            val repo = CountingProductRepository(listOf(product))
+            val store = TestHierarchy.store(FakeHouseholdRepository())
+            viewModel(repository = repo, hierarchyStore = store)
+            val callsAfterInit = repo.listCalls
+
+            store.refresh()
+
+            assertEquals(callsAfterInit + 1, repo.listCalls)
+        }
+
+    @Test
+    fun no_store_refresh_signal_triggers_no_extra_fetch_beyond_init() =
+        runTest {
+            val product = ProductDto(id = 1, name = "Milk", quantity = 2, shelf_id = 1)
+            val repo = CountingProductRepository(listOf(product))
+            val store = TestHierarchy.store(FakeHouseholdRepository())
+            viewModel(repository = repo, hierarchyStore = store)
+            val callsAfterInit = repo.listCalls
+
+            // No store.refresh() call at all — the store's own state never changes again,
+            // so nothing beyond init's own fetches happens.
+            assertEquals(callsAfterInit, repo.listCalls)
+        }
+
+    @Test
+    fun a_hierarchy_store_refresh_during_an_in_flight_local_mutation_does_not_clobber_it() =
+        runTest {
+            val product = ProductDto(id = 1, name = "Milk", quantity = 2, shelf_id = 1)
+            val gate = CompletableDeferred<Unit>()
+            val repo = CountingProductRepository(listOf(product))
+            val store = TestHierarchy.store(FakeHouseholdRepository())
+            val vm = viewModel(repository = repo, hierarchyStore = store)
+            val callsAfterInit = repo.listCalls
+
+            // Start a local reload that stays in-flight (e.g. a manual pull-to-refresh).
+            repo.inFlight = gate
+            vm.load()
+            assertTrue(vm.state.value.loading)
+            assertEquals(callsAfterInit + 1, repo.listCalls)
+
+            // A remote ping lands mid-flight — must not fire another, clobbering fetch.
+            store.refresh()
+            assertEquals(callsAfterInit + 1, repo.listCalls)
+
+            gate.complete(Unit)
+            advanceUntilIdle()
+            assertEquals(callsAfterInit + 1, repo.listCalls)
         }
 }

@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.scuttle.inventory.R
+import dev.scuttle.inventory.data.HierarchyStore
 import dev.scuttle.inventory.data.dto.ProductDto
 import dev.scuttle.inventory.data.error.toUserMessageRes
 import dev.scuttle.inventory.data.hierarchy.RestoreRepository
@@ -64,6 +65,7 @@ class ProductDetailViewModel
         savedStateHandle: SavedStateHandle,
         private val repository: ProductRepository,
         private val restoreRepository: RestoreRepository,
+        private val hierarchyStore: HierarchyStore,
     ) : ViewModel() {
         private val householdId: Long =
             savedStateHandle["householdId"] ?: run {
@@ -89,6 +91,21 @@ class ProductDetailViewModel
                 _state.update { it.copy(loadErrorRes = R.string.error_invalid_navigation_missing_product_id) }
             } else {
                 load()
+            }
+            // GAP6-M1: a remote household.changed ping (another member edits/moves/
+            // deletes this exact product) arrives via LiveUpdates as
+            // hierarchyStore.refresh() only — nothing previously re-fetched this
+            // screen's product, so it went stale until a manual pull-to-refresh.
+            // Mirrors HouseholdsViewModel's observeHierarchyStore() (bc0ea63): only
+            // react once the store's own refresh has LANDED (!loading), and only
+            // while this VM has no mutation of its own in flight (!loading on
+            // _state) so a remote ping never clobbers an in-flight local save/
+            // increment/decrement/delete.
+            viewModelScope.launch {
+                hierarchyStore.state.collect { hierarchyState ->
+                    if (hierarchyState.loading || _state.value.loading) return@collect
+                    load()
+                }
             }
         }
 

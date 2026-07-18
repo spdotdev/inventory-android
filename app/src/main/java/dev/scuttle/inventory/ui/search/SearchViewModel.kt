@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.scuttle.inventory.R
+import dev.scuttle.inventory.data.HierarchyStore
 import dev.scuttle.inventory.data.dto.SearchResultDto
 import dev.scuttle.inventory.data.error.toUserMessageRes
 import dev.scuttle.inventory.data.search.SearchRepository
@@ -42,12 +43,32 @@ class SearchViewModel
     @Inject
     constructor(
         private val repository: SearchRepository,
+        private val hierarchyStore: HierarchyStore,
     ) : ViewModel() {
         private var householdId: Long? = null
         private var searchJob: Job? = null
 
         private val _state = MutableStateFlow(SearchUiState())
         val state: StateFlow<SearchUiState> = _state.asStateFlow()
+
+        init {
+            // GAP6-M1: a remote household.changed ping (someone else adds/moves/deletes
+            // a product) arrives via LiveUpdates as hierarchyStore.refresh() only —
+            // nothing previously re-ran an already-active search, so a visible result
+            // list went stale until a manual pull-to-refresh. Mirrors
+            // HouseholdsViewModel's observeHierarchyStore() (bc0ea63): only react once
+            // the store's own refresh has LANDED (!loading), and only while this VM has
+            // no mutation of its own in flight (!loading on _state) so a remote ping
+            // never clobbers/duplicates an in-flight local search. Silently re-runs the
+            // CURRENT query only when one is active — an idle search box has nothing to
+            // refresh.
+            viewModelScope.launch {
+                hierarchyStore.state.collect { hierarchyState ->
+                    if (hierarchyState.loading || _state.value.loading) return@collect
+                    if (_state.value.query.isNotBlank()) search()
+                }
+            }
+        }
 
         /**
          * Only resets [state] when [householdId] actually CHANGED, not on every call

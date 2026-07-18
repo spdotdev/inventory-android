@@ -1,9 +1,12 @@
 package dev.scuttle.inventory
 
+import dev.scuttle.inventory.data.dto.HouseholdDto
 import dev.scuttle.inventory.data.dto.SearchResultDto
+import dev.scuttle.inventory.data.household.HouseholdRepository
 import dev.scuttle.inventory.data.search.SearchRepository
 import dev.scuttle.inventory.ui.common.SortOrder
 import dev.scuttle.inventory.ui.search.SearchViewModel
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -14,6 +17,24 @@ import org.junit.Test
 class SearchViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
+
+    /** Mirrors ProductsViewModelTest's minimal fake — no household data needed by these tests. */
+    private class FakeHouseholdRepository : HouseholdRepository {
+        override fun getCached() = emptyList<HouseholdDto>()
+
+        override suspend fun list() = emptyList<HouseholdDto>()
+
+        override suspend fun create(name: String) =
+            HouseholdDto(1, name, "", role = "admin", can_restructure = true, can_manage_members = true)
+
+        override suspend fun join(code: String) =
+            HouseholdDto(1, "", code, role = "admin", can_restructure = true, can_manage_members = true)
+
+        override suspend fun leave(householdId: Long) = Unit
+    }
+
+    private fun viewModel(repository: SearchRepository) =
+        SearchViewModel(repository, TestHierarchy.store(FakeHouseholdRepository()))
 
     private class FakeSearchRepository : SearchRepository {
         var failNext = false
@@ -42,7 +63,7 @@ class SearchViewModelTest {
     @Test
     fun query_returns_matches_with_path() =
         runTest {
-            val viewModel = SearchViewModel(FakeSearchRepository())
+            val viewModel = viewModel(FakeSearchRepository())
             viewModel.setHousehold(1)
 
             viewModel.onQueryChange("ice")
@@ -56,7 +77,7 @@ class SearchViewModelTest {
     @Test
     fun blank_query_clears_results() =
         runTest {
-            val viewModel = SearchViewModel(FakeSearchRepository())
+            val viewModel = viewModel(FakeSearchRepository())
             viewModel.setHousehold(1)
             viewModel.onQueryChange("ice")
             advanceUntilIdle()
@@ -77,7 +98,7 @@ class SearchViewModelTest {
     @Test
     fun sort_reorders_results_without_refetching() =
         runTest {
-            val viewModel = SearchViewModel(FakeSearchRepository())
+            val viewModel = viewModel(FakeSearchRepository())
             viewModel.setHousehold(1)
             // A query that returns both catalog rows (Peas qty 4, Vanilla ice cream qty 1).
             viewModel.onQueryChange("a")
@@ -103,7 +124,7 @@ class SearchViewModelTest {
     fun search_failure_surfaces_an_error() =
         runTest {
             val repo = FakeSearchRepository().apply { failNext = true }
-            val viewModel = SearchViewModel(repo)
+            val viewModel = viewModel(repo)
             viewModel.setHousehold(1)
 
             viewModel.onQueryChange("ice")
@@ -126,7 +147,7 @@ class SearchViewModelTest {
     @Test
     fun searchFor_runs_immediately_with_no_debounce() =
         runTest {
-            val viewModel = SearchViewModel(FakeSearchRepository())
+            val viewModel = viewModel(FakeSearchRepository())
             viewModel.setHousehold(1)
 
             viewModel.searchFor("ice")
@@ -139,5 +160,77 @@ class SearchViewModelTest {
                     .first()
                     .name,
             )
+        }
+
+    // GAP6-M1: a remote household.changed ping arrives as hierarchyStore.refresh() only
+    // (LiveUpdates.kt) — SearchViewModel must silently re-run the CURRENT query so a
+    // visible result list doesn't go stale until a manual pull-to-refresh.
+    private class CountingSearchRepository : SearchRepository {
+        var calls = 0
+        var inFlight: CompletableDeferred<Unit>? = null
+
+        override suspend fun search(
+            householdId: Long,
+            query: String,
+        ): List<SearchResultDto> {
+            calls++
+            inFlight?.await()
+            return emptyList()
+        }
+    }
+
+    @Test
+    fun a_hierarchy_store_refresh_re_runs_the_active_query() =
+        runTest {
+            val repo = CountingSearchRepository()
+            val householdRepo = FakeHouseholdRepository()
+            val store = TestHierarchy.store(householdRepo)
+            val viewModel = SearchViewModel(repo, store)
+            viewModel.setHousehold(1)
+            viewModel.searchFor("ice")
+            assertEquals(1, repo.calls)
+
+            store.refresh()
+
+            assertEquals(2, repo.calls)
+        }
+
+    @Test
+    fun a_hierarchy_store_refresh_with_no_active_query_triggers_no_fetch() =
+        runTest {
+            val repo = CountingSearchRepository()
+            val householdRepo = FakeHouseholdRepository()
+            val store = TestHierarchy.store(householdRepo)
+            val viewModel = SearchViewModel(repo, store)
+            viewModel.setHousehold(1)
+            assertEquals(0, repo.calls)
+
+            store.refresh()
+
+            assertEquals(0, repo.calls)
+        }
+
+    @Test
+    fun a_hierarchy_store_refresh_during_an_in_flight_local_search_does_not_clobber_it() =
+        runTest {
+            val repo = CountingSearchRepository()
+            val gate = CompletableDeferred<Unit>()
+            repo.inFlight = gate
+            val householdRepo = FakeHouseholdRepository()
+            val store = TestHierarchy.store(householdRepo)
+            val viewModel = SearchViewModel(repo, store)
+            viewModel.setHousehold(1)
+            viewModel.searchFor("ice")
+            // The local search is still suspended awaiting `gate`, so state.loading is true.
+            assertTrue(viewModel.state.value.loading)
+            assertEquals(1, repo.calls)
+
+            // A remote ping lands mid-flight — must not fire a second, clobbering search.
+            store.refresh()
+            assertEquals(1, repo.calls)
+
+            gate.complete(Unit)
+            advanceUntilIdle()
+            assertEquals(1, repo.calls)
         }
 }
