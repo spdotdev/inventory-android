@@ -54,17 +54,17 @@ fun ForgotPasswordScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         IconButton(onClick = onBack) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
         }
 
         Spacer(Modifier.height(8.dp))
 
-        Text("Reset password", style = MaterialTheme.typography.headlineSmall)
+        Text(stringResource(R.string.forgot_password_title), style = MaterialTheme.typography.headlineSmall)
 
         if (state.sent) {
             Spacer(Modifier.height(8.dp))
             Text(
-                "Check your email — we've sent a reset link if that address is registered.",
+                stringResource(R.string.forgot_password_sent_message),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -76,7 +76,7 @@ fun ForgotPasswordScreen(
             }
         } else {
             Text(
-                "Enter your email address and we'll send you a link to reset your password.",
+                stringResource(R.string.forgot_password_prompt),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -84,7 +84,7 @@ fun ForgotPasswordScreen(
             OutlinedTextField(
                 value = state.email,
                 onValueChange = viewModel::onEmailChange,
-                label = { Text("Email") },
+                label = { Text(stringResource(R.string.auth_field_email)) },
                 singleLine = true,
                 keyboardOptions =
                     KeyboardOptions(
@@ -124,7 +124,7 @@ fun ForgotPasswordScreen(
                         strokeWidth = 2.dp,
                     )
                 } else {
-                    Text("Send reset link")
+                    Text(stringResource(R.string.forgot_password_submit))
                 }
             }
         }

@@ -19,6 +19,10 @@
     <string name="auth_forgot_password">Forgot your password?</string>
     <!-- GAP5-M6: sent-state "try again" affordance on the forgot-password screen. -->
     <string name="forgot_password_try_again">Wrong email? Try again</string>
+    <string name="forgot_password_title">Reset password</string>
+    <string name="forgot_password_sent_message">Check your email — we\'ve sent a reset link if that address is registered.</string>
+    <string name="forgot_password_prompt">Enter your email address and we\'ll send you a link to reset your password.</string>
+    <string name="forgot_password_submit">Send reset link</string>
 
     <!-- Dashboard -->
     <string name="dashboard_title">Dashboard</string>
