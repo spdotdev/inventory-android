@@ -9,6 +9,7 @@ data class ProductEdit(
     val description: String?,
     val code: String?,
     val isMandatory: Boolean,
+    val isStarred: Boolean,
     val lowStockThreshold: Int?,
 )
 

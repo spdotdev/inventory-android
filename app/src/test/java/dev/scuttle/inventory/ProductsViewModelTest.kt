@@ -553,7 +553,15 @@ class ProductsViewModelTest {
 
             vm.update(
                 productId = 1,
-                edit = ProductEdit("Oat Milk", "lactose free", null, isMandatory = true, lowStockThreshold = null),
+                edit =
+                    ProductEdit(
+                        "Oat Milk",
+                        "lactose free",
+                        null,
+                        isMandatory = true,
+                        isStarred = false,
+                        lowStockThreshold = null,
+                    ),
             )
 
             val product =

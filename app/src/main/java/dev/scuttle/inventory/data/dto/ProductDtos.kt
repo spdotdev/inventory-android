@@ -14,6 +14,8 @@ data class ProductDto(
     val description: String? = null,
     val code: String? = null,
     val is_mandatory: Boolean? = false,
+    // Starred marker (a MARKER, never a sort key — see HierarchyOrder).
+    val is_starred: Boolean? = false,
     val image_url: String? = null,
     // "Running low" at quantity <= threshold; null = feature off for this product.
     val low_stock_threshold: Int? = null,
@@ -61,6 +63,7 @@ data class UpdateProductRequest(
     val description: String?,
     val code: String?,
     val is_mandatory: Boolean,
+    val is_starred: Boolean,
     val low_stock_threshold: Int?,
 )
 

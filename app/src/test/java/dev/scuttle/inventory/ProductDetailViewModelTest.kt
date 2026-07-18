@@ -217,7 +217,16 @@ class ProductDetailViewModelTest {
             val product = ProductDto(id = 1, name = "Milk", quantity = 2, shelf_id = 1)
             val vm = viewModel(savedState(), FakeProductRepository(listOf(product)))
 
-            vm.save(ProductEdit("Oat Milk", "lactose free", null, isMandatory = true, lowStockThreshold = null))
+            vm.save(
+                ProductEdit(
+                    "Oat Milk",
+                    "lactose free",
+                    null,
+                    isMandatory = true,
+                    isStarred = false,
+                    lowStockThreshold = null,
+                ),
+            )
 
             assertTrue(vm.state.value.saved)
             assertEquals(
@@ -239,7 +248,7 @@ class ProductDetailViewModelTest {
             val repo = FakeProductRepository(listOf(product)).apply { failUpdate = true }
             val vm = viewModel(savedState(), repo)
 
-            vm.save(ProductEdit("Oat Milk", null, null, false, null))
+            vm.save(ProductEdit("Oat Milk", null, null, false, false, null))
 
             assertFalse(vm.state.value.saved)
             assertNotNull(vm.state.value.errorRes)
@@ -252,7 +261,7 @@ class ProductDetailViewModelTest {
             val repo = FakeProductRepository(listOf(product))
             val vm = viewModel(savedState(), repo)
 
-            vm.save(ProductEdit("Eggs", null, null, isMandatory = true, lowStockThreshold = null))
+            vm.save(ProductEdit("Eggs", null, null, isMandatory = true, isStarred = false, lowStockThreshold = null))
 
             assertTrue(repo.items.first().is_mandatory == true)
         }
@@ -480,7 +489,7 @@ class ProductDetailViewModelTest {
             val repo = FakeProductRepository(listOf(product)).apply { failUpdate = true }
             val vm = viewModel(savedState(), repo)
 
-            vm.save(ProductEdit("Oat Milk", null, null, false, null))
+            vm.save(ProductEdit("Oat Milk", null, null, false, false, null))
             assertNotNull(vm.state.value.errorRes)
 
             // After the Snackbar has shown it, the error is consumed so it doesn't re-fire.

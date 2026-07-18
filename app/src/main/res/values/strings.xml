@@ -212,6 +212,8 @@
     <string name="product_detail_field_name">Name</string>
     <string name="product_detail_field_description">Description</string>
     <string name="product_detail_field_code">Product code / barcode</string>
+    <string name="product_detail_starred_label">Starred</string>
+    <string name="product_detail_starred_hint">Mark as a favourite. Doesn\'t change the order.</string>
     <string name="product_detail_mandatory_label">Mandatory on this shelf</string>
     <string name="product_detail_mandatory_hint">At 0, this lands on the Missing list and triggers the dashboard warning</string>
     <string name="product_detail_field_low_stock">Low-stock warning at</string>

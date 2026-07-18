@@ -62,6 +62,7 @@ class ProductRepositoryImpl
                         edit.description,
                         edit.code,
                         edit.isMandatory,
+                        edit.isStarred,
                         edit.lowStockThreshold,
                     ),
                 ).data

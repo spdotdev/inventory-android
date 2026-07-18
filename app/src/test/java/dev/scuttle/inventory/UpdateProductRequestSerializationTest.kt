@@ -25,13 +25,14 @@ class UpdateProductRequestSerializationTest {
                     description = null,
                     code = null,
                     is_mandatory = false,
+                    is_starred = false,
                     low_stock_threshold = null,
                 ),
             )
 
-        assertEquals(
-            """{"name":"Milk","description":null,"code":null,"is_mandatory":false,"low_stock_threshold":null}""",
-            body,
-        )
+        val expected =
+            """{"name":"Milk","description":null,"code":null,""" +
+                """"is_mandatory":false,"is_starred":false,"low_stock_threshold":null}"""
+        assertEquals(expected, body)
     }
 }

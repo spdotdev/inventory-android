@@ -201,6 +201,8 @@
     <string name="product_detail_field_name">Naam</string>
     <string name="product_detail_field_description">Omschrijving</string>
     <string name="product_detail_field_code">Productcode / barcode</string>
+    <string name="product_detail_starred_label">Met ster</string>
+    <string name="product_detail_starred_hint">Markeer als favoriet. Verandert de volgorde niet.</string>
     <string name="product_detail_mandatory_label">Verplicht op deze plank</string>
     <string name="product_detail_mandatory_hint">Bij 0 komt dit op de lijst Ontbrekend en verschijnt de waarschuwing op het dashboard</string>
     <string name="product_detail_field_low_stock">Voorraadwaarschuwing bij</string>

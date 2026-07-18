@@ -113,6 +113,7 @@ fun ProductDetailScreen(
     var description by rememberSaveable(product?.id) { mutableStateOf(product?.description ?: "") }
     var code by rememberSaveable(product?.id) { mutableStateOf(product?.code ?: "") }
     var isMandatory by rememberSaveable(product?.id) { mutableStateOf(product?.is_mandatory ?: false) }
+    var isStarred by rememberSaveable(product?.id) { mutableStateOf(product?.is_starred ?: false) }
     // Kept as text so the field can be empty (= threshold off); parsed on save.
     var lowStockThreshold by rememberSaveable(product?.id) {
         mutableStateOf(product?.low_stock_threshold?.toString() ?: "")
@@ -127,6 +128,7 @@ fun ProductDetailScreen(
             description = it.description ?: ""
             code = it.code ?: ""
             isMandatory = it.is_mandatory ?: false
+            isStarred = it.is_starred ?: false
             lowStockThreshold = it.low_stock_threshold?.toString() ?: ""
         }
     }
@@ -241,6 +243,7 @@ fun ProductDetailScreen(
                                     description = description.takeIf { it.isNotBlank() },
                                     code = code.takeIf { it.isNotBlank() },
                                     isMandatory = isMandatory,
+                                    isStarred = isStarred,
                                     lowStockThreshold = lowStockThreshold.toIntOrNull()?.takeIf { it > 0 },
                                 ),
                             )
@@ -478,6 +481,25 @@ fun ProductDetailScreen(
                         )
                     }
                     Switch(checked = isMandatory, onCheckedChange = { isMandatory = it })
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            stringResource(R.string.product_detail_starred_label),
+                            style = MaterialTheme.typography.bodyLarge,
+                        )
+                        Text(
+                            stringResource(R.string.product_detail_starred_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Switch(checked = isStarred, onCheckedChange = { isStarred = it })
                 }
 
                 OutlinedTextField(
