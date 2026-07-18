@@ -50,6 +50,10 @@ fun SearchScreen(
     onBack: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
     onOpenProduct: (householdId: Long, shelfId: Long, productId: Long) -> Unit = { _, _, _ -> },
+    // Scan-originated zero-result CTA (GAP-5 H6): "Add a product with this
+    // barcode" hands the household + scanned code back to the caller, which
+    // routes to a place a product can be created carrying that code.
+    onAddProductForCode: (householdId: Long, code: String) -> Unit = { _, _ -> },
     viewModel: SearchViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -125,6 +129,14 @@ fun SearchScreen(
 
         if (state.query.isNotBlank() && state.results.isEmpty() && !state.loading) {
             Text(text = stringResource(R.string.search_no_results))
+            // Only for a scan-originated miss (GAP-5 H6): the scanner turned up
+            // nothing to look up, so offer to create a product carrying that same
+            // code instead of leaving the user at a dead end.
+            if (state.scanOriginated) {
+                TextButton(onClick = { onAddProductForCode(householdId, state.query.trim()) }) {
+                    Text(stringResource(R.string.search_no_results_add_product_cta))
+                }
+            }
         }
 
         if (state.results.isNotEmpty()) {

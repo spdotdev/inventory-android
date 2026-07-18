@@ -590,11 +590,21 @@ private fun InventoryNavHost(
                 arguments = listOf(navArgument("householdId") { type = NavType.LongType }),
             ) { entry ->
                 val householdId = entry.arguments?.getLong("householdId") ?: return@composable
+                // Scan-originated zero-result CTA delivery (GAP-5 H6): the code set by
+                // SEARCH's onAddProductForCode below, right after navigating here — same
+                // savedStateHandle-on-the-just-pushed-entry mechanism as LOCATION's
+                // scanned_code. Read once via the entry's own StateFlow, then explicitly
+                // consumed by the screen so the hint doesn't re-fire on recomposition.
+                val pendingBarcodeCode by entry.savedStateHandle
+                    .getStateFlow<String?>("scanned_code", null)
+                    .collectAsState()
                 StorageOverviewScreen(
                     householdId = householdId,
                     onBack = { navController.popBackStack() },
                     onOpenLocation = { navController.navigate(Routes.location(householdId, it)) },
                     onOpenSearch = { navController.navigate(Routes.search(householdId)) },
+                    pendingBarcodeCode = pendingBarcodeCode,
+                    onPendingBarcodeConsumed = { entry.savedStateHandle["scanned_code"] = null },
                 )
             }
 
@@ -618,6 +628,16 @@ private fun InventoryNavHost(
                     onOpenSettings = onOpenSettings,
                     onOpenProduct = { hhId, shelfId, productId ->
                         navController.navigate(Routes.productDetail(hhId, shelfId, productId))
+                    },
+                    // GAP-5 H6, scoped down: no full pre-filled create-from-search flow
+                    // yet — navigate to the household's storage overview and carry the
+                    // scanned code along via the same savedStateHandle-on-the-new-entry
+                    // mechanism LOCATION's scan delivery uses, with a Snackbar hint
+                    // there. The user still has to open a shelf and add a product with
+                    // this code themselves; see StorageOverviewScreen's doc comment.
+                    onAddProductForCode = { hhId, code ->
+                        navController.navigate(Routes.storage(hhId))
+                        navController.currentBackStackEntry?.savedStateHandle?.set("scanned_code", code)
                     },
                 )
             }

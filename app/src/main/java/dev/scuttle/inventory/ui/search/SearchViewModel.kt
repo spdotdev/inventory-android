@@ -23,6 +23,12 @@ data class SearchUiState(
     val results: List<SearchResultDto> = emptyList(),
     val error: String? = null,
     val sort: SortOrder = SortOrder.NAME_ASC,
+    // True only when [query] arrived via [SearchViewModel.searchFor] (the
+    // scan-to-lookup flow), never from typed input (GAP-5 H6) — gates the
+    // "Add a product with this barcode" CTA on a zero-result search so it
+    // never appears for an ordinary typed miss where "this barcode" wouldn't
+    // even make sense.
+    val scanOriginated: Boolean = false,
 ) {
     /** Results after the user's local sort — the server query is the filter here. */
     val sortedResults: List<SearchResultDto>
@@ -63,7 +69,7 @@ class SearchViewModel
         }
 
         fun onQueryChange(value: String) {
-            _state.update { it.copy(query = value, error = null) }
+            _state.update { it.copy(query = value, error = null, scanOriginated = false) }
             searchJob?.cancel()
             searchJob =
                 viewModelScope.launch {
@@ -84,7 +90,7 @@ class SearchViewModel
          */
         fun searchFor(query: String) {
             searchJob?.cancel()
-            _state.update { it.copy(query = query, error = null) }
+            _state.update { it.copy(query = query, error = null, scanOriginated = true) }
             searchJob = viewModelScope.launch { doSearch() }
         }
 

@@ -85,6 +85,14 @@ fun StorageOverviewScreen(
     onBack: () -> Unit = {},
     onOpenLocation: (Long) -> Unit = {},
     onOpenSearch: () -> Unit = {},
+    // Scoped-down handoff from a scan-originated zero-result search (GAP-5 H6,
+    // MainActivity's savedStateHandle delivery): non-null once, right after
+    // arriving here from that CTA. There's no attach-on-create wiring yet from
+    // here into a shelf's add-product flow — this just tells the user the code
+    // is ready and where the code came from is remembered, via a one-shot
+    // Snackbar hint; see [onPendingBarcodeConsumed].
+    pendingBarcodeCode: String? = null,
+    onPendingBarcodeConsumed: () -> Unit = {},
     viewModel: StorageOverviewViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -97,6 +105,14 @@ fun StorageOverviewScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(householdId) { viewModel.load(householdId) }
+
+    val pendingBarcodeHint = stringResource(R.string.storage_pending_barcode_hint)
+    LaunchedEffect(pendingBarcodeCode) {
+        if (pendingBarcodeCode != null) {
+            snackbarHostState.showSnackbar(pendingBarcodeHint)
+            onPendingBarcodeConsumed()
+        }
+    }
 
     val statusBarInsets = WindowInsets.statusBars
     Scaffold(
