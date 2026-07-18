@@ -164,8 +164,21 @@ fun SearchScreen(
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = contentAlpha),
                     )
+                    // GAP5-L2: an all-blank location AND shelf used to fall through to
+                    // "${location} › ${shelf}" -> a bare " › " with nothing on either
+                    // side. Reuse the same "Location unavailable" caption the
+                    // !isTappable branch below already shows (M9), rather than a raw
+                    // separator with no content.
+                    val pathText =
+                        result.path.ifBlank {
+                            if (result.location.isBlank() && result.shelf.isBlank()) {
+                                stringResource(R.string.search_result_location_unavailable)
+                            } else {
+                                "${result.location} › ${result.shelf}"
+                            }
+                        }
                     Text(
-                        text = result.path.ifBlank { "${result.location} › ${result.shelf}" },
+                        text = pathText,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = contentAlpha),
                     )
