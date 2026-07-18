@@ -90,7 +90,9 @@
     <string name="household_edit_title">Edit household</string>
     <string name="household_edit_appearance_label">Appearance</string>
     <string name="household_edit_danger_zone_title">Danger zone</string>
-    <string name="household_edit_danger_zone_body">Leaving removes your access to this household.</string>
+    <!-- GAP5-M3: covers both actions in the card (Leave always shown; Delete only
+         to the Owner), not just Leave. -->
+    <string name="household_edit_danger_zone_body">Leaving removes your access to this household. Deleting removes it — every location, shelf, and product — for everyone, permanently.</string>
     <string name="household_edit_members_title">Members</string>
     <string name="household_edit_owner_leave_title">You\'re the owner</string>
     <string name="household_edit_owner_leave_body">Transfer ownership to another member before leaving, or delete the household instead.</string>
@@ -98,8 +100,13 @@
     <string name="household_edit_readonly_hint">Only the owner and admins can edit this household.</string>
     <string name="household_delete">Delete household</string>
     <string name="household_delete_dialog_title">Delete %1$s?</string>
-    <string name="household_delete_dialog_body">This permanently deletes the household and everything in it, for every member. This cannot be undone.</string>
+    <!-- GAP5-M1: names the scope explicitly (locations/shelves/products, every
+         member) rather than a vague "everything in it" — a per-member count isn't
+         cheaply available here without a new fetch (see HouseholdEditScreen doc). -->
+    <string name="household_delete_dialog_body">This permanently deletes every location, shelf, and product in this household — for every member. This cannot be undone.</string>
     <string name="household_delete_field_placeholder">Type the household name to confirm</string>
+    <!-- GAP5-M2: shown as the confirm field's supportingText once it's non-empty and doesn't match. -->
+    <string name="household_delete_field_mismatch">Doesn\'t match the household name yet</string>
 
     <!-- H3: cross-household selection reset (AllStoragesScreen) -->
     <string name="selection_cleared_switched_household">Selection cleared — now selecting in %1$s</string>

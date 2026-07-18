@@ -90,7 +90,7 @@
     <string name="household_edit_title">Huishouden bewerken</string>
     <string name="household_edit_appearance_label">Uiterlijk</string>
     <string name="household_edit_danger_zone_title">Gevarenzone</string>
-    <string name="household_edit_danger_zone_body">Als je het huishouden verlaat, verlies je je toegang ertoe.</string>
+    <string name="household_edit_danger_zone_body">Als je het huishouden verlaat, verlies je je toegang ertoe. Verwijderen verwijdert het — elke locatie, plank en product — permanent voor iedereen.</string>
     <string name="household_edit_members_title">Leden</string>
     <string name="household_edit_owner_leave_title">Je bent de eigenaar</string>
     <string name="household_edit_owner_leave_body">Draag het eigenaarschap over aan een ander lid voordat je vertrekt, of verwijder het huishouden in plaats daarvan.</string>
@@ -98,8 +98,9 @@
     <string name="household_edit_readonly_hint">Alleen de eigenaar en beheerders kunnen dit huishouden bewerken.</string>
     <string name="household_delete">Huishouden verwijderen</string>
     <string name="household_delete_dialog_title">%1$s verwijderen?</string>
-    <string name="household_delete_dialog_body">Dit verwijdert het huishouden en alles daarin permanent, voor alle leden. Dit kan niet ongedaan worden gemaakt.</string>
+    <string name="household_delete_dialog_body">Dit verwijdert permanent elke locatie, plank en product in dit huishouden — voor alle leden. Dit kan niet ongedaan worden gemaakt.</string>
     <string name="household_delete_field_placeholder">Typ de naam van het huishouden ter bevestiging</string>
+    <string name="household_delete_field_mismatch">Komt nog niet overeen met de naam van het huishouden</string>
 
     <!-- H3: cross-household selection reset (AllStoragesScreen) -->
     <string name="selection_cleared_switched_household">Selectie gewist — je selecteert nu in %1$s</string>

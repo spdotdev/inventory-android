@@ -435,6 +435,11 @@ fun HouseholdEditScreen(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(stringResource(R.string.household_delete_dialog_body))
+                    // GAP5-M2: a non-empty, non-matching value gets an inline error
+                    // (isError + supportingText) instead of a silently-disabled
+                    // button — an empty field just stays plain/disabled, no error.
+                    val trimmedMatches = deleteNameInput.trim() == household.name
+                    val showMismatch = deleteNameInput.isNotEmpty() && !trimmedMatches
                     OutlinedTextField(
                         value = deleteNameInput,
                         onValueChange = {
@@ -444,6 +449,12 @@ fun HouseholdEditScreen(
                         placeholder = { Text(stringResource(R.string.household_delete_field_placeholder)) },
                         singleLine = true,
                         enabled = !state.loading,
+                        isError = showMismatch,
+                        supportingText = {
+                            if (showMismatch) {
+                                Text(stringResource(R.string.household_delete_field_mismatch))
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth().testTag("household-delete-confirm-field"),
                     )
                     state.deleteError?.let {
@@ -466,8 +477,11 @@ fun HouseholdEditScreen(
             },
             confirmButton = {
                 TextButton(
-                    onClick = { viewModel.delete(householdId, deleteNameInput) },
-                    enabled = deleteNameInput == household.name && !state.loading,
+                    onClick = { viewModel.delete(householdId, deleteNameInput.trim()) },
+                    // GAP5-M2: trim the comparison — a trailing/leading space typed
+                    // (or pasted) around an otherwise-correct name used to leave the
+                    // button mystery-disabled forever.
+                    enabled = deleteNameInput.trim() == household.name && !state.loading,
                     modifier = Modifier.testTag("household-delete-confirm-button"),
                 ) {
                     Text(stringResource(R.string.household_delete), color = MaterialTheme.colorScheme.error)
