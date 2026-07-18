@@ -47,12 +47,25 @@ object NetworkModule {
                 .Builder()
                 .addInterceptor(authInterceptor)
         if (BuildConfig.DEBUG) {
-            builder.addInterceptor(
-                HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY },
-            )
+            builder.addInterceptor(buildLoggingInterceptor())
         }
         return builder.build()
     }
+
+    /**
+     * Distributed tester APKs are debug builds, so this interceptor ships. Level must
+     * never be BODY: request bodies carry plaintext passwords and Google id_tokens, and
+     * BODY also prints the Authorization bearer header — all of it into logcat, readable
+     * by anything with log access. HEADERS + redaction keeps request lines useful
+     * without leaking credentials.
+     */
+    internal fun buildLoggingInterceptor(
+        logger: HttpLoggingInterceptor.Logger = HttpLoggingInterceptor.Logger.DEFAULT,
+    ): HttpLoggingInterceptor =
+        HttpLoggingInterceptor(logger).apply {
+            level = HttpLoggingInterceptor.Level.HEADERS
+            redactHeader("Authorization")
+        }
 
     @Provides
     @Singleton
