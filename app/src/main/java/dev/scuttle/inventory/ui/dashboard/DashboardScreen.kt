@@ -168,42 +168,52 @@ fun DashboardScreen(
 
                 state.error?.let { ErrorRetry(it, onRetry = viewModel::refresh) }
 
-                // Stat cards. The caption belongs to the row, so they're grouped in
-                // their own Column rather than taking the page's 16dp rhythm.
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        StatCard(
-                            label = stringResource(R.string.dashboard_stat_locations),
-                            value = state.totalLocations.toString(),
-                            modifier = Modifier.weight(1f),
-                            onClick = onOpenAllStorage,
-                        )
-                        StatCard(
-                            label = stringResource(R.string.dashboard_stat_shelves),
-                            value = state.totalShelves.toString(),
-                            modifier = Modifier.weight(1f),
-                            onClick = onOpenAllStorage,
-                        )
-                        StatCard(
-                            label = stringResource(R.string.dashboard_stat_products),
-                            value = state.totalProducts.toString(),
-                            modifier = Modifier.weight(1f),
-                            onClick = openSearch,
-                        )
-                    }
+                // M11: distinct from the "no household at all" dialog above — this is
+                // an active household with zero locations. Gated on locationStats
+                // itself (not a stat number, which can read 0 for other reasons too,
+                // e.g. a household with locations but no products yet) so it only
+                // appears when there's genuinely nothing to show, and replaces the
+                // otherwise-bare all-zero stat row rather than sitting alongside it.
+                if (state.households.isNotEmpty() && state.locationStats.isEmpty() && !state.loading) {
+                    EmptyLocationsCard(onAddLocation = onOpenAllStorage)
+                } else {
+                    // Stat cards. The caption belongs to the row, so they're grouped in
+                    // their own Column rather than taking the page's 16dp rhythm.
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            StatCard(
+                                label = stringResource(R.string.dashboard_stat_locations),
+                                value = state.totalLocations.toString(),
+                                modifier = Modifier.weight(1f),
+                                onClick = onOpenAllStorage,
+                            )
+                            StatCard(
+                                label = stringResource(R.string.dashboard_stat_shelves),
+                                value = state.totalShelves.toString(),
+                                modifier = Modifier.weight(1f),
+                                onClick = onOpenAllStorage,
+                            )
+                            StatCard(
+                                label = stringResource(R.string.dashboard_stat_products),
+                                value = state.totalProducts.toString(),
+                                modifier = Modifier.weight(1f),
+                                onClick = openSearch,
+                            )
+                        }
 
-                    // These numbers sum every household; say so rather than let them
-                    // read as one household's (#33).
-                    if (state.showHouseholdAttribution) {
-                        Text(
-                            stringResource(R.string.dashboard_across_households, state.households.size),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                        )
+                        // These numbers sum every household; say so rather than let them
+                        // read as one household's (#33).
+                        if (state.showHouseholdAttribution) {
+                            Text(
+                                stringResource(R.string.dashboard_across_households, state.households.size),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.align(Alignment.CenterHorizontally),
+                            )
+                        }
                     }
                 }
 
@@ -282,6 +292,32 @@ fun DashboardScreen(
                 onOpenSearch(householdId)
             },
         )
+    }
+}
+
+/** M11: zero-state shown when the active household has no locations yet. */
+@Composable
+private fun EmptyLocationsCard(onAddLocation: () -> Unit) {
+    FrostCard(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                stringResource(R.string.dashboard_empty_locations_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                stringResource(R.string.dashboard_empty_locations_text),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Button(onClick = onAddLocation) {
+                Text(stringResource(R.string.dashboard_empty_locations_cta))
+            }
+        }
     }
 }
 

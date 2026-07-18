@@ -201,6 +201,9 @@
     <string name="storage_pending_barcode_hint">Barcode klaar — open een schap en voeg een product toe om te koppelen.</string>
     <string name="search_result_qty">Aantal: %s</string>
     <string name="search_result_location_unavailable">Locatie niet beschikbaar</string>
+    <string name="dashboard_empty_locations_title">Nog niets hier</string>
+    <string name="dashboard_empty_locations_text">Voeg je eerste opslaglocatie toe om te beginnen.</string>
+    <string name="dashboard_empty_locations_cta">Opslaglocatie toevoegen</string>
     <string name="search_choose_household_title">In welk huishouden zoeken?</string>
 
     <!-- Settings -->
