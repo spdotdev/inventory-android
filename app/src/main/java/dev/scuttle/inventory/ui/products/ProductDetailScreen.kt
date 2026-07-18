@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -70,6 +71,7 @@ import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.product.ProductEdit
 import dev.scuttle.inventory.ui.common.ErrorRetry
 import dev.scuttle.inventory.ui.common.SnackbarErrorEffect
+import dev.scuttle.inventory.ui.common.repeatingClickable
 import dev.scuttle.inventory.ui.hierarchy.UndoOutcome
 import kotlinx.coroutines.flow.first
 import java.io.File
@@ -302,26 +304,57 @@ fun ProductDetailScreen(
                 if (product != null) {
                     val decreaseDesc = stringResource(R.string.products_pane_decrease_cd, product.name)
                     val increaseDesc = stringResource(R.string.products_pane_increase_cd, product.name)
+                    // GAP-5 M10: same shared repeatingClickable as ProductsPane's row
+                    // stepper — accumulate the held delta locally, send ONE
+                    // increment()/decrement() call on release. See
+                    // ui/common/RepeatingIconButton.kt's doc comment for why this
+                    // (not one network call per tick) fits the always-online,
+                    // server-authoritative model.
+                    var pendingDelta by remember(product.id) { mutableStateOf(0) }
+                    LaunchedEffect(product.quantity) { pendingDelta = 0 }
+                    val displayedQuantity = (product.quantity + pendingDelta).coerceAtLeast(0)
+                    val decreaseInteractionSource = remember { MutableInteractionSource() }
+                    val increaseInteractionSource = remember { MutableInteractionSource() }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         OutlinedButton(
-                            onClick = viewModel::decrement,
-                            enabled = !state.loading && product.quantity > 0,
-                            modifier = Modifier.semantics { contentDescription = decreaseDesc },
+                            onClick = {},
+                            interactionSource = decreaseInteractionSource,
+                            enabled = !state.loading && displayedQuantity > 0,
+                            modifier =
+                                Modifier
+                                    .semantics { contentDescription = decreaseDesc }
+                                    .repeatingClickable(
+                                        interactionSource = decreaseInteractionSource,
+                                        enabled = !state.loading && displayedQuantity > 0,
+                                        onTick = {
+                                            pendingDelta = (pendingDelta - 1).coerceAtLeast(-product.quantity)
+                                        },
+                                        onRelease = { ticks -> if (ticks > 0) viewModel.decrement(ticks) },
+                                    ),
                         ) {
                             Text("−")
                         }
                         Text(
-                            text = product.quantity.toString(),
+                            text = displayedQuantity.toString(),
                             style = MaterialTheme.typography.headlineSmall,
                         )
                         OutlinedButton(
-                            onClick = viewModel::increment,
+                            onClick = {},
+                            interactionSource = increaseInteractionSource,
                             enabled = !state.loading,
-                            modifier = Modifier.semantics { contentDescription = increaseDesc },
+                            modifier =
+                                Modifier
+                                    .semantics { contentDescription = increaseDesc }
+                                    .repeatingClickable(
+                                        interactionSource = increaseInteractionSource,
+                                        enabled = !state.loading,
+                                        onTick = { pendingDelta++ },
+                                        onRelease = { ticks -> if (ticks > 0) viewModel.increment(ticks) },
+                                    ),
                         ) {
                             Text("+")
                         }

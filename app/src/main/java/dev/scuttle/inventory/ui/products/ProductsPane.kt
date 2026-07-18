@@ -1,6 +1,7 @@
 package dev.scuttle.inventory.ui.products
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -62,6 +63,7 @@ import dev.scuttle.inventory.ui.common.ErrorRetry
 import dev.scuttle.inventory.ui.common.SnackbarErrorEffect
 import dev.scuttle.inventory.ui.common.SortMenu
 import dev.scuttle.inventory.ui.common.SortOrder
+import dev.scuttle.inventory.ui.common.repeatingClickable
 import dev.scuttle.inventory.ui.common.shelfDisplayName
 import dev.scuttle.inventory.ui.hierarchy.UndoOutcome
 import dev.scuttle.inventory.ui.theme.FrostCard
@@ -247,6 +249,18 @@ fun ProductsPane(
                 val increaseDesc = stringResource(R.string.products_pane_increase_cd, product.name)
                 val moveDesc = stringResource(R.string.products_pane_move_cd, product.name)
 
+                // GAP-5 M10: press-and-hold auto-repeat. onTick only moves this LOCAL
+                // delta (no network call per tick — see repeatingClickable's doc
+                // comment for why); one accumulated increment()/decrement() call
+                // fires on release. pendingDelta resets once the server's own
+                // quantity arrives, so a released hold never gets stuck showing a
+                // stale locally-guessed number.
+                var pendingDelta by remember(product.id) { mutableStateOf(0) }
+                LaunchedEffect(product.quantity) { pendingDelta = 0 }
+                val displayedQuantity = (product.quantity + pendingDelta).coerceAtLeast(0)
+                val decreaseInteractionSource = remember { MutableInteractionSource() }
+                val increaseInteractionSource = remember { MutableInteractionSource() }
+
                 val swipeState =
                     rememberSwipeToDismissBoxState(
                         confirmValueChange = { value ->
@@ -347,17 +361,28 @@ fun ProductsPane(
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 ) {
                                     OutlinedButton(
-                                        onClick = { viewModel.decrement(product.id) },
-                                        enabled = !state.loading && product.quantity > 0,
+                                        onClick = {},
+                                        interactionSource = decreaseInteractionSource,
+                                        enabled = !state.loading && displayedQuantity > 0,
                                         modifier =
-                                            Modifier.semantics {
-                                                contentDescription = decreaseDesc
-                                            },
+                                            Modifier
+                                                .semantics { contentDescription = decreaseDesc }
+                                                .repeatingClickable(
+                                                    interactionSource = decreaseInteractionSource,
+                                                    enabled = !state.loading && displayedQuantity > 0,
+                                                    onTick = {
+                                                        pendingDelta =
+                                                            (pendingDelta - 1).coerceAtLeast(-product.quantity)
+                                                    },
+                                                    onRelease = { ticks ->
+                                                        if (ticks > 0) viewModel.decrement(product.id, ticks)
+                                                    },
+                                                ),
                                     ) {
                                         Text("−")
                                     }
                                     Text(
-                                        text = product.quantity.toString(),
+                                        text = displayedQuantity.toString(),
                                         color =
                                             if (isMandatoryWarning) {
                                                 MaterialTheme.colorScheme.error
@@ -366,12 +391,20 @@ fun ProductsPane(
                                             },
                                     )
                                     OutlinedButton(
-                                        onClick = { viewModel.increment(product.id) },
+                                        onClick = {},
+                                        interactionSource = increaseInteractionSource,
                                         enabled = !state.loading,
                                         modifier =
-                                            Modifier.semantics {
-                                                contentDescription = increaseDesc
-                                            },
+                                            Modifier
+                                                .semantics { contentDescription = increaseDesc }
+                                                .repeatingClickable(
+                                                    interactionSource = increaseInteractionSource,
+                                                    enabled = !state.loading,
+                                                    onTick = { pendingDelta++ },
+                                                    onRelease = { ticks ->
+                                                        if (ticks > 0) viewModel.increment(product.id, ticks)
+                                                    },
+                                                ),
                                     ) {
                                         Text("+")
                                     }

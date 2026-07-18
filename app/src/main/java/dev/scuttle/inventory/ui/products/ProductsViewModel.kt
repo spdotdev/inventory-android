@@ -280,7 +280,10 @@ class ProductsViewModel
 
         fun consumeUndoResult() = _state.update { it.copy(undoResult = null) }
 
-        fun increment(productId: Long) = mutateOne { h, s -> productRepository.add(h, s, productId, 1) }
+        fun increment(
+            productId: Long,
+            amount: Int = 1,
+        ) = mutateOne { h, s -> productRepository.add(h, s, productId, amount) }
 
         /**
          * Barcode scan outcome (Phase 2): a code matching a product on this shelf
@@ -300,14 +303,16 @@ class ProductsViewModel
         /** Clears the one-shot scan result after the UI has shown it. */
         fun consumeScanResult() = _state.update { it.copy(scanResult = null) }
 
-        fun decrement(productId: Long) {
-            if (_state.value.products
+        fun decrement(
+            productId: Long,
+            amount: Int = 1,
+        ) {
+            val current =
+                _state.value.products
                     .find { it.id == productId }
-                    ?.quantity ?: 0 <= 0
-            ) {
-                return
-            }
-            mutateOne { h, s -> productRepository.remove(h, s, productId, 1) }
+                    ?.quantity ?: 0
+            if (current <= 0 || amount <= 0) return
+            mutateOne { h, s -> productRepository.remove(h, s, productId, minOf(amount, current)) }
         }
 
         fun startMove(productId: Long) {

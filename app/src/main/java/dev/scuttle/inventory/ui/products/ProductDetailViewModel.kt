@@ -128,11 +128,12 @@ class ProductDetailViewModel
          * quantity always reflects the authoritative value, never a locally
          * guessed one.
          */
-        fun increment() {
+        fun increment(amount: Int = 1) {
             val current = _state.value.product ?: return
+            if (amount <= 0) return
             viewModelScope.launch {
                 _state.update { it.copy(loading = true, error = null) }
-                runCatching { repository.add(householdId, shelfId, current.id, 1) }
+                runCatching { repository.add(householdId, shelfId, current.id, amount) }
                     .onSuccess { updated -> _state.update { it.copy(loading = false, product = updated) } }
                     .onFailure { e ->
                         _state.update { it.copy(loading = false, error = e.toUserMessage("Something went wrong.")) }
@@ -140,12 +141,13 @@ class ProductDetailViewModel
             }
         }
 
-        fun decrement() {
+        fun decrement(amount: Int = 1) {
             val current = _state.value.product ?: return
-            if (current.quantity <= 0) return
+            if (current.quantity <= 0 || amount <= 0) return
+            val clamped = minOf(amount, current.quantity)
             viewModelScope.launch {
                 _state.update { it.copy(loading = true, error = null) }
-                runCatching { repository.remove(householdId, shelfId, current.id, 1) }
+                runCatching { repository.remove(householdId, shelfId, current.id, clamped) }
                     .onSuccess { updated -> _state.update { it.copy(loading = false, product = updated) } }
                     .onFailure { e ->
                         _state.update { it.copy(loading = false, error = e.toUserMessage("Something went wrong.")) }
