@@ -28,12 +28,20 @@ data class MembersUiState(
     // staleness window to a single recomposition instead of leaving the
     // caller's prop stale indefinitely.
     val ownershipTransferCount: Int = 0,
-    // One-shot event: set the moment a promote/demote lands, cleared once the
-    // screen has shown its snackbar (consumeRoleChangeEvent). Carries what the
-    // snackbar needs (who, new role, and the role to revert to on Undo) rather
-    // than just a counter like [ownershipTransferCount] — Undo needs the actual
-    // previous role, not merely a "something changed" signal.
-    val roleChangeEvent: RoleChangeEvent? = null,
+    // A QUEUE, not a single slot (H2): a lone `roleChangeEvent: RoleChangeEvent?`
+    // meant a second promote/demote arriving while the first's Undo snackbar was
+    // still showing silently replaced it — `LaunchedEffect(state.roleChangeEvent)`
+    // restarted on the new value and cancelled the in-flight `showSnackbar` for
+    // the first, dropping its Undo with no cue. The screen now shows one snackbar
+    // per queued event, oldest first: it keys its LaunchedEffect off
+    // `roleChangeEvents.firstOrNull()`, so a NEW event appended to the tail while
+    // the head is showing doesn't change that key and doesn't restart the
+    // effect — it only shows once the head is dequeued via
+    // [consumeRoleChangeEvent]. Each entry carries what its own snackbar needs
+    // (who, new role, and the role to revert to on Undo) rather than just a
+    // counter like [ownershipTransferCount] — Undo needs the actual previous
+    // role, not merely a "something changed" signal.
+    val roleChangeEvents: List<RoleChangeEvent> = emptyList(),
 )
 
 data class RoleChangeEvent(
@@ -88,18 +96,19 @@ class MembersViewModel
                 _state.update { state ->
                     state.copy(
                         members = state.members.map { if (it.id == userId) updated else it },
-                        roleChangeEvent =
+                        roleChangeEvents =
                             if (emitEvent && previousRole != null) {
-                                RoleChangeEvent(userId, updated.name, role, previousRole)
+                                state.roleChangeEvents + RoleChangeEvent(userId, updated.name, role, previousRole)
                             } else {
-                                state.roleChangeEvent
+                                state.roleChangeEvents
                             },
                     )
                 }
             }
         }
 
-        fun consumeRoleChangeEvent() = _state.update { it.copy(roleChangeEvent = null) }
+        /** Dequeues the HEAD event only — see [MembersUiState.roleChangeEvents]'s doc comment. */
+        fun consumeRoleChangeEvent() = _state.update { it.copy(roleChangeEvents = it.roleChangeEvents.drop(1)) }
 
         fun remove(userId: Long) {
             val id = householdId ?: return

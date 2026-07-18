@@ -5,6 +5,7 @@ import dev.scuttle.inventory.data.member.MemberRepository
 import dev.scuttle.inventory.ui.members.MembersViewModel
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -142,7 +143,9 @@ class MembersViewModelTest {
 
             viewModel.promote(2L)
 
-            val event = viewModel.state.value.roleChangeEvent
+            val event =
+                viewModel.state.value.roleChangeEvents
+                    .firstOrNull()
             assertEquals(2L, event?.userId)
             assertEquals("admin", event?.newRole)
             assertEquals("member", event?.previousRole)
@@ -159,7 +162,9 @@ class MembersViewModelTest {
             val viewModel = MembersViewModel(repo)
             viewModel.load(householdId = 1)
             viewModel.promote(2L)
-            val event = viewModel.state.value.roleChangeEvent!!
+            val event =
+                viewModel.state.value.roleChangeEvents
+                    .first()
 
             viewModel.undoRoleChange(event)
 
@@ -169,7 +174,9 @@ class MembersViewModelTest {
                     .first { it.id == 2L }
                     .role,
             )
-            assertEquals(event, viewModel.state.value.roleChangeEvent)
+            // Undo is a correction, not a fresh action — it must not itself
+            // enqueue a new event or dequeue the existing one.
+            assertEquals(listOf(event), viewModel.state.value.roleChangeEvents)
         }
 
     @Test
@@ -186,7 +193,48 @@ class MembersViewModelTest {
 
             viewModel.consumeRoleChangeEvent()
 
-            assertEquals(null, viewModel.state.value.roleChangeEvent)
+            assertTrue(
+                viewModel.state.value.roleChangeEvents
+                    .isEmpty(),
+            )
+        }
+
+    @Test
+    fun a_second_role_change_while_the_first_is_still_queued_is_not_dropped() =
+        runTest {
+            // H2 regression: a lone `roleChangeEvent` slot would replace the
+            // first change with the second, silently dropping the first's Undo.
+            // The queue must retain BOTH until each is individually dequeued.
+            val repo =
+                FakeMemberRepository().apply {
+                    members.add(MemberDto(1, "Owner", "owner", null))
+                    members.add(MemberDto(2, "Alice", "member", null))
+                    members.add(MemberDto(3, "Bob", "member", null))
+                }
+            val viewModel = MembersViewModel(repo)
+            viewModel.load(householdId = 1)
+
+            viewModel.promote(2L)
+            viewModel.promote(3L)
+
+            val events = viewModel.state.value.roleChangeEvents
+            assertEquals(2, events.size)
+            assertEquals(2L, events[0].userId)
+            assertEquals(3L, events[1].userId)
+
+            // Consuming only dequeues the HEAD — the second event survives.
+            viewModel.consumeRoleChangeEvent()
+            assertEquals(
+                listOf(3L),
+                viewModel.state.value.roleChangeEvents
+                    .map { it.userId },
+            )
+
+            viewModel.consumeRoleChangeEvent()
+            assertTrue(
+                viewModel.state.value.roleChangeEvents
+                    .isEmpty(),
+            )
         }
 
     /**

@@ -20,6 +20,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
@@ -86,8 +87,16 @@ fun MembersScreen(
         if (state.ownershipTransferCount > 0) onOwnershipTransferred()
     }
     val undoLabel = stringResource(R.string.delete_undo)
-    LaunchedEffect(state.roleChangeEvent) {
-        val event = state.roleChangeEvent ?: return@LaunchedEffect
+    // H2: keyed off the QUEUE's head, not the whole list — a role change appended
+    // to the tail while the head's snackbar is showing doesn't change this key,
+    // so it doesn't restart the effect and cancel the in-flight showSnackbar (the
+    // bug this fixes). Once the head is dequeued (consumeRoleChangeEvent), the key
+    // changes to whatever is now first and this effect reruns for it, so every
+    // queued event eventually gets its own snackbar+Undo — none are silently
+    // dropped.
+    val headRoleChangeEvent = state.roleChangeEvents.firstOrNull()
+    LaunchedEffect(headRoleChangeEvent) {
+        val event = headRoleChangeEvent ?: return@LaunchedEffect
         val message =
             if (event.newRole == "admin") {
                 context.getString(R.string.members_now_admin, event.memberName)
@@ -98,6 +107,7 @@ fun MembersScreen(
             snackbarHostState.showSnackbar(
                 message = message,
                 actionLabel = undoLabel,
+                duration = SnackbarDuration.Short,
             )
         if (result == SnackbarResult.ActionPerformed) {
             viewModel.undoRoleChange(event)
