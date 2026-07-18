@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,6 +25,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.BrokenImage
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -31,6 +33,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -66,7 +69,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.AsyncImage
+import coil.compose.AsyncImagePainter
+import coil.compose.SubcomposeAsyncImage
+import coil.compose.SubcomposeAsyncImageContent
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.product.ProductEdit
 import dev.scuttle.inventory.ui.common.ErrorRetry
@@ -265,12 +270,55 @@ fun ProductDetailScreen(
                 ) {
                     val imageSource: Any? = localImageUri ?: product?.image_url
                     if (imageSource != null) {
-                        AsyncImage(
-                            model = imageSource,
+                        // GAP5-L3: SubcomposeAsyncImage's loading/error slots give us a
+                        // spinner while an upload/fetch is in flight and a styled
+                        // broken-image placeholder (tap to retry) instead of a blank box
+                        // on a failed remote load — AsyncImage alone (Coil 2.7.0, no
+                        // `error`/`onState` used here) had neither.
+                        var imageReloadKey by remember(imageSource) { mutableStateOf(0) }
+                        val imageRequest =
+                            coil.request.ImageRequest.Builder(context)
+                                .data(imageSource)
+                                // Bumped on tap-to-retry to bypass Coil's memory/disk cache
+                                // for the SAME model, so a retry actually re-fetches.
+                                .setParameter("retry", imageReloadKey)
+                                .build()
+                        SubcomposeAsyncImage(
+                            model = imageRequest,
                             contentDescription = stringResource(R.string.product_detail_image_cd),
                             contentScale = ContentScale.Crop,
                             modifier = Modifier.fillMaxSize(),
-                        )
+                        ) {
+                            when (painter.state) {
+                                is AsyncImagePainter.State.Loading -> {
+                                    CircularProgressIndicator(modifier = Modifier.size(32.dp))
+                                }
+                                is AsyncImagePainter.State.Error -> {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                                        modifier =
+                                            Modifier.fillMaxSize().clickable {
+                                                // Tap-to-retry: bumping the key forces Coil
+                                                // to re-request the same model.
+                                                imageReloadKey++
+                                            },
+                                    ) {
+                                        Icon(
+                                            Icons.Default.BrokenImage,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.error,
+                                        )
+                                        Text(
+                                            stringResource(R.string.product_detail_image_load_failed),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.error,
+                                        )
+                                    }
+                                }
+                                else -> SubcomposeAsyncImageContent()
+                            }
+                        }
                     } else {
                         Icon(
                             Icons.Default.CameraAlt,
@@ -278,6 +326,13 @@ fun ProductDetailScreen(
                             modifier = Modifier.size(48.dp),
                             tint = MaterialTheme.colorScheme.outlineVariant,
                         )
+                    }
+                    // GAP5-L3: while ProductDetailViewModel.uploadImage is in flight
+                    // (shares state.loading with save()), overlay a spinner on the image
+                    // itself rather than only the top-of-screen LinearProgressIndicator,
+                    // so the user sees exactly which action is running.
+                    if (state.loading && localImageUri != null) {
+                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                     }
                 }
 

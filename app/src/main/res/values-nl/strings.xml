@@ -162,6 +162,7 @@
     <string name="product_detail_gallery">Galerij</string>
     <string name="product_detail_camera">Camera</string>
     <string name="product_detail_image_cd">Productafbeelding</string>
+    <string name="product_detail_image_load_failed">Afbeelding laden mislukt · Tik om opnieuw te proberen</string>
     <string name="product_detail_field_name">Naam</string>
     <string name="product_detail_field_description">Omschrijving</string>
     <string name="product_detail_field_code">Productcode / barcode</string>

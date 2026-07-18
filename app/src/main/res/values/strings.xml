@@ -171,6 +171,7 @@
     <string name="product_detail_gallery">Gallery</string>
     <string name="product_detail_camera">Camera</string>
     <string name="product_detail_image_cd">Product image</string>
+    <string name="product_detail_image_load_failed">Couldn\'t load image · Tap to retry</string>
     <string name="product_detail_field_name">Name</string>
     <string name="product_detail_field_description">Description</string>
     <string name="product_detail_field_code">Product code / barcode</string>
