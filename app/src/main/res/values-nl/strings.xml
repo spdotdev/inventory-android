@@ -237,6 +237,7 @@
     <string name="dashboard_empty_locations_title">Nog niets hier</string>
     <string name="dashboard_empty_locations_text">Voeg je eerste opslaglocatie toe om te beginnen.</string>
     <string name="dashboard_empty_locations_cta">Opslaglocatie toevoegen</string>
+    <string name="dashboard_no_products_yet_text">Nog geen producten — open een opslaglocatie om je eerste toe te voegen.</string>
     <string name="search_choose_household_title">In welk huishouden zoeken?</string>
 
     <!-- Settings -->

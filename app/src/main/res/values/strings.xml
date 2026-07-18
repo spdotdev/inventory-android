@@ -248,6 +248,9 @@
     <string name="dashboard_empty_locations_title">Nothing here yet</string>
     <string name="dashboard_empty_locations_text">Add your first storage location to get started.</string>
     <string name="dashboard_empty_locations_cta">Add a storage location</string>
+    <!-- GAP6-M3: light-touch nudge when the household has locations but zero products —
+         the bar chart below would otherwise render all-zero with no explanation. -->
+    <string name="dashboard_no_products_yet_text">No products yet — open a storage location to add your first.</string>
     <string name="search_choose_household_title">Search which household?</string>
 
     <!-- Settings -->

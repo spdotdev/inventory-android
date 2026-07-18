@@ -233,6 +233,14 @@ fun DashboardScreen(
                     )
                 }
 
+                // GAP6-M3: locations exist but nothing's been added to them yet — the bar
+                // chart below would otherwise render as an all-zero row set with no
+                // explanation of why. A light-touch nudge, not a replacement for the stat
+                // cards above (which still show the real 0 counts).
+                if (state.totalProducts == 0 && state.locationStats.isNotEmpty()) {
+                    NoProductsYetCard(onOpenAllStorage = onOpenAllStorage)
+                }
+
                 // Bar chart, grouped per household when there's more than one (#33)
                 if (state.locationStats.isNotEmpty()) {
                     Text(
@@ -319,6 +327,23 @@ private fun EmptyLocationsCard(onAddLocation: () -> Unit) {
                 Text(stringResource(R.string.dashboard_empty_locations_cta))
             }
         }
+    }
+}
+
+/**
+ * GAP6-M3: a light-touch nudge for "locations exist, zero products yet" — distinct from
+ * [EmptyLocationsCard] (which covers zero LOCATIONS). A plain text row, not a full
+ * FrostCard treatment, so it reads as a hint rather than another empty-state block.
+ */
+@Composable
+private fun NoProductsYetCard(onOpenAllStorage: () -> Unit) {
+    FrostCard(modifier = Modifier.fillMaxWidth(), onClick = onOpenAllStorage) {
+        Text(
+            stringResource(R.string.dashboard_no_products_yet_text),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(Spacing.md),
+        )
     }
 }
 
