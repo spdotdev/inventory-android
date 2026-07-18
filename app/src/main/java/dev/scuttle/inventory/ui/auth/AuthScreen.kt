@@ -246,10 +246,12 @@ fun AuthScreen(
             loading = state.googleLoading,
         )
 
-        // GAP5-M5: the mode switch is the more consequential of the two links below
-        // (it changes what the whole screen does), so it gets more visual weight —
-        // titleSmall/onSurface — while forgot-password stays small and muted, and a
-        // spacer separates them so they don't read as one undifferentiated stack.
+        // GAP5-M5 + GAP6-L1: the mode switch is the more consequential of the two
+        // links below (it changes what the whole screen does), so it gets more
+        // visual weight — titleSmall in the PRIMARY color, keeping the tappable-link
+        // affordance a plain onSurface tint stripped away (GAP-6's audit found it
+        // read as a caption, not a button) — while forgot-password stays small and
+        // muted, and a spacer separates them.
         TextButton(onClick = viewModel::toggleMode, modifier = Modifier.fillMaxWidth()) {
             Text(
                 text =
@@ -261,7 +263,7 @@ fun AuthScreen(
                         stringResource(R.string.auth_toggle_to_register)
                     },
                 style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = MaterialTheme.colorScheme.primary,
             )
         }
 
