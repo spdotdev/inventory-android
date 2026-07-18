@@ -15,6 +15,7 @@
     <string name="auth_toggle_to_register">Nieuw hier? Maak een account aan</string>
     <string name="auth_toggle_to_login">Heb je al een account? Inloggen</string>
     <string name="auth_forgot_password">Wachtwoord vergeten?</string>
+    <string name="forgot_password_try_again">Verkeerd e-mailadres? Probeer opnieuw</string>
 
     <!-- Dashboard -->
     <string name="dashboard_title">Dashboard</string>

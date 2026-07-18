@@ -17,6 +17,8 @@
     <string name="auth_toggle_to_register">New here? Create an account</string>
     <string name="auth_toggle_to_login">Already have an account? Sign in</string>
     <string name="auth_forgot_password">Forgot your password?</string>
+    <!-- GAP5-M6: sent-state "try again" affordance on the forgot-password screen. -->
+    <string name="forgot_password_try_again">Wrong email? Try again</string>
 
     <!-- Dashboard -->
     <string name="dashboard_title">Dashboard</string>

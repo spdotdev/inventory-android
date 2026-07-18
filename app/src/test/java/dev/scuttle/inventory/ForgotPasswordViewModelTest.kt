@@ -92,4 +92,21 @@ class ForgotPasswordViewModelTest {
             assertNull(vm.state.value.error)
             assertEquals("stan2@example.test", vm.state.value.email)
         }
+
+    @Test
+    fun resetToInput_leaves_sent_state_with_email_still_editable() =
+        runTest {
+            val vm = ForgotPasswordViewModel(FakeAuthRepository(succeed = true))
+            vm.onEmailChange("stan@example.test")
+            vm.submit()
+            assertTrue(vm.state.value.sent)
+
+            vm.resetToInput()
+
+            assertFalse(vm.state.value.sent)
+            assertNull(vm.state.value.error)
+            // The typed email survives the reset — GAP5-M6 is about fixing a typo,
+            // not starting over from a blank field.
+            assertEquals("stan@example.test", vm.state.value.email)
+        }
 }

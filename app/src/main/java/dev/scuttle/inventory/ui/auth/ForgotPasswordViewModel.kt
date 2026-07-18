@@ -29,6 +29,14 @@ class ForgotPasswordViewModel
 
         fun onEmailChange(value: String) = _state.update { it.copy(email = value, error = null) }
 
+        /**
+         * GAP5-M6: "Wrong email? Try again" from the sent-state — returns to the
+         * input state without a dead end. Keeps the typed email in place (it's
+         * still editable, not cleared) since the point is fixing a typo, not
+         * starting over from a blank field.
+         */
+        fun resetToInput() = _state.update { it.copy(sent = false, error = null) }
+
         fun submit() {
             val email = _state.value.email.trim()
             viewModelScope.launch {
