@@ -66,8 +66,15 @@ fun SearchScreen(
         }
     }
 
+    // Only steal focus (and pop the keyboard) on a genuinely fresh screen — an
+    // empty query is the only reliable local signal for that, since the same
+    // back-stack entry (and its ViewModel/state) survives a push-to-ProductDetail
+    // -then-back round trip; re-focusing on every recomposition would also
+    // re-open the keyboard over an already-populated results list (GAP-5 H7).
     LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
+        if (state.query.isBlank()) {
+            focusRequester.requestFocus()
+        }
     }
 
     Column(

@@ -41,6 +41,18 @@ class SearchViewModel
         private val _state = MutableStateFlow(SearchUiState())
         val state: StateFlow<SearchUiState> = _state.asStateFlow()
 
+        /**
+         * Only resets [state] when [householdId] actually CHANGED, not on every call
+         * (GAP-5 H7): SearchScreen calls this from a `LaunchedEffect(householdId)` that
+         * re-runs whenever the composable re-enters composition with a live household
+         * id, which includes returning from ProductDetail via back-nav — the SAME
+         * back-stack entry (and this same ViewModel instance, since it's scoped to that
+         * entry the way `hiltViewModel()`'s default resolves — see HouseholdsViewModel's
+         * hoisting doc comment in MainActivity for the general pattern) survives that
+         * round trip. Wiping state unconditionally here would silently discard the
+         * user's typed query and results on every return trip even though nothing
+         * about the search actually needs to restart.
+         */
         fun setHousehold(householdId: Long) {
             if (this.householdId == householdId) {
                 if (_state.value.query.isNotBlank()) search()
