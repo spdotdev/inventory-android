@@ -376,16 +376,64 @@ class HouseholdsViewModelTest {
         }
 
     @Test
-    fun delete_failure_surfaces_an_error_and_leaves_the_household_in_place() =
+    fun delete_failure_surfaces_a_delete_specific_error_and_leaves_the_household_in_place() =
         runTest {
+            // H1: a delete failure (422 name race, 403 role changed) must land in
+            // deleteError — the dialog-local field HouseholdEditScreen shows
+            // INLINE while the dialog stays open — NOT the generic top-of-screen
+            // `error`, whose Retry re-fetches the household list, not the delete.
             val repo = FakeHouseholdRepository().apply { deleteThrows = RuntimeException("name mismatch") }
             val viewModel = HouseholdsViewModel(repo, TestHierarchy.store(repo))
 
             viewModel.delete(householdId = 1, nameConfirmation = "wrong")
 
-            assertEquals("name mismatch", viewModel.state.value.error)
+            assertEquals("name mismatch", viewModel.state.value.deleteError)
+            assertNull(viewModel.state.value.error)
             assertEquals(1, viewModel.state.value.households.size)
             assertNull(viewModel.state.value.leftHouseholdId)
+            assertFalse(viewModel.state.value.loading)
+        }
+
+    @Test
+    fun successful_delete_clears_any_prior_delete_error() =
+        runTest {
+            val repo =
+                FakeHouseholdRepository().apply {
+                    items.add(
+                        HouseholdDto(
+                            id = 2,
+                            name = "Office",
+                            join_code = "BBBB-2222",
+                            role = "owner",
+                            can_restructure = true,
+                            can_manage_members = true,
+                        ),
+                    )
+                    deleteThrows = RuntimeException("name mismatch")
+                }
+            val viewModel = HouseholdsViewModel(repo, TestHierarchy.store(repo))
+            viewModel.delete(householdId = 2, nameConfirmation = "wrong")
+            assertEquals("name mismatch", viewModel.state.value.deleteError)
+
+            repo.deleteThrows = null
+            viewModel.delete(householdId = 2, nameConfirmation = "Office")
+
+            assertNull(viewModel.state.value.deleteError)
+            assertEquals(2L, viewModel.state.value.leftHouseholdId)
+        }
+
+    @Test
+    fun clear_delete_error_resets_it_without_touching_anything_else() =
+        runTest {
+            val repo = FakeHouseholdRepository().apply { deleteThrows = RuntimeException("name mismatch") }
+            val viewModel = HouseholdsViewModel(repo, TestHierarchy.store(repo))
+            viewModel.delete(householdId = 1, nameConfirmation = "wrong")
+            assertEquals("name mismatch", viewModel.state.value.deleteError)
+
+            viewModel.clearDeleteError()
+
+            assertNull(viewModel.state.value.deleteError)
+            assertEquals(1, viewModel.state.value.households.size)
         }
 
     @Test

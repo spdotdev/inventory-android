@@ -45,6 +45,17 @@ data class HouseholdsUiState(
     // without needing an explicit one-shot "consume" reset call (and without adding a
     // function this class doesn't have room for under TooManyFunctions).
     val leftHouseholdId: Long? = null,
+    /**
+     * Delete-specific failure (422 name-race, 403 role-changed-under-you, etc.),
+     * shown INSIDE HouseholdEditScreen's confirm-delete dialog rather than as the
+     * screen's top-of-screen [error] — that generic ErrorRetry's own Retry
+     * re-fetches the household LIST, not the delete, so routing a delete failure
+     * through [error] surfaced as an unrelated banner while the typed
+     * confirmation name (and the dialog itself) was already gone (H1). Cleared on
+     * dialog dismiss, on retyping the confirmation field, and on the next
+     * successful delete() — never on a plain refresh().
+     */
+    val deleteError: String? = null,
 )
 
 @HiltViewModel
@@ -138,15 +149,45 @@ class HouseholdsViewModel
          * replay-safety concern leave() already solves (see that field's doc
          * comment) — HouseholdEditScreen's existing `LaunchedEffect(state.
          * leftHouseholdId)` needs no changes at all to also cover delete.
+         *
+         * Deliberately NOT routed through [launchLoading] (H1): a failure here
+         * must land in [HouseholdsUiState.deleteError], not the generic [error]
+         * field launchLoading writes to — HouseholdEditScreen's confirm-delete
+         * dialog stays open for the whole call (gated on `state.loading`, which
+         * this still sets/clears identically to launchLoading) and shows
+         * deleteError INLINE; only a successful delete clears the dialog, via the
+         * existing leftHouseholdId nav signal.
          */
         fun delete(
             householdId: Long,
             nameConfirmation: String,
-        ) = launchLoading {
-            repository.delete(householdId, nameConfirmation)
-            _state.update { it.copy(households = repository.list(), leftHouseholdId = householdId) }
-            hierarchyStore.refresh()
+        ) {
+            viewModelScope.launch {
+                _state.update { it.copy(loading = true, deleteError = null) }
+                val result = runCatching { repository.delete(householdId, nameConfirmation) }
+                result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+                result.fold(
+                    onSuccess = {
+                        _state.update {
+                            it.copy(
+                                households = repository.list(),
+                                leftHouseholdId = householdId,
+                                loading = false,
+                            )
+                        }
+                        hierarchyStore.refresh()
+                    },
+                    onFailure = { e ->
+                        _state.update {
+                            it.copy(loading = false, deleteError = e.toUserMessage("Something went wrong."))
+                        }
+                    },
+                )
+            }
         }
+
+        /** Clears a delete-dialog error on dismiss/retype — see [HouseholdsUiState.deleteError]. */
+        fun clearDeleteError() = _state.update { it.copy(deleteError = null) }
 
         fun enterEditMode() = _state.update { it.copy(editMode = true) }
 

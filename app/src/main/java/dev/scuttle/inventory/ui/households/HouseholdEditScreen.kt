@@ -28,6 +28,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -52,6 +53,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.ui.common.ErrorRetry
@@ -102,6 +104,7 @@ fun HouseholdEditScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val household = state.households.find { it.id == householdId }
+    var confirmDelete by remember { mutableStateOf(false) }
 
     // Wait for leave() to actually complete server-side (not just for the tap) before
     // navigating back — see the doc on HouseholdsUiState.leftHouseholdId for why
@@ -111,7 +114,15 @@ fun HouseholdEditScreen(
     // boolean would stay stuck true and auto-navigate back out of the very next
     // household-edit visit, for any OTHER household, before the user could do
     // anything.
-    LaunchedEffect(state.leftHouseholdId) { if (state.leftHouseholdId == householdId) onBack() }
+    LaunchedEffect(state.leftHouseholdId) {
+        if (state.leftHouseholdId == householdId) {
+            // Close the confirm-delete dialog only once delete() has actually
+            // succeeded server-side (H1) — a 422/403 never reaches here, so the
+            // dialog stays open with deleteError shown inline instead.
+            confirmDelete = false
+            onBack()
+        }
+    }
 
     var name by remember(household?.id) { mutableStateOf(household?.name.orEmpty()) }
     // Kept locally (rather than reading household.color/icon back from state at
@@ -122,7 +133,6 @@ fun HouseholdEditScreen(
     var selectedIcon by remember(household?.id) { mutableStateOf(household?.icon) }
     var confirmLeave by remember { mutableStateOf(false) }
     var confirmTransferFirst by remember { mutableStateOf(false) }
-    var confirmDelete by remember { mutableStateOf(false) }
     var deleteNameInput by remember(household?.id) { mutableStateOf("") }
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -350,6 +360,7 @@ fun HouseholdEditScreen(
                             Button(
                                 onClick = {
                                     deleteNameInput = ""
+                                    viewModel.clearDeleteError()
                                     confirmDelete = true
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
@@ -402,36 +413,74 @@ fun HouseholdEditScreen(
         )
     }
 
+    // H1: this dialog stays OPEN for the whole delete() call — closing it the
+    // instant Delete is tapped (the old behaviour) meant a 422 (name race) or 403
+    // (role changed under the user) lost the typed confirmation name and surfaced
+    // as an unrelated top-of-screen ErrorRetry whose Retry re-fetches the
+    // household LIST, not the delete. `state.loading` (set for the whole call,
+    // same flag Save-name/theme swatches already gate on) disables both buttons
+    // and the text field and shows a small progress indicator; `state.deleteError`
+    // renders INLINE and is cleared on dismiss/retype; only a successful delete —
+    // via the leftHouseholdId LaunchedEffect above — closes the dialog.
     if (confirmDelete && household != null) {
         AlertDialog(
-            onDismissRequest = { confirmDelete = false },
+            onDismissRequest = {
+                if (!state.loading) {
+                    confirmDelete = false
+                    viewModel.clearDeleteError()
+                }
+            },
+            properties = DialogProperties(dismissOnBackPress = !state.loading, dismissOnClickOutside = !state.loading),
             title = { Text(stringResource(R.string.household_delete_dialog_title, household.name)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(stringResource(R.string.household_delete_dialog_body))
                     OutlinedTextField(
                         value = deleteNameInput,
-                        onValueChange = { deleteNameInput = it },
+                        onValueChange = {
+                            deleteNameInput = it
+                            viewModel.clearDeleteError()
+                        },
                         placeholder = { Text(stringResource(R.string.household_delete_field_placeholder)) },
                         singleLine = true,
+                        enabled = !state.loading,
                         modifier = Modifier.fillMaxWidth().testTag("household-delete-confirm-field"),
                     )
+                    state.deleteError?.let {
+                        Text(
+                            text = it,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.testTag("household-delete-error"),
+                        )
+                    }
+                    if (state.loading) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center,
+                        ) {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                        }
+                    }
                 }
             },
             confirmButton = {
                 TextButton(
-                    onClick = {
-                        viewModel.delete(householdId, deleteNameInput)
-                        confirmDelete = false
-                    },
-                    enabled = deleteNameInput == household.name,
+                    onClick = { viewModel.delete(householdId, deleteNameInput) },
+                    enabled = deleteNameInput == household.name && !state.loading,
                     modifier = Modifier.testTag("household-delete-confirm-button"),
                 ) {
                     Text(stringResource(R.string.household_delete), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.action_cancel)) }
+                TextButton(
+                    onClick = {
+                        confirmDelete = false
+                        viewModel.clearDeleteError()
+                    },
+                    enabled = !state.loading,
+                ) { Text(stringResource(R.string.action_cancel)) }
             },
         )
     }
