@@ -46,6 +46,9 @@
     <string name="scanner_title_add">Scan to add</string>
     <string name="scanner_subtitle_add">Adds or increases stock on this shelf.</string>
     <string name="scanner_permission_denied">Camera permission is needed to scan barcodes. You can still add and edit products manually.</string>
+    <string name="scanner_open_settings">Open settings</string>
+    <string name="scanner_torch_on">Turn off flashlight</string>
+    <string name="scanner_torch_off">Turn on flashlight</string>
     <string name="location_scan_cd">Scan a barcode</string>
     <string name="scan_incremented">%s +1</string>
     <string name="scan_unknown_code">No product with code %s — it will be attached to the next product you add</string>

@@ -1,9 +1,13 @@
 package dev.scuttle.inventory.ui.scanner
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
@@ -25,11 +29,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.FlashlightOff
+import androidx.compose.material.icons.filled.FlashlightOn
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -94,6 +101,10 @@ fun ScannerScreen(
         )
     }
     var permissionDenied by remember { mutableStateOf(false) }
+    // GAP-5 M7: the bound Camera is hoisted here so the top bar can toggle the
+    // torch — scanning inside a dark fridge or cupboard is this app's home turf.
+    var camera by remember { mutableStateOf<Camera?>(null) }
+    var torchOn by remember { mutableStateOf(false) }
     val permissionLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             hasPermission = granted
@@ -133,13 +144,32 @@ fun ScannerScreen(
                         )
                     }
                 },
+                actions = {
+                    // Hidden entirely on devices without a flash unit.
+                    if (camera?.cameraInfo?.hasFlashUnit() == true) {
+                        IconButton(
+                            onClick = {
+                                torchOn = !torchOn
+                                camera?.cameraControl?.enableTorch(torchOn)
+                            },
+                        ) {
+                            Icon(
+                                if (torchOn) Icons.Filled.FlashlightOn else Icons.Filled.FlashlightOff,
+                                contentDescription =
+                                    stringResource(
+                                        if (torchOn) R.string.scanner_torch_on else R.string.scanner_torch_off,
+                                    ),
+                            )
+                        }
+                    }
+                },
             )
         },
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             when {
                 hasPermission -> {
-                    CameraPreview(onScanned = onScanned)
+                    CameraPreview(onScanned = onScanned, onCameraReady = { camera = it })
                     ScannerOverlay()
                 }
                 permissionDenied ->
@@ -155,6 +185,22 @@ fun ScannerScreen(
                         Button(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
                             Text(stringResource(R.string.action_back))
                         }
+                        // GAP-5 M8: once denied, Android never re-prompts — the
+                        // only way back is the app's settings page, so hand the
+                        // user a direct route instead of a dead end.
+                        OutlinedButton(
+                            onClick = {
+                                context.startActivity(
+                                    Intent(
+                                        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                        Uri.fromParts("package", context.packageName, null),
+                                    ),
+                                )
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(stringResource(R.string.scanner_open_settings))
+                        }
                     }
             }
         }
@@ -162,7 +208,10 @@ fun ScannerScreen(
 }
 
 @Composable
-private fun CameraPreview(onScanned: (String) -> Unit) {
+private fun CameraPreview(
+    onScanned: (String) -> Unit,
+    onCameraReady: (Camera) -> Unit = {},
+) {
     val lifecycleOwner = LocalLifecycleOwner.current
     // Deliver at most one result: ML Kit keeps analyzing frames after the first
     // hit, and a double navigation crashes the back stack.
@@ -194,12 +243,14 @@ private fun CameraPreview(onScanned: (String) -> Unit) {
                 val preview = Preview.Builder().build()
                 preview.surfaceProvider = previewView.surfaceProvider
                 provider.unbindAll()
-                provider.bindToLifecycle(
-                    lifecycleOwner,
-                    CameraSelector.DEFAULT_BACK_CAMERA,
-                    preview,
-                    analysis,
-                )
+                val boundCamera =
+                    provider.bindToLifecycle(
+                        lifecycleOwner,
+                        CameraSelector.DEFAULT_BACK_CAMERA,
+                        preview,
+                        analysis,
+                    )
+                onCameraReady(boundCamera)
             }, ContextCompat.getMainExecutor(ctx))
             previewView
         },

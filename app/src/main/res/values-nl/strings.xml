@@ -43,6 +43,9 @@
     <string name="scanner_title_add">Scannen om toe te voegen</string>
     <string name="scanner_subtitle_add">Voegt toe of verhoogt de voorraad op dit schap.</string>
     <string name="scanner_permission_denied">Cameratoegang is nodig om barcodes te scannen. Je kunt producten nog steeds handmatig toevoegen en bewerken.</string>
+    <string name="scanner_open_settings">Instellingen openen</string>
+    <string name="scanner_torch_on">Zaklamp uitzetten</string>
+    <string name="scanner_torch_off">Zaklamp aanzetten</string>
     <string name="location_scan_cd">Scan een barcode</string>
     <string name="scan_incremented">%s +1</string>
     <string name="scan_unknown_code">Geen product met code %s — deze wordt gekoppeld aan het volgende product dat je toevoegt</string>
