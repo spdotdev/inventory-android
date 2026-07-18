@@ -6,6 +6,7 @@ import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -92,21 +93,67 @@ fun Modifier.repeatingClickable(
             awaitEachGesture {
                 awaitFirstDown(requireUnconsumed = false)
                 if (!enabled) return@awaitEachGesture
-                var ticks = 0
-                val repeatJob =
-                    launch {
-                        onTick()
-                        ticks = 1
-                        delay(timing.initialDelayMillis)
-                        while (true) {
-                            onTick()
-                            ticks++
-                            delay(timing.repeatIntervalMillis)
-                        }
-                    }
+                // waitForUpOrCancellation() is only callable directly on this restricted
+                // AwaitPointerEventScope, so it can't be handed to awaitHoldAndFlush as a
+                // captured suspend lambda directly (that call is itself a plain — non-restricted
+                // — suspend function). Bridge the two with a CompletableDeferred instead: the
+                // hold-and-flush logic runs on its own child job (launch is a regular, unrestricted
+                // CoroutineScope member) and is released once the pointer goes up. If the gesture
+                // itself is cancelled, that child job is cancelled as part of this coroutineScope,
+                // and `awaitHoldAndFlush`'s `finally` still fires `onRelease` with the ticks
+                // accumulated so far — see its doc comment for why that's cancellation-safe.
+                val released = CompletableDeferred<Unit>()
+                launch {
+                    awaitHoldAndFlush(onTick, onRelease, timing) { released.await() }
+                }
                 waitForUpOrCancellation()
-                repeatJob.cancel()
-                onRelease(ticks)
+                released.complete(Unit)
             }
         }
     }
+
+/**
+ * H1: accumulates hold ticks and guarantees [onRelease] fires with the final tick count exactly
+ * once, whether [awaitRelease] returns normally (pointer up) OR the surrounding coroutine is
+ * cancelled (gesture cancellation from navigating away, backgrounding, a config change, etc.).
+ * Before this fix, [onRelease] only fired after `waitForUpOrCancellation()` returned normally —
+ * a cancelled gesture skipped it and the locally-accumulated delta (and the server mutation it
+ * triggers) was silently dropped.
+ *
+ * [onRelease] itself is a plain (non-suspend) callback — see `ProductsPane`/
+ * `ProductDetailScreen`'s wiring, both of which call a non-suspend `ProductsViewModel`/
+ * `ProductDetailViewModel` function that launches its own network call on `viewModelScope`
+ * internally. That means firing it from `finally` during cancellation needs no
+ * `NonCancellable` wrapper: nothing here suspends after cancellation is signalled, so there is
+ * no "suspend call in a cancelled scope" hazard — `onRelease` just schedules the flush onto the
+ * ViewModel's own scope, which outlives this composable's gesture coroutine.
+ *
+ * Pulled out of [repeatingClickable] (rather than inlined in the gesture block) so this
+ * accumulate-and-flush behavior is unit-testable with plain `kotlinx-coroutines-test`, without
+ * any Compose gesture/pointer-input simulation.
+ */
+internal suspend fun awaitHoldAndFlush(
+    onTick: () -> Unit,
+    onRelease: (ticks: Int) -> Unit,
+    timing: RepeatTiming,
+    awaitRelease: suspend () -> Unit,
+) = coroutineScope {
+    var ticks = 0
+    try {
+        val repeatJob =
+            launch {
+                onTick()
+                ticks = 1
+                delay(timing.initialDelayMillis)
+                while (true) {
+                    onTick()
+                    ticks++
+                    delay(timing.repeatIntervalMillis)
+                }
+            }
+        awaitRelease()
+        repeatJob.cancel()
+    } finally {
+        onRelease(ticks)
+    }
+}
