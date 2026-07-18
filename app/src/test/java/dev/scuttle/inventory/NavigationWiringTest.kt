@@ -76,7 +76,10 @@ class NavigationWiringTest {
         listOf(
             "Dashboard" to "composable(Routes.DASHBOARD)",
             "Storage tab (Routes.HOME)" to "composable(Routes.HOME)",
-            "Missing items" to "composable(Routes.MISSING_ITEMS)",
+            // GAP4-L8: MISSING_ITEMS's composable() call gained an `arguments = ...` line
+            // (the `?fromDrawer=` back-arrow gate), so it's no longer `composable(Routes.
+            // MISSING_ITEMS)` on one line — match just the route reference instead.
+            "Missing items" to "composable(\n                Routes.MISSING_ITEMS,",
         ).forEach { (label, marker) ->
             val block = composableBlock(mainActivity, marker)
             assertTrue(
