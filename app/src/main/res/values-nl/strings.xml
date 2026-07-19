@@ -135,7 +135,7 @@
     <string name="household_edit_owner_leave_body">Draag het eigenaarschap over aan een ander lid voordat je vertrekt, of verwijder het huishouden in plaats daarvan.</string>
     <string name="household_edit_owner_leave_action">Leden openen</string>
     <string name="household_edit_readonly_hint">Alleen de eigenaar en beheerders kunnen dit huishouden bewerken.</string>
-    <string name="household_edit_export_hint">Exporteer de gegevens van dit huishouden via de webapp.</string>
+    <string name="household_edit_export_hint">Exporteer de gegevens van dit huishouden als JSON-bestand.</string>
     <string name="household_delete">Huishouden verwijderen</string>
     <string name="household_delete_dialog_title">%1$s verwijderen?</string>
     <string name="household_delete_dialog_body">Dit verwijdert permanent elke locatie, plank en product in dit huishouden — voor alle leden. Dit kan niet ongedaan worden gemaakt.</string>
@@ -160,6 +160,13 @@
     <string name="members_transfer_ownership_pick">Wie moet de nieuwe eigenaar worden?</string>
     <string name="members_now_admin">%s is nu beheerder</string>
     <string name="members_now_member">%s is nu lid</string>
+
+    <!-- Recently deleted browser -->
+    <string name="deleted_browser_title">Recent verwijderd</string>
+    <string name="deleted_browser_empty">Niets om nu te herstellen.</string>
+    <string name="deleted_browser_restore_action">Herstellen</string>
+    <string name="deleted_browser_conflict">Al hersteld, of te oud om terug te halen.</string>
+    <string name="deleted_browser_summary">%1$d locaties, %2$d schappen, %3$d producten</string>
 
     <!-- Location detail / Shelves -->
     <string name="location_shelves_title">Planken</string>

@@ -38,4 +38,23 @@ interface HouseholdRepository {
 
     /** Drop the in-memory cache so one account's data never bleeds into the next session. */
     fun clear() {}
+
+    /**
+     * Downloads the household's JSON export. Default throws so test fakes only
+     * implement it where a test actually exercises this (same pattern as
+     * [update]'s default).
+     */
+    suspend fun export(householdId: Long): HouseholdExportFile =
+        throw UnsupportedOperationException("export not supported")
 }
+
+/**
+ * [suggestedFilename] comes from the server's Content-Disposition header when present.
+ * A plain class, not a data class: nothing here is ever compared for equality, and a
+ * data class over a ByteArray would generate a reference-equality equals()/hashCode()
+ * that looks structural but isn't.
+ */
+class HouseholdExportFile(
+    val bytes: ByteArray,
+    val suggestedFilename: String,
+)

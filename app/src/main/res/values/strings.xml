@@ -142,7 +142,7 @@
     <string name="household_edit_owner_leave_action">Open members</string>
     <string name="household_edit_readonly_hint">Only the owner and admins can edit this household.</string>
     <!-- GAP6-M6: capability cross-hint — data export exists only on the web app. -->
-    <string name="household_edit_export_hint">Export this household\'s data from the web app.</string>
+    <string name="household_edit_export_hint">Export this household\'s data as a JSON file.</string>
     <string name="household_delete">Delete household</string>
     <string name="household_delete_dialog_title">Delete %1$s?</string>
     <!-- GAP5-M1: names the scope explicitly (locations/shelves/products, every
@@ -171,6 +171,13 @@
     <string name="members_transfer_ownership_pick">Who should become the new owner?</string>
     <string name="members_now_admin">%s is now an admin</string>
     <string name="members_now_member">%s is now a member</string>
+
+    <!-- Recently deleted browser -->
+    <string name="deleted_browser_title">Recently deleted</string>
+    <string name="deleted_browser_empty">Nothing to restore right now.</string>
+    <string name="deleted_browser_restore_action">Restore</string>
+    <string name="deleted_browser_conflict">Already restored, or too old to bring back.</string>
+    <string name="deleted_browser_summary">%1$d locations, %2$d shelves, %3$d products</string>
 
     <!-- Location detail / Shelves -->
     <string name="location_shelves_title">Shelves</string>

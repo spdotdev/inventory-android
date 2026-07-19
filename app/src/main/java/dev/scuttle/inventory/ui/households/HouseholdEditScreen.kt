@@ -1,6 +1,8 @@
 package dev.scuttle.inventory.ui.households
 
+import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -58,15 +60,16 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
-import androidx.core.net.toUri
+import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import dev.scuttle.inventory.BuildConfig
 import dev.scuttle.inventory.R
+import dev.scuttle.inventory.data.household.HouseholdExportFile
 import dev.scuttle.inventory.ui.common.ErrorRetry
 import dev.scuttle.inventory.ui.theme.FrostCard
 import dev.scuttle.inventory.ui.theme.householdAccentsByKey
 import dev.scuttle.inventory.ui.theme.householdIconsByKey
 import dev.scuttle.inventory.ui.theme.householdTheme
+import java.io.File
 
 private val SWATCH_SIZE = 40.dp
 private val SWATCH_ICON_SIZE = 22.dp
@@ -74,22 +77,6 @@ private const val SWATCH_BACKGROUND_ALPHA = 0.28f
 
 /** Matches the server-side household name column limit (UpdateHouseholdRequest's `max:50`). */
 private const val MAX_HOUSEHOLD_NAME_LENGTH = 50
-
-/** The API suffix [BuildConfig.BASE_URL] always carries — see [webExportUrl]. */
-private const val API_PATH_SUFFIX = "/api/v1/"
-
-/**
- * GAP6-M6: household data export exists only on the web
- * (`/app/households/{id}/export`) — the app never mentions it otherwise. The API and
- * web app share one domain (see CLAUDE.md "Web Google sign-in"), so the web origin is
- * derived by stripping [BuildConfig.BASE_URL]'s `/api/v1/` suffix rather than hardcoding
- * a second host. [baseUrl] is a parameter (not read from BuildConfig directly) so this
- * is a plain, unit-testable function.
- */
-internal fun webExportUrl(
-    householdId: Long,
-    baseUrl: String = BuildConfig.BASE_URL,
-): String = baseUrl.removeSuffix(API_PATH_SUFFIX) + "/app/households/$householdId/export"
 
 /**
  * Rename a household, pick its colour/icon (moved out of the old palette-icon
@@ -122,6 +109,7 @@ fun HouseholdEditScreen(
     modifier: Modifier = Modifier,
     onBack: () -> Unit = {},
     onOpenMembers: () -> Unit = {},
+    onOpenDeleted: () -> Unit = {},
     viewModel: HouseholdsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -145,6 +133,26 @@ fun HouseholdEditScreen(
             confirmDelete = false
             onBack()
         }
+    }
+
+    // GAP6-M6 closed: write the downloaded bytes to a cache file and hand it to a
+    // share-sheet chooser, same shape as ProductDetailScreen's createCameraUri —
+    // FileProvider content:// Uri, Android-framework specifics kept out of the
+    // ViewModel. state.exportedFile is a one-shot signal, consumed immediately.
+    LaunchedEffect(state.exportedFile) {
+        val export = state.exportedFile ?: return@LaunchedEffect
+        val uri = writeExportFile(context, export)
+        context.startActivity(
+            Intent.createChooser(
+                Intent(Intent.ACTION_SEND).apply {
+                    type = "application/json"
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                },
+                null,
+            ),
+        )
+        viewModel.consumeExportedFile()
     }
 
     var name by remember(household?.id) { mutableStateOf(household?.name.orEmpty()) }
@@ -345,18 +353,29 @@ fun HouseholdEditScreen(
                     }
                 }
 
-                // GAP6-M6: capability cross-hint — export exists only on the web, and
-                // this is the closest screen to where a user would look for it.
-                // Deliberately NOT in the danger zone below: exporting isn't
-                // destructive, and burying it next to Leave/Delete would mislabel it.
-                // Plain informational text, opens the web export page in the browser.
+                // Recently deleted: a view-only browser for restoring a batch after its
+                // Undo snackbar has timed out or the app restarted — see
+                // DeletedBatchesScreen's doc comment. Membership-gated like the roster
+                // above, not restructure-gated: viewing is not itself a mutation.
+                FrostCard(modifier = Modifier.fillMaxWidth(), onClick = onOpenDeleted) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = stringResource(R.string.deleted_browser_title),
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                    }
+                }
+
+                // GAP6-M6 closed: export used to exist only on the web (this card opened
+                // the browser). Now fetched natively and handed to a share-sheet chooser
+                // so the exported JSON can be saved/shared without leaving the app.
                 FrostCard(
                     modifier = Modifier.fillMaxWidth(),
-                    onClick = {
-                        context.startActivity(
-                            Intent(Intent.ACTION_VIEW, webExportUrl(householdId).toUri()),
-                        )
-                    },
+                    onClick = { viewModel.exportHousehold(householdId) },
                 ) {
                     Text(
                         text = stringResource(R.string.household_edit_export_hint),
@@ -583,3 +602,18 @@ private fun Modifier.selectionBorder(selected: Boolean): Modifier =
     } else {
         this
     }
+
+/**
+ * Writes the downloaded export to the app's cache (the `exports/` sub-dir
+ * declared in file_paths.xml) and returns a FileProvider content:// Uri for the
+ * share-sheet Intent — same shape as ProductDetailScreen's createCameraUri.
+ */
+private fun writeExportFile(
+    context: Context,
+    export: HouseholdExportFile,
+): Uri {
+    val dir = File(context.cacheDir, "exports").apply { mkdirs() }
+    val file = File(dir, export.suggestedFilename)
+    file.writeBytes(export.bytes)
+    return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+}

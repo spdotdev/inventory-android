@@ -8,6 +8,9 @@ import dev.scuttle.inventory.data.dto.JoinHouseholdRequest
 import dev.scuttle.inventory.data.dto.UpdateHouseholdRequest
 import javax.inject.Inject
 
+/** Server sends `Content-Disposition: attachment; filename="inventory-....json"`. */
+private val CONTENT_DISPOSITION_FILENAME = Regex("""filename="?([^";]+)"?""")
+
 class HouseholdRepositoryImpl
     @Inject
     constructor(
@@ -50,5 +53,23 @@ class HouseholdRepositoryImpl
 
         override fun clear() {
             cache = null
+        }
+
+        override suspend fun export(householdId: Long): HouseholdExportFile {
+            val response = api.export(householdId)
+            if (!response.isSuccessful) error("Export failed: HTTP ${response.code()}")
+            val body = response.body() ?: error("Export failed: empty response body")
+            // Strip any path separators before this becomes a filesystem File name —
+            // defense in depth against a header that shouldn't ever carry one, since
+            // this server-controlled value is about to be written to disk verbatim.
+            val filename =
+                response
+                    .headers()["Content-Disposition"]
+                    ?.let { CONTENT_DISPOSITION_FILENAME.find(it)?.groupValues?.get(1) }
+                    ?.substringAfterLast('/')
+                    ?.substringAfterLast('\\')
+                    ?.takeIf { it.isNotBlank() }
+                    ?: "inventory-household-$householdId.json"
+            return HouseholdExportFile(bytes = body.bytes(), suggestedFilename = filename)
         }
     }

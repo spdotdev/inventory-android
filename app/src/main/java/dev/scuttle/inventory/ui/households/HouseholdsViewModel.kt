@@ -7,6 +7,7 @@ import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.HierarchyStore
 import dev.scuttle.inventory.data.dto.HouseholdDto
 import dev.scuttle.inventory.data.error.toUserMessageRes
+import dev.scuttle.inventory.data.household.HouseholdExportFile
 import dev.scuttle.inventory.data.household.HouseholdRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -58,6 +59,11 @@ data class HouseholdsUiState(
      * successful delete() — never on a plain refresh().
      */
     val deleteErrorRes: Int? = null,
+    // One-shot: set the moment an export download completes, consumed by the
+    // screen to write the file + launch a share-sheet Intent (Android-framework
+    // specifics deliberately stay out of the ViewModel, same as camera capture's
+    // createCameraUri in ProductDetailScreen).
+    val exportedFile: HouseholdExportFile? = null,
 )
 
 @HiltViewModel
@@ -135,6 +141,13 @@ class HouseholdsViewModel
                 hierarchyStore.refresh()
             }
         }
+
+        fun exportHousehold(householdId: Long) =
+            launchLoading {
+                _state.update { it.copy(exportedFile = repository.export(householdId)) }
+            }
+
+        fun consumeExportedFile() = _state.update { it.copy(exportedFile = null) }
 
         fun leave(householdId: Long) =
             launchLoading {
