@@ -45,6 +45,23 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-07-19` — **`EditModeHintViewModel` test coverage gap closed.** Last of ~20
+  ViewModels with no dedicated unit test, flagged by a codebase audit.
+  `EditModeHintViewModelTest.kt` covers: `visible` reflects `hasSeen()` at construction
+  (both true/false), `dismiss()` marks seen and flips `visible` false, and the correct
+  `HINT_EDIT_MODE_PENCIL` id is used. Also documented (not fixed, per audit scope) a real
+  gap in `dismiss()`: it has no try/catch around `markSeen()`, so a `HintsStore` write
+  failure is only ever delivered as an uncaught coroutine exception from
+  `viewModelScope.launch` — it never propagates to the caller and `visible` is left stuck
+  `true` forever, with no user-facing error. Exercising that path deliberately leaves an
+  uncaught coroutine exception on `Dispatchers.Main`'s scheduler, which made
+  `MainDispatcherRule` an accidental cross-test leak vector: `UnconfinedTestDispatcher()`'s
+  no-scheduler-given form reuses whatever scheduler Main is already set to, so a
+  full-suite run could non-deterministically fail an unrelated later `runTest`-based test
+  with `UncaughtExceptionsBeforeTest` instead of the originating test. Fixed by having
+  `MainDispatcherRule` always construct its own explicit `TestCoroutineScheduler()`, so
+  every test's Main dispatcher is provably isolated. `ktlintCheck`/`detekt`/
+  `testDebugUnitTest` green (verified stable across repeated full-suite runs, not just once).
 - ✅ `2026-07-10` — **3 "device-state" instrumented failures were a real bug — geometry, not
   state.** EditProductDetail/MandatoryToggle/MissingItems::product_detail all performClick'd
   the product card, which injects at the node CENTER — and since the bin/Move overlap fix
