@@ -12,9 +12,10 @@ concurrency:
 # insecure crypto, unsafe deserialization, etc. Results show up under the
 # repo's Security > Code scanning tab.
 
+# No push trigger: a full Kotlin compile per push was the repo's biggest
+# Actions cost. PRs are still gated, and the weekly schedule scans main —
+# push-to-main coverage is delayed by at most a week, not lost.
 on:
-  push:
-    branches: [ main ]
   pull_request:
     branches: [ main ]
   schedule:
