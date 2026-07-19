@@ -22,6 +22,9 @@ Markers: 🟡 TBD · 🔲 TODO · 🛠 in progress · ✅ done (shipped work mov
 | 3 — Inventory | ✅ shipped 2026-06-23 | Storage overview → shelves (tab strip + swipe) → products; add/remove/move; global search. |
 | 4 — Settings + polish | ✅ shipped 2026-06-24 | Theme (System/Light/Dark), household mgmt, account/sign out; empty/error/offline states. |
 | 5 — Phase 2 | ✅ shipped 2026-07-10 | **Unlocked 2026-07-10** (user decision): barcode scanning ✅, low-stock tile ✅, filter/sort ✅ (backlog sweep), household color/icon theme ✅, live-updates client ✅ (server Reverb config completed + verified 2026-07-10). |
+| 6 — Storage architecture editing UI | ✅ shipped 2026-07-15 (v0.1.9 prerelease) | Nav rework, edit mode, up/down reorder, delete-strategy dialog, tabs⇄list toggle, the client-minted `deletion_batch_id` + snackbar Undo, the per-location Unsorted system shelf. Backend spec: `inventory-laravel/docs/superpowers/specs/2026-07-13-storage-architecture-editing-design.md`. |
+| 7 — Household roles UI | ✅ shipped 2026-07-17 | Role badges, promote/demote/remove (Members screen), transfer-ownership, household delete with typed name confirmation; every edit-mode pencil gates on server-computed `can_restructure`/`can_manage_members`. Backend spec: `inventory-laravel/docs/superpowers/specs/2026-07-17-household-roles-design.md`. |
+| 8 — GAP audit waves 4-8 + round-2 gap closers | ✅ shipped 2026-07-17 through 2026-07-19 | Iterative parity/stability audits (BACKLOG.md → Done). 2026-07-19: fixed a logcat credential leak, a backup-restore crash-loop, and a repository-cache race (BUG-1..3); closed the recently-deleted-browser and native-export (GAP6-M6) parity gaps — see PARITY below. |
 
 Detailed build order: [`CLAUDE.md`](CLAUDE.md) and [`docs/android-plan.md`](docs/android-plan.md).
 
@@ -74,12 +77,14 @@ Detailed build order: [`CLAUDE.md`](CLAUDE.md) and [`docs/android-plan.md`](docs
   server value (UpdateProductRequest now always encodes every field).
 
 ### PARITY (from the 2026-07-19 GAP-8 audit)
-- 🔲 **Recently-deleted browser** — the web has a "Recently deleted" list with
-  per-batch restore (`household.blade.php`, `Support\RecentlyDeleted`); the app
-  only has snackbar Undo for its own last gesture. Needs a new API listing
-  endpoint first (`RestoreApi` only has `POST restore/{batch}`), then a screen
-  reachable from the household edit page. Until then there is no cross-hint —
-  the web feature is discoverable there and works on mobile browsers.
+- [x] **Recently-deleted browser** — shipped 2026-07-19. `GET .../households/{household}/deleted`
+  (new API endpoint, same `Support\RecentlyDeleted` the web view uses) feeds a new
+  screen reachable from the household edit page, with a Restore action per batch.
+  Closes the gap where the snackbar Undo was the only way back once it timed out.
+- [x] **Native household export (GAP6-M6)** — shipped 2026-07-19. `HouseholdApi.export()`
+  streams the JSON directly instead of opening the web export page in a browser; the
+  bytes are written to a cache file (server's Content-Disposition filename) and handed
+  to a share-sheet chooser via the existing FileProvider.
 
 ### QUALITY
 - [x] **CI live and green** — wrapper validation + `testDebugUnitTest` + lint pass.
