@@ -242,7 +242,8 @@ the device isn't on, render the composable in isolation and override `LocalDensi
 ## Security
 Vulnerability reports go through [`SECURITY.md`](SECURITY.md) (GitHub Security
 Advisory or maintainer email — **not** a public issue). CI runs `gitleaks` (secret
-scan), CodeQL (SAST) on push/PR + weekly schedule, and dependency review (blocks
+scan), CodeQL (SAST) on PRs + weekly schedule (dropped from per-push 2026-07-20 to cut
+Actions cost — main is still scanned weekly), and dependency review (blocks
 high-severity-vulnerable new dependencies) — see `.github/workflows/`.
 
 ## Status
