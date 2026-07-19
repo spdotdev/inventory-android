@@ -11,3 +11,14 @@
   - No regression tests were added for this story - these are compile-time API surface renames with byte-for-byte identical runtime behavior, not logic changes, so nothing new to assert.
   - Full JVM test suite, ktlintCheck, detekt all green.
 ---
+
+## 2026-07-19 - US-003
+- Genuine audit of app/src/main/java for unguarded !!, unsafe casts, and division/index on possibly-empty collections in ViewModels/DTO mapping. No confirmed defects found - codebase was already hardened (zero `!!` anywhere in prod source; the one real `as` cast is a system-service cast not DTO data; the one real division-by-collection-size is already zero-guarded in DashboardLocationChart.kt; the one `.first()` call is already gated by a `size == 1` check per CLAUDE.md's documented prior fix).
+- No files changed, no fix/test added - per PRD instructions, a category with nothing to fix is marked passing with notes explaining what was checked, not padded with a fabricated fix.
+- Full JVM test suite, ktlintCheck, detekt all pass.
+- **Learnings for future iterations:**
+  - This repo has no separate DTO-to-UiState "Mapper" class/object layer - mapping happens inline inside ViewModels, so audit ViewModels directly rather than searching for `*Mapper` files.
+  - grep for `!!`, `as [A-Z]`, division near `.size`/`.count()`, and `.first()`/`.last()`/`.random()` across app/src/main/java (exclude androidTest) is a fast way to sweep this bug class; cross-check each hit's file/line against CLAUDE.md's "Deletes"/"Editing the hierarchy" sections first since several of these were already fixed and documented in a prior branch.
+
+All PRD stories now pass (US-001, US-002, US-003).
+---
