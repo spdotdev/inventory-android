@@ -5,6 +5,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import dev.scuttle.inventory.BuildConfig
+import dev.scuttle.inventory.data.api.AppReleaseApi
 import dev.scuttle.inventory.data.api.AuthApi
 import dev.scuttle.inventory.data.api.AuthInterceptor
 import dev.scuttle.inventory.data.api.ErrorApi
@@ -119,4 +120,8 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideRestoreApi(retrofit: Retrofit): RestoreApi = retrofit.create(RestoreApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideAppReleaseApi(retrofit: Retrofit): AppReleaseApi = retrofit.create(AppReleaseApi::class.java)
 }

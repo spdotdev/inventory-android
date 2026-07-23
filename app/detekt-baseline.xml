@@ -201,6 +201,8 @@
     <ID>ReturnCount:ShelvesViewModel.kt$ShelvesViewModel$fun create()</ID>
     <ID>ReturnCount:ShelvesViewModel.kt$ShelvesViewModel$fun deleteSelected()</ID>
     <ID>SwallowedException:AuthScreen.kt$e: GetCredentialCancellationException</ID>
+    <ID>TooGenericExceptionCaught:AppUpdateRepositoryImpl.kt$AppUpdateRepositoryImpl$e: Exception</ID>
+    <ID>TooGenericExceptionThrown:AppUpdateRepositoryTest.kt$AppUpdateRepositoryTest.FakeAppReleaseApi$throw RuntimeException("offline")</ID>
     <ID>TooGenericExceptionThrown:ForgotPasswordViewModelTest.kt$ForgotPasswordViewModelTest.FakeAuthRepository$throw RuntimeException("Unable to resolve host \"inventory.test\"")</ID>
     <ID>TooGenericExceptionThrown:HouseholdsViewModelTest.kt$HouseholdsViewModelTest.FakeHouseholdRepository$throw RuntimeException("offline")</ID>
     <ID>TooGenericExceptionThrown:InviteViewModelTest.kt$InviteViewModelTest.FakeInviteRepository$throw RuntimeException("offline")</ID>

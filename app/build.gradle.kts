@@ -96,6 +96,13 @@ android {
         buildConfig = true
     }
 
+    // AppUpdateRepositoryImpl logs via android.util.Log on the failure path; JVM unit
+    // tests run without a real Android runtime, so unmocked framework calls throw
+    // unless defaults are returned instead.
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
+
     // Skeleton/early stage: keep lint non-fatal so CI gates on compilation + tests.
     lint {
         abortOnError = false

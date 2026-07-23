@@ -4,6 +4,8 @@ import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import dev.scuttle.inventory.data.appupdate.AppUpdateRepository
+import dev.scuttle.inventory.data.appupdate.AppUpdateRepositoryImpl
 import dev.scuttle.inventory.data.auth.AuthRepository
 import dev.scuttle.inventory.data.auth.AuthRepositoryImpl
 import dev.scuttle.inventory.data.error.ErrorLogger
@@ -74,4 +76,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindRestoreRepository(impl: RestoreRepositoryImpl): RestoreRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAppUpdateRepository(impl: AppUpdateRepositoryImpl): AppUpdateRepository
 }
