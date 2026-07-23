@@ -43,8 +43,8 @@ android {
         applicationId = "dev.scuttle.inventory"
         minSdk = 26
         targetSdk = 36
-        versionCode = 20
-        versionName = "0.1.19"
+        versionCode = 21
+        versionName = "0.1.20"
         testInstrumentationRunner = "dev.scuttle.inventory.HiltTestRunner"
         // Disable Espresso's InputManager.getInstance() call, removed in Android 16 (API 36).
 
