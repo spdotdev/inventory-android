@@ -103,6 +103,17 @@ Detailed build order: [`CLAUDE.md`](CLAUDE.md) and [`docs/android-plan.md`](docs
   intended preview behavior; the DEBUG_KEYSTORE_* secrets are in place). Still ahead
   of any Play Store upload: a real release signingConfig + AAB output.
 
+### NOTIFICATIONS
+- [ ] **App update notifications** — 🔲 TODO. Periodic (24h) WorkManager check +
+  on-open popup against a new `GET /api/v1/app-version` endpoint; optional vs
+  breaking (hard-block) releases; single `"app_updates"` notification channel;
+  releases publishable via new `inventory-mcp` tools. Spec:
+  `inventory-laravel/docs/superpowers/specs/2026-07-24-app-update-notifications-design.md`.
+- [ ] **Daily missing-items reminder** — 🟡 TBD, parked here 2026-07-24. A separate
+  notification channel (not folded into `"app_updates"`) reminding the user once a
+  day about mandatory/missing items. Depends on the notification-channel
+  infrastructure the update-notifications item establishes.
+
 ### SECURITY
 - [x] **CodeQL SAST + dependency review CI** — shipped 2026-07-13. `codeql.yml` runs
   static security analysis over the Kotlin/Java source on push/PR to `main` plus a
