@@ -2,18 +2,24 @@
 
 package dev.scuttle.inventory
 
+import android.Manifest
 import android.content.Context
+import android.os.Build
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.rule.GrantPermissionRule
 import dagger.hilt.android.testing.HiltAndroidRule
 import dev.scuttle.inventory.data.storage.TokenStore
 import org.junit.Rule
 import org.junit.rules.ExternalResource
 import org.junit.rules.RuleChain
+import org.junit.rules.TestRule
+import org.junit.runner.Description
+import org.junit.runners.model.Statement
 import javax.inject.Inject
 
 /**
@@ -21,7 +27,17 @@ import javax.inject.Inject
  * 1. MockWebServer starts (so TestNetworkModule reads the right URL)
  * 2. Hilt builds the graph + injects fields
  * 3. Token is cleared (before the Activity launches)
- * 4. Compose rule launches MainActivity
+ * 4. POST_NOTIFICATIONS is pre-granted (before the Activity launches)
+ * 5. Compose rule launches MainActivity
+ *
+ * Step 4 exists because MainActivity's RequestNotificationPermissionOnce (added
+ * for the app-update-notifications feature) fires a REAL system permission
+ * dialog on every fresh instrumented-test launch (a clean app install never has
+ * the permission pre-granted). That dialog is a separate system window, not
+ * part of the app's Compose hierarchy, so it silently blocks every UI
+ * interaction with "No compose hierarchies found in the app" — the dialog, not
+ * a real crash, is what's covering the screen. Not needed below API 33, where
+ * the permission doesn't exist as a requestable runtime permission at all.
  */
 abstract class FlowTestBase {
     val mockServer = MockWebServerRule()
@@ -33,6 +49,18 @@ abstract class FlowTestBase {
         object : ExternalResource() {
             override fun before() {
                 tokenStore.clear()
+            }
+        }
+
+    private val notificationPermissionRule: TestRule =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            GrantPermissionRule.grant(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            object : TestRule {
+                override fun apply(
+                    base: Statement,
+                    description: Description,
+                ): Statement = base
             }
         }
 
@@ -51,6 +79,7 @@ abstract class FlowTestBase {
                     }
                 },
             ).around(clearTokenRule)
+            .around(notificationPermissionRule)
             .around(composeRule)
 
     protected val testContext: Context
