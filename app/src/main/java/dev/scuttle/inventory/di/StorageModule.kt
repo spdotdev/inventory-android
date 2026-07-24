@@ -12,11 +12,13 @@ import dev.scuttle.inventory.data.settings.FavoritesStore
 import dev.scuttle.inventory.data.settings.HintsStore
 import dev.scuttle.inventory.data.settings.HouseholdViewStore
 import dev.scuttle.inventory.data.settings.LanguageStore
+import dev.scuttle.inventory.data.settings.ReminderSettingsStore
 import dev.scuttle.inventory.data.settings.SharedPrefsDefaultHouseholdStore
 import dev.scuttle.inventory.data.settings.SharedPrefsFavoritesStore
 import dev.scuttle.inventory.data.settings.SharedPrefsHintsStore
 import dev.scuttle.inventory.data.settings.SharedPrefsHouseholdViewStore
 import dev.scuttle.inventory.data.settings.SharedPrefsLanguageStore
+import dev.scuttle.inventory.data.settings.SharedPrefsReminderSettingsStore
 import dev.scuttle.inventory.data.settings.SharedPrefsShelfViewStore
 import dev.scuttle.inventory.data.settings.SharedPrefsThemeModeStore
 import dev.scuttle.inventory.data.settings.ShelfViewStore
@@ -77,6 +79,12 @@ object StorageModule {
     fun provideHouseholdViewStore(
         @ApplicationContext context: Context,
     ): HouseholdViewStore = SharedPrefsHouseholdViewStore(context)
+
+    @Provides
+    @Singleton
+    fun provideReminderSettingsStore(
+        @ApplicationContext context: Context,
+    ): ReminderSettingsStore = SharedPrefsReminderSettingsStore(context)
 
     @Provides
     @Singleton
