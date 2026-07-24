@@ -96,20 +96,7 @@ jobs:
           force-avd-creation: false
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           disable-animations: true
-          # `clean --no-build-cache`: setup-gradle persists both the Gradle user
-          # home (KSP/Hilt incremental state) AND the Gradle build cache across
-          # nightly runs. `clean` alone only removes the local build/ directory —
-          # Gradle's build cache still serves stale cached task outputs by content
-          # hash afterward (confirmed 2026-07-24: a `clean`-only run still showed
-          # "43 from cache" and failed identically). Hilt's cross-module
-          # aggregating component-generation tasks are known not to be reliably
-          # cacheable across source-graph changes (e.g. a newly added
-          # @HiltWorker) — surfaced as "cannot find symbol
-          # DaggerDefault_HiltComponents_SingletonC" across several unrelated
-          # flow tests, not reproducible with a genuinely fully-clean local
-          # build. This job only runs nightly, so the full-rebuild cost is a
-          # non-issue.
-          script: ./gradlew clean connectedDebugAndroidTest --no-build-cache
+          script: ./gradlew connectedDebugAndroidTest
 
       - name: Upload instrumented test report
         if: always()
