@@ -13,6 +13,7 @@ import dev.scuttle.inventory.data.api.HouseholdApi
 import dev.scuttle.inventory.data.api.InviteApi
 import dev.scuttle.inventory.data.api.LocationApi
 import dev.scuttle.inventory.data.api.MemberApi
+import dev.scuttle.inventory.data.api.MissingItemsApi
 import dev.scuttle.inventory.data.api.ProductApi
 import dev.scuttle.inventory.data.api.RestoreApi
 import dev.scuttle.inventory.data.api.SearchApi
@@ -124,4 +125,8 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideAppReleaseApi(retrofit: Retrofit): AppReleaseApi = retrofit.create(AppReleaseApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideMissingItemsApi(retrofit: Retrofit): MissingItemsApi = retrofit.create(MissingItemsApi::class.java)
 }

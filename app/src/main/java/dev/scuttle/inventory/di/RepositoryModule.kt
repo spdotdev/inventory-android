@@ -20,6 +20,8 @@ import dev.scuttle.inventory.data.location.LocationRepository
 import dev.scuttle.inventory.data.location.LocationRepositoryImpl
 import dev.scuttle.inventory.data.member.MemberRepository
 import dev.scuttle.inventory.data.member.MemberRepositoryImpl
+import dev.scuttle.inventory.data.missingitems.MissingItemsRepository
+import dev.scuttle.inventory.data.missingitems.MissingItemsRepositoryImpl
 import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.data.product.ProductRepositoryImpl
 import dev.scuttle.inventory.data.realtime.PusherRealtimeGateway
@@ -80,4 +82,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindAppUpdateRepository(impl: AppUpdateRepositoryImpl): AppUpdateRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindMissingItemsRepository(impl: MissingItemsRepositoryImpl): MissingItemsRepository
 }
