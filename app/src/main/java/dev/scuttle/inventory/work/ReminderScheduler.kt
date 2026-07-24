@@ -35,17 +35,23 @@ open class ReminderScheduler
                     .setInitialDelay(delayMillis, TimeUnit.MILLISECONDS)
                     .build()
 
+            // CANCEL_AND_REENQUEUE, not UPDATE: UPDATE preserves an already-scheduled
+            // periodic work's existing next-run anchor and does NOT apply a new
+            // request's initialDelay to it (confirmed on-device: changing the
+            // reminder time a second time silently kept firing at the first-ever
+            // schedule's original time). CANCEL_AND_REENQUEUE genuinely cancels and
+            // reschedules, so a user-initiated time change actually takes effect.
             workManager.enqueueUniquePeriodicWork(
                 MISSING_ITEMS_CHECK_WORK_NAME,
-                ExistingPeriodicWorkPolicy.UPDATE,
+                ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE,
                 request,
             )
         }
 
         /**
          * Enqueues idempotently at app boot without disturbing an already-scheduled
-         * reminder's timing (unlike [reschedule]'s UPDATE policy, used when the user
-         * actively changes the time).
+         * reminder's timing (unlike [reschedule]'s CANCEL_AND_REENQUEUE, used when
+         * the user actively changes the time).
          */
         open fun ensureScheduled(
             context: Context,
