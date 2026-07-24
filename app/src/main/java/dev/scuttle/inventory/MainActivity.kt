@@ -3,6 +3,7 @@ package dev.scuttle.inventory
 import android.content.Context
 import android.content.res.Configuration
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -79,6 +80,7 @@ import dev.scuttle.inventory.ui.theme.InventoryTheme
 import dev.scuttle.inventory.ui.theme.ThemeMode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -125,6 +127,7 @@ class MainActivity : ComponentActivity() {
                 }
             val appUpdateViewModel: AppUpdateViewModel = hiltViewModel()
             val updateStatus by appUpdateViewModel.status.collectAsState()
+            val isUpdateDialogVisible by appUpdateViewModel.isDialogVisible.collectAsState()
             val context = LocalContext.current
             val coroutineScope = rememberCoroutineScope()
             val updateInstaller: UpdateInstaller = remember { UpdateInstaller() }
@@ -134,7 +137,7 @@ class MainActivity : ComponentActivity() {
             InventoryTheme(darkTheme = dark) {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     InventoryNavHost(themeViewModel = themeViewModel)
-                    if (appUpdateViewModel.isDialogVisible) {
+                    if (isUpdateDialogVisible) {
                         UpdateDialog(
                             status = updateStatus,
                             onUpdateClick = {
@@ -145,7 +148,17 @@ class MainActivity : ComponentActivity() {
                                         UpdateStatus.None -> return@UpdateDialog
                                     }
                                 coroutineScope.launch(Dispatchers.IO) {
-                                    updateInstaller.downloadAndInstall(context, downloadUrl)
+                                    val result = updateInstaller.downloadAndInstall(context, downloadUrl)
+                                    if (result.isFailure) {
+                                        withContext(Dispatchers.Main) {
+                                            Toast
+                                                .makeText(
+                                                    context,
+                                                    R.string.update_download_failed,
+                                                    Toast.LENGTH_LONG,
+                                                ).show()
+                                        }
+                                    }
                                 }
                             },
                             onDismiss = { appUpdateViewModel.dismissOptional() },

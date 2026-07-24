@@ -330,4 +330,5 @@
     <string name="update_dialog_available_title">Update beschikbaar</string>
     <string name="update_dialog_update_now">Nu updaten</string>
     <string name="update_dialog_later">Later</string>
+    <string name="update_download_failed">De update kon niet worden gedownload. Probeer het opnieuw.</string>
 </resources>

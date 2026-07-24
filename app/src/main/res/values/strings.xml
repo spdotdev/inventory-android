@@ -344,4 +344,5 @@
     <string name="update_dialog_available_title">Update available</string>
     <string name="update_dialog_update_now">Update now</string>
     <string name="update_dialog_later">Later</string>
+    <string name="update_download_failed">Couldn\'t download the update. Please try again.</string>
 </resources>

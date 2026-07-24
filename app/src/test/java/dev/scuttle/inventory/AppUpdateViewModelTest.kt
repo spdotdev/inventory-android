@@ -24,10 +24,21 @@ class AppUpdateViewModelTest {
             downloadUrl = "https://example.test/app.apk",
         )
 
+    private val newerRelease =
+        release.copy(id = 2, versionCode = 1000, versionName = "even newer")
+
     private class FakeAppUpdateRepository(
-        private val result: UpdateStatus,
+        private val results: List<UpdateStatus>,
     ) : AppUpdateRepository {
-        override suspend fun check(): UpdateStatus = result
+        private var index = 0
+
+        constructor(result: UpdateStatus) : this(listOf(result))
+
+        override suspend fun check(): UpdateStatus {
+            val result = results[minOf(index, results.size - 1)]
+            index++
+            return result
+        }
     }
 
     @Test
@@ -46,9 +57,9 @@ class AppUpdateViewModelTest {
             val viewModel = AppUpdateViewModel(FakeAppUpdateRepository(UpdateStatus.Optional(release)))
             viewModel.refresh()
 
-            assertTrue(viewModel.isDialogVisible)
+            assertTrue(viewModel.isDialogVisible.value)
             viewModel.dismissOptional()
-            assertFalse(viewModel.isDialogVisible)
+            assertFalse(viewModel.isDialogVisible.value)
         }
 
     @Test
@@ -59,6 +70,27 @@ class AppUpdateViewModelTest {
 
             viewModel.dismissOptional()
 
-            assertTrue(viewModel.isDialogVisible)
+            assertTrue(viewModel.isDialogVisible.value)
+        }
+
+    @Test
+    fun dismissing_one_release_does_not_suppress_a_different_newer_release() =
+        runTest {
+            val viewModel =
+                AppUpdateViewModel(
+                    FakeAppUpdateRepository(
+                        listOf(UpdateStatus.Optional(release), UpdateStatus.Optional(newerRelease)),
+                    ),
+                )
+
+            viewModel.refresh()
+            assertTrue(viewModel.isDialogVisible.value)
+            viewModel.dismissOptional()
+            assertFalse(viewModel.isDialogVisible.value)
+
+            viewModel.refresh()
+
+            assertEquals(UpdateStatus.Optional(newerRelease), viewModel.status.value)
+            assertTrue(viewModel.isDialogVisible.value)
         }
 }
