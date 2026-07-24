@@ -68,11 +68,13 @@
     <ID>ReturnCount:ShelvesViewModel.kt$ShelvesViewModel$fun create()</ID>
     <ID>SwallowedException:AuthScreen.kt$e: GetCredentialCancellationException</ID>
     <ID>TooGenericExceptionCaught:AppUpdateRepositoryImpl.kt$AppUpdateRepositoryImpl$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:MissingItemsRepositoryImpl.kt$MissingItemsRepositoryImpl$e: Exception</ID>
     <ID>TooGenericExceptionThrown:AppUpdateRepositoryTest.kt$AppUpdateRepositoryTest.FakeAppReleaseApi$throw RuntimeException("offline")</ID>
     <ID>TooGenericExceptionThrown:ForgotPasswordViewModelTest.kt$ForgotPasswordViewModelTest.FakeAuthRepository$throw RuntimeException("Unable to resolve host \"inventory.test\"")</ID>
     <ID>TooGenericExceptionThrown:HouseholdsViewModelTest.kt$HouseholdsViewModelTest.FakeHouseholdRepository$throw RuntimeException("offline")</ID>
     <ID>TooGenericExceptionThrown:InviteViewModelTest.kt$InviteViewModelTest.FakeInviteRepository$throw RuntimeException("offline")</ID>
     <ID>TooGenericExceptionThrown:JoinHouseholdViewModelTest.kt$JoinHouseholdViewModelTest.FakeHouseholdRepository$throw RuntimeException("Invalid code.")</ID>
+    <ID>TooGenericExceptionThrown:MissingItemsRepositoryTest.kt$MissingItemsRepositoryTest.FakeMissingItemsApi$throw RuntimeException("offline")</ID>
     <ID>TooGenericExceptionThrown:ProductDetailViewModelTest.kt$ProductDetailViewModelTest.FakeProductRepository$throw RuntimeException("add failed")</ID>
     <ID>TooGenericExceptionThrown:ProductDetailViewModelTest.kt$ProductDetailViewModelTest.FakeProductRepository$throw RuntimeException("delete failed")</ID>
     <ID>TooGenericExceptionThrown:ProductDetailViewModelTest.kt$ProductDetailViewModelTest.FakeProductRepository$throw RuntimeException("network error")</ID>
