@@ -147,7 +147,15 @@ always asks what to do with the contents — see "Deletes" above.
   Compose theme to match these.
 
 ## Scope guardrails — refuse to add
-No expiry/reminders, recipes, shopping list, offline mode.
+No recipes, shopping list, offline mode. No expiry-date reminders/tracking
+specifically (still cut).
+**Daily missing-items reminder unlocked 2026-07-24** (user decision, narrow
+carve-out from the "no reminders" cut — a once-daily, user-timed notification when
+the account has 1+ missing items right now, not an expiry-date reminder system):
+its own `"missing_items_reminder"` notification channel (separate from
+`"app_updates"`), a device-local on/off + time preference in Settings, and a
+WorkManager job polling the new `GET /api/v1/missing-items/count` endpoint. Spec:
+`inventory-laravel/docs/superpowers/specs/2026-07-24-daily-missing-items-reminder-design.md`.
 **Phase 2 unlocked 2026-07-10** (user decision) and since shipped: barcode scanning,
 the low-stock "running low" view, filter/sort, household color/icon theming, and the
 live-updates client — see `ROADMAP.md` / `BACKLOG.md`.
