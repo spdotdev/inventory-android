@@ -111,10 +111,14 @@ Detailed build order: [`CLAUDE.md`](CLAUDE.md) and [`docs/android-plan.md`](docs
   `inventory-mcp`'s `create_app_release`/`list_app_releases`/`update_app_release`
   tools. Device-verified end to end (dialog, notification, in-app APK install). Spec:
   `inventory-laravel/docs/superpowers/specs/2026-07-24-app-update-notifications-design.md`.
-- [ ] **Daily missing-items reminder** — 🟡 TBD, parked here 2026-07-24. A separate
-  notification channel (not folded into `"app_updates"`) reminding the user once a
-  day about mandatory/missing items. Depends on the notification-channel
-  infrastructure the update-notifications item establishes.
+- [x] **Daily missing-items reminder** — shipped 2026-07-24. User-timed (Settings
+  toggle + time picker), once-daily WorkManager check against a new account-wide
+  `GET /api/v1/missing-items/count` endpoint; skips entirely when count is 0; own
+  `"missing_items_reminder"` notification channel (separate from `"app_updates"`);
+  tapping the notification deep-links to the Missing tab (cold-start and
+  already-running paths both handled via `MainActivity.onNewIntent`). Narrow,
+  dated carve-out from the "no reminders" scope guardrail — see CLAUDE.md. Spec:
+  `inventory-laravel/docs/superpowers/specs/2026-07-24-daily-missing-items-reminder-design.md`.
 
 ### SECURITY
 - [x] **CodeQL SAST + dependency review CI** — shipped 2026-07-13. `codeql.yml` runs
