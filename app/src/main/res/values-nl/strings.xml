@@ -322,4 +322,8 @@
     <string name="delete_undo_failed">Ongedaan maken lukt niet — dit is al hersteld of definitief verwijderd.</string>
     <string name="product_deleted">Product verwijderd.</string>
     <string name="shelf_unsorted">Ongesorteerd</string>
+    <string name="notification_channel_app_updates_name">App-updates</string>
+    <string name="notification_channel_app_updates_description">Meldt je wanneer een nieuwe app-versie beschikbaar is</string>
+    <string name="notification_app_update_required_title">Update vereist</string>
+    <string name="notification_app_update_available_title">Update beschikbaar</string>
 </resources>

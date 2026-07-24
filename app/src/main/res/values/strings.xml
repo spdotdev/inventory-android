@@ -336,4 +336,8 @@
     <string name="delete_undo_failed">Couldn\'t undo — this was already restored or permanently removed.</string>
     <string name="product_deleted">Product deleted.</string>
     <string name="shelf_unsorted">Unsorted</string>
+    <string name="notification_channel_app_updates_name">App updates</string>
+    <string name="notification_channel_app_updates_description">Notifies you when a new app version is available</string>
+    <string name="notification_app_update_required_title">Update required</string>
+    <string name="notification_app_update_available_title">Update available</string>
 </resources>
