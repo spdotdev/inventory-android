@@ -15,7 +15,8 @@ class SharedPrefsReminderSettingsStore(
         )
 
     override fun set(settings: ReminderSettings) {
-        prefs.edit()
+        prefs
+            .edit()
             .putBoolean(KEY_ENABLED, settings.enabled)
             .putInt(KEY_HOUR, settings.hour)
             .putInt(KEY_MINUTE, settings.minute)

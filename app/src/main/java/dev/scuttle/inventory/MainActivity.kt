@@ -2,6 +2,7 @@ package dev.scuttle.inventory
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Build
@@ -46,6 +47,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.navigation.NavHostController
 import androidx.navigation.NavOptionsBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -85,16 +87,36 @@ import dev.scuttle.inventory.ui.storage.StorageOverviewScreen
 import dev.scuttle.inventory.ui.theme.InventoryTheme
 import dev.scuttle.inventory.ui.theme.ThemeMode
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    companion object {
+        const val EXTRA_NAVIGATE_TO = "navigate_to"
+    }
+
     // Live updates (Q-3): connected while this (single) activity is started —
     // i.e. exactly while the app is in the foreground.
     @Inject
     lateinit var liveUpdates: LiveUpdates
+
+    // Pending deep-link target from a notification tap (Task 5): published by
+    // onNewIntent when the Activity is already alive (singleTop re-delivery), and
+    // checked once more at cold-start time in onCreate, since a notification can
+    // just as easily cold-start the app as resume it. Consumed by the
+    // LaunchedEffect in onCreate's setContent, which actually drives the
+    // NavController — Compose state, not raw Intent extras, is what survives
+    // recomposition here.
+    private val pendingNavigation = MutableStateFlow<String?>(null)
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        intent.getStringExtra(EXTRA_NAVIGATE_TO)?.let { pendingNavigation.value = it }
+    }
 
     override fun onStart() {
         super.onStart()
@@ -122,6 +144,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         liveUpdates.start()
+        intent.getStringExtra(EXTRA_NAVIGATE_TO)?.let { pendingNavigation.value = it }
         setContent {
             val themeViewModel: ThemeViewModel = hiltViewModel()
             val mode by themeViewModel.mode.collectAsState()
@@ -137,13 +160,16 @@ class MainActivity : ComponentActivity() {
             val context = LocalContext.current
             val coroutineScope = rememberCoroutineScope()
             val updateInstaller: UpdateInstaller = remember { UpdateInstaller() }
+            val navController = rememberNavController()
+            val navigateTo by pendingNavigation.collectAsState()
 
             RequestNotificationPermissionOnce(context)
             LaunchedEffect(Unit) { appUpdateViewModel.refresh() }
+            HandlePendingNavigation(navigateTo, navController) { pendingNavigation.value = null }
 
             InventoryTheme(darkTheme = dark) {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    InventoryNavHost(themeViewModel = themeViewModel)
+                    InventoryNavHost(themeViewModel = themeViewModel, navController = navController)
                     if (isUpdateDialogVisible) {
                         UpdateDialog(
                             status = updateStatus,
@@ -173,6 +199,28 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * Drives the deep link from a missing-items notification tap (Task 5): whenever
+ * [navigateTo] resolves to [dev.scuttle.inventory.work.NAVIGATE_TO_MISSING_ITEMS] —
+ * set by [MainActivity.onNewIntent] or the cold-start check in `onCreate` — navigate
+ * to the Missing items screen (as the drawer/dashboard deep link does: a genuinely
+ * pushed entry with a back arrow) and clear the pending value via [onConsumed] so it
+ * doesn't refire on recomposition or a later unrelated NavController change.
+ */
+@Composable
+private fun HandlePendingNavigation(
+    navigateTo: String?,
+    navController: NavHostController,
+    onConsumed: () -> Unit,
+) {
+    LaunchedEffect(navigateTo) {
+        if (navigateTo == dev.scuttle.inventory.work.NAVIGATE_TO_MISSING_ITEMS) {
+            navController.navigate(Routes.missingItems(fromDrawer = true)) { launchSingleTop = true }
+            onConsumed()
         }
     }
 }
@@ -400,10 +448,10 @@ fun authRedirectFor(
 @Composable
 private fun InventoryNavHost(
     themeViewModel: ThemeViewModel,
+    navController: NavHostController = rememberNavController(),
     authViewModel: AuthViewModel = hiltViewModel(),
     drawerViewModel: DrawerViewModel = hiltViewModel(),
 ) {
-    val navController = rememberNavController()
     val authState by authViewModel.state.collectAsState()
 
     // Redirect only on an actual auth *transition* (login / logout), never on a bare

@@ -59,7 +59,8 @@ open class ReminderScheduler
                     .setInitialDelay(delayMillis, TimeUnit.MILLISECONDS)
                     .build()
 
-            WorkManager.getInstance(context)
+            WorkManager
+                .getInstance(context)
                 .enqueueUniquePeriodicWork(
                     MISSING_ITEMS_CHECK_WORK_NAME,
                     ExistingPeriodicWorkPolicy.KEEP,
