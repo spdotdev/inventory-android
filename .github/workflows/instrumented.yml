@@ -96,7 +96,17 @@ jobs:
           force-avd-creation: false
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           disable-animations: true
-          script: ./gradlew connectedDebugAndroidTest
+          # `clean` first: setup-gradle persists the Gradle user home (including
+          # KSP/Hilt incremental state) across nightly runs, and Hilt's
+          # cross-module aggregating component generation is known to leave a
+          # stale generated Dagger component behind when a run's cached
+          # incremental state predates a source change to the Hilt module/worker
+          # graph (e.g. a newly added @HiltWorker) — surfaced 2026-07-24 as
+          # "cannot find symbol DaggerDefault_HiltComponents_SingletonC" across
+          # several unrelated flow tests, not reproducible with a genuinely
+          # clean local build of the same source. This job only runs nightly, so
+          # the clean-build cost is a non-issue.
+          script: ./gradlew clean connectedDebugAndroidTest
 
       - name: Upload instrumented test report
         if: always()
