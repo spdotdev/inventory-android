@@ -22,6 +22,8 @@ class UpdateInstaller
             downloadUrl: String,
         ): Result<Unit> =
             runCatching {
+                requireHttps(downloadUrl)
+
                 val apkDir = File(context.cacheDir, "apk").apply { mkdirs() }
                 val apkFile = File(apkDir, "update.apk")
 
@@ -46,7 +48,21 @@ class UpdateInstaller
                 Log.e(TAG, "Failed to download/install update from $downloadUrl", error)
             }
 
-        private companion object {
+        internal companion object {
             const val TAG = "UpdateInstaller"
+
+            /**
+             * Rejects any [downloadUrl] that isn't served over HTTPS. The system package
+             * installer independently verifies the APK's signing certificate against the
+             * currently-installed app before allowing an install, but requiring HTTPS at
+             * the download layer is cheap defense-in-depth against network-level tampering
+             * in transit (e.g. a misconfigured backend value pointing at `http://`).
+             */
+            fun requireHttps(downloadUrl: String) {
+                val protocol = URL(downloadUrl).protocol
+                require(protocol.equals("https", ignoreCase = true)) {
+                    "APK download URL must use https, got: $protocol"
+                }
+            }
         }
     }
