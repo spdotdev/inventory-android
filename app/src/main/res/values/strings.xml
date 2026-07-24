@@ -345,4 +345,10 @@
     <string name="update_dialog_update_now">Update now</string>
     <string name="update_dialog_later">Later</string>
     <string name="update_download_failed">Couldn\'t download the update. Please try again.</string>
+    <string name="notification_channel_missing_items_name">Missing items reminder</string>
+    <string name="notification_channel_missing_items_description">Reminds you once a day if any mandatory items are missing</string>
+    <plurals name="notification_missing_items_title">
+        <item quantity="one">%d item is missing</item>
+        <item quantity="other">%d items are missing</item>
+    </plurals>
 </resources>

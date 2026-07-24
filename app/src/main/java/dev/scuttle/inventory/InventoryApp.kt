@@ -7,8 +7,11 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import dagger.hilt.android.HiltAndroidApp
+import dev.scuttle.inventory.data.settings.ReminderSettingsStore
 import dev.scuttle.inventory.work.AppUpdateCheckWorker
+import dev.scuttle.inventory.work.ReminderScheduler
 import dev.scuttle.inventory.work.createAppUpdatesNotificationChannel
+import dev.scuttle.inventory.work.createMissingItemsNotificationChannel
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -21,13 +24,21 @@ class InventoryApp :
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
 
+    @Inject
+    lateinit var reminderSettingsStore: ReminderSettingsStore
+
+    @Inject
+    lateinit var reminderScheduler: ReminderScheduler
+
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder().setWorkerFactory(workerFactory).build()
 
     override fun onCreate() {
         super.onCreate()
         createAppUpdatesNotificationChannel(this)
+        createMissingItemsNotificationChannel(this)
         scheduleAppUpdateCheck()
+        reminderScheduler.ensureScheduled(this, reminderSettingsStore.get())
     }
 
     private fun scheduleAppUpdateCheck() {

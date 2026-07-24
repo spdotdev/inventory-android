@@ -331,4 +331,10 @@
     <string name="update_dialog_update_now">Nu updaten</string>
     <string name="update_dialog_later">Later</string>
     <string name="update_download_failed">De update kon niet worden gedownload. Probeer het opnieuw.</string>
+    <string name="notification_channel_missing_items_name">Herinnering ontbrekende items</string>
+    <string name="notification_channel_missing_items_description">Herinnert je eenmaal per dag als er verplichte items ontbreken</string>
+    <plurals name="notification_missing_items_title">
+        <item quantity="one">%d item ontbreekt</item>
+        <item quantity="other">%d items ontbreken</item>
+    </plurals>
 </resources>
