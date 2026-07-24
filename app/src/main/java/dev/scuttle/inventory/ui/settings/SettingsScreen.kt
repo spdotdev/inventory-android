@@ -25,13 +25,17 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -67,11 +71,14 @@ fun SettingsScreen(
     themeViewModel: ThemeViewModel = hiltViewModel(),
     languageViewModel: LanguageViewModel = hiltViewModel(),
     joinViewModel: JoinHouseholdViewModel = hiltViewModel(),
+    reminderViewModel: ReminderViewModel = hiltViewModel(),
 ) {
     val mode by themeViewModel.mode.collectAsState()
     val language by languageViewModel.language.collectAsState()
     val activity = LocalContext.current as? android.app.Activity
     val joinState by joinViewModel.state.collectAsState()
+    val reminderSettings by reminderViewModel.settings.collectAsState()
+    var showTimePicker by remember { mutableStateOf(false) }
     var confirmSignOut by rememberSaveable { mutableStateOf(false) }
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -147,6 +154,34 @@ fun SettingsScreen(
                                 },
                             )
                         },
+                    )
+                }
+            }
+
+            Text(
+                text = stringResource(R.string.settings_missing_items_reminder_section),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.semantics { heading() },
+            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(stringResource(R.string.settings_missing_items_reminder_toggle))
+                Switch(
+                    checked = reminderSettings.enabled,
+                    onCheckedChange = { reminderViewModel.setEnabled(it) },
+                )
+            }
+            if (reminderSettings.enabled) {
+                TextButton(onClick = { showTimePicker = true }) {
+                    Text(
+                        stringResource(
+                            R.string.settings_missing_items_reminder_time,
+                            reminderSettings.hour,
+                            reminderSettings.minute,
+                        ),
                     )
                 }
             }
@@ -276,6 +311,32 @@ fun SettingsScreen(
             dismissButton = {
                 TextButton(onClick = { confirmSignOut = false }) { Text(stringResource(R.string.action_cancel)) }
             },
+        )
+    }
+
+    if (showTimePicker) {
+        val timePickerState =
+            rememberTimePickerState(
+                initialHour = reminderSettings.hour,
+                initialMinute = reminderSettings.minute,
+                is24Hour = true,
+            )
+        AlertDialog(
+            onDismissRequest = { showTimePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    reminderViewModel.setTime(timePickerState.hour, timePickerState.minute)
+                    showTimePicker = false
+                }) {
+                    Text(stringResource(R.string.settings_missing_items_reminder_time_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTimePicker = false }) {
+                    Text(stringResource(R.string.settings_missing_items_reminder_time_cancel))
+                }
+            },
+            text = { TimePicker(state = timePickerState) },
         )
     }
 }

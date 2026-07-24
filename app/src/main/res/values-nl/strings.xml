@@ -258,6 +258,11 @@
     <string name="settings_title">Instellingen</string>
     <string name="settings_language_section">Taal</string>
     <string name="settings_theme_section">Thema</string>
+    <string name="settings_missing_items_reminder_section">Herinnering ontbrekende items</string>
+    <string name="settings_missing_items_reminder_toggle">Dagelijks herinneren</string>
+    <string name="settings_missing_items_reminder_time">Herinneringstijd: %1$02d:%2$02d</string>
+    <string name="settings_missing_items_reminder_time_confirm">Opslaan</string>
+    <string name="settings_missing_items_reminder_time_cancel">Annuleren</string>
     <string name="settings_join_section">Huishouden deelnemen</string>
     <string name="settings_join_success">Succesvol deelgenomen!</string>
     <string name="settings_join_success_member_hint">Je bent lid geworden — eigenaren en beheerders beheren de opslag.</string>

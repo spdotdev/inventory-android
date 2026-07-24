@@ -272,6 +272,11 @@
     <string name="settings_title">Settings</string>
     <string name="settings_language_section">Language</string>
     <string name="settings_theme_section">Theme</string>
+    <string name="settings_missing_items_reminder_section">Missing items reminder</string>
+    <string name="settings_missing_items_reminder_toggle">Remind me daily</string>
+    <string name="settings_missing_items_reminder_time">Reminder time: %1$02d:%2$02d</string>
+    <string name="settings_missing_items_reminder_time_confirm">Save</string>
+    <string name="settings_missing_items_reminder_time_cancel">Cancel</string>
     <string name="settings_join_section">Join household</string>
     <string name="settings_join_success">Joined successfully!</string>
     <string name="settings_join_success_member_hint">You\'ve joined as a member — owners and admins manage storage.</string>
