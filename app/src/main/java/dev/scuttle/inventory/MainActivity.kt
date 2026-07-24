@@ -1,12 +1,17 @@
 package dev.scuttle.inventory
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -39,6 +44,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavOptionsBuilder
 import androidx.navigation.NavType
@@ -132,6 +138,7 @@ class MainActivity : ComponentActivity() {
             val coroutineScope = rememberCoroutineScope()
             val updateInstaller: UpdateInstaller = remember { UpdateInstaller() }
 
+            RequestNotificationPermissionOnce(context)
             LaunchedEffect(Unit) { appUpdateViewModel.refresh() }
 
             InventoryTheme(darkTheme = dark) {
@@ -166,6 +173,27 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * Requests POST_NOTIFICATIONS (API 33+) once per process start. Without this request
+ * the OS denies it by default, so the WorkManager background-update notification —
+ * this feature's headline "notify even when the app is closed" goal — would silently
+ * never fire on any fresh install. Same pattern as ScannerScreen's CAMERA request.
+ * Below API 33 the permission doesn't exist as a requestable runtime permission, so
+ * there's nothing to request.
+ */
+@Composable
+private fun RequestNotificationPermissionOnce(context: Context) {
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
+    LaunchedEffect(Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
     }
 }
