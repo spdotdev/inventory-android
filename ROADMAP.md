@@ -104,10 +104,12 @@ Detailed build order: [`CLAUDE.md`](CLAUDE.md) and [`docs/android-plan.md`](docs
   of any Play Store upload: a real release signingConfig + AAB output.
 
 ### NOTIFICATIONS
-- [ ] **App update notifications** — 🔲 TODO. Periodic (24h) WorkManager check +
-  on-open popup against a new `GET /api/v1/app-version` endpoint; optional vs
-  breaking (hard-block) releases; single `"app_updates"` notification channel;
-  releases publishable via new `inventory-mcp` tools. Spec:
+- [x] **App update notifications** — shipped 2026-07-24. Periodic (24h) WorkManager
+  check + on-open popup against `GET /api/v1/app-version`; optional vs breaking
+  (hard-block) releases, keyed per-release so a dismissed optional doesn't suppress a
+  later one; single `"app_updates"` notification channel; releases publishable via
+  `inventory-mcp`'s `create_app_release`/`list_app_releases`/`update_app_release`
+  tools. Device-verified end to end (dialog, notification, in-app APK install). Spec:
   `inventory-laravel/docs/superpowers/specs/2026-07-24-app-update-notifications-design.md`.
 - [ ] **Daily missing-items reminder** — 🟡 TBD, parked here 2026-07-24. A separate
   notification channel (not folded into `"app_updates"`) reminding the user once a
