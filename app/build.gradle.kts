@@ -191,3 +191,14 @@ dependencies {
     androidTestImplementation("com.squareup.okhttp3:mockwebserver:5.4.0")
     testImplementation("com.squareup.okhttp3:mockwebserver:5.4.0")
 }
+
+tasks.withType<Test>().configureEach {
+    // EditModeHintViewModelTest deliberately provokes an uncaught coroutine exception
+    // (GAP4-L9) to document undefined behavior. kotlinx-coroutines-test's uncaught-
+    // exception tracking isn't fully scoped to MainDispatcherRule's per-test dispatcher
+    // instance, so that exception can otherwise surface as an unrelated
+    // UncaughtExceptionsBeforeTest failure on whichever sibling test class happens to
+    // run next in the same JVM. Forking a fresh JVM per test class removes that
+    // JVM-global leakage path entirely, regardless of the exact internal mechanism.
+    forkEvery = 1
+}
