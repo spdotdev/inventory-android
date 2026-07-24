@@ -5,12 +5,14 @@ import dagger.Provides
 import dagger.hilt.components.SingletonComponent
 import dagger.hilt.testing.TestInstallIn
 import dev.scuttle.inventory.MockWebServerHolder
+import dev.scuttle.inventory.data.api.AppReleaseApi
 import dev.scuttle.inventory.data.api.AuthApi
 import dev.scuttle.inventory.data.api.ErrorApi
 import dev.scuttle.inventory.data.api.HouseholdApi
 import dev.scuttle.inventory.data.api.InviteApi
 import dev.scuttle.inventory.data.api.LocationApi
 import dev.scuttle.inventory.data.api.MemberApi
+import dev.scuttle.inventory.data.api.MissingItemsApi
 import dev.scuttle.inventory.data.api.ProductApi
 import dev.scuttle.inventory.data.api.RestoreApi
 import dev.scuttle.inventory.data.api.SearchApi
@@ -101,4 +103,10 @@ object TestNetworkModule {
 
     @Provides @Singleton
     fun provideRestoreApi(r: Retrofit): RestoreApi = r.create(RestoreApi::class.java)
+
+    @Provides @Singleton
+    fun provideAppReleaseApi(r: Retrofit): AppReleaseApi = r.create(AppReleaseApi::class.java)
+
+    @Provides @Singleton
+    fun provideMissingItemsApi(r: Retrofit): MissingItemsApi = r.create(MissingItemsApi::class.java)
 }
