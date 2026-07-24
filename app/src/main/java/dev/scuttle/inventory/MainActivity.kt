@@ -31,9 +31,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -45,9 +47,13 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import dagger.hilt.android.AndroidEntryPoint
+import dev.scuttle.inventory.data.appupdate.UpdateStatus
 import dev.scuttle.inventory.data.realtime.LiveUpdates
 import dev.scuttle.inventory.data.settings.SharedPrefsLanguageStore
 import dev.scuttle.inventory.ui.app.DrawerViewModel
+import dev.scuttle.inventory.ui.appupdate.AppUpdateViewModel
+import dev.scuttle.inventory.ui.appupdate.UpdateDialog
+import dev.scuttle.inventory.ui.appupdate.UpdateInstaller
 import dev.scuttle.inventory.ui.auth.AuthScreen
 import dev.scuttle.inventory.ui.auth.AuthViewModel
 import dev.scuttle.inventory.ui.auth.ForgotPasswordScreen
@@ -71,6 +77,8 @@ import dev.scuttle.inventory.ui.settings.ThemeViewModel
 import dev.scuttle.inventory.ui.storage.StorageOverviewScreen
 import dev.scuttle.inventory.ui.theme.InventoryTheme
 import dev.scuttle.inventory.ui.theme.ThemeMode
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -115,10 +123,34 @@ class MainActivity : ComponentActivity() {
                     ThemeMode.LIGHT -> false
                     ThemeMode.DARK -> true
                 }
+            val appUpdateViewModel: AppUpdateViewModel = hiltViewModel()
+            val updateStatus by appUpdateViewModel.status.collectAsState()
+            val context = LocalContext.current
+            val coroutineScope = rememberCoroutineScope()
+            val updateInstaller: UpdateInstaller = remember { UpdateInstaller() }
+
+            LaunchedEffect(Unit) { appUpdateViewModel.refresh() }
 
             InventoryTheme(darkTheme = dark) {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     InventoryNavHost(themeViewModel = themeViewModel)
+                    if (appUpdateViewModel.isDialogVisible) {
+                        UpdateDialog(
+                            status = updateStatus,
+                            onUpdateClick = {
+                                val downloadUrl =
+                                    when (val current = updateStatus) {
+                                        is UpdateStatus.Optional -> current.release.downloadUrl
+                                        is UpdateStatus.Breaking -> current.release.downloadUrl
+                                        UpdateStatus.None -> return@UpdateDialog
+                                    }
+                                coroutineScope.launch(Dispatchers.IO) {
+                                    updateInstaller.downloadAndInstall(context, downloadUrl)
+                                }
+                            },
+                            onDismiss = { appUpdateViewModel.dismissOptional() },
+                        )
+                    }
                 }
             }
         }

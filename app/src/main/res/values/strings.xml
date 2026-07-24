@@ -340,4 +340,8 @@
     <string name="notification_channel_app_updates_description">Notifies you when a new app version is available</string>
     <string name="notification_app_update_required_title">Update required</string>
     <string name="notification_app_update_available_title">Update available</string>
+    <string name="update_dialog_required_title">Update required</string>
+    <string name="update_dialog_available_title">Update available</string>
+    <string name="update_dialog_update_now">Update now</string>
+    <string name="update_dialog_later">Later</string>
 </resources>

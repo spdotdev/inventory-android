@@ -326,4 +326,8 @@
     <string name="notification_channel_app_updates_description">Meldt je wanneer een nieuwe app-versie beschikbaar is</string>
     <string name="notification_app_update_required_title">Update vereist</string>
     <string name="notification_app_update_available_title">Update beschikbaar</string>
+    <string name="update_dialog_required_title">Update vereist</string>
+    <string name="update_dialog_available_title">Update beschikbaar</string>
+    <string name="update_dialog_update_now">Nu updaten</string>
+    <string name="update_dialog_later">Later</string>
 </resources>
