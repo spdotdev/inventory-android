@@ -70,8 +70,6 @@ fun AccountScreen(
         onConsumed = viewModel::consumeSaved,
     )
 
-    val dirty = state.user != null && (state.name != state.user?.name || state.email != state.user?.email)
-
     val statusBarInsets = WindowInsets.statusBars
     Scaffold(
         contentWindowInsets = WindowInsets(0),
@@ -129,13 +127,21 @@ fun AccountScreen(
                         KeyboardOptions(
                             keyboardType = KeyboardType.Email,
                             autoCorrectEnabled = false,
-                            imeAction = ImeAction.Done,
+                            imeAction = ImeAction.Next,
                         ),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(
+                    value = state.gender,
+                    onValueChange = viewModel::onGenderChange,
+                    label = { Text(stringResource(R.string.account_gender_label)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, imeAction = ImeAction.Done),
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Button(
                     onClick = viewModel::save,
-                    enabled = !state.loading && dirty && state.name.isNotBlank() && state.email.isNotBlank(),
+                    enabled = !state.loading && state.dirty && state.name.isNotBlank() && state.email.isNotBlank(),
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(stringResource(R.string.account_save_button))

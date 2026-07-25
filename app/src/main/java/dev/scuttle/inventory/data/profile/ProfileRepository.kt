@@ -8,5 +8,6 @@ interface ProfileRepository {
     suspend fun update(
         name: String,
         email: String,
+        gender: String?,
     ): UserDto
 }

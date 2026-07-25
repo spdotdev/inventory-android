@@ -15,5 +15,6 @@ class ProfileRepositoryImpl
         override suspend fun update(
             name: String,
             email: String,
-        ): UserDto = api.update(UpdateProfileRequest(name, email)).data
+            gender: String?,
+        ): UserDto = api.update(UpdateProfileRequest(name, email, gender)).data
     }
