@@ -85,14 +85,14 @@ fun StorageOverviewScreen(
     householdId: Long,
     modifier: Modifier = Modifier,
     onBack: () -> Unit = {},
-    onOpenLocation: (Long) -> Unit = {},
+    onOpenLocation: (Long, String?) -> Unit = { _, _ -> },
     onOpenSearch: () -> Unit = {},
-    // Scoped-down handoff from a scan-originated zero-result search (GAP-5 H6,
-    // MainActivity's savedStateHandle delivery): non-null once, right after
-    // arriving here from that CTA. There's no attach-on-create wiring yet from
-    // here into a shelf's add-product flow — this just tells the user the code
-    // is ready and where the code came from is remembered, via a one-shot
-    // Snackbar hint; see [onPendingBarcodeConsumed].
+    // Handoff from a scan-originated zero-result search (GAP-5 H6, MainActivity's
+    // savedStateHandle delivery): non-null once, right after arriving here from
+    // that CTA. Shown as a one-shot Snackbar hint, then held in [pendingCode] below
+    // so the next location the user opens carries it forward via onOpenLocation —
+    // LocationDetailScreen already knows how to attach a carried code to its active
+    // shelf's next product create (same mechanism ADD-mode scanning uses).
     pendingBarcodeCode: String? = null,
     onPendingBarcodeConsumed: () -> Unit = {},
     viewModel: StorageOverviewViewModel = hiltViewModel(),
@@ -112,9 +112,11 @@ fun StorageOverviewScreen(
 
     LaunchedEffect(householdId) { viewModel.load(householdId) }
 
+    var pendingCode by rememberSaveable { mutableStateOf<String?>(null) }
     val pendingBarcodeHint = stringResource(R.string.storage_pending_barcode_hint)
     LaunchedEffect(pendingBarcodeCode) {
         if (pendingBarcodeCode != null) {
+            pendingCode = pendingBarcodeCode
             snackbarHostState.showSnackbar(pendingBarcodeHint)
             onPendingBarcodeConsumed()
         }
@@ -302,7 +304,10 @@ fun StorageOverviewScreen(
                             // Hoist formatted string for use inside non-composable semantics block
                             val openDesc = stringResource(R.string.storage_overview_open_cd, location.name)
                             FrostCard(
-                                onClick = { onOpenLocation(location.id) },
+                                onClick = {
+                                    onOpenLocation(location.id, pendingCode)
+                                    pendingCode = null
+                                },
                                 modifier =
                                     Modifier
                                         .fillMaxWidth()
