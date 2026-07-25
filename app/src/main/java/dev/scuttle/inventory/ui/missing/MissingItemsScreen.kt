@@ -46,7 +46,7 @@ import dev.scuttle.inventory.ui.theme.FrostCard
 @Composable
 fun MissingItemsScreen(
     onBack: () -> Unit,
-    onOpenLocation: (householdId: Long, locationId: Long) -> Unit,
+    onOpenProduct: (householdId: Long, shelfId: Long, productId: Long) -> Unit,
     // GAP4-L8: false at the bottom-tab root (matches every other tab root's TopAppBar,
     // which has no navigationIcon at all) — true only when reached via the drawer's
     // missing-items-count deep link, a genuinely pushed backstack entry. See
@@ -168,7 +168,7 @@ fun MissingItemsScreen(
                     item { /* top spacing */ }
                     items(state.items) { item ->
                         FrostCard(
-                            onClick = { onOpenLocation(item.householdId, item.locationId) },
+                            onClick = { onOpenProduct(item.householdId, item.shelfId, item.productId) },
                             modifier = Modifier.fillMaxWidth(),
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {

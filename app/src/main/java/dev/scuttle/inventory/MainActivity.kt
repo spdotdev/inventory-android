@@ -866,8 +866,8 @@ private fun InventoryNavHost(
                 MissingItemsScreen(
                     canNavigateBack = fromDrawer,
                     onBack = { navController.popBackStack() },
-                    onOpenLocation = { hhId, locId ->
-                        navController.navigate(Routes.location(hhId, locId))
+                    onOpenProduct = { hhId, shelfId, productId ->
+                        navController.navigate(Routes.productDetail(hhId, shelfId, productId))
                     },
                     households = drawerUi.entries.map { HouseholdOption(it.id, it.name) },
                     onOpenSearch = { hhId ->

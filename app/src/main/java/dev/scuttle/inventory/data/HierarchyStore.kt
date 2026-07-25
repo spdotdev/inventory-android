@@ -55,6 +55,8 @@ data class MissingItem(
     val locationName: String,
     val householdId: Long,
     val locationId: Long,
+    val shelfId: Long,
+    val productId: Long,
 )
 
 data class LowStockItem(
@@ -220,6 +222,8 @@ class HierarchyStore(
                         place.location.name,
                         place.householdId,
                         place.location.id,
+                        place.shelf.id,
+                        product.id,
                     ),
                 )
             threshold != null && product.quantity <= threshold ->
