@@ -393,53 +393,58 @@ fun ProductDetailScreen(
                     val displayedQuantity = (product.quantity + pendingDelta).coerceAtLeast(0)
                     val decreaseInteractionSource = remember { MutableInteractionSource() }
                     val increaseInteractionSource = remember { MutableInteractionSource() }
-                    Text(
-                        text = stringResource(R.string.product_detail_field_quantity),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
-                        OutlinedButton(
-                            onClick = {},
-                            interactionSource = decreaseInteractionSource,
-                            enabled = !state.loading && displayedQuantity > 0,
-                            modifier =
-                                Modifier
-                                    .semantics { contentDescription = decreaseDesc }
-                                    .repeatingClickable(
-                                        interactionSource = decreaseInteractionSource,
-                                        enabled = !state.loading && displayedQuantity > 0,
-                                        onTick = {
-                                            pendingDelta = (pendingDelta - 1).coerceAtLeast(-product.quantity)
-                                        },
-                                        onRelease = { ticks -> if (ticks > 0) viewModel.decrement(ticks) },
-                                    ),
-                        ) {
-                            Text("−")
-                        }
                         Text(
-                            text = displayedQuantity.toString(),
-                            style = MaterialTheme.typography.headlineSmall,
+                            text = stringResource(R.string.product_detail_field_quantity),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
-                        OutlinedButton(
-                            onClick = {},
-                            interactionSource = increaseInteractionSource,
-                            enabled = !state.loading,
-                            modifier =
-                                Modifier
-                                    .semantics { contentDescription = increaseDesc }
-                                    .repeatingClickable(
-                                        interactionSource = increaseInteractionSource,
-                                        enabled = !state.loading,
-                                        onTick = { pendingDelta++ },
-                                        onRelease = { ticks -> if (ticks > 0) viewModel.increment(ticks) },
-                                    ),
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
-                            Text("+")
+                            OutlinedButton(
+                                onClick = {},
+                                interactionSource = decreaseInteractionSource,
+                                enabled = !state.loading && displayedQuantity > 0,
+                                modifier =
+                                    Modifier
+                                        .semantics { contentDescription = decreaseDesc }
+                                        .repeatingClickable(
+                                            interactionSource = decreaseInteractionSource,
+                                            enabled = !state.loading && displayedQuantity > 0,
+                                            onTick = {
+                                                pendingDelta = (pendingDelta - 1).coerceAtLeast(-product.quantity)
+                                            },
+                                            onRelease = { ticks -> if (ticks > 0) viewModel.decrement(ticks) },
+                                        ),
+                            ) {
+                                Text("−")
+                            }
+                            Text(
+                                text = displayedQuantity.toString(),
+                                style = MaterialTheme.typography.headlineSmall,
+                            )
+                            OutlinedButton(
+                                onClick = {},
+                                interactionSource = increaseInteractionSource,
+                                enabled = !state.loading,
+                                modifier =
+                                    Modifier
+                                        .semantics { contentDescription = increaseDesc }
+                                        .repeatingClickable(
+                                            interactionSource = increaseInteractionSource,
+                                            enabled = !state.loading,
+                                            onTick = { pendingDelta++ },
+                                            onRelease = { ticks -> if (ticks > 0) viewModel.increment(ticks) },
+                                        ),
+                            ) {
+                                Text("+")
+                            }
                         }
                     }
                 }
