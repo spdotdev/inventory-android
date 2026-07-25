@@ -393,6 +393,11 @@ fun ProductDetailScreen(
                     val displayedQuantity = (product.quantity + pendingDelta).coerceAtLeast(0)
                     val decreaseInteractionSource = remember { MutableInteractionSource() }
                     val increaseInteractionSource = remember { MutableInteractionSource() }
+                    Text(
+                        text = stringResource(R.string.product_detail_field_quantity),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
