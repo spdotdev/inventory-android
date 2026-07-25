@@ -184,6 +184,13 @@ fun MissingItemsScreen(
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.error,
                                 )
+                                if (!item.productCode.isNullOrBlank()) {
+                                    Text(
+                                        text = item.productCode,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
                                 Text(
                                     text = "${item.locationName} · ${item.shelfName}",
                                     style = MaterialTheme.typography.bodySmall,
