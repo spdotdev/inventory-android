@@ -81,7 +81,10 @@ import dev.scuttle.inventory.ui.missing.MissingItemsScreen
 import dev.scuttle.inventory.ui.products.ProductDetailScreen
 import dev.scuttle.inventory.ui.scanner.ScannerScreen
 import dev.scuttle.inventory.ui.search.SearchScreen
-import dev.scuttle.inventory.ui.settings.SettingsScreen
+import dev.scuttle.inventory.ui.settings.AccountScreen
+import dev.scuttle.inventory.ui.settings.GeneralScreen
+import dev.scuttle.inventory.ui.settings.MoreScreen
+import dev.scuttle.inventory.ui.settings.NotificationsScreen
 import dev.scuttle.inventory.ui.settings.ThemeViewModel
 import dev.scuttle.inventory.ui.storage.StorageOverviewScreen
 import dev.scuttle.inventory.ui.theme.InventoryTheme
@@ -348,6 +351,9 @@ private object Routes {
     const val MEMBERS = "members/{householdId}"
     const val DELETED_BATCHES = "deleted/{householdId}"
     const val SETTINGS = "settings"
+    const val SETTINGS_NOTIFICATIONS = "settings/notifications"
+    const val SETTINGS_ACCOUNT = "settings/account"
+    const val SETTINGS_GENERAL = "settings/general"
     const val STORAGE = "storage/{householdId}"
     const val SEARCH = "search/{householdId}?query={query}"
     const val INVITE = "invite/{householdId}/{householdName}"
@@ -648,10 +654,28 @@ private fun InventoryNavHost(
             }
 
             composable(Routes.SETTINGS) {
-                SettingsScreen(
+                MoreScreen(
+                    onOpenNotifications = { navController.navigate(Routes.SETTINGS_NOTIFICATIONS) },
+                    onOpenHouseholds = { navController.navigate(Routes.HOUSEHOLDS, tabNavOptions) },
+                    onOpenAccount = { navController.navigate(Routes.SETTINGS_ACCOUNT) },
+                    onOpenGeneral = { navController.navigate(Routes.SETTINGS_GENERAL) },
+                )
+            }
+
+            composable(Routes.SETTINGS_NOTIFICATIONS) {
+                NotificationsScreen(onBack = { navController.popBackStack() })
+            }
+
+            composable(Routes.SETTINGS_ACCOUNT) {
+                AccountScreen(
                     onBack = { navController.popBackStack() },
                     onSignOut = { authViewModel.signOut() },
-                    onOpenHouseholds = { navController.navigate(Routes.HOUSEHOLDS, tabNavOptions) },
+                )
+            }
+
+            composable(Routes.SETTINGS_GENERAL) {
+                GeneralScreen(
+                    onBack = { navController.popBackStack() },
                     themeViewModel = themeViewModel,
                 )
             }

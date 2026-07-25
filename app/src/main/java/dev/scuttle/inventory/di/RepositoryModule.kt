@@ -24,6 +24,8 @@ import dev.scuttle.inventory.data.missingitems.MissingItemsRepository
 import dev.scuttle.inventory.data.missingitems.MissingItemsRepositoryImpl
 import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.data.product.ProductRepositoryImpl
+import dev.scuttle.inventory.data.profile.ProfileRepository
+import dev.scuttle.inventory.data.profile.ProfileRepositoryImpl
 import dev.scuttle.inventory.data.realtime.PusherRealtimeGateway
 import dev.scuttle.inventory.data.realtime.RealtimeGateway
 import dev.scuttle.inventory.data.search.SearchRepository
@@ -86,4 +88,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindMissingItemsRepository(impl: MissingItemsRepositoryImpl): MissingItemsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindProfileRepository(impl: ProfileRepositoryImpl): ProfileRepository
 }

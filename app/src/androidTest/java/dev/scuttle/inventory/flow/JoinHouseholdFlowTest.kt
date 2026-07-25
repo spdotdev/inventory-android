@@ -8,6 +8,7 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -36,9 +37,13 @@ class JoinHouseholdFlowTest : FlowTestBase() {
             Thread.sleep(3_000)
             waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 5_000)
 
-            // "More" tab → SettingsScreen (Settings left the top-bar gear; it's a
-            // bottom-nav tab now).
+            // "More" tab → "Households" → HouseholdsScreen, whose join FAB opens the
+            // join-code bottom sheet (join moved off Settings, see MoreScreen/HouseholdsScreen).
             onNodeWithTag("bottom-nav-more").performClick()
+            waitForIdle()
+            onNodeWithText("Households").performClick()
+            waitForIdle()
+            onNodeWithContentDescription("Join a household with a code").performClick()
             waitForIdle()
 
             // Enter join code and submit — POST /households/join

@@ -8,6 +8,7 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -38,9 +39,13 @@ class JoinFromInviteLinkFlowTest : FlowTestBase() {
             onAllNodesWithText("Sign in").filterToOne(hasClickAction()).performClick()
             waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 10_000)
 
-            // "More" tab → SettingsScreen (Settings left the top-bar gear; it's a
-            // bottom-nav tab now).
+            // "More" tab → "Households" → HouseholdsScreen, whose join FAB opens the
+            // join-code bottom sheet (join moved off Settings, see MoreScreen/HouseholdsScreen).
             onNodeWithTag("bottom-nav-more").performClick()
+            waitForIdle()
+            onNodeWithText("Households").performClick()
+            waitForIdle()
+            onNodeWithContentDescription("Join a household with a code").performClick()
             waitForIdle()
 
             // Exactly what the QR carries, and what the scanner used to hand over verbatim.

@@ -38,3 +38,9 @@ data class AuthResponse(
 data class ForgotPasswordRequest(
     val email: String,
 )
+
+// Laravel API Resources wrap payloads in a `data` envelope.
+@Serializable
+data class UserResponse(
+    val data: UserDto,
+)

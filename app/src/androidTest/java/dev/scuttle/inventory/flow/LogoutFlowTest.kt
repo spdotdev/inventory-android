@@ -37,14 +37,14 @@ class LogoutFlowTest : FlowTestBase() {
             Thread.sleep(3_000)
             waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 5_000)
 
-            // "More" tab → SettingsScreen (Settings left the top-bar gear; it's a
-            // bottom-nav tab now).
+            // "More" tab → the category hub (MoreScreen) → "Account" → AccountScreen,
+            // which now holds sign-out (moved off the hub itself, see MoreScreen).
             onNodeWithTag("bottom-nav-more").performClick()
             waitForIdle()
+            onNodeWithText("Account").performClick()
+            waitForIdle()
 
-            // Tap "Sign out" to open the confirm dialog. Scroll first: the bottom
-            // nav costs the settings screen height, pushing the button below the
-            // fold on small CI-emulator screens (clipped clicks miss).
+            // Tap "Sign out" to open the confirm dialog.
             onNodeWithText("Sign out").performScrollTo().performClick()
             waitForIdle()
             // Dialog appears — now 2 "Sign out" nodes exist (button + dialog confirm); pick the dialog one [1]

@@ -1,5 +1,6 @@
 package dev.scuttle.inventory.ui.households
 
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,6 +20,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.GroupAdd
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
@@ -30,6 +33,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -49,10 +53,14 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.journeyapps.barcodescanner.ScanContract
+import com.journeyapps.barcodescanner.ScanOptions
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.ui.common.ErrorRetry
+import dev.scuttle.inventory.ui.settings.JoinHouseholdViewModel
 import dev.scuttle.inventory.ui.theme.FrostCard
 import dev.scuttle.inventory.ui.theme.HouseholdAvatar
 
@@ -65,11 +73,24 @@ fun HouseholdsScreen(
     onOpenInvite: (householdId: Long, householdName: String) -> Unit = { _, _ -> },
     onEditHousehold: (householdId: Long) -> Unit = {},
     viewModel: HouseholdsViewModel = hiltViewModel(),
+    joinViewModel: JoinHouseholdViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+    val joinState by joinViewModel.state.collectAsState()
     var showCreateSheet by rememberSaveable { mutableStateOf(false) }
+    var showJoinSheet by rememberSaveable { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val joinSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val keyboardController = LocalSoftwareKeyboardController.current
+
+    val scanPrompt = stringResource(R.string.settings_scan_prompt)
+    val scanLauncher =
+        rememberLauncherForActivityResult(ScanContract()) { result ->
+            result.contents?.let {
+                joinViewModel.onCodeScanned(it)
+                showJoinSheet = true
+            }
+        }
 
     val statusBarInsets = WindowInsets.statusBars
     Scaffold(
@@ -115,11 +136,36 @@ fun HouseholdsScreen(
         },
         floatingActionButton = {
             if (!state.editMode) {
-                FloatingActionButton(
+                Column(
                     modifier = Modifier.navigationBarsPadding(),
-                    onClick = { showCreateSheet = true },
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.households_create_fab_cd))
+                    SmallFloatingActionButton(
+                        onClick = {
+                            scanLauncher.launch(
+                                ScanOptions().apply {
+                                    setPrompt(scanPrompt)
+                                    setBeepEnabled(false)
+                                    setOrientationLocked(false)
+                                },
+                            )
+                        },
+                    ) {
+                        Icon(
+                            Icons.Default.QrCodeScanner,
+                            contentDescription = stringResource(R.string.households_scan_fab_cd),
+                        )
+                    }
+                    SmallFloatingActionButton(onClick = { showJoinSheet = true }) {
+                        Icon(
+                            Icons.Default.GroupAdd,
+                            contentDescription = stringResource(R.string.households_join_fab_cd),
+                        )
+                    }
+                    FloatingActionButton(onClick = { showCreateSheet = true }) {
+                        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.households_create_fab_cd))
+                    }
                 }
             }
         },
@@ -244,6 +290,68 @@ fun HouseholdsScreen(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(stringResource(R.string.households_create_button))
+                }
+            }
+        }
+    }
+
+    if (showJoinSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showJoinSheet = false },
+            sheetState = joinSheetState,
+        ) {
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                        .padding(bottom = 32.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Text(
+                    text = stringResource(R.string.households_join_dialog_title),
+                    style = MaterialTheme.typography.titleLarge,
+                )
+                joinState.errorRes?.let {
+                    ErrorRetry(stringResource(it), onRetry = joinViewModel::join)
+                }
+                if (joinState.success) {
+                    val successMessage =
+                        if (joinState.joinedRole == "member") {
+                            stringResource(R.string.settings_join_success) + " " +
+                                stringResource(R.string.settings_join_success_member_hint)
+                        } else {
+                            stringResource(R.string.settings_join_success)
+                        }
+                    Text(successMessage, color = MaterialTheme.colorScheme.primary)
+                }
+                OutlinedTextField(
+                    value = joinState.code,
+                    onValueChange = joinViewModel::onCodeChange,
+                    label = { Text(stringResource(R.string.settings_join_field)) },
+                    singleLine = true,
+                    keyboardOptions =
+                        KeyboardOptions(
+                            capitalization = KeyboardCapitalization.Characters,
+                            autoCorrectEnabled = false,
+                            imeAction = ImeAction.Done,
+                        ),
+                    keyboardActions =
+                        KeyboardActions(onDone = {
+                            keyboardController?.hide()
+                            joinViewModel.join()
+                        }),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Button(
+                    onClick = {
+                        keyboardController?.hide()
+                        joinViewModel.join()
+                    },
+                    enabled = !joinState.loading && joinState.code.isNotBlank(),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(stringResource(R.string.settings_join_button))
                 }
             }
         }

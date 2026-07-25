@@ -24,6 +24,7 @@
     <string name="error_search_failed">Zoeken is mislukt.</string>
     <string name="error_failed_to_load">Laden is mislukt.</string>
     <string name="error_failed_to_load_product">Product laden is mislukt.</string>
+    <string name="error_failed_to_load_account">Account laden is mislukt.</string>
     <string name="error_failed_to_save">Opslaan is mislukt.</string>
     <string name="error_failed_to_upload_image">Afbeelding uploaden is mislukt.</string>
     <string name="error_failed_to_delete">Verwijderen is mislukt.</string>
@@ -258,6 +259,13 @@
 
     <!-- Settings -->
     <string name="settings_title">Instellingen</string>
+    <string name="settings_hub_notifications_button">Meldingen</string>
+    <string name="settings_hub_households_button">Huishoudens</string>
+    <string name="settings_hub_account_button">Account</string>
+    <string name="settings_hub_general_button">Algemeen</string>
+    <string name="settings_notifications_title">Meldingen</string>
+    <string name="settings_account_title">Account</string>
+    <string name="settings_general_title">Algemeen</string>
     <string name="settings_language_section">Taal</string>
     <string name="settings_theme_section">Thema</string>
     <string name="settings_missing_items_reminder_section">Herinnering ontbrekende items</string>
@@ -265,20 +273,21 @@
     <string name="settings_missing_items_reminder_time">Herinneringstijd: %1$02d:%2$02d</string>
     <string name="settings_missing_items_reminder_time_confirm">Opslaan</string>
     <string name="settings_missing_items_reminder_time_cancel">Annuleren</string>
-    <string name="settings_join_section">Huishouden deelnemen</string>
     <string name="settings_join_success">Succesvol deelgenomen!</string>
     <string name="settings_join_success_member_hint">Je bent lid geworden — eigenaren en beheerders beheren de opslag.</string>
     <string name="settings_join_field">Deelnamecode</string>
     <string name="settings_join_button">Deelnemen</string>
-    <string name="settings_scan_qr_button">QR-code scannen om deel te nemen</string>
     <string name="settings_scan_prompt">Huishouden QR-code scannen</string>
-    <string name="settings_households_section">Huishoudens</string>
-    <string name="settings_my_households_button">Mijn huishoudens</string>
-    <string name="settings_account_section">Account</string>
     <string name="settings_sign_out_button">Uitloggen</string>
     <string name="settings_version">Versie %1$s (build %2$d)</string>
     <string name="settings_sign_out_dialog_title">Uitloggen?</string>
     <string name="settings_sign_out_dialog_text">Je moet opnieuw inloggen.</string>
+    <string name="account_name_label">Naam</string>
+    <string name="account_email_label">E-mail</string>
+    <string name="general_language_label">Taal</string>
+    <string name="households_join_fab_cd">Deelnemen aan een huishouden met een code</string>
+    <string name="households_scan_fab_cd">Scan een QR-code om deel te nemen aan een huishouden</string>
+    <string name="households_join_dialog_title">Huishouden deelnemen</string>
 
     <!-- Theme -->
     <string name="theme_system">Systeem</string>
