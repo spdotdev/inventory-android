@@ -217,6 +217,7 @@
     <string name="product_detail_image_load_failed">Couldn\'t load image · Tap to retry</string>
     <string name="hint_edit_mode_pencil">Tip: the pencil lets you rename, reorder and delete</string>
     <string name="product_detail_field_quantity">Quantity</string>
+    <string name="product_detail_field_location">Location</string>
     <string name="product_detail_field_name">Name</string>
     <string name="product_detail_field_description">Description</string>
     <string name="product_detail_field_code">Product code / barcode</string>

@@ -4,11 +4,15 @@ import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import dev.scuttle.inventory.data.HierarchyStore
 import dev.scuttle.inventory.data.dto.HouseholdDto
+import dev.scuttle.inventory.data.dto.LocationDto
 import dev.scuttle.inventory.data.dto.ProductDto
+import dev.scuttle.inventory.data.dto.ShelfDto
 import dev.scuttle.inventory.data.hierarchy.RestoreRepository
 import dev.scuttle.inventory.data.household.HouseholdRepository
+import dev.scuttle.inventory.data.location.LocationRepository
 import dev.scuttle.inventory.data.product.ProductEdit
 import dev.scuttle.inventory.data.product.ProductRepository
+import dev.scuttle.inventory.data.shelf.ShelfRepository
 import dev.scuttle.inventory.ui.hierarchy.UndoOutcome
 import dev.scuttle.inventory.ui.products.ProductDetailViewModel
 import kotlinx.coroutines.CompletableDeferred
@@ -156,6 +160,42 @@ class ProductDetailViewModelTest {
         }
     }
 
+    /** Mirrors ProductsViewModelTest's own fake — no location data needed by most tests here. */
+    private class FakeLocationRepository(
+        private val locations: List<LocationDto> = emptyList(),
+    ) : LocationRepository {
+        override fun getCached(householdId: Long): List<LocationDto>? = null
+
+        override suspend fun list(householdId: Long): List<LocationDto> = locations
+
+        override suspend fun create(
+            householdId: Long,
+            name: String,
+            type: String,
+        ): LocationDto = LocationDto(99, name, type)
+    }
+
+    /** Mirrors ProductsViewModelTest's own fake — no shelf data needed by most tests here. */
+    private class FakeShelfRepository(
+        private val byLocation: Map<Long, List<ShelfDto>> = emptyMap(),
+    ) : ShelfRepository {
+        override fun getCached(
+            householdId: Long,
+            locationId: Long,
+        ): List<ShelfDto>? = null
+
+        override suspend fun list(
+            householdId: Long,
+            locationId: Long,
+        ): List<ShelfDto> = byLocation[locationId].orEmpty()
+
+        override suspend fun create(
+            householdId: Long,
+            locationId: Long,
+            name: String,
+        ): ShelfDto = ShelfDto(99, name, 0, locationId)
+    }
+
     /** Mirrors ProductsViewModelTest's minimal fake — no household data needed by these tests. */
     private class FakeHouseholdRepository : HouseholdRepository {
         override fun getCached() = emptyList<HouseholdDto>()
@@ -171,12 +211,27 @@ class ProductDetailViewModelTest {
         override suspend fun leave(householdId: Long) = Unit
     }
 
+    /** Bundles the location/shelf fakes [viewModel] needs to resolve "where a product lives". */
+    private data class Place(
+        val locations: LocationRepository = FakeLocationRepository(),
+        val shelves: ShelfRepository = FakeShelfRepository(),
+    )
+
     private fun viewModel(
         savedStateHandle: SavedStateHandle = savedState(),
         repository: ProductRepository = FakeProductRepository(),
         restoreRepository: RestoreRepository = FakeRestoreRepository(),
         hierarchyStore: HierarchyStore = TestHierarchy.store(FakeHouseholdRepository()),
-    ): ProductDetailViewModel = ProductDetailViewModel(savedStateHandle, repository, restoreRepository, hierarchyStore)
+        place: Place = Place(),
+    ): ProductDetailViewModel =
+        ProductDetailViewModel(
+            savedStateHandle,
+            repository,
+            restoreRepository,
+            hierarchyStore,
+            place.locations,
+            place.shelves,
+        )
 
     @Test
     fun load_finds_product_by_id() =
@@ -199,6 +254,63 @@ class ProductDetailViewModelTest {
 
             assertNull(vm.state.value.product)
             assertFalse(vm.state.value.loading)
+        }
+
+    @Test
+    fun load_resolves_current_location_and_shelf() =
+        runTest {
+            val product = ProductDto(id = 42, name = "Milk", quantity = 2, shelf_id = 5)
+            val locations = FakeLocationRepository(listOf(LocationDto(1, "Kitchen", "fridge")))
+            val shelves = FakeShelfRepository(mapOf(1L to listOf(ShelfDto(5, "Top shelf", 0, 1))))
+            val vm =
+                viewModel(
+                    savedState(shelfId = 5, productId = 42),
+                    FakeProductRepository(listOf(product)),
+                    place = Place(locations, shelves),
+                )
+
+            assertEquals("Kitchen", vm.state.value.locationName)
+            assertEquals("Top shelf", vm.state.value.shelfName)
+        }
+
+    @Test
+    fun confirmMove_moves_product_and_resolves_new_location() =
+        runTest {
+            val product = ProductDto(id = 42, name = "Milk", quantity = 2, shelf_id = 5)
+            val locations =
+                FakeLocationRepository(
+                    listOf(LocationDto(1, "Kitchen", "fridge"), LocationDto(2, "Garage", "pantry")),
+                )
+            val shelves =
+                FakeShelfRepository(
+                    mapOf(
+                        1L to listOf(ShelfDto(5, "Top shelf", 0, 1)),
+                        2L to listOf(ShelfDto(6, "Back shelf", 0, 2)),
+                    ),
+                )
+            val vm =
+                viewModel(
+                    savedState(shelfId = 5, productId = 42),
+                    FakeProductRepository(listOf(product)),
+                    place = Place(locations, shelves),
+                )
+
+            vm.startMove()
+            advanceUntilIdle()
+            assertEquals(1, vm.state.value.moveTargets.size)
+            assertEquals(
+                6L,
+                vm.state.value.moveTargets
+                    .first()
+                    .shelfId,
+            )
+
+            vm.confirmMove(6L)
+            advanceUntilIdle()
+
+            assertFalse(vm.state.value.movingProduct)
+            assertEquals("Garage", vm.state.value.locationName)
+            assertEquals("Back shelf", vm.state.value.shelfName)
         }
 
     @Test

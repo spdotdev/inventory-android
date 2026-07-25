@@ -79,6 +79,7 @@ import dev.scuttle.inventory.data.product.ProductEdit
 import dev.scuttle.inventory.ui.common.ErrorRetry
 import dev.scuttle.inventory.ui.common.SnackbarErrorEffect
 import dev.scuttle.inventory.ui.common.repeatingClickable
+import dev.scuttle.inventory.ui.common.shelfDisplayName
 import dev.scuttle.inventory.ui.hierarchy.UndoOutcome
 import kotlinx.coroutines.flow.first
 import java.io.File
@@ -372,6 +373,40 @@ fun ProductDetailScreen(
                     }
                 }
 
+                // Location (GAP-5): the detail screen never showed where the product
+                // lives, or offered a way to change it — mirrors ProductsPane's own
+                // "Move" flow (same TextButton + move-target dialog), just promoted
+                // here since there's no swipe-to-reveal affordance on this screen.
+                if (product != null) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Column {
+                            Text(
+                                text = stringResource(R.string.product_detail_field_location),
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            val locationName = state.locationName
+                            val shelfName = state.shelfName
+                            if (locationName != null && shelfName != null) {
+                                Text(
+                                    text = "$locationName › ${shelfDisplayName(shelfName, state.isSystemShelf)}",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                )
+                            }
+                        }
+                        TextButton(
+                            onClick = viewModel::startMove,
+                            enabled = !state.loading,
+                        ) {
+                            Text(stringResource(R.string.products_pane_move_button))
+                        }
+                    }
+                }
+
                 // Quantity stepper (GAP-5 H8): the detail screen never showed
                 // product.quantity or offered add/remove before this — visually
                 // mirrors ProductsPane's own row-level stepper (same "−"/"+"
@@ -565,6 +600,36 @@ fun ProductDetailScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteConfirm = false }) { Text(stringResource(R.string.action_cancel)) }
+            },
+        )
+    }
+
+    if (state.movingProduct) {
+        AlertDialog(
+            onDismissRequest = viewModel::cancelMove,
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = viewModel::cancelMove) { Text(stringResource(R.string.action_cancel)) }
+            },
+            title = { Text(stringResource(R.string.products_pane_move_dialog_title)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    when {
+                        state.loading && state.moveTargets.isEmpty() ->
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                        state.moveTargets.isEmpty() ->
+                            Text(stringResource(R.string.products_pane_no_shelves_to_move))
+                        else ->
+                            state.moveTargets.forEach { target ->
+                                TextButton(onClick = { viewModel.confirmMove(target.shelfId) }) {
+                                    Text(
+                                        "${target.locationName} › " +
+                                            shelfDisplayName(target.shelfName, target.isSystemShelf),
+                                    )
+                                }
+                            }
+                    }
+                }
             },
         )
     }

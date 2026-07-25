@@ -10,8 +10,10 @@ import dev.scuttle.inventory.data.HierarchyStore
 import dev.scuttle.inventory.data.dto.ProductDto
 import dev.scuttle.inventory.data.error.toUserMessageRes
 import dev.scuttle.inventory.data.hierarchy.RestoreRepository
+import dev.scuttle.inventory.data.location.LocationRepository
 import dev.scuttle.inventory.data.product.ProductEdit
 import dev.scuttle.inventory.data.product.ProductRepository
+import dev.scuttle.inventory.data.shelf.ShelfRepository
 import dev.scuttle.inventory.ui.hierarchy.UndoOutcome
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -56,6 +58,13 @@ data class ProductDetailUiState(
      * [ProductDetailViewModel.consumeQuantityMutationFailed].
      */
     val quantityMutationFailed: Boolean = false,
+    /** Where the product currently lives — resolved alongside [product] in [ProductDetailViewModel.load]. */
+    val locationName: String? = null,
+    val shelfName: String? = null,
+    val isSystemShelf: Boolean = false,
+    /** True while the move-target picker dialog is showing. */
+    val movingProduct: Boolean = false,
+    val moveTargets: List<MoveTarget> = emptyList(),
 )
 
 @HiltViewModel
@@ -66,13 +75,19 @@ class ProductDetailViewModel
         private val repository: ProductRepository,
         private val restoreRepository: RestoreRepository,
         private val hierarchyStore: HierarchyStore,
+        private val locationRepository: LocationRepository,
+        private val shelfRepository: ShelfRepository,
     ) : ViewModel() {
         private val householdId: Long =
             savedStateHandle["householdId"] ?: run {
                 android.util.Log.e("ProductDetailVM", "householdId missing from nav args")
                 -1L
             }
-        private val shelfId: Long =
+
+        // A successful move (see confirmMove) changes which shelf this product lives
+        // on without leaving this screen — everything downstream (load/increment/
+        // decrement/move) must read the CURRENT shelf, so this is a var, not a val.
+        private var shelfId: Long =
             savedStateHandle["shelfId"] ?: run {
                 android.util.Log.e("ProductDetailVM", "shelfId missing from nav args")
                 -1L
@@ -113,10 +128,13 @@ class ProductDetailViewModel
             if (householdId == -1L || shelfId == -1L || productId == -1L) return
             viewModelScope.launch {
                 _state.update { it.copy(loading = true, refreshing = true, loadErrorRes = null) }
-                val result = runCatching { repository.list(householdId, shelfId) }
+                val result =
+                    runCatching {
+                        repository.list(householdId, shelfId) to resolvePlace(householdId, shelfId)
+                    }
                 result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
                 result
-                    .onSuccess { products ->
+                    .onSuccess { (products, place) ->
                         _state.update {
                             it.copy(
                                 loading = false,
@@ -125,6 +143,9 @@ class ProductDetailViewModel
                                     products.find { p ->
                                         p.id == productId
                                     },
+                                locationName = place?.locationName,
+                                shelfName = place?.shelfName,
+                                isSystemShelf = place?.isSystemShelf ?: false,
                             )
                         }
                     }.onFailure { e ->
@@ -137,6 +158,21 @@ class ProductDetailViewModel
                         }
                     }
             }
+        }
+
+        /** Finds which location owns [shelfId] — same shelf-by-shelf scan [startMove] uses for targets. */
+        private suspend fun resolvePlace(
+            householdId: Long,
+            shelfId: Long,
+        ): MoveTarget? {
+            for (location in locationRepository.list(householdId)) {
+                for (shelf in shelfRepository.list(householdId, location.id)) {
+                    if (shelf.id == shelfId) {
+                        return MoveTarget(shelf.id, location.name, shelf.name, shelf.is_system)
+                    }
+                }
+            }
+            return null
         }
 
         fun save(edit: ProductEdit) {
@@ -228,6 +264,77 @@ class ProductDetailViewModel
                                 loading = false,
                                 quantityMutationFailed = true,
                                 quantityMutationEpoch = it.quantityMutationEpoch + 1,
+                            )
+                        }
+                    }
+            }
+        }
+
+        fun startMove() {
+            _state.update { it.copy(movingProduct = true, moveTargets = emptyList()) }
+            viewModelScope.launch {
+                _state.update { it.copy(loading = true, errorRes = null) }
+                val result =
+                    runCatching {
+                        val targets = mutableListOf<MoveTarget>()
+                        for (location in locationRepository.list(householdId)) {
+                            for (shelf in shelfRepository.list(householdId, location.id)) {
+                                if (shelf.id != shelfId) {
+                                    targets.add(MoveTarget(shelf.id, location.name, shelf.name, shelf.is_system))
+                                }
+                            }
+                        }
+                        targets
+                    }
+                _state.update { state ->
+                    result.fold(
+                        onSuccess = { targets -> state.copy(loading = false, moveTargets = targets) },
+                        onFailure = { e ->
+                            state.copy(
+                                loading = false,
+                                errorRes = e.toUserMessageRes(R.string.error_failed_to_load_shelves),
+                                movingProduct = false,
+                                moveTargets = emptyList(),
+                            )
+                        },
+                    )
+                }
+            }
+        }
+
+        fun cancelMove() = _state.update { it.copy(movingProduct = false, moveTargets = emptyList()) }
+
+        fun confirmMove(targetShelfId: Long) {
+            viewModelScope.launch {
+                _state.update { it.copy(loading = true, errorRes = null) }
+                val result = runCatching { repository.move(householdId, shelfId, productId, targetShelfId) }
+                result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+                result
+                    .onSuccess { updated ->
+                        shelfId = targetShelfId
+                        val place = runCatching { resolvePlace(householdId, targetShelfId) }.getOrNull()
+                        _state.update {
+                            it.copy(
+                                loading = false,
+                                product = updated,
+                                locationName = place?.locationName,
+                                shelfName = place?.shelfName,
+                                isSystemShelf = place?.isSystemShelf ?: false,
+                                movingProduct = false,
+                                moveTargets = emptyList(),
+                            )
+                        }
+                        // Mirrors ProductsViewModel.confirmMove: the source and
+                        // destination shelves' product/warning counts go stale on
+                        // Home/the drawer without this.
+                        hierarchyStore.refresh()
+                    }.onFailure { e ->
+                        _state.update {
+                            it.copy(
+                                loading = false,
+                                errorRes = e.toUserMessageRes(R.string.error_generic),
+                                movingProduct = false,
+                                moveTargets = emptyList(),
                             )
                         }
                     }
