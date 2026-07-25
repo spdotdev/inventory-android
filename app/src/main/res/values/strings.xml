@@ -298,6 +298,8 @@
     <string name="settings_sign_out_dialog_text">You\'ll need to log in again.</string>
     <string name="account_name_label">Name</string>
     <string name="account_email_label">Email</string>
+    <string name="account_save_button">Save</string>
+    <string name="account_saved">Account updated</string>
     <string name="general_language_label">Language</string>
     <string name="households_join_fab_cd">Join a household with a code</string>
     <string name="households_scan_fab_cd">Scan a QR code to join a household</string>

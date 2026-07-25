@@ -284,6 +284,8 @@
     <string name="settings_sign_out_dialog_text">Je moet opnieuw inloggen.</string>
     <string name="account_name_label">Naam</string>
     <string name="account_email_label">E-mail</string>
+    <string name="account_save_button">Opslaan</string>
+    <string name="account_saved">Account bijgewerkt</string>
     <string name="general_language_label">Taal</string>
     <string name="households_join_fab_cd">Deelnemen aan een huishouden met een code</string>
     <string name="households_scan_fab_cd">Scan een QR-code om deel te nemen aan een huishouden</string>
