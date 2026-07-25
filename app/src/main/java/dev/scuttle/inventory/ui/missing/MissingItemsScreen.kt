@@ -1,5 +1,6 @@
 package dev.scuttle.inventory.ui.missing
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -171,10 +172,17 @@ fun MissingItemsScreen(
                             onClick = { onOpenProduct(item.householdId, item.shelfId, item.productId) },
                             modifier = Modifier.fillMaxWidth(),
                         ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
+                            Column(
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .background(MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f))
+                                        .padding(16.dp),
+                            ) {
                                 Text(
                                     text = item.productName,
                                     style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.error,
                                 )
                                 Text(
                                     text = "${item.locationName} · ${item.shelfName}",
