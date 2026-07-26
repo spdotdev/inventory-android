@@ -144,6 +144,19 @@ fun LocationDetailScreen(
         shelvesViewModel.load(householdId, locationId)
     }
 
+    // When this location's tile showed a stock warning, land on the shelf that
+    // caused it instead of always page 0. One-shot (survives rotation via
+    // rememberSaveable) so it never fights the user's own tab swipes afterwards.
+    val warningShelfId = drawerState.warningShelfByLocation[locationId]
+    var openedOnWarningShelf by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(state.shelves, warningShelfId) {
+        if (!openedOnWarningShelf && state.shelves.isNotEmpty()) {
+            openedOnWarningShelf = true
+            val index = state.shelves.indexOfFirst { it.id == warningShelfId }
+            if (index > 0) pagerState.scrollToPage(index)
+        }
+    }
+
     // Hosts one-shot action errors from the ProductsPane(s) below, plus the
     // delete-undo snackbar (LaunchedEffect further down).
     val snackbarHostState = remember { SnackbarHostState() }

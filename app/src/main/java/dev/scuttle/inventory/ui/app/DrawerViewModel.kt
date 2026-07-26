@@ -31,6 +31,12 @@ import javax.inject.Inject
 data class DrawerUiState(
     val entries: List<HouseholdWithLocations> = emptyList(),
     val locationWarnings: Map<Long, Boolean> = emptyMap(),
+    /**
+     * Per location, the shelf holding its first missing item — the shelf the
+     * location screen's pager should open on when the storage tile shows a
+     * stock warning (which is itself derived from the same missing items).
+     */
+    val warningShelfByLocation: Map<Long, Long> = emptyMap(),
     val missingItemCount: Int = 0,
     val loading: Boolean = false,
     val refreshing: Boolean = false,
@@ -111,6 +117,10 @@ class DrawerViewModel
                 DrawerUiState(
                     entries = s.entries,
                     locationWarnings = s.locationWarnings,
+                    warningShelfByLocation =
+                        s.missingItems
+                            .groupBy { it.locationId }
+                            .mapValues { (_, items) -> items.first().shelfId },
                     missingItemCount = s.missingItemCount,
                     loading = s.loading,
                     refreshing = s.refreshing,
