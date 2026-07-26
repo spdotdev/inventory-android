@@ -18,10 +18,14 @@ import dev.scuttle.inventory.data.invite.InviteRepository
 import dev.scuttle.inventory.data.invite.InviteRepositoryImpl
 import dev.scuttle.inventory.data.location.LocationRepository
 import dev.scuttle.inventory.data.location.LocationRepositoryImpl
+import dev.scuttle.inventory.data.lowstock.LowStockRepository
+import dev.scuttle.inventory.data.lowstock.LowStockRepositoryImpl
 import dev.scuttle.inventory.data.member.MemberRepository
 import dev.scuttle.inventory.data.member.MemberRepositoryImpl
 import dev.scuttle.inventory.data.missingitems.MissingItemsRepository
 import dev.scuttle.inventory.data.missingitems.MissingItemsRepositoryImpl
+import dev.scuttle.inventory.data.notifications.NotificationFeedRepository
+import dev.scuttle.inventory.data.notifications.NotificationFeedRepositoryImpl
 import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.data.product.ProductRepositoryImpl
 import dev.scuttle.inventory.data.profile.ProfileRepository
@@ -92,4 +96,12 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindProfileRepository(impl: ProfileRepositoryImpl): ProfileRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindNotificationFeedRepository(impl: NotificationFeedRepositoryImpl): NotificationFeedRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindLowStockRepository(impl: LowStockRepositoryImpl): LowStockRepository
 }
