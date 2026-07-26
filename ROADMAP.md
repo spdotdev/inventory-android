@@ -129,6 +129,10 @@ Detailed build order: [`CLAUDE.md`](CLAUDE.md) and [`docs/android-plan.md`](docs
   edit page, pencil/gear removed): wireframes at
   https://claude.ai/code/artifact/eb5c6b14-cdf6-4ad4-b3fa-2fe9edb4d49c.
   Decision pending discussion with the product owner — do not build until picked.
+  2026-07-26 (later): user currently leans **option 3** (richer edit-mode sheet);
+  context that shifted since the wireframes: storage-list edit mode was reworked
+  the same day (stars removed, checkbox leads the row, ↑↓ + long-press drag
+  reorder), so re-read the current screen before building whichever option wins.
 
 ### SECURITY
 - [x] **CodeQL SAST + dependency review CI** — shipped 2026-07-13. `codeql.yml` runs
