@@ -78,15 +78,15 @@ fun MoreScreen(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     CategoryButton(
-                        label = stringResource(R.string.settings_hub_notifications_button),
-                        icon = Icons.Default.Notifications,
-                        onClick = onOpenNotifications,
+                        label = stringResource(R.string.settings_hub_general_button),
+                        icon = Icons.Default.Tune,
+                        onClick = onOpenGeneral,
                         modifier = Modifier.weight(1f),
                     )
                     CategoryButton(
-                        label = stringResource(R.string.settings_hub_households_button),
-                        icon = Icons.Default.Groups,
-                        onClick = onOpenHouseholds,
+                        label = stringResource(R.string.settings_hub_account_button),
+                        icon = Icons.Default.AccountCircle,
+                        onClick = onOpenAccount,
                         modifier = Modifier.weight(1f),
                     )
                 }
@@ -95,15 +95,15 @@ fun MoreScreen(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     CategoryButton(
-                        label = stringResource(R.string.settings_hub_account_button),
-                        icon = Icons.Default.AccountCircle,
-                        onClick = onOpenAccount,
+                        label = stringResource(R.string.settings_hub_households_button),
+                        icon = Icons.Default.Groups,
+                        onClick = onOpenHouseholds,
                         modifier = Modifier.weight(1f),
                     )
                     CategoryButton(
-                        label = stringResource(R.string.settings_hub_general_button),
-                        icon = Icons.Default.Tune,
-                        onClick = onOpenGeneral,
+                        label = stringResource(R.string.settings_hub_notifications_button),
+                        icon = Icons.Default.Notifications,
+                        onClick = onOpenNotifications,
                         modifier = Modifier.weight(1f),
                     )
                 }
