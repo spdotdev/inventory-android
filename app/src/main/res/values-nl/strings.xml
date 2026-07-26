@@ -367,4 +367,19 @@
         <item quantity="one">%d item is bijna op</item>
         <item quantity="other">%d items zijn bijna op</item>
     </plurals>
+    <string name="notification_channel_household_events_name">Huishoudgebeurtenissen</string>
+    <string name="notification_channel_household_events_description">Meldt je wanneer iemand lid wordt van je huishouden of je rol verandert</string>
+    <string name="notification_channel_household_activity_name">Huishoudactiviteit</string>
+    <string name="notification_channel_household_activity_description">Vat wijzigingen in je huishouden samen</string>
+    <string name="notification_channel_weekly_summary_name">Weekoverzicht</string>
+    <string name="notification_channel_weekly_summary_description">Een wekelijks overzicht van ontbrekende en bijna op items</string>
+    <string name="notification_fallback_household">je huishouden</string>
+    <string name="notification_member_joined_title">%1$s is lid geworden van %2$s</string>
+    <string name="notification_role_changed_title">Je rol in %1$s is nu %2$s</string>
+    <plurals name="notification_activity_digest_title">
+        <item quantity="one">%d wijziging in %s</item>
+        <item quantity="other">%d wijzigingen in %s</item>
+    </plurals>
+    <string name="notification_weekly_summary_title">Jouw week</string>
+    <string name="notification_weekly_summary_body">%1$d ontbrekend, %2$d bijna op</string>
 </resources>

@@ -381,4 +381,19 @@
         <item quantity="one">%d item is running low</item>
         <item quantity="other">%d items are running low</item>
     </plurals>
+    <string name="notification_channel_household_events_name">Household events</string>
+    <string name="notification_channel_household_events_description">Notifies you when someone joins your household or your role changes</string>
+    <string name="notification_channel_household_activity_name">Household activity</string>
+    <string name="notification_channel_household_activity_description">Summarizes changes made in your household</string>
+    <string name="notification_channel_weekly_summary_name">Weekly summary</string>
+    <string name="notification_channel_weekly_summary_description">A weekly overview of missing and low-stock items</string>
+    <string name="notification_fallback_household">your household</string>
+    <string name="notification_member_joined_title">%1$s joined %2$s</string>
+    <string name="notification_role_changed_title">Your role in %1$s is now %2$s</string>
+    <plurals name="notification_activity_digest_title">
+        <item quantity="one">%d change in %s</item>
+        <item quantity="other">%d changes in %s</item>
+    </plurals>
+    <string name="notification_weekly_summary_title">Your week</string>
+    <string name="notification_weekly_summary_body">%1$d missing, %2$d running low</string>
 </resources>
