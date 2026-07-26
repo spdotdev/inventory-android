@@ -18,12 +18,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -228,7 +228,7 @@ fun AllStoragesScreen(
                         // (collapsed) chevron and animates back to pointing-down
                         // (expanded) — one icon, two states, matching this file's
                         // existing "no new icon asset for a two-state toggle"
-                        // idiom (see the favorite star below). Keyed by household
+                        // idiom. Keyed by household
                         // id (like the location loop below) so this per-entry
                         // animation state is never misattributed to a different
                         // household across recompositions.
@@ -306,10 +306,9 @@ fun AllStoragesScreen(
                             } else {
                                 orderByPosition(entry.locations, { it.position }, { it.name })
                             }
-                        orderedLocations.forEach { location ->
+                        orderedLocations.forEachIndexed { locationIndex, location ->
                             key(location.id) {
                                 val hasWarning = state.locationWarnings[location.id] == true
-                                val isFavorite = location.id in localState.favoriteLocationIds
 
                                 val rowContent: @Composable () -> Unit = {
                                     Row(
@@ -343,40 +342,36 @@ fun AllStoragesScreen(
                                             }
                                         }
                                         if (editMode && entry.canRestructure) {
+                                            // Mirrors StorageOverviewScreen's edit-row order: reorder
+                                            // arrows before the selection checkbox.
+                                            IconButton(
+                                                onClick = { viewModel.moveUp(entry.id, location.id) },
+                                                enabled = locationIndex > 0,
+                                            ) {
+                                                Icon(
+                                                    Icons.Default.ArrowUpward,
+                                                    contentDescription = stringResource(R.string.storage_move_up_cd),
+                                                )
+                                            }
+                                            IconButton(
+                                                onClick = { viewModel.moveDown(entry.id, location.id) },
+                                                enabled = locationIndex < orderedLocations.size - 1,
+                                            ) {
+                                                Icon(
+                                                    Icons.Default.ArrowDownward,
+                                                    contentDescription = stringResource(R.string.storage_move_down_cd),
+                                                )
+                                            }
                                             Checkbox(
                                                 checked = location.id in state.selected,
                                                 onCheckedChange = {
                                                     viewModel.toggleSelection(entry.id, location.id)
                                                 },
                                             )
-                                        } else if (!editMode) {
-                                            IconButton(onClick = { localViewModel.toggleFavorite(location.id) }) {
-                                                Icon(
-                                                    if (isFavorite) {
-                                                        Icons.Default.Star
-                                                    } else {
-                                                        Icons.Outlined.StarOutline
-                                                    },
-                                                    contentDescription =
-                                                        if (isFavorite) {
-                                                            stringResource(
-                                                                R.string.all_storage_favorite_remove_cd,
-                                                            )
-                                                        } else {
-                                                            stringResource(R.string.all_storage_favorite_add_cd)
-                                                        },
-                                                    tint =
-                                                        if (isFavorite) {
-                                                            MaterialTheme.colorScheme.primary
-                                                        } else {
-                                                            MaterialTheme.colorScheme.onSurfaceVariant
-                                                        },
-                                                )
-                                            }
                                         }
-                                        // editMode && !entry.canRestructure: neither icon renders — a
+                                        // editMode && !entry.canRestructure: nothing renders here — a
                                         // Member's row in edit mode has nothing restructure-capable to
-                                        // offer here, and favorite-toggling belongs to the non-edit view.
+                                        // offer.
                                     }
                                 }
                                 // In edit mode, tapping the row body toggles selection (matching

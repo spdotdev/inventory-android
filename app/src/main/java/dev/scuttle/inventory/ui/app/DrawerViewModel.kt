@@ -12,6 +12,7 @@ import dev.scuttle.inventory.data.hierarchy.LocationDeleteStrategy
 import dev.scuttle.inventory.data.hierarchy.LocationDeletion
 import dev.scuttle.inventory.data.hierarchy.RestoreRepository
 import dev.scuttle.inventory.data.location.LocationRepository
+import dev.scuttle.inventory.ui.common.orderByPosition
 import dev.scuttle.inventory.ui.hierarchy.DeletePlan
 import dev.scuttle.inventory.ui.hierarchy.MoveTarget
 import dev.scuttle.inventory.ui.hierarchy.UndoOutcome
@@ -137,6 +138,12 @@ class DrawerViewModel
             }.stateIn(viewModelScope, SharingStarted.Eagerly, DrawerUiState())
 
         private var deleteJob: Job? = null
+
+        // Serialized like StorageOverviewViewModel.moveJob: skip a new move while
+        // one is still in flight rather than let a rapid double-tap interleave two
+        // coroutines, where the SECOND call's success could be clobbered by the
+        // FIRST call's (still in-flight) failure path re-resolving stale state.
+        private var moveJob: Job? = null
 
         // Which location the open strategy dialog (or the last completed batch)
         // belongs to. Kept out of DrawerUiState/DeleteFlowState on purpose: the
@@ -444,4 +451,62 @@ class DrawerViewModel
             locationId: Long,
             hasWarning: Boolean,
         ) = store.reportLocationWarning(locationId, hasWarning)
+
+        fun moveUp(
+            householdId: Long,
+            locationId: Long,
+        ) = move(householdId, locationId, -1)
+
+        fun moveDown(
+            householdId: Long,
+            locationId: Long,
+        ) = move(householdId, locationId, +1)
+
+        /**
+         * Reorders one location up/down within its household, on AllStorages'
+         * edit-mode row — the drawer-scoped counterpart of
+         * StorageOverviewViewModel.move (same rationale there applies here).
+         *
+         * The order moved against MUST be the same order the screen renders
+         * (orderByPosition over entry.locations, keyed by position then name) —
+         * anything else and the arrows visibly move the wrong row relative to
+         * what's on screen.
+         */
+        private fun move(
+            householdId: Long,
+            locationId: Long,
+            delta: Int,
+        ) {
+            // Serialized: skip a new move while one is still in flight (see
+            // moveJob's own doc comment above). Merged with the other guards
+            // below (rather than their own early returns) to stay under
+            // ReturnCount's limit.
+            if (moveJob?.isActive == true) return
+            val entry =
+                store.state.value.entries
+                    .firstOrNull { it.id == householdId }
+            val current =
+                orderByPosition(entry?.locations.orEmpty(), { it.position }, { it.name })
+            val index = current.indexOfFirst { it.id == locationId }
+            val target = index + delta
+            if (entry == null || index < 0 || target !in current.indices) return
+
+            val reordered = current.toMutableList().apply { add(target, removeAt(index)) }
+
+            moveJob =
+                viewModelScope.launch {
+                    // The COMPLETE ordered id list — a partial list produces
+                    // duplicate positions server-side (LocationController::reorder
+                    // rejects any list that isn't exactly every live location in
+                    // this household).
+                    val result = runCatching { locationRepository.reorder(householdId, reordered.map { it.id }) }
+                    result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+                    // Server truth wins either way — refresh rather than trust the
+                    // optimistic local reorder, whether it landed or not.
+                    store.refresh()
+                    result.exceptionOrNull()?.let {
+                        _actionErrorRes.value = it.toUserMessageRes(R.string.error_generic)
+                    }
+                }
+        }
     }

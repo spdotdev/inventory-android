@@ -85,8 +85,6 @@
     <string name="scan_incremented">%s +1</string>
     <string name="scan_unknown_code">Geen product met code %s — deze wordt gekoppeld aan het volgende product dat je toevoegt</string>
     <string name="dashboard_low_stock_qty">%1$d van %2$d over</string>
-    <string name="dashboard_favorite_locations">Favoriete locaties</string>
-    <string name="dashboard_favorite_shelves">Favoriete planken</string>
 
     <!-- Global actions -->
     <string name="action_settings">Instellingen</string>
@@ -103,8 +101,6 @@
     <string name="all_storage_empty">Nog geen opslaglocaties. Voeg een huishouden toe en maak opslag aan via Instellingen.</string>
     <string name="all_storage_add_location_cd">Opslaglocatie toevoegen</string>
     <string name="all_storage_stock_warning">⚠ Voorraadwaarschuwing</string>
-    <string name="all_storage_favorite_add_cd">Toevoegen aan favorieten</string>
-    <string name="all_storage_favorite_remove_cd">Verwijderen uit favorieten</string>
     <string name="all_storage_collapse_household_cd">%1$s inklappen</string>
     <string name="all_storage_expand_household_cd">%1$s uitklappen</string>
 

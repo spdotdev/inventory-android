@@ -6,14 +6,10 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.scuttle.inventory.data.HierarchyStore
 import dev.scuttle.inventory.data.LocationStats
 import dev.scuttle.inventory.data.LowStockItem
-import dev.scuttle.inventory.data.ShelfEntry
-import dev.scuttle.inventory.data.settings.FavoritesStore
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
 /** Identity of a household, as the dashboard needs it: enough to name and theme it. */
@@ -42,9 +38,6 @@ data class DashboardUiState(
     val mandatoryWarnings: Int = 0,
     val lowStockItems: List<LowStockItem> = emptyList(),
     val locationStats: List<LocationStats> = emptyList(),
-    val favoriteLocationIds: Set<Long> = emptySet(),
-    val favoriteShelfIds: Set<Long> = emptySet(),
-    val favoriteShelves: List<ShelfEntry> = emptyList(),
     // H3: an R.string.* id, not a raw literal — resolved via stringResource() by the screen.
     val errorRes: Int? = null,
 ) {
@@ -79,46 +72,28 @@ class DashboardViewModel
     @Inject
     constructor(
         private val store: HierarchyStore,
-        private val favoritesStore: FavoritesStore,
     ) : ViewModel() {
-        private val favState =
-            MutableStateFlow(
-                favoritesStore.getFavoriteLocations() to favoritesStore.getFavoriteShelves(),
-            )
-
         val state: StateFlow<DashboardUiState> =
-            combine(store.state, favState) { s, (favLocs, favShelves) ->
-                DashboardUiState(
-                    loading = s.loading,
-                    refreshing = s.refreshing,
-                    hasNoHouseholds = s.entries.isEmpty() && !s.loading,
-                    firstHouseholdId = s.entries.firstOrNull()?.id,
-                    households =
-                        s.entries.map {
-                            DashboardHousehold(id = it.id, name = it.name, color = it.color, icon = it.icon)
-                        },
-                    totalLocations = s.locationStats.size,
-                    totalShelves = s.totalShelves,
-                    totalProducts = s.totalProducts,
-                    mandatoryWarnings = s.mandatoryWarnings,
-                    lowStockItems = s.lowStockItems,
-                    locationStats = s.locationStats,
-                    favoriteLocationIds = favLocs,
-                    favoriteShelfIds = favShelves,
-                    favoriteShelves = s.allShelves.filter { it.shelf.id in favShelves },
-                    errorRes = s.errorRes,
-                )
-            }.stateIn(viewModelScope, SharingStarted.Eagerly, DashboardUiState())
+            store.state
+                .map { s ->
+                    DashboardUiState(
+                        loading = s.loading,
+                        refreshing = s.refreshing,
+                        hasNoHouseholds = s.entries.isEmpty() && !s.loading,
+                        firstHouseholdId = s.entries.firstOrNull()?.id,
+                        households =
+                            s.entries.map {
+                                DashboardHousehold(id = it.id, name = it.name, color = it.color, icon = it.icon)
+                            },
+                        totalLocations = s.locationStats.size,
+                        totalShelves = s.totalShelves,
+                        totalProducts = s.totalProducts,
+                        mandatoryWarnings = s.mandatoryWarnings,
+                        lowStockItems = s.lowStockItems,
+                        locationStats = s.locationStats,
+                        errorRes = s.errorRes,
+                    )
+                }.stateIn(viewModelScope, SharingStarted.Eagerly, DashboardUiState())
 
         fun refresh() = store.refresh(userInitiated = true)
-
-        fun toggleFavoriteLocation(id: Long) {
-            favoritesStore.toggleFavoriteLocation(id)
-            favState.update { favoritesStore.getFavoriteLocations() to favoritesStore.getFavoriteShelves() }
-        }
-
-        fun toggleFavoriteShelf(id: Long) {
-            favoritesStore.toggleFavoriteShelf(id)
-            favState.update { favoritesStore.getFavoriteLocations() to favoritesStore.getFavoriteShelves() }
-        }
     }

@@ -75,7 +75,27 @@ class DrawerViewModelTest {
         // simulates a server-side failure (e.g. an invalid move target) mid-request.
         var failDeleteWithStrategyId: Long? = null
 
+        // Recorded for the reorder tests below; mirrors StorageOverviewViewModelTest's
+        // own FakeLocationRepository.reorder fake — the real endpoint's response IS
+        // the full, current location list (PATCH .../locations/reorder ends with
+        // `return $this->index(...)`), so this returns the full reordered `live` list,
+        // never a partial/merged one.
+        val reorderCallsByHousehold = mutableListOf<Pair<Long, List<Long>>>()
+        var failReorder = false
+
         override fun getCached(householdId: Long) = cached[householdId]
+
+        override suspend fun reorder(
+            householdId: Long,
+            orderedIds: List<Long>,
+        ): List<LocationDto> {
+            reorderCallsByHousehold += householdId to orderedIds
+            if (failReorder) throw IOException("reorder failed")
+            val byId = live[householdId].orEmpty().associateBy { it.id }
+            val reordered = orderedIds.mapIndexedNotNull { index, id -> byId[id]?.copy(position = index) }
+            live[householdId] = reordered.toMutableList()
+            return reordered
+        }
 
         override suspend fun list(householdId: Long) = live[householdId].orEmpty()
 
@@ -1186,6 +1206,152 @@ class DrawerViewModelTest {
 
             assertEquals(listOf(10L), repo.deletedLocationIds)
             assertNotNull(vm.state.value.lastBatchId)
+            assertNotNull(vm.actionErrorRes.value)
+        }
+
+    // --- Storage-tab reordering (per-household up/down, AllStorages edit mode) ---
+
+    @Test
+    fun move_up_swaps_with_the_previous_location_and_sends_the_complete_ordered_id_list() =
+        runTest {
+            val repo =
+                FakeLocationRepository(
+                    mapOf(
+                        1L to
+                            listOf(
+                                LocationDto(10, "Fridge", "fridge", position = 0),
+                                LocationDto(11, "Freezer", "freezer", position = 1),
+                                LocationDto(12, "Pantry", "pantry", position = 2),
+                            ),
+                    ),
+                )
+            val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
+            val vm = viewModel(store, repo)
+
+            vm.moveUp(householdId = 1, locationId = 11)
+
+            assertEquals(1, repo.reorderCallsByHousehold.size)
+            val (calledHouseholdId, orderedIds) = repo.reorderCallsByHousehold.first()
+            assertEquals(1L, calledHouseholdId)
+            assertEquals(listOf(11L, 10L, 12L), orderedIds)
+        }
+
+    @Test
+    fun move_down_swaps_with_the_next_location() =
+        runTest {
+            val repo =
+                FakeLocationRepository(
+                    mapOf(
+                        1L to
+                            listOf(
+                                LocationDto(10, "Fridge", "fridge", position = 0),
+                                LocationDto(11, "Freezer", "freezer", position = 1),
+                            ),
+                    ),
+                )
+            val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
+            val vm = viewModel(store, repo)
+
+            vm.moveDown(householdId = 1, locationId = 10)
+
+            val (_, orderedIds) = repo.reorderCallsByHousehold.first()
+            assertEquals(listOf(11L, 10L), orderedIds)
+        }
+
+    @Test
+    fun moving_the_top_location_up_is_a_no_op() =
+        runTest {
+            val repo =
+                FakeLocationRepository(
+                    mapOf(
+                        1L to
+                            listOf(
+                                LocationDto(10, "Fridge", "fridge", position = 0),
+                                LocationDto(11, "Freezer", "freezer", position = 1),
+                            ),
+                    ),
+                )
+            val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
+            val vm = viewModel(store, repo)
+
+            vm.moveUp(householdId = 1, locationId = 10)
+
+            assertTrue(repo.reorderCallsByHousehold.isEmpty())
+        }
+
+    @Test
+    fun moving_the_bottom_location_down_is_a_no_op() =
+        runTest {
+            val repo =
+                FakeLocationRepository(
+                    mapOf(
+                        1L to
+                            listOf(
+                                LocationDto(10, "Fridge", "fridge", position = 0),
+                                LocationDto(11, "Freezer", "freezer", position = 1),
+                            ),
+                    ),
+                )
+            val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
+            val vm = viewModel(store, repo)
+
+            vm.moveDown(householdId = 1, locationId = 11)
+
+            assertTrue(repo.reorderCallsByHousehold.isEmpty())
+        }
+
+    @Test
+    fun a_successful_move_refreshes_the_hierarchy_store_so_server_truth_wins() =
+        runTest {
+            val repo =
+                FakeLocationRepository(
+                    mapOf(
+                        1L to
+                            listOf(
+                                LocationDto(10, "Fridge", "fridge", position = 0),
+                                LocationDto(11, "Freezer", "freezer", position = 1),
+                            ),
+                    ),
+                )
+            val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
+            val vm = viewModel(store, repo)
+
+            vm.moveUp(householdId = 1, locationId = 11)
+
+            val refreshed =
+                store.state.first {
+                    it.entries
+                        .first()
+                        .locations
+                        .map { l -> l.id } == listOf(11L, 10L)
+                }
+            assertEquals(
+                listOf(11L, 10L),
+                refreshed.entries
+                    .first()
+                    .locations
+                    .map { it.id },
+            )
+        }
+
+    @Test
+    fun a_failed_move_still_refreshes_and_surfaces_an_action_error() =
+        runTest {
+            val repo =
+                FakeLocationRepository(
+                    mapOf(
+                        1L to
+                            listOf(
+                                LocationDto(10, "Fridge", "fridge", position = 0),
+                                LocationDto(11, "Freezer", "freezer", position = 1),
+                            ),
+                    ),
+                ).apply { failReorder = true }
+            val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
+            val vm = viewModel(store, repo)
+
+            vm.moveUp(householdId = 1, locationId = 11)
+
             assertNotNull(vm.actionErrorRes.value)
         }
 }

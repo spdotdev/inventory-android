@@ -89,8 +89,6 @@
     <string name="scan_incremented">%s +1</string>
     <string name="scan_unknown_code">No product with code %s — it will be attached to the next product you add</string>
     <string name="dashboard_low_stock_qty">%1$d of %2$d left</string>
-    <string name="dashboard_favorite_locations">Favorite locations</string>
-    <string name="dashboard_favorite_shelves">Favorite shelves</string>
 
     <!-- Global actions -->
     <string name="action_settings">Settings</string>
@@ -107,8 +105,6 @@
     <string name="all_storage_empty">No storage locations yet. Add a household and create storage from Settings.</string>
     <string name="all_storage_add_location_cd">Add storage location</string>
     <string name="all_storage_stock_warning">⚠ Stock warning</string>
-    <string name="all_storage_favorite_add_cd">Add to favorites</string>
-    <string name="all_storage_favorite_remove_cd">Remove favorite</string>
     <string name="all_storage_collapse_household_cd">Collapse %1$s</string>
     <string name="all_storage_expand_household_cd">Expand %1$s</string>
 

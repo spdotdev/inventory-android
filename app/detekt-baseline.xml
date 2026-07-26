@@ -35,11 +35,10 @@
     <ID>EmptyFunctionBlock:MissingItemsViewModelTest.kt$MissingItemsViewModelTest.ThrowingHouseholdRepository${}</ID>
     <ID>EmptyFunctionBlock:ProductsViewModelTest.kt$ProductsViewModelTest.FakeHouseholdRepository${}</ID>
     <ID>EmptyFunctionBlock:SessionCleanerTest.kt$SessionCleanerTest.RecordingDefaultHouseholdStore${}</ID>
-    <ID>EmptyFunctionBlock:SessionCleanerTest.kt$SessionCleanerTest.RecordingFavoritesStore${}</ID>
     <ID>EmptyFunctionBlock:SessionCleanerTest.kt$SessionCleanerTest.RecordingHouseholdRepo${}</ID>
     <ID>EmptyFunctionBlock:ShelvesViewModelMoveRaceTest.kt$ShelvesViewModelMoveRaceTest.FakeShelfViewStore${}</ID>
     <ID>LargeClass:DrawerViewModelTest.kt$DrawerViewModelTest</ID>
-    <ID>LongParameterList:SessionCleaner.kt$SessionCleaner$( private val householdRepository: HouseholdRepository, private val locationRepository: LocationRepository, private val shelfRepository: ShelfRepository, private val productRepository: ProductRepository, private val hierarchyStore: HierarchyStore, private val favoritesStore: FavoritesStore, private val defaultHouseholdStore: DefaultHouseholdStore, private val shelfViewStore: ShelfViewStore, private val householdViewStore: HouseholdViewStore, private val feedStateStore: FeedStateStore, )</ID>
+    <ID>LongParameterList:SessionCleaner.kt$SessionCleaner$( private val householdRepository: HouseholdRepository, private val locationRepository: LocationRepository, private val shelfRepository: ShelfRepository, private val productRepository: ProductRepository, private val hierarchyStore: HierarchyStore, private val defaultHouseholdStore: DefaultHouseholdStore, private val shelfViewStore: ShelfViewStore, private val householdViewStore: HouseholdViewStore, private val feedStateStore: FeedStateStore, )</ID>
     <ID>MagicNumber:AuthInterceptor.kt$AuthInterceptor$401</ID>
     <ID>MagicNumber:ErrorMapping.kt$401</ID>
     <ID>MagicNumber:ErrorMapping.kt$403</ID>

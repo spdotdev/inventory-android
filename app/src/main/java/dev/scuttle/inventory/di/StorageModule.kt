@@ -8,7 +8,6 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import dev.scuttle.inventory.data.settings.DefaultHouseholdStore
-import dev.scuttle.inventory.data.settings.FavoritesStore
 import dev.scuttle.inventory.data.settings.FeedStateStore
 import dev.scuttle.inventory.data.settings.HintsStore
 import dev.scuttle.inventory.data.settings.HouseholdViewStore
@@ -16,7 +15,6 @@ import dev.scuttle.inventory.data.settings.LanguageStore
 import dev.scuttle.inventory.data.settings.NotificationPrefsStore
 import dev.scuttle.inventory.data.settings.ReminderSettingsStore
 import dev.scuttle.inventory.data.settings.SharedPrefsDefaultHouseholdStore
-import dev.scuttle.inventory.data.settings.SharedPrefsFavoritesStore
 import dev.scuttle.inventory.data.settings.SharedPrefsFeedStateStore
 import dev.scuttle.inventory.data.settings.SharedPrefsHintsStore
 import dev.scuttle.inventory.data.settings.SharedPrefsHouseholdViewStore
@@ -52,12 +50,6 @@ object StorageModule {
     fun provideDefaultHouseholdStore(
         @ApplicationContext context: Context,
     ): DefaultHouseholdStore = SharedPrefsDefaultHouseholdStore(context)
-
-    @Provides
-    @Singleton
-    fun provideFavoritesStore(
-        @ApplicationContext context: Context,
-    ): FavoritesStore = SharedPrefsFavoritesStore(context)
 
     @Provides
     @Singleton

@@ -5,7 +5,6 @@ import dev.scuttle.inventory.data.household.HouseholdRepository
 import dev.scuttle.inventory.data.location.LocationRepository
 import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.data.settings.DefaultHouseholdStore
-import dev.scuttle.inventory.data.settings.FavoritesStore
 import dev.scuttle.inventory.data.settings.FeedStateStore
 import dev.scuttle.inventory.data.settings.HouseholdViewStore
 import dev.scuttle.inventory.data.settings.ShelfViewStore
@@ -18,7 +17,7 @@ import javax.inject.Singleton
  * bleeds into the next session. The repositories, [HierarchyStore], and the pref
  * stores are all `@Singleton`, so without this an account switch on the same
  * process would render the previous user's households/locations/products/
- * missing-items (and favorites) to the new user — `HierarchyStore.refresh()`
+ * missing-items to the new user — `HierarchyStore.refresh()`
  * calls `loadFromCache()`, which repopulates synchronously from the stale caches
  * before the network returns. In-memory/prefs only, so it respects the
  * always-online, no-local-DB rule.
@@ -38,7 +37,6 @@ class SessionCleaner
         private val shelfRepository: ShelfRepository,
         private val productRepository: ProductRepository,
         private val hierarchyStore: HierarchyStore,
-        private val favoritesStore: FavoritesStore,
         private val defaultHouseholdStore: DefaultHouseholdStore,
         private val shelfViewStore: ShelfViewStore,
         private val householdViewStore: HouseholdViewStore,
@@ -50,7 +48,6 @@ class SessionCleaner
             shelfRepository.clear()
             productRepository.clear()
             hierarchyStore.clear()
-            favoritesStore.clear()
             defaultHouseholdStore.clear()
             shelfViewStore.clear()
             householdViewStore.clear()

@@ -10,7 +10,6 @@ import dev.scuttle.inventory.data.household.HouseholdRepository
 import dev.scuttle.inventory.data.location.LocationRepository
 import dev.scuttle.inventory.data.product.ProductEdit
 import dev.scuttle.inventory.data.product.ProductRepository
-import dev.scuttle.inventory.data.settings.FavoritesStore
 import dev.scuttle.inventory.data.shelf.ShelfRepository
 import dev.scuttle.inventory.ui.dashboard.DashboardViewModel
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -143,34 +142,12 @@ class DashboardViewModelTest {
         }
     }
 
-    private class FakeFavoritesStore : FavoritesStore {
-        private val locations = mutableSetOf<Long>()
-        private val shelves = mutableSetOf<Long>()
-
-        override fun getFavoriteLocations() = locations.toSet()
-
-        override fun toggleFavoriteLocation(id: Long) {
-            if (!locations.add(id)) locations.remove(id)
-        }
-
-        override fun isFavoriteLocation(id: Long) = id in locations
-
-        override fun getFavoriteShelves() = shelves.toSet()
-
-        override fun toggleFavoriteShelf(id: Long) {
-            if (!shelves.add(id)) shelves.remove(id)
-        }
-
-        override fun isFavoriteShelf(id: Long) = id in shelves
-    }
-
     private fun viewModel(
         households: List<HouseholdDto> =
             listOf(HouseholdDto(1, "Home", "AAAA", role = "admin", can_restructure = true, can_manage_members = true)),
         locationsByHousehold: Map<Long, List<LocationDto>> = emptyMap(),
         shelvesByLocation: Map<Long, List<ShelfDto>> = emptyMap(),
         productsByShelf: Map<Long, List<ProductDto>> = emptyMap(),
-        favoritesStore: FakeFavoritesStore = FakeFavoritesStore(),
     ): DashboardViewModel {
         val store =
             HierarchyStore(
@@ -181,7 +158,7 @@ class DashboardViewModelTest {
                 UnconfinedTestDispatcher(),
             )
         store.loadFromCache()
-        return DashboardViewModel(store, favoritesStore)
+        return DashboardViewModel(store)
     }
 
     @Test
@@ -243,34 +220,6 @@ class DashboardViewModelTest {
 
             assertTrue(vm.state.value.hasNoHouseholds)
             assertFalse(vm.state.value.loading)
-        }
-
-    @Test
-    fun toggle_favorite_location_updates_state() =
-        runTest {
-            val vm =
-                viewModel(
-                    locationsByHousehold = mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge"))),
-                    shelvesByLocation = mapOf(10L to listOf(ShelfDto(100, "Top", 0, 10))),
-                )
-
-            vm.toggleFavoriteLocation(10L)
-            assertTrue(10L in vm.state.value.favoriteLocationIds)
-
-            vm.toggleFavoriteLocation(10L)
-            assertFalse(10L in vm.state.value.favoriteLocationIds)
-        }
-
-    @Test
-    fun toggle_favorite_shelf_updates_state() =
-        runTest {
-            val vm = viewModel()
-
-            vm.toggleFavoriteShelf(100L)
-            assertTrue(100L in vm.state.value.favoriteShelfIds)
-
-            vm.toggleFavoriteShelf(100L)
-            assertFalse(100L in vm.state.value.favoriteShelfIds)
         }
 
     @Test
@@ -440,32 +389,5 @@ class DashboardViewModelTest {
             // Scaled per-card, Beach house's 2 products would fill its bar as completely
             // as Home's 9 fill theirs, and the chart would lie about the comparison.
             assertEquals(9, vm.state.value.maxLocationProductCount)
-        }
-
-    @Test
-    fun favorite_shelves_list_reflects_favorited_ids() =
-        runTest {
-            val vm =
-                viewModel(
-                    locationsByHousehold = mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge"))),
-                    shelvesByLocation =
-                        mapOf(
-                            10L to
-                                listOf(
-                                    ShelfDto(100, "Top", 0, 10),
-                                    ShelfDto(101, "Bottom", 1, 10),
-                                ),
-                        ),
-                )
-
-            vm.toggleFavoriteShelf(100L)
-
-            assertEquals(1, vm.state.value.favoriteShelves.size)
-            assertEquals(
-                "Top",
-                vm.state.value.favoriteShelves
-                    .first()
-                    .shelf.name,
-            )
         }
 }

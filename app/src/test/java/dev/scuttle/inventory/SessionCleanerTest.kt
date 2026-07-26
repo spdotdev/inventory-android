@@ -12,7 +12,6 @@ import dev.scuttle.inventory.data.location.LocationRepository
 import dev.scuttle.inventory.data.product.ProductEdit
 import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.data.settings.DefaultHouseholdStore
-import dev.scuttle.inventory.data.settings.FavoritesStore
 import dev.scuttle.inventory.data.settings.FeedState
 import dev.scuttle.inventory.data.settings.FeedStateStore
 import dev.scuttle.inventory.data.settings.HouseholdViewStore
@@ -151,26 +150,6 @@ class SessionCleanerTest {
         }
     }
 
-    private class RecordingFavoritesStore : FavoritesStore {
-        var cleared = false
-
-        override fun getFavoriteLocations() = emptySet<Long>()
-
-        override fun toggleFavoriteLocation(id: Long) {}
-
-        override fun isFavoriteLocation(id: Long) = false
-
-        override fun getFavoriteShelves() = emptySet<Long>()
-
-        override fun toggleFavoriteShelf(id: Long) {}
-
-        override fun isFavoriteShelf(id: Long) = false
-
-        override fun clear() {
-            cleared = true
-        }
-    }
-
     private class RecordingDefaultHouseholdStore : DefaultHouseholdStore {
         var cleared = false
 
@@ -231,7 +210,6 @@ class SessionCleanerTest {
         val location = RecordingLocationRepo()
         val shelf = RecordingShelfRepo()
         val product = RecordingProductRepo()
-        val favorites = RecordingFavoritesStore()
         val defaultHousehold = RecordingDefaultHouseholdStore()
         val shelfView = RecordingShelfViewStore()
         val householdView = RecordingHouseholdViewStore()
@@ -244,7 +222,6 @@ class SessionCleanerTest {
             shelf,
             product,
             store,
-            favorites,
             defaultHousehold,
             shelfView,
             householdView,
@@ -255,7 +232,6 @@ class SessionCleanerTest {
         assertTrue(location.cleared)
         assertTrue(shelf.cleared)
         assertTrue(product.cleared)
-        assertTrue(favorites.cleared)
         assertTrue(defaultHousehold.cleared)
         assertTrue(shelfView.cleared)
         assertTrue(householdView.cleared)

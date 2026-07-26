@@ -24,7 +24,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -63,7 +62,6 @@ import dev.scuttle.inventory.data.LowStockItem
 import dev.scuttle.inventory.ui.common.ErrorRetry
 import dev.scuttle.inventory.ui.common.HouseholdOption
 import dev.scuttle.inventory.ui.common.HouseholdPickerSheet
-import dev.scuttle.inventory.ui.common.shelfDisplayName
 import dev.scuttle.inventory.ui.theme.FrostCard
 import dev.scuttle.inventory.ui.theme.HouseholdAvatar
 import dev.scuttle.inventory.ui.theme.LocalFrostCardColors
@@ -282,38 +280,6 @@ fun DashboardScreen(
                     )
                 }
 
-                // Favorite locations
-                if (state.favoriteLocationIds.isNotEmpty()) {
-                    Text(
-                        stringResource(R.string.dashboard_favorite_locations),
-                        style = MaterialTheme.typography.titleMedium,
-                    )
-                    state.locationStats
-                        .filter { it.location.id in state.favoriteLocationIds }
-                        .forEach { stat ->
-                            FavoriteRow(
-                                name = stat.location.name,
-                                household = badgeFor(stat.householdId),
-                                onClick = { onOpenLocation(stat.householdId, stat.location.id) },
-                            )
-                        }
-                }
-
-                // Favorite shelves
-                if (state.favoriteShelves.isNotEmpty()) {
-                    Text(
-                        stringResource(R.string.dashboard_favorite_shelves),
-                        style = MaterialTheme.typography.titleMedium,
-                    )
-                    state.favoriteShelves.forEach { entry ->
-                        FavoriteRow(
-                            name = shelfDisplayName(entry.shelf),
-                            household = badgeFor(entry.householdId),
-                            onClick = { onOpenLocation(entry.householdId, entry.shelf.location_id) },
-                        )
-                    }
-                }
-
                 Spacer(Modifier.height(Spacing.lg))
             }
         } // end PullToRefreshBox
@@ -449,39 +415,6 @@ private fun HouseholdBadge(household: DashboardHousehold) {
         size = Spacing.lg,
         contentDescription = household.name,
     )
-}
-
-/** A favorited location or shelf. [household] is null when there's nothing to disambiguate. */
-@Composable
-private fun FavoriteRow(
-    name: String,
-    household: DashboardHousehold?,
-    onClick: () -> Unit,
-) {
-    FrostCard(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier =
-                Modifier
-                    .padding(Spacing.md)
-                    .fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            household?.let { HouseholdBadge(it) }
-            Text(
-                name,
-                style = MaterialTheme.typography.bodyLarge,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f),
-            )
-            Icon(
-                Icons.Default.Star,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-            )
-        }
-    }
 }
 
 @Composable
