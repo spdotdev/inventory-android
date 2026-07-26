@@ -1,10 +1,11 @@
 package dev.scuttle.inventory.ui.home
 
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -16,35 +17,33 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowDownward
-import androidx.compose.material.icons.filled.ArrowUpward
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -55,18 +54,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.HouseholdWithLocations
 import dev.scuttle.inventory.data.dto.LocationDto
-import dev.scuttle.inventory.ui.app.DrawerUiState
 import dev.scuttle.inventory.ui.app.DrawerViewModel
 import dev.scuttle.inventory.ui.common.ErrorRetry
 import dev.scuttle.inventory.ui.common.HouseholdOption
@@ -74,59 +72,65 @@ import dev.scuttle.inventory.ui.common.HouseholdPickerSheet
 import dev.scuttle.inventory.ui.common.SnackbarErrorEffect
 import dev.scuttle.inventory.ui.common.orderByPosition
 import dev.scuttle.inventory.ui.common.storageTypeLabel
-import dev.scuttle.inventory.ui.hierarchy.DeleteStrategyDialog
-import dev.scuttle.inventory.ui.hierarchy.UndoOutcome
-import dev.scuttle.inventory.ui.hierarchy.locationStrategyOptions
+import dev.scuttle.inventory.ui.storage.STORAGE_TYPES
 import dev.scuttle.inventory.ui.theme.FrostCard
-import sh.calvin.reorderable.ReorderableColumn
 
-@OptIn(ExperimentalMaterial3Api::class)
+/** Matches the server-side location name column limit (same cap StorageOverviewScreen uses). */
+private const val MAX_LOCATION_NAME_LENGTH = 50
+
+/**
+ * Home/AllStorages: a clean, BROWSE-ONLY list of every household's storage
+ * locations. Editing (add/rename/delete/reorder) lives entirely on the
+ * per-household Storage overview screen (Routes.storage(hhId)) — this screen's
+ * gear icon and FAB both route there (directly with one household, via
+ * [HouseholdPickerSheet] with more than one) instead of offering any edit
+ * affordance inline. See CLAUDE.md's Navigation section for the full picture.
+ */
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun AllStoragesScreen(
     modifier: Modifier = Modifier,
     viewModel: DrawerViewModel,
     onOpenLocation: (householdId: Long, locationId: Long) -> Unit = { _, _ -> },
     onOpenStorage: (householdId: Long) -> Unit = {},
-    onOpenSearch: (householdId: Long) -> Unit = {},
     localViewModel: AllStoragesViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
     val localState by localViewModel.state.collectAsState()
     val actionErrorRes by viewModel.actionErrorRes.collectAsState()
-    // M5: edit mode is checkbox multi-select + a single "delete selected" action
-    // opening the DeleteStrategyDialog, matching StorageOverview/LocationDetail's
-    // grammar — previously this screen alone used a single per-row delete button.
-    // The selection itself now lives in DrawerViewModel (state.editMode/selected),
-    // since it's part of the same delete-strategy flow as pendingDelete/moveTargets.
-    val editMode = state.editMode
 
     val snackbarHostState = remember { SnackbarHostState() }
-    val context = LocalContext.current
-    // Surfaces a failed delete (or a failed undo) as a transient snackbar so it
-    // isn't silent (W10).
-    // H3: actionErrorRes is an R.string.* id, not a raw literal — resolved via stringResource().
+    // Surfaces a failed create-location as a transient snackbar (W10).
     SnackbarErrorEffect(
         error = actionErrorRes?.let { stringResource(it) },
         snackbarHostState = snackbarHostState,
         onConsumed = viewModel::consumeActionError,
     )
 
-    // Blocker 2 (final review): this screen's search icon is a single GLOBAL
-    // top-bar action, not tied to any one of the household groups rendered below —
-    // there's no "row tapped" to carry a household from. With exactly one household
-    // there's nothing to ask; with more than one, hard-coding the FIRST (the bug
-    // this fixes) silently made every other household's search reachable only by
-    // drilling into that household's own Storage overview first. Ask via the shared
-    // picker instead.
-    var showHouseholdPicker by rememberSaveable { mutableStateOf(false) }
-    val openSearch: () -> Unit = {
-        if (state.entries.size > 1) {
-            showHouseholdPicker = true
+    // One shared household picker, reused by both the gear (edit) and the FAB
+    // (add) — [pickerPurpose] tracks which gesture opened it so onPick can
+    // route to the right place instead of the two flows fighting over one
+    // boolean.
+    var pickerPurpose by rememberSaveable { mutableStateOf<HouseholdPickerPurpose?>(null) }
+    var showAddSheetForHousehold by rememberSaveable { mutableStateOf<Long?>(null) }
+    var newName by rememberSaveable { mutableStateOf("") }
+    var newType by rememberSaveable { mutableStateOf("freezer") }
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    val openEdit: () -> Unit = {
+        val households = state.entries
+        if (households.size > 1) {
+            pickerPurpose = HouseholdPickerPurpose.EDIT
         } else {
-            state.entries
-                .firstOrNull()
-                ?.id
-                ?.let(onOpenSearch)
+            households.firstOrNull()?.id?.let(onOpenStorage)
+        }
+    }
+    val openAdd: () -> Unit = {
+        val households = state.entries
+        if (households.size > 1) {
+            pickerPurpose = HouseholdPickerPurpose.ADD
+        } else {
+            households.firstOrNull()?.id?.let { showAddSheetForHousehold = it }
         }
     }
 
@@ -138,63 +142,33 @@ fun AllStoragesScreen(
         topBar = {
             TopAppBar(
                 windowInsets = statusBarInsets,
-                title = {
-                    if (editMode && state.selected.isNotEmpty()) {
-                        Text(stringResource(R.string.location_selected_count, state.selected.size))
-                    } else {
-                        Text(stringResource(R.string.all_storage_title))
-                    }
-                },
-                navigationIcon = {
-                    // Aligned to StorageOverview's edit-mode chrome (GAP5-M4): Cancel
-                    // lives in the navigationIcon slot, not mixed into actions.
-                    if (editMode) {
-                        TextButton(onClick = viewModel::exitEditMode) {
-                            Text(stringResource(R.string.action_cancel))
-                        }
-                    }
-                },
+                title = { Text(stringResource(R.string.all_storage_title)) },
                 actions = {
-                    if (editMode) {
-                        // Labeled, error-coloured Button showing the count — matches
-                        // StorageOverviewScreen's delete affordance exactly (GAP5-M4);
-                        // this screen used to show an icon-only Delete button instead.
-                        Button(
-                            onClick = viewModel::requestDeleteSelected,
-                            enabled = state.selected.isNotEmpty() && !state.loading,
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                            modifier = Modifier.padding(end = 8.dp),
-                        ) {
-                            Text(
-                                if (state.selected.isEmpty()) {
-                                    stringResource(R.string.location_delete_button)
-                                } else {
-                                    stringResource(R.string.location_delete_count_button, state.selected.size)
-                                },
+                    // Unlike the old inline edit-mode pencil (only worth showing
+                    // when there was something to select/reorder), the gear just
+                    // NAVIGATES to a household's Storage overview — which has its
+                    // own add-storage FAB and empty state — so it's available
+                    // whenever there is at least one household, even an empty one.
+                    if (state.entries.isNotEmpty()) {
+                        IconButton(onClick = openEdit) {
+                            Icon(
+                                Icons.Default.Settings,
+                                contentDescription = stringResource(R.string.all_storage_manage_cd),
                             )
                         }
-                    } else {
-                        // Search lost its bottom-nav tab (Task 7) but keeps a top-bar
-                        // icon here, per spec — opens the household picker with more
-                        // than one household (see openSearch above), navigates
-                        // straight through with exactly one, no-ops with none.
-                        IconButton(onClick = openSearch) {
-                            Icon(Icons.Default.Search, contentDescription = stringResource(R.string.nav_search))
-                        }
-                        if (state.entries.any { it.locations.isNotEmpty() }) {
-                            IconButton(onClick = viewModel::enterEditMode) {
-                                Icon(
-                                    Icons.Default.Edit,
-                                    contentDescription = stringResource(R.string.storage_overview_edit_cd),
-                                )
-                            }
-                        }
-                        IconButton(onClick = { viewModel.refresh() }) {
-                            Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.action_refresh))
-                        }
+                    }
+                    IconButton(onClick = { viewModel.refresh() }) {
+                        Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.action_refresh))
                     }
                 },
             )
+        },
+        floatingActionButton = {
+            if (state.entries.isNotEmpty()) {
+                FloatingActionButton(modifier = Modifier.navigationBarsPadding(), onClick = openAdd) {
+                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.all_storage_add_location_cd))
+                }
+            }
         },
     ) { padding ->
         PullToRefreshBox(
@@ -234,10 +208,9 @@ fun AllStoragesScreen(
                         // (collapsed) chevron and animates back to pointing-down
                         // (expanded) — one icon, two states, matching this file's
                         // existing "no new icon asset for a two-state toggle"
-                        // idiom. Keyed by household
-                        // id (like the location loop below) so this per-entry
-                        // animation state is never misattributed to a different
-                        // household across recompositions.
+                        // idiom. Keyed by household id so this per-entry animation
+                        // state is never misattributed to a different household
+                        // across recompositions.
                         val chevronRotation by animateFloatAsState(
                             targetValue = if (isCollapsed) -90f else 0f,
                             label = "household-chevron-${entry.id}",
@@ -249,264 +222,176 @@ fun AllStoragesScreen(
                                 stringResource(R.string.all_storage_collapse_household_cd, entry.name)
                             }
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp, start = 4.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp, start = 4.dp)
+                                    // Announce the ACTION via onClickLabel rather than
+                                    // replacing the row's semantics wholesale — see the
+                                    // history in this file's earlier revisions for why
+                                    // clearAndSetSemantics is the wrong tool here.
+                                    .clickable(
+                                        role = Role.Button,
+                                        onClickLabel = toggleCollapsedCd,
+                                    ) {
+                                        localViewModel.toggleCollapsed(entry.id)
+                                    },
+                            horizontalArrangement = Arrangement.Start,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Row(
-                                modifier =
-                                    Modifier
-                                        .weight(1f)
-                                        // Announce the ACTION via onClickLabel rather than
-                                        // replacing the row's semantics wholesale — clearAndSetSemantics
-                                        // used to sit here and discard every descendant's semantics,
-                                        // including the household's own name (Text(entry.name) below),
-                                        // so TalkBack lost "Home" entirely and it also silently broke
-                                        // every onNodeWithText/hasText("Home") flow test that navigates
-                                        // by tapping through the household name (regression, final
-                                        // review 2026-07-14). onClickLabel keeps the name readable —
-                                        // TalkBack now announces "Home, button, collapse group" — while
-                                        // still exposing the collapse/expand action distinctly from a
-                                        // plain click.
-                                        .clickable(
-                                            role = Role.Button,
-                                            onClickLabel = toggleCollapsedCd,
-                                        ) {
-                                            localViewModel.toggleCollapsed(entry.id)
-                                        },
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Icon(
-                                    Icons.Default.KeyboardArrowDown,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.rotate(chevronRotation),
-                                )
-                                Spacer(Modifier.width(4.dp))
-                                Text(
-                                    text = entry.name,
-                                    style = MaterialTheme.typography.titleSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                            if (!editMode) {
-                                IconButton(onClick = { onOpenStorage(entry.id) }) {
-                                    Icon(
-                                        Icons.Default.Add,
-                                        contentDescription = stringResource(R.string.all_storage_add_location_cd),
-                                    )
-                                }
-                            }
+                            Icon(
+                                Icons.Default.KeyboardArrowDown,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.rotate(chevronRotation),
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text(
+                                text = entry.name,
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
                         }
 
                         // Collapsing only hides these rows -- it never touches
-                        // edit mode, favorites, or the delete-confirmation flow
-                        // below (state.pendingDelete), which lives outside this
-                        // Column entirely and stays reachable regardless of
-                        // collapse state. A row that isn't rendered can't be
-                        // tapped, so a collapsed group can never carry a pending
-                        // delete the user can't see.
+                        // any dialog/sheet state, which lives outside this Column
+                        // entirely.
                         val orderedLocations =
                             if (isCollapsed) {
                                 emptyList()
                             } else {
                                 orderByPosition(entry.locations, { it.position }, { it.name })
                             }
-                        // Drag-to-reorder rides ALONGSIDE the arrows (both must keep working) —
-                        // only wraps in ReorderableColumn when there's something restructurable
-                        // to drag: edit mode + canRestructure, same gate the arrows already use.
-                        // A plain Column below keeps every other case (view mode, or a Member's
-                        // read-only group) byte-for-byte as before.
-                        if (editMode && entry.canRestructure) {
-                            ReorderableColumn(
-                                list = orderedLocations,
-                                onSettle = { fromIndex, toIndex ->
-                                    val reordered =
-                                        orderedLocations.toMutableList().apply {
-                                            add(toIndex, removeAt(fromIndex))
-                                        }
-                                    viewModel.applyOrder(entry.id, reordered.map { it.id })
-                                },
-                            ) { locationIndex, location, isDragging ->
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            orderedLocations.forEach { location ->
                                 key(location.id) {
-                                    // Modest lift while dragging (elevation, Frost-styled) —
-                                    // ELEVATION_DRAGGING_DP vs ELEVATION_IDLE_DP named per
-                                    // detekt MagicNumber.
-                                    val elevation by
-                                        animateDpAsState(
-                                            targetValue = if (isDragging) ELEVATION_DRAGGING_DP else ELEVATION_IDLE_DP,
-                                            label = "location-drag-elevation-${location.id}",
-                                        )
                                     LocationRow(
                                         entry = entry,
                                         location = location,
-                                        locationIndex = locationIndex,
-                                        orderedLocationsCount = orderedLocations.size,
-                                        editMode = editMode,
-                                        state = state,
-                                        viewModel = viewModel,
+                                        hasWarning = state.locationWarnings[location.id] == true,
                                         onOpenLocation = onOpenLocation,
-                                        // Long-press anywhere on the row body starts the drag —
-                                        // the row's own onClick (toggle-selection in edit mode)
-                                        // keeps working since longPressDraggableHandle only
-                                        // consumes gestures that turn into an actual drag.
-                                        rowModifier = Modifier.longPressDraggableHandle().shadow(elevation),
                                     )
-                                }
-                            }
-                        } else {
-                            Column {
-                                orderedLocations.forEachIndexed { locationIndex, location ->
-                                    key(location.id) {
-                                        LocationRow(
-                                            entry = entry,
-                                            location = location,
-                                            locationIndex = locationIndex,
-                                            orderedLocationsCount = orderedLocations.size,
-                                            editMode = editMode,
-                                            state = state,
-                                            viewModel = viewModel,
-                                            onOpenLocation = onOpenLocation,
-                                        )
-                                    }
                                 }
                             }
                         }
                     }
                 }
 
-                Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(96.dp))
             }
         }
     }
 
-    // The delete-strategy dialog for the location just tapped for delete.
-    // Non-null pendingDelete is the ONLY thing that shows this dialog, and
-    // confirmDelete() (the only path that actually deletes) is reachable
-    // exclusively from its confirm button — the per-row trash icon above only
-    // ever calls requestDelete().
-    state.pendingDelete?.let { plan ->
-        DeleteStrategyDialog(
-            plan = plan,
-            options = locationStrategyOptions(),
-            targets = state.moveTargets,
-            onDismiss = viewModel::cancelDelete,
-            onConfirm = { strategy, targetId -> viewModel.confirmDelete(strategy, targetId) },
-        )
-    }
-
-    // Undo snackbar. A snackbar with an action, rather than a one-shot error
-    // effect (which has no action slot).
-    val undoLabel = stringResource(R.string.delete_undo)
-    val deletedMessage = stringResource(R.string.locations_deleted)
-    LaunchedEffect(state.lastBatchId) {
-        if (state.lastBatchId == null) return@LaunchedEffect
-        val result =
-            snackbarHostState.showSnackbar(
-                message = deletedMessage,
-                actionLabel = undoLabel,
-                duration = SnackbarDuration.Long,
-            )
-        if (result == SnackbarResult.ActionPerformed) {
-            viewModel.undoDelete()
-        } else {
-            viewModel.consumeLastBatch()
-        }
-    }
-
-    // The undo OUTCOME, as its own one-shot snackbar — distinct from the "deleted,
-    // [Undo]" snackbar above. A 409 here (already restored elsewhere, or past the
-    // undo window) used to fall through to a generic error; this shows the specific
-    // message instead (final review, ALSO FIX).
-    val undoneMessage = stringResource(R.string.delete_undone)
-    val undoFailedMessage = stringResource(R.string.delete_undo_failed)
-    LaunchedEffect(state.undoResult) {
-        val message =
-            when (state.undoResult) {
-                UndoOutcome.SUCCESS -> undoneMessage
-                UndoOutcome.FAILURE -> undoFailedMessage
-                null -> return@LaunchedEffect
-            }
-        snackbarHostState.showSnackbar(message)
-        viewModel.consumeUndoResult()
-    }
-
-    // H3: tapping a row in a DIFFERENT household than the current selection
-    // resets the selection instead of accumulating across households (see
-    // DrawerViewModel.toggleSelection's doc comment) — that used to be silent,
-    // the count just changed. Surface it as a short snackbar naming the new
-    // household.
-    LaunchedEffect(state.selectionResetEvent) {
-        val householdName = state.selectionResetEvent ?: return@LaunchedEffect
-        snackbarHostState.showSnackbar(
-            context.getString(R.string.selection_cleared_switched_household, householdName),
-        )
-        viewModel.consumeSelectionResetEvent()
-    }
-
-    if (showHouseholdPicker) {
+    if (pickerPurpose != null) {
+        val purpose = pickerPurpose
         HouseholdPickerSheet(
             households = state.entries.map { HouseholdOption(it.id, it.name) },
-            onDismiss = { showHouseholdPicker = false },
+            title =
+                when (purpose) {
+                    HouseholdPickerPurpose.ADD -> stringResource(R.string.all_storage_add_choose_household_title)
+                    else -> stringResource(R.string.all_storage_edit_choose_household_title)
+                },
+            onDismiss = { pickerPurpose = null },
             onPick = { householdId ->
-                showHouseholdPicker = false
-                onOpenSearch(householdId)
+                pickerPurpose = null
+                when (purpose) {
+                    HouseholdPickerPurpose.ADD -> showAddSheetForHousehold = householdId
+                    else -> onOpenStorage(householdId)
+                }
             },
         )
     }
+
+    val addHouseholdId = showAddSheetForHousehold
+    if (addHouseholdId != null) {
+        ModalBottomSheet(
+            onDismissRequest = { showAddSheetForHousehold = null },
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        ) {
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                        .padding(bottom = 32.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Text(
+                    text = stringResource(R.string.add_storage_sheet_title),
+                    style = MaterialTheme.typography.titleLarge,
+                )
+
+                Text(text = stringResource(R.string.add_storage_type_label))
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    STORAGE_TYPES.forEach { type ->
+                        FilterChip(
+                            selected = newType == type,
+                            onClick = { newType = type },
+                            label = { Text(storageTypeLabel(type)) },
+                        )
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    OutlinedTextField(
+                        value = newName,
+                        onValueChange = { newName = it.take(MAX_LOCATION_NAME_LENGTH) },
+                        label = { Text(stringResource(R.string.add_storage_name_field)) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, imeAction = ImeAction.Done),
+                        keyboardActions =
+                            KeyboardActions(onDone = {
+                                keyboardController?.hide()
+                                viewModel.createLocation(addHouseholdId, newName, newType)
+                                newName = ""
+                                showAddSheetForHousehold = null
+                            }),
+                        modifier = Modifier.weight(1f),
+                    )
+                    Button(
+                        onClick = {
+                            keyboardController?.hide()
+                            viewModel.createLocation(addHouseholdId, newName, newType)
+                            newName = ""
+                            showAddSheetForHousehold = null
+                        },
+                        enabled = newName.isNotBlank(),
+                    ) {
+                        Text(stringResource(R.string.action_add))
+                    }
+                }
+            }
+        }
+    }
 }
 
-// Modest drag-lift elevation (spec: "modest, match Frost styling") — named per
-// detekt's MagicNumber rule rather than inlined into the animateDpAsState call.
-private val ELEVATION_IDLE_DP = 0.dp
-private val ELEVATION_DRAGGING_DP = 6.dp
+/** Which gesture opened the shared [HouseholdPickerSheet] — see its call site's doc comment. */
+private enum class HouseholdPickerPurpose { EDIT, ADD }
 
 /**
- * One location row in a household group's edit-mode (or view-mode) list —
- * pulled out of the per-household loop in [AllStoragesScreen] so both the
- * drag-reorderable path (wrapped in `ReorderableColumn`, only when
- * `editMode && entry.canRestructure`) and the plain path (every other case:
- * view mode, or a Member's read-only group) render byte-for-byte the same
- * checkbox/name/type/arrows row.
- *
- * [rowModifier] is where the drag library's `Modifier.longPressDraggableHandle()`
- * (plus the drag-lift shadow) gets applied when this row is inside a
- * `ReorderableColumn` — empty in the plain path, since there's nothing to drag.
+ * One location row — browse-only now: tapping it always navigates to that
+ * location. Pulled out of the per-household loop for the same readability
+ * reason it was pulled out before edit mode existed at all.
  */
 @Composable
 private fun LocationRow(
     entry: HouseholdWithLocations,
     location: LocationDto,
-    locationIndex: Int,
-    orderedLocationsCount: Int,
-    editMode: Boolean,
-    state: DrawerUiState,
-    viewModel: DrawerViewModel,
+    hasWarning: Boolean,
     onOpenLocation: (householdId: Long, locationId: Long) -> Unit,
-    rowModifier: Modifier = Modifier,
 ) {
-    val hasWarning = state.locationWarnings[location.id] == true
-
     val rowContent: @Composable () -> Unit = {
         Row(
             modifier =
                 Modifier
-                    .padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp)
+                    .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp)
                     .fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (editMode && entry.canRestructure) {
-                // Selection checkbox leads the row (user decision
-                // 2026-07-26): pick first, then act — the reorder
-                // arrows stay on the trailing edge.
-                Checkbox(
-                    checked = location.id in state.selected,
-                    onCheckedChange = {
-                        viewModel.toggleSelection(entry.id, location.id)
-                    },
-                )
-            }
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     location.name,
@@ -529,50 +414,13 @@ private fun LocationRow(
                     }
                 }
             }
-            if (editMode && entry.canRestructure) {
-                IconButton(
-                    onClick = { viewModel.moveUp(entry.id, location.id) },
-                    enabled = locationIndex > 0,
-                ) {
-                    Icon(
-                        Icons.Default.ArrowUpward,
-                        contentDescription = stringResource(R.string.storage_move_up_cd),
-                    )
-                }
-                IconButton(
-                    onClick = { viewModel.moveDown(entry.id, location.id) },
-                    enabled = locationIndex < orderedLocationsCount - 1,
-                ) {
-                    Icon(
-                        Icons.Default.ArrowDownward,
-                        contentDescription = stringResource(R.string.storage_move_down_cd),
-                    )
-                }
-            }
-            // editMode && !entry.canRestructure: nothing renders here — a
-            // Member's row in edit mode has nothing restructure-capable to
-            // offer.
         }
     }
-    // In edit mode, tapping the row body toggles selection (matching
-    // StorageOverviewScreen's EditableRow), not navigation — same as
-    // the checkbox itself; a Member's row (no canRestructure) has no
-    // selection to toggle, so it keeps navigating even in edit mode.
-    // Long-press (which starts a drag, via rowModifier's
-    // longPressDraggableHandle) is a distinct gesture the library only
-    // consumes when it turns into an actual drag, so this click still fires
-    // normally on a plain tap.
-    val rowOnClick =
-        if (editMode && entry.canRestructure) {
-            { viewModel.toggleSelection(entry.id, location.id) }
-        } else {
-            { onOpenLocation(entry.id, location.id) }
-        }
+    val rowOnClick = { onOpenLocation(entry.id, location.id) }
     if (hasWarning) {
         Card(
             onClick = rowOnClick,
-            modifier =
-                rowModifier.fillMaxWidth().testTag("home-location-${location.name}"),
+            modifier = Modifier.fillMaxWidth().testTag("home-location-${location.name}"),
             colors =
                 CardDefaults.cardColors(
                     containerColor =
@@ -585,8 +433,7 @@ private fun LocationRow(
     } else {
         FrostCard(
             onClick = rowOnClick,
-            modifier =
-                rowModifier.fillMaxWidth().testTag("home-location-${location.name}"),
+            modifier = Modifier.fillMaxWidth().testTag("home-location-${location.name}"),
             content = { rowContent() },
         )
     }

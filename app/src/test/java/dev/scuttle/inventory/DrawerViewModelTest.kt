@@ -7,28 +7,22 @@ import dev.scuttle.inventory.data.dto.HouseholdDto
 import dev.scuttle.inventory.data.dto.LocationDto
 import dev.scuttle.inventory.data.dto.ProductDto
 import dev.scuttle.inventory.data.dto.ShelfDto
-import dev.scuttle.inventory.data.hierarchy.LocationDeleteStrategy
-import dev.scuttle.inventory.data.hierarchy.LocationDeletion
-import dev.scuttle.inventory.data.hierarchy.RestoreRepository
 import dev.scuttle.inventory.data.household.HouseholdRepository
 import dev.scuttle.inventory.data.location.LocationRepository
 import dev.scuttle.inventory.data.product.ProductEdit
 import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.data.shelf.ShelfRepository
 import dev.scuttle.inventory.ui.app.DrawerViewModel
-import dev.scuttle.inventory.ui.hierarchy.UndoOutcome
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import java.io.IOException
-import java.util.UUID
 
 class DrawerViewModelTest {
     @get:Rule
@@ -51,58 +45,14 @@ class DrawerViewModelTest {
     private class FakeLocationRepository(
         private val initial: Map<Long, List<LocationDto>> = emptyMap(),
     ) : LocationRepository {
-        // getCached() returns a FROZEN snapshot of what was true at construction —
-        // exactly like HierarchyStore's own `entries`, which is only rebuilt by an
-        // explicit store.refresh()/loadFromCache(), never by a location-level
-        // network call made elsewhere. `live` is the separate, mutable "what the
-        // server actually has right now" that list()/deleteWithStrategy() read
-        // and write — kept apart from `initial` on purpose, so a test can move it
-        // out from under the frozen snapshot to prove requestDelete() re-fetches
-        // instead of trusting a stale cached copy (see
-        // requesting_delete_fetches_a_fresh_location_list_so_stale_cached_shelf_count_cannot_skip_the_strategy_prompt).
         private val cached: Map<Long, List<LocationDto>> = initial
         val live = initial.mapValues { it.value.toMutableList() }.toMutableMap()
 
-        // Recorded for assertions below — the real LocationRepository interface bundles
-        // batchId/strategy/targetLocationId into one LocationDeletion (data/hierarchy/DeleteStrategy.kt),
-        // so each call's deletion is captured whole and unpacked into these lists.
-        val batchIdsUsed = mutableListOf<String>()
-        val strategiesUsed = mutableListOf<LocationDeleteStrategy?>()
-        val targetIdsUsed = mutableListOf<Long?>()
-        val deletedLocationIds = mutableListOf<Long>()
-
-        // When set, deleteWithStrategy throws for this one id instead of deleting it —
-        // simulates a server-side failure (e.g. an invalid move target) mid-request.
-        var failDeleteWithStrategyId: Long? = null
-
-        // Recorded for the reorder tests below; mirrors StorageOverviewViewModelTest's
-        // own FakeLocationRepository.reorder fake — the real endpoint's response IS
-        // the full, current location list (PATCH .../locations/reorder ends with
-        // `return $this->index(...)`), so this returns the full reordered `live` list,
-        // never a partial/merged one.
-        val reorderCallsByHousehold = mutableListOf<Pair<Long, List<Long>>>()
-        var failReorder = false
-
-        // Set to park reorder() mid-flight — the applyOrder/moveJob race test's
-        // way of proving a drag settling while an arrow-move (or another drag)
-        // is still in flight gets dropped, mirroring
-        // StorageOverviewViewModelMoveRaceTest's own reorderGate.
-        var reorderGate: kotlinx.coroutines.CompletableDeferred<Unit>? = null
+        // Recorded for the createLocation() tests below.
+        val createCallsByHousehold = mutableListOf<Triple<Long, String, String>>()
+        var failCreate = false
 
         override fun getCached(householdId: Long) = cached[householdId]
-
-        override suspend fun reorder(
-            householdId: Long,
-            orderedIds: List<Long>,
-        ): List<LocationDto> {
-            reorderGate?.await()
-            reorderCallsByHousehold += householdId to orderedIds
-            if (failReorder) throw IOException("reorder failed")
-            val byId = live[householdId].orEmpty().associateBy { it.id }
-            val reordered = orderedIds.mapIndexedNotNull { index, id -> byId[id]?.copy(position = index) }
-            live[householdId] = reordered.toMutableList()
-            return reordered
-        }
 
         override suspend fun list(householdId: Long) = live[householdId].orEmpty()
 
@@ -110,37 +60,12 @@ class DrawerViewModelTest {
             householdId: Long,
             name: String,
             type: String,
-        ) = LocationDto(99, name, type)
-
-        override suspend fun deleteWithStrategy(
-            householdId: Long,
-            locationId: Long,
-            deletion: LocationDeletion,
-        ) {
-            if (locationId == failDeleteWithStrategyId) throw IOException("delete failed")
-            batchIdsUsed += deletion.batchId
-            strategiesUsed += deletion.strategy
-            targetIdsUsed += deletion.targetLocationId
-            deletedLocationIds += locationId
-            live[householdId]?.removeIf { it.id == locationId }
-        }
-    }
-
-    private class FakeRestoreRepository : RestoreRepository {
-        var lastHouseholdId: Long? = null
-        var lastBatchId: String? = null
-        var restoreCalls = 0
-        var fail = false
-
-        override suspend fun restore(
-            householdId: Long,
-            batchId: String,
-        ): Int {
-            if (fail) throw IOException("restore failed")
-            lastHouseholdId = householdId
-            lastBatchId = batchId
-            restoreCalls++
-            return 1
+        ): LocationDto {
+            createCallsByHousehold += Triple(householdId, name, type)
+            if (failCreate) throw IOException("create failed")
+            val created = LocationDto(99, name, type)
+            live[householdId] = (live[householdId].orEmpty() + created).toMutableList()
+            return created
         }
     }
 
@@ -249,8 +174,7 @@ class DrawerViewModelTest {
                 FakeShelfRepository(shelvesByLocation),
                 FakeProductRepository(productsByShelf),
                 // A fresh, unconfined test dispatcher — not the production
-                // Dispatchers.IO the 4-arg constructor falls back to (Minor 5,
-                // Task 5/5b review). See TestHierarchy.store()'s own doc comment.
+                // Dispatchers.IO the 4-arg constructor falls back to.
                 UnconfinedTestDispatcher(),
             )
         store.loadFromCache()
@@ -260,9 +184,8 @@ class DrawerViewModelTest {
     private fun viewModel(
         store: HierarchyStore,
         locationRepo: LocationRepository,
-        restoreRepository: RestoreRepository = FakeRestoreRepository(),
         authRepository: AuthRepository = TestHierarchy.FakeAuthRepository(),
-    ): DrawerViewModel = DrawerViewModel(store, locationRepo, restoreRepository, authRepository)
+    ): DrawerViewModel = DrawerViewModel(store, locationRepo, authRepository)
 
     @Test
     fun refresh_populates_entries_with_locations() =
@@ -380,1120 +303,69 @@ class DrawerViewModelTest {
             assertTrue(failed.entries.isEmpty())
         }
 
-    @Test
-    fun request_delete_does_not_delete_anything_until_confirmed() =
-        runTest {
-            // The confirm dialog can never be bypassed. Requesting must NOT mutate
-            // the repository — only an explicit confirmDelete() may do that.
-            val repo =
-                FakeLocationRepository(
-                    mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge", shelf_count = 0, product_count = 3))),
-                )
-            val (store, _) =
-                makeStore(
-                    households =
-                        listOf(
-                            HouseholdDto(
-                                1,
-                                "Home",
-                                "AAAA",
-                                role = "admin",
-                                can_restructure = true,
-                                can_manage_members = true,
-                            ),
-                        ),
-                    locationRepo = repo,
-                )
-            val vm = viewModel(store, repo)
-
-            vm.requestDelete(householdId = 1, locationId = 10)
-
-            assertTrue(repo.batchIdsUsed.isEmpty())
-            assertNotNull(vm.state.value.pendingDelete)
-            assertEquals(
-                3,
-                vm.state.value.pendingDelete
-                    ?.productCount,
-            )
-        }
-
-    @Test
-    fun deleting_a_location_whose_shelves_are_empty_still_needs_a_strategy() =
-        runTest {
-            // The trap: the server asks about a location's SHELVES, not its
-            // products. A location with 3 empty shelves has product_count 0 but
-            // shelf_count 3 — contentCount must be built from shelf_count, or this
-            // delete goes out with no strategy and 422s (exactly the bug this task
-            // fixes, one screen over from where Task 5 already fixed it).
-            val repo =
-                FakeLocationRepository(
-                    mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge", shelf_count = 3, product_count = 0))),
-                )
-            val (store, _) =
-                makeStore(
-                    households =
-                        listOf(
-                            HouseholdDto(
-                                1,
-                                "Home",
-                                "AAAA",
-                                role = "admin",
-                                can_restructure = true,
-                                can_manage_members = true,
-                            ),
-                        ),
-                    locationRepo = repo,
-                )
-            val vm = viewModel(store, repo)
-
-            vm.requestDelete(householdId = 1, locationId = 10)
-
-            val plan = vm.state.value.pendingDelete
-            assertNotNull(plan)
-            assertEquals(3, plan?.contentCount)
-            assertEquals(0, plan?.productCount)
-            assertTrue(plan?.needsStrategy == true)
-        }
-
-    @Test
-    fun requesting_delete_fetches_a_fresh_location_list_so_stale_cached_shelf_count_cannot_skip_the_strategy_prompt() =
-        runTest {
-            // Home renders from HierarchyStore's cached `entries`, which only
-            // change on the next store.refresh() — a shelf added elsewhere
-            // (LocationDetailScreen's own add-shelf sheet) never updates them on
-            // its own. requestDelete() must go straight to
-            // LocationRepository.list() rather than trusting entries, or this
-            // scenario reintroduces the 422.
-            val repo =
-                FakeLocationRepository(
-                    mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge", shelf_count = 0, product_count = 0))),
-                )
-            val (store, _) =
-                makeStore(
-                    households =
-                        listOf(
-                            HouseholdDto(
-                                1,
-                                "Home",
-                                "AAAA",
-                                role = "admin",
-                                can_restructure = true,
-                                can_manage_members = true,
-                            ),
-                        ),
-                    locationRepo = repo,
-                )
-            val vm = viewModel(store, repo)
-            // state.entries is now a snapshot with shelf_count = 0 — the VM never
-            // reloads it as part of requestDelete().
-            assertEquals(
-                0,
-                vm.state.value.entries
-                    .first()
-                    .locations
-                    .first()
-                    .shelf_count,
-            )
-
-            // The server-side shelf count changed through a path this screen never
-            // observes; only the repository's own live (network-backed) data
-            // reflects it — the frozen `getCached()` snapshot backing
-            // state.entries does not, exactly like the real
-            // LocationRepositoryImpl/HierarchyStore split.
-            val staleEntry = repo.live.getValue(1L)[0]
-            repo.live.getValue(1L)[0] = staleEntry.copy(shelf_count = 1)
-
-            vm.requestDelete(householdId = 1, locationId = 10)
-
-            val plan = vm.state.value.pendingDelete
-            assertNotNull(plan)
-            assertEquals(1, plan?.contentCount)
-            assertTrue(plan?.needsStrategy == true)
-        }
-
-    @Test
-    fun requesting_delete_offers_only_other_live_locations_in_the_same_household_as_move_targets() =
-        runTest {
-            // A move target has to live in the SAME household as what's being
-            // deleted (HierarchyDeleter::deleteLocation only ever looks up
-            // $household->locations()). Home shows every household on one
-            // screen, so this is the one new way this trap could reappear:
-            // offering another household's location as a place to move
-            // contents into would 422 (or worse, silently target the wrong
-            // household's location of the same id).
-            val repo =
-                FakeLocationRepository(
-                    mapOf(
-                        1L to
-                            listOf(
-                                LocationDto(10, "Fridge", "fridge"),
-                                LocationDto(11, "Freezer", "freezer"),
-                            ),
-                        2L to listOf(LocationDto(20, "Pantry", "pantry")),
-                    ),
-                )
-            val (store, _) =
-                makeStore(
-                    households =
-                        listOf(
-                            HouseholdDto(
-                                1,
-                                "Home",
-                                "AAAA",
-                                role = "admin",
-                                can_restructure = true,
-                                can_manage_members = true,
-                            ),
-                            HouseholdDto(
-                                2,
-                                "Cabin",
-                                "BBBB",
-                                role = "admin",
-                                can_restructure = true,
-                                can_manage_members = true,
-                            ),
-                        ),
-                    locationRepo = repo,
-                )
-            val vm = viewModel(store, repo)
-
-            vm.requestDelete(householdId = 1, locationId = 10)
-
-            assertEquals(
-                listOf(11L),
-                vm.state.value.moveTargets
-                    .map { it.id },
-            )
-        }
-
-    @Test
-    fun deleting_the_only_location_in_a_household_offers_no_move_target() =
-        runTest {
-            val repo = FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge"))))
-            val (store, _) =
-                makeStore(
-                    households =
-                        listOf(
-                            HouseholdDto(
-                                1,
-                                "Home",
-                                "AAAA",
-                                role = "admin",
-                                can_restructure = true,
-                                can_manage_members = true,
-                            ),
-                        ),
-                    locationRepo = repo,
-                )
-            val vm = viewModel(store, repo)
-
-            vm.requestDelete(householdId = 1, locationId = 10)
-
-            assertTrue(
-                vm.state.value.moveTargets
-                    .isEmpty(),
-            )
-        }
-
-    @Test
-    fun requesting_delete_for_a_location_that_no_longer_exists_does_nothing() =
-        runTest {
-            val repo = FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge"))))
-            val (store, _) =
-                makeStore(
-                    households =
-                        listOf(
-                            HouseholdDto(
-                                1,
-                                "Home",
-                                "AAAA",
-                                role = "admin",
-                                can_restructure = true,
-                                can_manage_members = true,
-                            ),
-                        ),
-                    locationRepo = repo,
-                )
-            val vm = viewModel(store, repo)
-
-            vm.requestDelete(householdId = 1, locationId = 999)
-
-            assertNull(vm.state.value.pendingDelete)
-        }
-
-    @Test
-    fun confirming_delete_sends_a_strategy_and_a_client_minted_batch_id_via_delete_with_strategy() =
-        runTest {
-            // THE regression this task fixes: before it, Home's swipe-to-delete
-            // called a bodyless LocationRepository.delete() — no strategy, no
-            // deletion_batch_id. That method (and its ShelfRepository twin) has
-            // since been deleted outright (final review, Blocker 3): it had zero
-            // production callers and the server unconditionally 422s a bodyless
-            // delete, so it was a landmine for the next caller to wire one up.
-            // FakeLocationRepository below only implements deleteWithStrategy —
-            // any regression back to a bare delete() call now fails to compile.
-            val repo =
-                FakeLocationRepository(
-                    mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge", shelf_count = 2, product_count = 5))),
-                )
-            val (store, _) =
-                makeStore(
-                    households =
-                        listOf(
-                            HouseholdDto(
-                                1,
-                                "Home",
-                                "AAAA",
-                                role = "admin",
-                                can_restructure = true,
-                                can_manage_members = true,
-                            ),
-                        ),
-                    locationRepo = repo,
-                )
-            val vm = viewModel(store, repo)
-            vm.requestDelete(householdId = 1, locationId = 10)
-
-            vm.confirmDelete(LocationDeleteStrategy.DELETE_CONTENTS, targetId = null)
-
-            assertEquals(listOf(10L), repo.deletedLocationIds)
-            assertEquals(1, repo.batchIdsUsed.size)
-            // Client-minted and a real uuid — the server's `'deletion_batch_id' =>
-            // ['required', 'uuid']` rule rejects anything else.
-            UUID.fromString(repo.batchIdsUsed.first())
-            assertEquals(listOf(LocationDeleteStrategy.DELETE_CONTENTS), repo.strategiesUsed)
-            assertEquals(listOf<Long?>(null), repo.targetIdsUsed)
-            assertEquals(repo.batchIdsUsed.first(), vm.state.value.lastBatchId)
-            assertNull(vm.state.value.pendingDelete)
-            assertNull(vm.actionErrorRes.value)
-        }
-
-    @Test
-    fun confirming_delete_refreshes_the_hierarchy_store() =
-        runTest {
-            // Minor 3 (Task 5/5b review): mutating `store.refresh()` in
-            // confirmDelete to Unit leaves the suite green — the drawer/home
-            // would still render a location the server just deleted. The
-            // cached snapshot (loadFromCache, synchronous, reads
-            // FakeLocationRepository's FROZEN `cached` map) still has it;
-            // only a REAL store.refresh() (async, reads the mutable `live`
-            // map deleteWithStrategy() actually writes to) can make it
-            // disappear from HierarchyStore's own `entries`.
-            val repo =
-                FakeLocationRepository(
-                    mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge", shelf_count = 0, product_count = 0))),
-                )
-            val (store, _) =
-                makeStore(
-                    households =
-                        listOf(
-                            HouseholdDto(
-                                1,
-                                "Home",
-                                "AAAA",
-                                role = "admin",
-                                can_restructure = true,
-                                can_manage_members = true,
-                            ),
-                        ),
-                    locationRepo = repo,
-                )
-            val vm = viewModel(store, repo)
-            vm.requestDelete(householdId = 1, locationId = 10)
-            // The cached snapshot still shows "Fridge" — this is what loadFromCache
-            // (called once, synchronously, when makeStore() built the store) produced.
-            assertTrue(
-                store.state.value.entries
-                    .first()
-                    .locations
-                    .any { it.name == "Fridge" },
-            )
-
-            vm.confirmDelete(LocationDeleteStrategy.DELETE_CONTENTS, targetId = null)
-
-            val refreshed =
-                store.state.first {
-                    it.entries
-                        .first()
-                        .locations
-                        .none { l -> l.name == "Fridge" }
-                }
-            assertTrue(
-                refreshed.entries
-                    .first()
-                    .locations
-                    .isEmpty(),
-            )
-        }
-
-    @Test
-    fun confirming_a_move_delete_sends_the_target_location_id() =
-        runTest {
-            val repo =
-                FakeLocationRepository(
-                    mapOf(
-                        1L to
-                            listOf(
-                                LocationDto(10, "Fridge", "fridge", shelf_count = 1),
-                                LocationDto(11, "Pantry", "pantry"),
-                            ),
-                    ),
-                )
-            val (store, _) =
-                makeStore(
-                    households =
-                        listOf(
-                            HouseholdDto(
-                                1,
-                                "Home",
-                                "AAAA",
-                                role = "admin",
-                                can_restructure = true,
-                                can_manage_members = true,
-                            ),
-                        ),
-                    locationRepo = repo,
-                )
-            val vm = viewModel(store, repo)
-            vm.requestDelete(householdId = 1, locationId = 10)
-
-            vm.confirmDelete(LocationDeleteStrategy.MOVE_CONTENTS, targetId = 11L)
-
-            assertEquals(listOf(11L), repo.targetIdsUsed)
-        }
-
-    @Test
-    fun cancel_delete_closes_the_dialog_without_deleting_anything() =
-        runTest {
-            val repo = FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge"))))
-            val (store, _) =
-                makeStore(
-                    households =
-                        listOf(
-                            HouseholdDto(
-                                1,
-                                "Home",
-                                "AAAA",
-                                role = "admin",
-                                can_restructure = true,
-                                can_manage_members = true,
-                            ),
-                        ),
-                    locationRepo = repo,
-                )
-            val vm = viewModel(store, repo)
-            vm.requestDelete(householdId = 1, locationId = 10)
-
-            vm.cancelDelete()
-
-            assertNull(vm.state.value.pendingDelete)
-            assertTrue(repo.batchIdsUsed.isEmpty())
-
-            // Confirming after a cancel must be a no-op — there is no pending
-            // location left to delete.
-            vm.confirmDelete(LocationDeleteStrategy.DELETE_CONTENTS, targetId = null)
-            assertTrue(repo.batchIdsUsed.isEmpty())
-        }
-
-    @Test
-    fun a_failed_delete_with_strategy_surfaces_an_action_error_and_closes_the_dialog() =
-        runTest {
-            // W10: a failed delete must not be swallowed — it surfaces as a
-            // one-shot actionError the screen shows as a snackbar, same as the
-            // legacy bodyless-delete failure path did.
-            val repo =
-                FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge")))).apply {
-                    failDeleteWithStrategyId = 10L
-                }
-            val (store, _) =
-                makeStore(
-                    households =
-                        listOf(
-                            HouseholdDto(
-                                1,
-                                "Home",
-                                "AAAA",
-                                role = "admin",
-                                can_restructure = true,
-                                can_manage_members = true,
-                            ),
-                        ),
-                    locationRepo = repo,
-                )
-            val vm = viewModel(store, repo)
-            vm.requestDelete(householdId = 1, locationId = 10)
-
-            vm.confirmDelete(LocationDeleteStrategy.DELETE_CONTENTS, targetId = null)
-
-            val message = vm.actionErrorRes.first { it != null }
-            assertNotNull(message)
-            assertNull(vm.state.value.pendingDelete)
-            assertNull(vm.state.value.lastBatchId)
-        }
-
-    @Test
-    fun undo_delete_restores_the_batch_and_clears_it() =
-        runTest {
-            val repo = FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge"))))
-            val restore = FakeRestoreRepository()
-            val (store, _) =
-                makeStore(
-                    households =
-                        listOf(
-                            HouseholdDto(
-                                1,
-                                "Home",
-                                "AAAA",
-                                role = "admin",
-                                can_restructure = true,
-                                can_manage_members = true,
-                            ),
-                        ),
-                    locationRepo = repo,
-                )
-            val vm = viewModel(store, repo, restore)
-            vm.requestDelete(householdId = 1, locationId = 10)
-            vm.confirmDelete(LocationDeleteStrategy.DELETE_CONTENTS, targetId = null)
-            val batchId = vm.state.value.lastBatchId
-            assertNotNull(batchId)
-
-            vm.undoDelete()
-
-            assertEquals(1L, restore.lastHouseholdId)
-            assertEquals(batchId, restore.lastBatchId)
-            assertNull(vm.state.value.lastBatchId)
-            // ALSO FIX (final review): a successful undo sets undoResult so the
-            // screen can show the "Restored." snackbar (delete_undone).
-            assertEquals(UndoOutcome.SUCCESS, vm.state.value.undoResult)
-        }
-
-    @Test
-    fun a_failed_undo_sets_the_failure_result_instead_of_a_generic_action_error() =
-        runTest {
-            // ALSO FIX (final review): a 409 from the restore endpoint (already
-            // restored elsewhere, or past the undo window) used to fall through to
-            // the generic actionError/"Failed to undo delete." — undoResult now
-            // carries the specific outcome instead, and actionError stays unset
-            // so the screen doesn't show BOTH messages.
-            val repo = FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge"))))
-            val restore = FakeRestoreRepository()
-            val (store, _) =
-                makeStore(
-                    households =
-                        listOf(
-                            HouseholdDto(
-                                1,
-                                "Home",
-                                "AAAA",
-                                role = "admin",
-                                can_restructure = true,
-                                can_manage_members = true,
-                            ),
-                        ),
-                    locationRepo = repo,
-                )
-            val vm = viewModel(store, repo, restore)
-            vm.requestDelete(householdId = 1, locationId = 10)
-            vm.confirmDelete(LocationDeleteStrategy.DELETE_CONTENTS, targetId = null)
-            restore.fail = true
-
-            vm.undoDelete()
-
-            assertEquals(UndoOutcome.FAILURE, vm.state.value.undoResult)
-            assertNull(vm.actionErrorRes.value)
-            // The batch id survives a failed undo — nothing was actually restored.
-            assertNotNull(vm.state.value.lastBatchId)
-        }
-
-    @Test
-    fun consume_undo_result_clears_it() =
-        runTest {
-            val repo = FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge"))))
-            val restore = FakeRestoreRepository()
-            val (store, _) =
-                makeStore(
-                    households =
-                        listOf(
-                            HouseholdDto(
-                                1,
-                                "Home",
-                                "AAAA",
-                                role = "admin",
-                                can_restructure = true,
-                                can_manage_members = true,
-                            ),
-                        ),
-                    locationRepo = repo,
-                )
-            val vm = viewModel(store, repo, restore)
-            vm.requestDelete(householdId = 1, locationId = 10)
-            vm.confirmDelete(LocationDeleteStrategy.DELETE_CONTENTS, targetId = null)
-            vm.undoDelete()
-            assertNotNull(vm.state.value.undoResult)
-
-            vm.consumeUndoResult()
-
-            assertNull(vm.state.value.undoResult)
-        }
-
-    @Test
-    fun consume_last_batch_clears_it_without_restoring() =
-        runTest {
-            val repo = FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge"))))
-            val restore = FakeRestoreRepository()
-            val (store, _) =
-                makeStore(
-                    households =
-                        listOf(
-                            HouseholdDto(
-                                1,
-                                "Home",
-                                "AAAA",
-                                role = "admin",
-                                can_restructure = true,
-                                can_manage_members = true,
-                            ),
-                        ),
-                    locationRepo = repo,
-                )
-            val vm = viewModel(store, repo, restore)
-            vm.requestDelete(householdId = 1, locationId = 10)
-            vm.confirmDelete(LocationDeleteStrategy.DELETE_CONTENTS, targetId = null)
-
-            vm.consumeLastBatch()
-
-            assertNull(vm.state.value.lastBatchId)
-            assertEquals(0, restore.restoreCalls)
-        }
-
-    // --- M5: AllStorages' checkbox multi-select grammar ---
+    // --- createLocation() — AllStorages' FAB add-storage sheet ---
 
     private val homeHousehold =
         HouseholdDto(1, "Home", "AAAA", role = "admin", can_restructure = true, can_manage_members = true)
-    private val cabinHousehold =
-        HouseholdDto(2, "Cabin", "BBBB", role = "admin", can_restructure = true, can_manage_members = true)
 
     @Test
-    fun enter_edit_mode_starts_with_no_selection() =
+    fun create_location_calls_the_repository_with_the_household_name_and_type() =
         runTest {
-            val repo = FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge"))))
+            val repo = FakeLocationRepository(mapOf(1L to emptyList()))
             val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
             val vm = viewModel(store, repo)
 
-            vm.enterEditMode()
+            vm.createLocation(householdId = 1, name = "Pantry", type = "pantry")
 
-            assertTrue(vm.state.value.editMode)
-            assertTrue(
-                vm.state.value.selected
-                    .isEmpty(),
-            )
+            assertEquals(listOf(Triple(1L, "Pantry", "pantry")), repo.createCallsByHousehold)
         }
 
     @Test
-    fun toggling_selection_twice_clears_it() =
+    fun create_location_refreshes_the_hierarchy_store_on_success() =
         runTest {
-            val repo = FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge"))))
-            val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
-            val vm = viewModel(store, repo)
-            vm.enterEditMode()
-
-            vm.toggleSelection(householdId = 1, locationId = 10)
-            assertEquals(setOf(10L), vm.state.value.selected)
-            assertEquals(1L, vm.state.value.selectedHouseholdId)
-
-            vm.toggleSelection(householdId = 1, locationId = 10)
-            assertTrue(
-                vm.state.value.selected
-                    .isEmpty(),
-            )
-            assertNull(vm.state.value.selectedHouseholdId)
-        }
-
-    @Test
-    fun selecting_a_location_in_a_different_household_starts_a_fresh_selection() =
-        runTest {
-            // AllStorages spans MULTIPLE households (unlike StorageOverviewViewModel,
-            // scoped to one) and a MOVE_CONTENTS target has to live in the SAME
-            // household as what's being deleted, so a selection can never span
-            // households — switching households resets it instead of accumulating.
-            val repo =
-                FakeLocationRepository(
-                    mapOf(
-                        1L to listOf(LocationDto(10, "Fridge", "fridge")),
-                        2L to listOf(LocationDto(20, "Shed", "other")),
-                    ),
-                )
-            val (store, _) = makeStore(households = listOf(homeHousehold, cabinHousehold), locationRepo = repo)
-            val vm = viewModel(store, repo)
-            vm.enterEditMode()
-            vm.toggleSelection(householdId = 1, locationId = 10)
-
-            vm.toggleSelection(householdId = 2, locationId = 20)
-
-            assertEquals(setOf(20L), vm.state.value.selected)
-            assertEquals(2L, vm.state.value.selectedHouseholdId)
-        }
-
-    @Test
-    fun a_cross_household_toggle_fires_the_selection_reset_event_with_the_new_household_name() =
-        runTest {
-            // H3: the cross-household reset used to be silent — the selection
-            // count just changed. It must now fire a one-shot event naming the
-            // household the selection just moved TO, so the screen can show
-            // "Selection cleared — now selecting in {name}".
-            val repo =
-                FakeLocationRepository(
-                    mapOf(
-                        1L to listOf(LocationDto(10, "Fridge", "fridge")),
-                        2L to listOf(LocationDto(20, "Shed", "other")),
-                    ),
-                )
-            val (store, _) = makeStore(households = listOf(homeHousehold, cabinHousehold), locationRepo = repo)
-            val vm = viewModel(store, repo)
-            vm.enterEditMode()
-            vm.toggleSelection(householdId = 1, locationId = 10)
-            assertNull(vm.state.value.selectionResetEvent)
-
-            vm.toggleSelection(householdId = 2, locationId = 20)
-
-            assertEquals("Cabin", vm.state.value.selectionResetEvent)
-        }
-
-    @Test
-    fun a_same_household_toggle_never_fires_the_selection_reset_event() =
-        runTest {
-            val repo =
-                FakeLocationRepository(
-                    mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge"), LocationDto(11, "Freezer", "freezer"))),
-                )
-            val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
-            val vm = viewModel(store, repo)
-            vm.enterEditMode()
-            vm.toggleSelection(householdId = 1, locationId = 10)
-
-            vm.toggleSelection(householdId = 1, locationId = 11)
-            // Deselecting one of the two, still within the same household.
-            vm.toggleSelection(householdId = 1, locationId = 10)
-
-            assertNull(vm.state.value.selectionResetEvent)
-        }
-
-    @Test
-    fun consume_selection_reset_event_clears_it() =
-        runTest {
-            val repo =
-                FakeLocationRepository(
-                    mapOf(
-                        1L to listOf(LocationDto(10, "Fridge", "fridge")),
-                        2L to listOf(LocationDto(20, "Shed", "other")),
-                    ),
-                )
-            val (store, _) = makeStore(households = listOf(homeHousehold, cabinHousehold), locationRepo = repo)
-            val vm = viewModel(store, repo)
-            vm.enterEditMode()
-            vm.toggleSelection(householdId = 1, locationId = 10)
-            vm.toggleSelection(householdId = 2, locationId = 20)
-            assertNotNull(vm.state.value.selectionResetEvent)
-
-            vm.consumeSelectionResetEvent()
-
-            assertNull(vm.state.value.selectionResetEvent)
-        }
-
-    @Test
-    fun exit_edit_mode_clears_the_selection() =
-        runTest {
-            val repo = FakeLocationRepository(mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge"))))
-            val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
-            val vm = viewModel(store, repo)
-            vm.enterEditMode()
-            vm.toggleSelection(householdId = 1, locationId = 10)
-
-            vm.exitEditMode()
-
-            assertFalse(vm.state.value.editMode)
-            assertTrue(
-                vm.state.value.selected
-                    .isEmpty(),
-            )
-            assertNull(vm.state.value.selectedHouseholdId)
-        }
-
-    @Test
-    fun request_delete_selected_builds_an_aggregate_plan_across_the_batch() =
-        runTest {
-            val repo =
-                FakeLocationRepository(
-                    mapOf(
-                        1L to
-                            listOf(
-                                LocationDto(10, "Fridge", "fridge", shelf_count = 2, product_count = 3),
-                                LocationDto(11, "Freezer", "freezer", shelf_count = 1, product_count = 5),
-                                LocationDto(12, "Pantry", "pantry", shelf_count = 0, product_count = 0),
-                            ),
-                    ),
-                )
-            val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
-            val vm = viewModel(store, repo)
-            vm.enterEditMode()
-            vm.toggleSelection(householdId = 1, locationId = 10)
-            vm.toggleSelection(householdId = 1, locationId = 11)
-
-            vm.requestDeleteSelected()
-
-            val plan = vm.state.value.pendingDelete
-            assertEquals(2, plan?.itemCount)
-            assertEquals(8, plan?.productCount)
-            assertEquals(3, plan?.contentCount)
-            // Pantry (unselected) is a valid move target; Fridge/Freezer (being
-            // deleted) are not.
-            assertEquals(
-                listOf(12L),
-                vm.state.value.moveTargets
-                    .map { it.id },
-            )
-        }
-
-    @Test
-    fun confirming_a_batch_delete_removes_every_selected_location_under_one_batch_id() =
-        runTest {
-            val repo =
-                FakeLocationRepository(
-                    mapOf(
-                        1L to
-                            listOf(
-                                LocationDto(10, "Fridge", "fridge", shelf_count = 0, product_count = 0),
-                                LocationDto(11, "Freezer", "freezer", shelf_count = 0, product_count = 0),
-                            ),
-                    ),
-                )
-            val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
-            val vm = viewModel(store, repo)
-            vm.enterEditMode()
-            vm.toggleSelection(householdId = 1, locationId = 10)
-            vm.toggleSelection(householdId = 1, locationId = 11)
-            vm.requestDeleteSelected()
-
-            vm.confirmDelete(strategy = null, targetId = null)
-
-            assertEquals(listOf(10L, 11L), repo.deletedLocationIds)
-            assertEquals(1, repo.batchIdsUsed.toSet().size)
-            assertNotNull(vm.state.value.lastBatchId)
-            // Confirming exits edit mode and clears the selection, same as
-            // ShelvesViewModel/StorageOverviewViewModel's own confirmDelete.
-            assertFalse(vm.state.value.editMode)
-            assertTrue(
-                vm.state.value.selected
-                    .isEmpty(),
-            )
-        }
-
-    @Test
-    fun a_partial_batch_failure_stops_but_keeps_whatever_already_succeeded() =
-        runTest {
-            val repo =
-                FakeLocationRepository(
-                    mapOf(
-                        1L to
-                            listOf(
-                                LocationDto(10, "Fridge", "fridge", shelf_count = 0, product_count = 0),
-                                LocationDto(11, "Freezer", "freezer", shelf_count = 0, product_count = 0),
-                            ),
-                    ),
-                )
-            repo.failDeleteWithStrategyId = 11
-            val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
-            val vm = viewModel(store, repo)
-            vm.enterEditMode()
-            vm.toggleSelection(householdId = 1, locationId = 10)
-            vm.toggleSelection(householdId = 1, locationId = 11)
-            vm.requestDeleteSelected()
-
-            vm.confirmDelete(strategy = null, targetId = null)
-
-            assertEquals(listOf(10L), repo.deletedLocationIds)
-            assertNotNull(vm.state.value.lastBatchId)
-            assertNotNull(vm.actionErrorRes.value)
-        }
-
-    // --- Storage-tab reordering (per-household up/down, AllStorages edit mode) ---
-
-    @Test
-    fun move_up_swaps_with_the_previous_location_and_sends_the_complete_ordered_id_list() =
-        runTest {
-            val repo =
-                FakeLocationRepository(
-                    mapOf(
-                        1L to
-                            listOf(
-                                LocationDto(10, "Fridge", "fridge", position = 0),
-                                LocationDto(11, "Freezer", "freezer", position = 1),
-                                LocationDto(12, "Pantry", "pantry", position = 2),
-                            ),
-                    ),
-                )
+            val repo = FakeLocationRepository(mapOf(1L to emptyList()))
             val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
             val vm = viewModel(store, repo)
 
-            vm.moveUp(householdId = 1, locationId = 11)
-
-            assertEquals(1, repo.reorderCallsByHousehold.size)
-            val (calledHouseholdId, orderedIds) = repo.reorderCallsByHousehold.first()
-            assertEquals(1L, calledHouseholdId)
-            assertEquals(listOf(11L, 10L, 12L), orderedIds)
-        }
-
-    @Test
-    fun move_down_swaps_with_the_next_location() =
-        runTest {
-            val repo =
-                FakeLocationRepository(
-                    mapOf(
-                        1L to
-                            listOf(
-                                LocationDto(10, "Fridge", "fridge", position = 0),
-                                LocationDto(11, "Freezer", "freezer", position = 1),
-                            ),
-                    ),
-                )
-            val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
-            val vm = viewModel(store, repo)
-
-            vm.moveDown(householdId = 1, locationId = 10)
-
-            val (_, orderedIds) = repo.reorderCallsByHousehold.first()
-            assertEquals(listOf(11L, 10L), orderedIds)
-        }
-
-    @Test
-    fun moving_the_top_location_up_is_a_no_op() =
-        runTest {
-            val repo =
-                FakeLocationRepository(
-                    mapOf(
-                        1L to
-                            listOf(
-                                LocationDto(10, "Fridge", "fridge", position = 0),
-                                LocationDto(11, "Freezer", "freezer", position = 1),
-                            ),
-                    ),
-                )
-            val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
-            val vm = viewModel(store, repo)
-
-            vm.moveUp(householdId = 1, locationId = 10)
-
-            assertTrue(repo.reorderCallsByHousehold.isEmpty())
-        }
-
-    @Test
-    fun moving_the_bottom_location_down_is_a_no_op() =
-        runTest {
-            val repo =
-                FakeLocationRepository(
-                    mapOf(
-                        1L to
-                            listOf(
-                                LocationDto(10, "Fridge", "fridge", position = 0),
-                                LocationDto(11, "Freezer", "freezer", position = 1),
-                            ),
-                    ),
-                )
-            val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
-            val vm = viewModel(store, repo)
-
-            vm.moveDown(householdId = 1, locationId = 11)
-
-            assertTrue(repo.reorderCallsByHousehold.isEmpty())
-        }
-
-    @Test
-    fun a_successful_move_refreshes_the_hierarchy_store_so_server_truth_wins() =
-        runTest {
-            val repo =
-                FakeLocationRepository(
-                    mapOf(
-                        1L to
-                            listOf(
-                                LocationDto(10, "Fridge", "fridge", position = 0),
-                                LocationDto(11, "Freezer", "freezer", position = 1),
-                            ),
-                    ),
-                )
-            val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
-            val vm = viewModel(store, repo)
-
-            vm.moveUp(householdId = 1, locationId = 11)
+            vm.createLocation(householdId = 1, name = "Pantry", type = "pantry")
 
             val refreshed =
                 store.state.first {
                     it.entries
                         .first()
                         .locations
-                        .map { l -> l.id } == listOf(11L, 10L)
+                        .any { l -> l.name == "Pantry" }
                 }
-            assertEquals(
-                listOf(11L, 10L),
+            assertTrue(
                 refreshed.entries
                     .first()
                     .locations
-                    .map { it.id },
+                    .any { it.name == "Pantry" },
             )
         }
 
     @Test
-    fun a_failed_move_still_refreshes_and_surfaces_an_action_error() =
+    fun create_location_surfaces_an_action_error_on_failure() =
         runTest {
-            val repo =
-                FakeLocationRepository(
-                    mapOf(
-                        1L to
-                            listOf(
-                                LocationDto(10, "Fridge", "fridge", position = 0),
-                                LocationDto(11, "Freezer", "freezer", position = 1),
-                            ),
-                    ),
-                ).apply { failReorder = true }
+            val repo = FakeLocationRepository(mapOf(1L to emptyList())).apply { failCreate = true }
             val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
             val vm = viewModel(store, repo)
 
-            vm.moveUp(householdId = 1, locationId = 11)
+            vm.createLocation(householdId = 1, name = "Pantry", type = "pantry")
 
-            assertNotNull(vm.actionErrorRes.value)
-        }
-
-    // --- Drag-to-reorder (applyOrder), alongside the arrows above ---
-
-    @Test
-    fun apply_order_sends_the_exact_dragged_list_to_the_repository() =
-        runTest {
-            val repo =
-                FakeLocationRepository(
-                    mapOf(
-                        1L to
-                            listOf(
-                                LocationDto(10, "Fridge", "fridge", position = 0),
-                                LocationDto(11, "Freezer", "freezer", position = 1),
-                                LocationDto(12, "Pantry", "pantry", position = 2),
-                            ),
-                    ),
-                )
-            val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
-            val vm = viewModel(store, repo)
-
-            vm.applyOrder(householdId = 1, orderedIds = listOf(12L, 10L, 11L))
-
-            assertEquals(1, repo.reorderCallsByHousehold.size)
-            val (calledHouseholdId, orderedIds) = repo.reorderCallsByHousehold.first()
-            assertEquals(1L, calledHouseholdId)
-            assertEquals(listOf(12L, 10L, 11L), orderedIds)
+            val message = vm.actionErrorRes.first { it != null }
+            assertNotNull(message)
         }
 
     @Test
-    fun apply_order_with_a_list_that_is_not_the_households_live_id_set_is_ignored() =
+    fun create_location_with_a_blank_name_does_nothing() =
         runTest {
-            val repo =
-                FakeLocationRepository(
-                    mapOf(
-                        1L to
-                            listOf(
-                                LocationDto(10, "Fridge", "fridge", position = 0),
-                                LocationDto(11, "Freezer", "freezer", position = 1),
-                            ),
-                    ),
-                )
+            val repo = FakeLocationRepository(mapOf(1L to emptyList()))
             val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
             val vm = viewModel(store, repo)
 
-            // Missing id 11 — a stale/partial list the server would 422 on.
-            vm.applyOrder(householdId = 1, orderedIds = listOf(10L))
-            // An id that doesn't belong to this household at all.
-            vm.applyOrder(householdId = 1, orderedIds = listOf(10L, 11L, 999L))
+            vm.createLocation(householdId = 1, name = "   ", type = "pantry")
 
-            assertTrue(repo.reorderCallsByHousehold.isEmpty())
-        }
-
-    @Test
-    fun apply_order_is_dropped_while_an_arrow_move_is_still_in_flight() =
-        runTest {
-            val repo =
-                FakeLocationRepository(
-                    mapOf(
-                        1L to
-                            listOf(
-                                LocationDto(10, "Fridge", "fridge", position = 0),
-                                LocationDto(11, "Freezer", "freezer", position = 1),
-                                LocationDto(12, "Pantry", "pantry", position = 2),
-                            ),
-                    ),
-                )
-            val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
-            val vm = viewModel(store, repo)
-            repo.reorderGate = kotlinx.coroutines.CompletableDeferred()
-
-            vm.moveUp(householdId = 1, locationId = 11) // parks in flight
-            // A drag settling while the arrow-move above is still in flight —
-            // must be dropped, not queued or interleaved.
-            vm.applyOrder(householdId = 1, orderedIds = listOf(12L, 11L, 10L))
-
-            repo.reorderGate?.complete(Unit)
-
-            assertEquals(1, repo.reorderCallsByHousehold.size)
-            assertEquals(listOf(11L, 10L, 12L), repo.reorderCallsByHousehold.first().second)
-        }
-
-    @Test
-    fun apply_order_refreshes_the_hierarchy_store_on_success() =
-        runTest {
-            val repo =
-                FakeLocationRepository(
-                    mapOf(
-                        1L to
-                            listOf(
-                                LocationDto(10, "Fridge", "fridge", position = 0),
-                                LocationDto(11, "Freezer", "freezer", position = 1),
-                            ),
-                    ),
-                )
-            val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
-            val vm = viewModel(store, repo)
-
-            vm.applyOrder(householdId = 1, orderedIds = listOf(11L, 10L))
-
-            val refreshed =
-                store.state.first {
-                    it.entries
-                        .first()
-                        .locations
-                        .map { l -> l.id } == listOf(11L, 10L)
-                }
-            assertEquals(
-                listOf(11L, 10L),
-                refreshed.entries
-                    .first()
-                    .locations
-                    .map { it.id },
-            )
-        }
-
-    @Test
-    fun apply_order_refreshes_and_surfaces_an_action_error_on_failure() =
-        runTest {
-            val repo =
-                FakeLocationRepository(
-                    mapOf(
-                        1L to
-                            listOf(
-                                LocationDto(10, "Fridge", "fridge", position = 0),
-                                LocationDto(11, "Freezer", "freezer", position = 1),
-                            ),
-                    ),
-                ).apply { failReorder = true }
-            val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
-            val vm = viewModel(store, repo)
-
-            vm.applyOrder(householdId = 1, orderedIds = listOf(11L, 10L))
-
-            assertNotNull(vm.actionErrorRes.value)
+            assertTrue(repo.createCallsByHousehold.isEmpty())
         }
 }

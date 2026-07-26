@@ -18,7 +18,6 @@
     <string name="error_failed_to_load_products">Producten laden is mislukt.</string>
     <string name="error_failed_to_delete_product">Product verwijderen is mislukt.</string>
     <string name="error_failed_to_load_shelves">Planken laden is mislukt.</string>
-    <string name="error_failed_to_delete_location">Locatie verwijderen is mislukt.</string>
     <string name="error_failed_to_join">Deelnemen is mislukt.</string>
     <string name="error_failed_to_load_invite">Uitnodiging laden is mislukt.</string>
     <string name="error_search_failed">Zoeken is mislukt.</string>
@@ -103,6 +102,9 @@
     <string name="all_storage_stock_warning">⚠ Voorraadwaarschuwing</string>
     <string name="all_storage_collapse_household_cd">%1$s inklappen</string>
     <string name="all_storage_expand_household_cd">%1$s uitklappen</string>
+    <string name="all_storage_manage_cd">Opslag beheren</string>
+    <string name="all_storage_edit_choose_household_title">Van welk huishouden wil je de opslag bewerken?</string>
+    <string name="all_storage_add_choose_household_title">Aan welk huishouden een opslag toevoegen?</string>
 
     <!-- Delete dialogs -->
     <string name="delete_dialog_product_title">\"%s\" verwijderen?</string>
@@ -141,7 +143,6 @@
     <string name="household_delete_field_mismatch">Komt nog niet overeen met de naam van het huishouden</string>
 
     <!-- H3: cross-household selection reset (AllStoragesScreen) -->
-    <string name="selection_cleared_switched_household">Selectie gewist — je selecteert nu in %1$s</string>
 
     <!-- Members -->
     <string name="members_title">Leden</string>

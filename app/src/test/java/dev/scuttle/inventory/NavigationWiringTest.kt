@@ -71,11 +71,15 @@ class NavigationWiringTest {
     // --- Critical 1: Search must be reachable from every top-level screen ---
 
     @Test
-    fun `MainActivity wires Dashboard, Storage tab and Missing to Routes-search`() {
+    fun `MainActivity wires Dashboard and Missing to Routes-search`() {
         val mainActivity = read("MainActivity.kt")
+        // Storage tab (Routes.HOME/AllStoragesScreen) deliberately dropped its own
+        // search icon and onOpenSearch wiring (storage-tab rework) — it's a
+        // browse-only list now, and Search stays reachable from Dashboard/Missing
+        // (and Storage overview's own search icon) per CLAUDE.md's Navigation
+        // section, so it's no longer asserted here.
         listOf(
             "Dashboard" to "composable(Routes.DASHBOARD)",
-            "Storage tab (Routes.HOME)" to "composable(Routes.HOME)",
             // GAP4-L8: MISSING_ITEMS's composable() call gained an `arguments = ...` line
             // (the `?fromDrawer=` back-arrow gate), so it's no longer `composable(Routes.
             // MISSING_ITEMS)` on one line — match just the route reference instead.
@@ -91,10 +95,9 @@ class NavigationWiringTest {
     }
 
     @Test
-    fun `Dashboard, AllStoragesScreen and MissingItemsScreen each invoke onOpenSearch from the UI`() {
+    fun `Dashboard and MissingItemsScreen each invoke onOpenSearch from the UI`() {
         listOf(
             "ui/dashboard/DashboardScreen.kt",
-            "ui/home/AllStoragesScreen.kt",
             "ui/missing/MissingItemsScreen.kt",
         ).forEach { path ->
             val src = read(path)

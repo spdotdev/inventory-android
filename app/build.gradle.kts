@@ -154,12 +154,6 @@ dependencies {
     implementation("androidx.credentials:credentials-play-services-auth:1.6.0")
     implementation("com.google.android.libraries.identity.googleid:googleid:1.2.0")
 
-    // Drag-to-reorder in Storage edit mode, alongside the existing arrows —
-    // ReorderableColumn supports a plain (non-lazy) Column, which AllStoragesScreen
-    // needs since its location rows sit inside one verticalScroll'd Column grouped
-    // by household.
-    implementation("sh.calvin.reorderable:reorderable:2.5.1")
-
     // Barcode scanning (Phase 2): CameraX preview + ML Kit on-device barcode model
     implementation("androidx.camera:camera-camera2:1.6.1")
     implementation("androidx.camera:camera-lifecycle:1.6.1")

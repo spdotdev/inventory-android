@@ -45,11 +45,12 @@ class CreateLocationFlowTest : FlowTestBase() {
             Thread.sleep(2_000)
             waitForIdle()
 
-            // Tap "Add storage location" (the + icon next to "Home" household) → StorageOverviewScreen
+            // Tap the gear ("Manage storage") — with exactly one household this
+            // navigates straight to its Storage overview screen.
             // StorageOverviewViewModel.load() calls GET /households/1/locations
             mockServer.route("/households/1/locations", fixture("locations_one.json"))
             waitUntilAtLeastOneExists(hasText("Home"), timeoutMillis = 5_000)
-            onNodeWithContentDescription("Add storage location").performClick()
+            onNodeWithContentDescription("Manage storage").performClick()
             Thread.sleep(2_000)
             waitForIdle()
 

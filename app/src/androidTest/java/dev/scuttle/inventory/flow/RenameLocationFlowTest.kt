@@ -54,10 +54,11 @@ class RenameLocationFlowTest : FlowTestBase() {
             Thread.sleep(2_000)
             waitForIdle()
 
-            // "Add storage location" (the + icon next to "Home") → StorageOverviewScreen
+            // Gear ("Manage storage") — with exactly one household this navigates
+            // straight to its Storage overview screen.
             mockServer.route("/households/1/locations", fixture("locations_one.json"))
             waitUntilAtLeastOneExists(hasText("Home"), timeoutMillis = 5_000)
-            onNodeWithContentDescription("Add storage location").performClick()
+            onNodeWithContentDescription("Manage storage").performClick()
             Thread.sleep(2_000)
             waitForIdle()
 

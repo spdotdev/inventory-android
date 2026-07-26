@@ -19,7 +19,6 @@
     <string name="error_failed_to_load_products">Failed to load products.</string>
     <string name="error_failed_to_delete_product">Failed to delete product.</string>
     <string name="error_failed_to_load_shelves">Couldn\'t load shelves.</string>
-    <string name="error_failed_to_delete_location">Failed to delete location.</string>
     <string name="error_failed_to_join">Failed to join.</string>
     <string name="error_failed_to_load_invite">Couldn\'t load the invite.</string>
     <string name="error_search_failed">Search failed.</string>
@@ -107,6 +106,9 @@
     <string name="all_storage_stock_warning">⚠ Stock warning</string>
     <string name="all_storage_collapse_household_cd">Collapse %1$s</string>
     <string name="all_storage_expand_household_cd">Expand %1$s</string>
+    <string name="all_storage_manage_cd">Manage storage</string>
+    <string name="all_storage_edit_choose_household_title">Which household\'s storages do you want to edit?</string>
+    <string name="all_storage_add_choose_household_title">Add a storage to which household?</string>
 
     <!-- Delete dialogs -->
     <string name="delete_dialog_product_title">Delete \"%s\"?</string>
@@ -152,7 +154,6 @@
     <string name="household_delete_field_mismatch">Doesn\'t match the household name yet</string>
 
     <!-- H3: cross-household selection reset (AllStoragesScreen) -->
-    <string name="selection_cleared_switched_household">Selection cleared — now selecting in %1$s</string>
 
     <!-- Members -->
     <string name="members_title">Members</string>

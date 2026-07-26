@@ -8,26 +8,20 @@ import dev.scuttle.inventory.data.HierarchyStore
 import dev.scuttle.inventory.data.HouseholdWithLocations
 import dev.scuttle.inventory.data.auth.AuthRepository
 import dev.scuttle.inventory.data.error.toUserMessageRes
-import dev.scuttle.inventory.data.hierarchy.LocationDeleteStrategy
-import dev.scuttle.inventory.data.hierarchy.LocationDeletion
-import dev.scuttle.inventory.data.hierarchy.RestoreRepository
 import dev.scuttle.inventory.data.location.LocationRepository
-import dev.scuttle.inventory.ui.common.orderByPosition
-import dev.scuttle.inventory.ui.hierarchy.DeletePlan
-import dev.scuttle.inventory.ui.hierarchy.MoveTarget
-import dev.scuttle.inventory.ui.hierarchy.UndoOutcome
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.util.UUID
 import javax.inject.Inject
+
+/** Server-side location name column limit — mirrors StorageOverviewViewModel's own constant. */
+private const val MAX_LOCATION_NAME_LENGTH = 50
 
 data class DrawerUiState(
     val entries: List<HouseholdWithLocations> = emptyList(),
@@ -45,510 +39,94 @@ data class DrawerUiState(
     // apart from a genuinely empty account (W3) — without this a failed load
     // rendered the "No storages yet" empty state. H3: an R.string.* id, not a raw literal.
     val errorRes: Int? = null,
-    /** Non-null while the delete-strategy dialog is open for a Home location. */
-    val pendingDelete: DeletePlan? = null,
-    /**
-     * The location's household's other live locations — the ONLY signal for
-     * whether the dialog offers "move" (DeletePlan itself carries no canMove
-     * flag; see DeletePlan.kt). Empty when the household has no other location
-     * to move contents into.
-     */
-    val moveTargets: List<MoveTarget> = emptyList(),
-    /** The batch just deleted, for the Undo snackbar. Cleared once consumed. */
-    val lastBatchId: String? = null,
-    /**
-     * One-shot result of the last undoDelete() call — null while none is pending.
-     * The screen turns this into the matching localized snackbar (delete_undone /
-     * delete_undo_failed) and calls [DrawerViewModel.consumeUndoResult].
-     */
-    val undoResult: UndoOutcome? = null,
-    // M5: align AllStorages' pencil to the multi-select grammar StorageOverview/
-    // LocationDetail already use, instead of a single per-row delete button.
-    val editMode: Boolean = false,
-    /**
-     * The ONE household [selected] ids belong to — AllStorages spans MULTIPLE
-     * households (unlike StorageOverviewViewModel, scoped to one), and a
-     * MOVE_CONTENTS target has to live in the SAME household as what's being
-     * deleted (see [requestDeleteSelected]'s doc comment), so a selection can
-     * never span households. Null while [selected] is empty.
-     */
-    val selectedHouseholdId: Long? = null,
-    val selected: Set<Long> = emptySet(),
-    /**
-     * One-shot event (H3): set the moment [toggleSelection] resets the selection
-     * because the tapped row belongs to a DIFFERENT household than the current
-     * selection — carries that NEW household's name so the screen can surface
-     * "Selection cleared — now selecting in {name}" instead of letting the
-     * selection count just silently change underneath the user. Cleared via
-     * [DrawerViewModel.consumeSelectionResetEvent] once the screen has shown it.
-     */
-    val selectionResetEvent: String? = null,
 )
 
 /**
- * The delete-strategy flow's own bit of state, combined with [HierarchyStore]'s
- * state to build [DrawerUiState]. Kept separate from the household/location
- * projection below because it has nothing to do with what HierarchyStore knows —
- * it is local to the dialog Home opens for one location at a time.
+ * Home/AllStorages is now a browse-only list — editing (add/rename/delete/
+ * reorder) moved entirely to the per-household Storage overview screen
+ * (StorageOverviewViewModel), which already supports it. This VM keeps only
+ * what AllStoragesScreen and LocationDetailScreen still read: the projected
+ * household/location list, stock-warning tracking, and (new) the ability to
+ * create a location from the FAB's add-storage sheet on THIS screen.
  */
-private data class DeleteFlowState(
-    val pendingDelete: DeletePlan? = null,
-    val moveTargets: List<MoveTarget> = emptyList(),
-    val lastBatchId: String? = null,
-    val undoResult: UndoOutcome? = null,
-    val editMode: Boolean = false,
-    val selectedHouseholdId: Long? = null,
-    val selected: Set<Long> = emptySet(),
-    val selectionResetEvent: String? = null,
-)
-
 @HiltViewModel
 class DrawerViewModel
     @Inject
     constructor(
         private val store: HierarchyStore,
         private val locationRepository: LocationRepository,
-        private val restoreRepository: RestoreRepository,
         private val authRepository: AuthRepository,
     ) : ViewModel() {
-        private val deleteFlow = MutableStateFlow(DeleteFlowState())
-
         val state: StateFlow<DrawerUiState> =
-            combine(store.state, deleteFlow) { s, del ->
-                DrawerUiState(
-                    entries = s.entries,
-                    locationWarnings = s.locationWarnings,
-                    warningShelfByLocation =
-                        s.missingItems
-                            .groupBy { it.locationId }
-                            .mapValues { (_, items) -> items.first().shelfId },
-                    missingItemCount = s.missingItemCount,
-                    loading = s.loading,
-                    refreshing = s.refreshing,
-                    errorRes = s.errorRes,
-                    pendingDelete = del.pendingDelete,
-                    moveTargets = del.moveTargets,
-                    lastBatchId = del.lastBatchId,
-                    undoResult = del.undoResult,
-                    editMode = del.editMode,
-                    selectedHouseholdId = del.selectedHouseholdId,
-                    selected = del.selected,
-                    selectionResetEvent = del.selectionResetEvent,
-                )
-            }.stateIn(viewModelScope, SharingStarted.Eagerly, DrawerUiState())
+            store.state
+                .map { s ->
+                    DrawerUiState(
+                        entries = s.entries,
+                        locationWarnings = s.locationWarnings,
+                        warningShelfByLocation =
+                            s.missingItems
+                                .groupBy { it.locationId }
+                                .mapValues { (_, items) -> items.first().shelfId },
+                        missingItemCount = s.missingItemCount,
+                        loading = s.loading,
+                        refreshing = s.refreshing,
+                        errorRes = s.errorRes,
+                    )
+                }.stateIn(viewModelScope, SharingStarted.Eagerly, DrawerUiState())
 
-        private var deleteJob: Job? = null
-
-        // Serialized like StorageOverviewViewModel.moveJob: skip a new move while
-        // one is still in flight rather than let a rapid double-tap interleave two
-        // coroutines, where the SECOND call's success could be clobbered by the
-        // FIRST call's (still in-flight) failure path re-resolving stale state.
-        private var moveJob: Job? = null
-
-        // Which location the open strategy dialog (or the last completed batch)
-        // belongs to. Kept out of DrawerUiState/DeleteFlowState on purpose: the
-        // dialog only ever needs the DeletePlan + moveTargets, and Undo only
-        // ever needs to replay these two ids against RestoreRepository.
-        private var pendingHouseholdId: Long? = null
-
-        // A list rather than a single id so [confirmDelete] can serve both
-        // requestDelete()'s one-location gesture and requestDeleteSelected()'s
-        // multi-location one through the same delete loop (M5) — a one-element
-        // list behaves identically to the old single-id path.
-        private var pendingLocationIds: List<Long> = emptyList()
-        private var lastBatchHouseholdId: Long? = null
-
-        // One-shot delete failure, surfaced by AllStorages as a snackbar (W10). Kept
-        // separate from the store-derived load `errorRes` above because a delete fails
-        // while the list is populated — the inline ErrorRetry (empty-state only)
-        // would never show it. H3: an R.string.* id, not a raw literal.
+        // One-shot create-location failure, surfaced by AllStorages as a snackbar —
+        // same convention as the delete-flow's old actionErrorRes (W10).
         private val _actionErrorRes = MutableStateFlow<Int?>(null)
         val actionErrorRes: StateFlow<Int?> = _actionErrorRes.asStateFlow()
 
-        init {
-            // CRITICAL fix: this VM is resolved once against the Activity's
-            // ViewModelStoreOwner (MainActivity's InventoryNavHost) and survives a
-            // logout→login in the same process — SessionCleaner.clear() only
-            // reaches Hilt @Singletons, not ViewModels. Without this, a pending
-            // delete-strategy dialog or "Deleted · Undo" snackbar minted under one
-            // account (carrying its household/location/batch ids) would still be
-            // showing for the NEXT signed-in account, and confirming/undoing it
-            // would fire API calls against the old ids under the new token.
-            // authRepository.sessionActive flips on every session boundary (logout,
-            // a mid-session 401, and the token being set for a fresh login) — react
-            // to every emission, including the first (current-value) one, since a
-            // reset at VM-creation time on already-empty state is a harmless no-op.
-            viewModelScope.launch {
-                authRepository.sessionActive.collect { resetTransientDeleteState() }
-            }
-        }
+        private var createJob: Job? = null
 
-        private fun resetTransientDeleteState() {
-            deleteJob?.cancel()
-            deleteJob = null
-            pendingHouseholdId = null
-            pendingLocationIds = emptyList()
-            lastBatchHouseholdId = null
-            deleteFlow.update { DeleteFlowState() }
+        init {
+            // CRITICAL: this VM is resolved once against the Activity's
+            // ViewModelStoreOwner and survives a logout->login in the same process —
+            // SessionCleaner.clear() only reaches Hilt @Singletons, not ViewModels.
+            // Without this, a failed create's one-shot error minted under one
+            // account would still be showing for the NEXT signed-in account.
+            viewModelScope.launch {
+                authRepository.sessionActive.collect { _actionErrorRes.value = null }
+            }
         }
 
         fun refresh() = store.refresh(userInitiated = true)
-
-        fun enterEditMode() =
-            deleteFlow.update {
-                it.copy(editMode = true, selectedHouseholdId = null, selected = emptySet(), selectionResetEvent = null)
-            }
-
-        fun exitEditMode() =
-            deleteFlow.update {
-                it.copy(editMode = false, selectedHouseholdId = null, selected = emptySet(), selectionResetEvent = null)
-            }
-
-        /**
-         * Toggles [locationId]'s selection. Selection is scoped to ONE household at a
-         * time (see [DrawerUiState.selectedHouseholdId]'s doc comment) — tapping a
-         * location in a DIFFERENT household than the current selection starts a fresh
-         * selection there instead of adding to it, since a batch spanning households
-         * would have no single household to draw MOVE_CONTENTS targets from.
-         *
-         * H3: that reset used to be silent — the selection count just changed
-         * underneath the user with no explanation. It now also fires
-         * [DeleteFlowState.selectionResetEvent], carrying the NEW household's name
-         * (read from [store]'s own state, which this VM already treats as the
-         * source of truth for household names elsewhere), so the screen can show
-         * "Selection cleared — now selecting in {name}". A same-household toggle
-         * (add/remove one row) does NOT touch the event.
-         */
-        fun toggleSelection(
-            householdId: Long,
-            locationId: Long,
-        ) = deleteFlow.update { state ->
-            if (state.selectedHouseholdId != null && state.selectedHouseholdId != householdId) {
-                val newHouseholdName =
-                    store.state.value.entries
-                        .firstOrNull { it.id == householdId }
-                        ?.name
-                state.copy(
-                    selectedHouseholdId = householdId,
-                    selected = setOf(locationId),
-                    selectionResetEvent = newHouseholdName,
-                )
-            } else {
-                val updated =
-                    if (locationId in state.selected) state.selected - locationId else state.selected + locationId
-                state.copy(
-                    selectedHouseholdId = if (updated.isEmpty()) null else householdId,
-                    selected = updated,
-                )
-            }
-        }
-
-        /** Clears the one-shot cross-household reset event once the screen has shown it. */
-        fun consumeSelectionResetEvent() = deleteFlow.update { it.copy(selectionResetEvent = null) }
-
-        /**
-         * Opens the delete-strategy dialog for ONE location.
-         *
-         * Home deletes one location per gesture, unlike StorageOverviewScreen's
-         * batch selection — there is no cross-household batch semantics to build
-         * here: a MOVE_CONTENTS target has to live in the SAME household as what's
-         * being deleted, and a selection spanning households would have no single
-         * household to draw those targets from.
-         *
-         * Reads a FRESH copy of the household's locations from the server first —
-         * the same staleness concern StorageOverviewViewModel.requestDelete()
-         * guards against: a shelf added via LocationDetailScreen's own add-shelf
-         * sheet never updates this location's shelf_count in HierarchyStore's
-         * cached `entries` on its own (see LocationDto.shelf_count's own doc
-         * comment, which calls out HierarchyStore.refresh() as the fix for a
-         * screen that only ever reads HierarchyStore's cache). Going straight to
-         * `locationRepository.list()` buys the same freshness guarantee without
-         * paying for a full households+shelves+products reload just to open a
-         * confirmation dialog.
-         */
-        fun requestDelete(
-            householdId: Long,
-            locationId: Long,
-        ) = requestDeleteForIds(householdId, listOf(locationId))
-
-        /**
-         * Opens the delete-strategy dialog for the CURRENT selection (M5) — the
-         * batch counterpart of [requestDelete], mirroring
-         * StorageOverviewViewModel.requestDelete()/ShelvesViewModel.requestDelete()'s
-         * aggregate-plan shape. [DrawerUiState.selectedHouseholdId] guarantees every
-         * selected id belongs to one household, so this can reuse the same
-         * single-household delete pipeline [requestDeleteForIds] already provides.
-         */
-        fun requestDeleteSelected() {
-            val householdId = deleteFlow.value.selectedHouseholdId ?: return
-            val selectedIds = deleteFlow.value.selected
-            if (selectedIds.isEmpty()) return
-            requestDeleteForIds(householdId, selectedIds.toList())
-        }
-
-        /**
-         * Reads a FRESH copy of the household's locations from the server first —
-         * the same staleness concern StorageOverviewViewModel.requestDelete()
-         * guards against: a shelf added via LocationDetailScreen's own add-shelf
-         * sheet never updates this location's shelf_count in HierarchyStore's
-         * cached `entries` on its own (see LocationDto.shelf_count's own doc
-         * comment, which calls out HierarchyStore.refresh() as the fix for a
-         * screen that only ever reads HierarchyStore's cache). Going straight to
-         * `locationRepository.list()` buys the same freshness guarantee without
-         * paying for a full households+shelves+products reload just to open a
-         * confirmation dialog.
-         */
-        private fun requestDeleteForIds(
-            householdId: Long,
-            locationIds: List<Long>,
-        ) {
-            if (deleteJob?.isActive == true) return
-            deleteJob =
-                viewModelScope.launch {
-                    val listResult = runCatching { locationRepository.list(householdId) }
-                    // Cancelled (session reset mid-flight) must not surface as a
-                    // failure snackbar to whoever is signed in NEXT — same CE
-                    // guard as ShelvesViewModel/StorageOverviewViewModel.
-                    listResult.exceptionOrNull()?.let { if (it is CancellationException) throw it }
-                    listResult
-                        .onSuccess { locations ->
-                            val selected = locations.filter { it.id in locationIds }
-                            if (selected.isEmpty()) return@onSuccess
-                            pendingHouseholdId = householdId
-                            pendingLocationIds = selected.map { it.id }
-                            deleteFlow.update {
-                                it.copy(
-                                    pendingDelete =
-                                        DeletePlan(
-                                            itemCount = selected.size,
-                                            productCount = selected.sumOf { l -> l.product_count },
-                                            // The trap: the server asks about a
-                                            // location's SHELVES, not its products
-                                            // (see DeletePlan.kt) — a location with
-                                            // only empty shelves still needs a
-                                            // strategy. Do not "simplify" this to
-                                            // productCount.
-                                            contentCount = selected.sumOf { l -> l.shelf_count },
-                                        ),
-                                    moveTargets =
-                                        locations
-                                            .filter { l -> l.id !in locationIds }
-                                            .map { l -> MoveTarget(id = l.id, name = l.name) },
-                                )
-                            }
-                        }.onFailure { e ->
-                            _actionErrorRes.value =
-                                e.toUserMessageRes(R.string.error_failed_to_delete_location)
-                        }
-                }
-        }
-
-        fun confirmDelete(
-            strategy: LocationDeleteStrategy?,
-            targetId: Long?,
-        ) {
-            val householdId = pendingHouseholdId
-            val locationIds = pendingLocationIds
-            if (householdId == null || locationIds.isEmpty() || deleteJob?.isActive == true) return
-
-            // ONE batch id for the whole gesture — deleting several locations is
-            // several requests; if each minted its own id they would land in
-            // separate batches and Undo would restore only one of them (same
-            // reasoning as ShelvesViewModel.confirmDelete's batch loop).
-            val batchId = UUID.randomUUID().toString()
-
-            deleteJob =
-                viewModelScope.launch {
-                    var failure: Throwable? = null
-                    var anySucceeded = false
-                    for (locationId in locationIds) {
-                        val result =
-                            runCatching {
-                                locationRepository.deleteWithStrategy(
-                                    householdId,
-                                    locationId,
-                                    LocationDeletion(batchId, strategy, targetId),
-                                )
-                            }
-                        result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
-                        if (result.isSuccess) {
-                            anySucceeded = true
-                        } else {
-                            // Stop at the first failure: whatever already landed
-                            // server-side must still be reflected and made
-                            // Undo-able, but nothing past the failure was
-                            // attempted, so there is nothing more to reconcile.
-                            failure = result.exceptionOrNull()
-                            break
-                        }
-                    }
-
-                    if (anySucceeded) {
-                        lastBatchHouseholdId = householdId
-                        deleteFlow.update {
-                            it.copy(
-                                pendingDelete = null,
-                                moveTargets = emptyList(),
-                                lastBatchId = batchId,
-                                editMode = false,
-                                selectedHouseholdId = null,
-                                selected = emptySet(),
-                            )
-                        }
-                        store.refresh()
-                    } else {
-                        deleteFlow.update { it.copy(pendingDelete = null, moveTargets = emptyList()) }
-                    }
-                    failure?.let {
-                        _actionErrorRes.value =
-                            it.toUserMessageRes(
-                                R.string.error_failed_to_delete_location,
-                            )
-                    }
-                    pendingHouseholdId = null
-                    pendingLocationIds = emptyList()
-                }
-        }
-
-        fun cancelDelete() {
-            pendingHouseholdId = null
-            pendingLocationIds = emptyList()
-            deleteFlow.update { it.copy(pendingDelete = null, moveTargets = emptyList()) }
-        }
-
-        fun undoDelete() {
-            val householdId = lastBatchHouseholdId
-            val batchId = deleteFlow.value.lastBatchId
-            if (householdId == null || batchId == null || deleteJob?.isActive == true) return
-            deleteJob =
-                viewModelScope.launch {
-                    // A 409 here means the batch was already restored (another
-                    // device, a double-tap) or permanently removed past the undo
-                    // window — NOT a generic action failure, so this does NOT go
-                    // through _actionError/toUserMessage's generic fallback; the
-                    // screen turns undoResult into the specific message instead.
-                    val restoreResult = runCatching { restoreRepository.restore(householdId, batchId) }
-                    restoreResult.exceptionOrNull()?.let { if (it is CancellationException) throw it }
-                    restoreResult
-                        .onSuccess {
-                            deleteFlow.update { it.copy(lastBatchId = null, undoResult = UndoOutcome.SUCCESS) }
-                            store.refresh()
-                        }.onFailure {
-                            deleteFlow.update { it.copy(undoResult = UndoOutcome.FAILURE) }
-                        }
-                }
-        }
-
-        fun consumeLastBatch() = deleteFlow.update { it.copy(lastBatchId = null) }
-
-        fun consumeUndoResult() = deleteFlow.update { it.copy(undoResult = null) }
-
-        fun consumeActionError() {
-            _actionErrorRes.value = null
-        }
 
         fun reportLocationWarning(
             locationId: Long,
             hasWarning: Boolean,
         ) = store.reportLocationWarning(locationId, hasWarning)
 
-        fun moveUp(
-            householdId: Long,
-            locationId: Long,
-        ) = move(householdId, locationId, -1)
-
-        fun moveDown(
-            householdId: Long,
-            locationId: Long,
-        ) = move(householdId, locationId, +1)
-
-        /**
-         * Reorders one location up/down within its household, on AllStorages'
-         * edit-mode row — the drawer-scoped counterpart of
-         * StorageOverviewViewModel.move (same rationale there applies here).
-         *
-         * The order moved against MUST be the same order the screen renders
-         * (orderByPosition over entry.locations, keyed by position then name) —
-         * anything else and the arrows visibly move the wrong row relative to
-         * what's on screen.
-         */
-        private fun move(
-            householdId: Long,
-            locationId: Long,
-            delta: Int,
-        ) {
-            // Serialized: skip a new move while one is still in flight (see
-            // moveJob's own doc comment above). Merged with the other guards
-            // below (rather than their own early returns) to stay under
-            // ReturnCount's limit.
-            if (moveJob?.isActive == true) return
-            val entry =
-                store.state.value.entries
-                    .firstOrNull { it.id == householdId }
-            val current =
-                orderByPosition(entry?.locations.orEmpty(), { it.position }, { it.name })
-            val index = current.indexOfFirst { it.id == locationId }
-            val target = index + delta
-            if (entry == null || index < 0 || target !in current.indices) return
-
-            val reordered = current.toMutableList().apply { add(target, removeAt(index)) }
-            submitOrder(householdId, reordered.map { it.id })
+        fun consumeActionError() {
+            _actionErrorRes.value = null
         }
 
         /**
-         * Drag-to-reorder's settle callback (the ReorderableColumn counterpart of
-         * the arrows' [move]) — takes the COMPLETE ordered id list the drag
-         * produced within one household group and submits it through the same
-         * serialized [moveJob] pipeline, so a drag settling while an arrow-move
-         * (or another drag) is still in flight is skipped exactly like a second
-         * arrow tap would be.
-         *
-         * [orderedIds] must be exactly the household's current LIVE location id
-         * set (compared unordered) — anything else (a stale drag over a list that
-         * changed underneath it, or a bug in the reordering library) would send
-         * the server a partial list, which LocationController::reorder 422s. That
-         * case is silently ignored here rather than surfaced as an error: the
-         * drag never left this device, so there is nothing server-side to explain
-         * to the user, and [store]'s state already reflects the real order.
+         * Creates a location from AllStoragesScreen's FAB add-storage sheet —
+         * the Home-level equivalent of StorageOverviewViewModel.create(), reusing
+         * the same repository call. Home has no single household's location list
+         * cached the way StorageOverviewViewModel does, so on success this just
+         * asks [HierarchyStore] to refresh from server truth rather than trying
+         * to splice the new location into local state itself.
          */
-        fun applyOrder(
+        fun createLocation(
             householdId: Long,
-            orderedIds: List<Long>,
+            name: String,
+            type: String,
         ) {
-            val entry =
-                store.state.value.entries
-                    .firstOrNull { it.id == householdId }
-            val liveIds = entry?.locations?.map { it.id }?.toSet()
-            val isExactLiveSet = liveIds != null && orderedIds.toSet() == liveIds && orderedIds.size == liveIds.size
-            if (moveJob?.isActive != true && isExactLiveSet) {
-                submitOrder(householdId, orderedIds)
-            }
-        }
-
-        /**
-         * Shared core for [move] and [applyOrder]: submit a complete ordered id
-         * list, serialized via [moveJob] so a drag and an arrow-tap (or two drags)
-         * can never interleave, then refresh from server truth regardless of
-         * outcome (see the doc comment this replaces on [move] for why).
-         */
-        private fun submitOrder(
-            householdId: Long,
-            orderedIds: List<Long>,
-        ) {
-            moveJob =
+            val trimmed = name.trim().take(MAX_LOCATION_NAME_LENGTH)
+            if (trimmed.isEmpty() || createJob?.isActive == true) return
+            createJob =
                 viewModelScope.launch {
-                    // The COMPLETE ordered id list — a partial list produces
-                    // duplicate positions server-side (LocationController::reorder
-                    // rejects any list that isn't exactly every live location in
-                    // this household).
-                    val result = runCatching { locationRepository.reorder(householdId, orderedIds) }
+                    val result = runCatching { locationRepository.create(householdId, trimmed, type) }
                     result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
-                    // Server truth wins either way — refresh rather than trust the
-                    // optimistic local reorder, whether it landed or not.
-                    store.refresh()
-                    result.exceptionOrNull()?.let {
-                        _actionErrorRes.value = it.toUserMessageRes(R.string.error_generic)
-                    }
+                    result
+                        .onSuccess { store.refresh() }
+                        .onFailure { e ->
+                            _actionErrorRes.value = e.toUserMessageRes(R.string.error_generic)
+                        }
                 }
         }
     }

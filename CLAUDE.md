@@ -107,16 +107,19 @@ Navigation: Household → Storage overview → Shelves (tabs *or* list) → Prod
 bottom bar (**Dashboard / Storage / Scan / Missing / More**) is the app's only
 navigation surface — there is no drawer. **Households** left the bar: it's a
 tenant-management screen reached under **More**, which absorbed Settings *and*
-households. **Search** lost its tab; it's reached via a top-bar icon on Dashboard, Storage overview,
-Home and Missing items. Storage overview is already scoped to one household (its route
-carries `householdId`), so its icon just opens Search directly. Dashboard, Home and
+households. **Search** lost its tab; it's reached via a top-bar icon on Dashboard, Storage
+overview, and Missing items — **not** Home/Storage tab (AllStoragesScreen), which dropped
+its own search icon in the storage-tab rework (2026-07-26): Home is a browse-only list now
+and Search stays reachable through Dashboard/Missing or by drilling into a household's own
+Storage overview. Storage overview is already scoped to one household (its route
+carries `householdId`), so its icon just opens Search directly. Dashboard and
 Missing items are **not** household-scoped — their icon (and Dashboard's products stat
 card) opens Search directly only when the account has exactly one household; with more
 than one it opens a shared household picker (`ui/common/HouseholdPickerSheet.kt`) first,
 same as the centre **Scan** tab's LOOKUP mode below. (Final review, 2026-07-14: every one
 of these hard-coded the *first* household instead, making a second household's search
-reachable only by drilling Home → that household's own "+" icon → Storage overview → its
-search icon — don't reintroduce a bare `entries.firstOrNull()`.) Search keeps a
+reachable only by drilling into that household's own Storage overview first — don't
+reintroduce a bare `entries.firstOrNull()`.) Search keeps a
 small gear-icon shortcut back to Settings, since it doesn't sit on the bottom bar —
 that's the only place a gear icon survives (Households lost its gear 2026-07-26; its
 back arrow returns to More, which is one tap from Settings anyway). The centre **Scan** tab always opens the scanner in LOOKUP mode
@@ -130,15 +133,24 @@ bar's own visibility/selected state for the Scan tab is resolved from the *mode*
 argument, not the route alone — `scannerRouteIsTheBottomBarTab()`; matching the bare
 route would show the bar (with Scan selected) over ADD mode's camera too.
 
-**Editing the hierarchy** lives behind a pencil (edit mode) on the locations and
-shelves lists — never inside Settings/More itself. There, edit mode turns each row into
-a checkbox (multi-select → delete-strategy dialog) plus a rename pencil and up/down
-reorder buttons; the row body itself only toggles selection. Households (no
-multi-select or reorder) dropped their pencil 2026-07-26: tapping a household row
-always opens the full household edit page directly (name, colour/icon theme, and a
-danger zone offering "Leave" plus, Owner-only, "Delete household") — the edit page is
-role-aware, so a Member sees only what they can do. Deleting a non-empty shelf or location
-always asks what to do with the contents — see "Deletes" above.
+**Editing the hierarchy** lives behind a pencil (edit mode) on the shelves list and on
+Storage overview's own locations list — never inside Settings/More itself. There, edit
+mode turns each row into a checkbox (multi-select → delete-strategy dialog) plus a
+rename pencil and up/down reorder buttons; the row body itself only toggles selection.
+**Home/Storage tab (AllStoragesScreen) has no edit mode at all** (storage-tab rework,
+2026-07-26): it's a clean, browse-only list spanning every household — tapping a row
+always navigates straight to that location. A top-bar **gear** icon and a bottom-right
+**FAB** are Home's only two write affordances, and both just ROUTE to the per-household
+Storage overview screen rather than editing inline: the gear opens Storage overview
+directly (one household) or a household picker first (more than one) for
+rename/reorder/delete; the FAB opens the same add-storage sheet Storage overview has
+(name + type), routed to the right household the same way, then calls
+`DrawerViewModel.createLocation()` and refreshes. Households (no multi-select or
+reorder) dropped their pencil 2026-07-26: tapping a household row always opens the full
+household edit page directly (name, colour/icon theme, and a danger zone offering
+"Leave" plus, Owner-only, "Delete household") — the edit page is role-aware, so a Member
+sees only what they can do. Deleting a non-empty shelf or location always asks what to
+do with the contents — see "Deletes" above.
 
 ## Design — B · Frost (D-021)
 - Frosted-glass cards, icy-blue accent **#7dd3fc**, rounded controls, **Plus Jakarta Sans**.

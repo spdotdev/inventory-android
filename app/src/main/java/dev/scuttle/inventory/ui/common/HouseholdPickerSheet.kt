@@ -38,6 +38,10 @@ fun HouseholdPickerSheet(
     households: List<HouseholdOption>,
     onDismiss: () -> Unit,
     onPick: (Long) -> Unit,
+    // Defaults to the original search-picker copy so the three existing call
+    // sites (Dashboard/Missing/Scan-lookup) are unaffected — AllStoragesScreen
+    // passes its own edit/add-specific titles instead.
+    title: String = stringResource(R.string.search_choose_household_title),
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
@@ -48,7 +52,7 @@ fun HouseholdPickerSheet(
                     .navigationBarsPadding(),
         ) {
             Text(
-                stringResource(R.string.search_choose_household_title),
+                title,
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(16.dp),
             )

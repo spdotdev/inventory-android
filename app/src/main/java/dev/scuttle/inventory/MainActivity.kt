@@ -634,9 +634,6 @@ private fun InventoryNavHost(
                     onOpenStorage = { hhId ->
                         navController.navigate(Routes.storage(hhId))
                     },
-                    onOpenSearch = { hhId ->
-                        navController.navigate(Routes.search(hhId)) { launchSingleTop = true }
-                    },
                 )
             }
 

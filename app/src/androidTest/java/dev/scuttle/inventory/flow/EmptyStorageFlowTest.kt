@@ -36,16 +36,16 @@ class EmptyStorageFlowTest : FlowTestBase() {
             Thread.sleep(3_000)
             waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 5_000)
 
-            // Storage tab → AllStoragesScreen → tap "Add storage location" for Home → StorageOverviewScreen
+            // Storage tab → AllStoragesScreen → tap the gear ("Manage storage") for
+            // Home → StorageOverviewScreen (AllStorages is browse-only now).
             onNodeWithTag("bottom-nav-home").performClick()
             waitForIdle()
             Thread.sleep(2_000)
             waitForIdle()
 
-            // Tap the + button next to "Home" household
             mockServer.route("/households/1/locations", fixture("locations_empty.json"))
             waitUntilAtLeastOneExists(hasText("Home"), timeoutMillis = 5_000)
-            onNodeWithContentDescription("Add storage location").performClick()
+            onNodeWithContentDescription("Manage storage").performClick()
             Thread.sleep(2_000)
             waitForIdle()
 
