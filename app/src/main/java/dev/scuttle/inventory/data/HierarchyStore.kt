@@ -68,6 +68,8 @@ data class LowStockItem(
     val locationName: String,
     val householdId: Long,
     val locationId: Long,
+    val shelfId: Long,
+    val productId: Long,
 )
 
 data class HierarchyState(
@@ -238,6 +240,8 @@ class HierarchyStore(
                         locationName = place.location.name,
                         householdId = place.householdId,
                         locationId = place.location.id,
+                        shelfId = place.shelf.id,
+                        productId = product.id,
                     ),
                 )
             else -> null

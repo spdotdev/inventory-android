@@ -81,6 +81,7 @@ const val DASHBOARD_TITLE_TEST_TAG = "dashboard_top_bar_title"
 fun DashboardScreen(
     modifier: Modifier = Modifier,
     onOpenLocation: (householdId: Long, locationId: Long) -> Unit = { _, _ -> },
+    onOpenProduct: (householdId: Long, shelfId: Long, productId: Long) -> Unit = { _, _, _ -> },
     onOpenHouseholds: () -> Unit = {},
     onOpenMissingItems: () -> Unit = {},
     onOpenAllStorage: () -> Unit = {},
@@ -255,7 +256,7 @@ fun DashboardScreen(
                     RunningLowCard(
                         items = state.lowStockItems,
                         badgeFor = badgeFor,
-                        onOpenLocation = onOpenLocation,
+                        onOpenProduct = onOpenProduct,
                     )
                 }
 
@@ -487,7 +488,7 @@ private fun FavoriteRow(
 private fun RunningLowCard(
     items: List<LowStockItem>,
     badgeFor: (Long) -> DashboardHousehold?,
-    onOpenLocation: (householdId: Long, locationId: Long) -> Unit,
+    onOpenProduct: (householdId: Long, shelfId: Long, productId: Long) -> Unit,
 ) {
     FrostCard(modifier = Modifier.fillMaxWidth()) {
         Column(
@@ -499,7 +500,7 @@ private fun RunningLowCard(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .clickable { onOpenLocation(item.householdId, item.locationId) },
+                            .clickable { onOpenProduct(item.householdId, item.shelfId, item.productId) },
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {

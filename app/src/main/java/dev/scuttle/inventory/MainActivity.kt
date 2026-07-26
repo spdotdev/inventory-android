@@ -645,6 +645,9 @@ private fun InventoryNavHost(
                     onOpenLocation = { hhId, locId ->
                         navController.navigate(Routes.location(hhId, locId))
                     },
+                    onOpenProduct = { hhId, shelfId, productId ->
+                        navController.navigate(Routes.productDetail(hhId, shelfId, productId))
+                    },
                     onOpenAllStorage = {
                         navController.navigate(Routes.HOME) { launchSingleTop = true }
                     },
