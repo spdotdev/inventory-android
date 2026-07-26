@@ -15,7 +15,6 @@ enum class GenderOption(
 ) {
     FEMALE("female", R.string.account_gender_option_female),
     MALE("male", R.string.account_gender_option_male),
-    NON_BINARY("non_binary", R.string.account_gender_option_non_binary),
     PREFER_NOT_TO_SAY("prefer_not_to_say", R.string.account_gender_option_prefer_not_to_say),
     ;
 
