@@ -38,3 +38,10 @@ val FrostOnMoveAccent = Color(0xFF3D2B00)
  * same red everywhere (user decision 2026-07-27).
  */
 const val WARNING_TINT_ALPHA = 0.3f
+
+/**
+ * "Running low" tint — a muted grey-leaning dark orange, always used at
+ * [WARNING_TINT_ALPHA] so it sits at exactly the same visual weight as the
+ * missing-item red (user decision 2026-07-27).
+ */
+val LowStockWarnOrange = Color(0xFFB45309)

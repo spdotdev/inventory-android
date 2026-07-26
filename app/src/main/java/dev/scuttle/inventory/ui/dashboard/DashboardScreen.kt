@@ -65,6 +65,7 @@ import dev.scuttle.inventory.ui.common.HouseholdPickerSheet
 import dev.scuttle.inventory.ui.theme.FrostCard
 import dev.scuttle.inventory.ui.theme.HouseholdAvatar
 import dev.scuttle.inventory.ui.theme.LocalFrostCardColors
+import dev.scuttle.inventory.ui.theme.LowStockWarnOrange
 import dev.scuttle.inventory.ui.theme.Spacing
 import dev.scuttle.inventory.ui.theme.WARNING_TINT_ALPHA
 
@@ -424,7 +425,10 @@ private fun RunningLowCard(
     badgeFor: (Long) -> DashboardHousehold?,
     onOpenProduct: (householdId: Long, shelfId: Long, productId: Long) -> Unit,
 ) {
-    FrostCard(modifier = Modifier.fillMaxWidth()) {
+    FrostCard(
+        modifier = Modifier.fillMaxWidth(),
+        containerColor = LowStockWarnOrange.copy(alpha = WARNING_TINT_ALPHA),
+    ) {
         Column(
             modifier = Modifier.padding(Spacing.md),
             verticalArrangement = Arrangement.spacedBy(12.dp),
