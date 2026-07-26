@@ -25,3 +25,8 @@ val FrostLightSurface = Color(0xFFF5FAFD) // near-white card surface
 val FrostLightSurfaceVariant = Color(FROST_LIGHT_SURFACE_VARIANT_ARGB) // chart bg / chips
 val FrostLightOnSurface = Color(0xFF0D2436)
 val FrostLightOnSurfaceVariant = Color(0xFF3D5A6E)
+
+// Move-button accent — distinct from the icy-blue primary so the relocate action reads
+// as its own affordance. Same amber works in both themes; dark on-color gives ~8:1 contrast.
+val FrostMoveAccent = Color(0xFFFBBF24)
+val FrostOnMoveAccent = Color(0xFF3D2B00)

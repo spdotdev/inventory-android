@@ -7,18 +7,24 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -51,6 +57,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -67,6 +74,8 @@ import dev.scuttle.inventory.ui.common.repeatingClickable
 import dev.scuttle.inventory.ui.common.shelfDisplayName
 import dev.scuttle.inventory.ui.hierarchy.UndoOutcome
 import dev.scuttle.inventory.ui.theme.FrostCard
+import dev.scuttle.inventory.ui.theme.FrostMoveAccent
+import dev.scuttle.inventory.ui.theme.FrostOnMoveAccent
 
 /**
  * The mandatory / out-of-stock filter chips and the sort menu.
@@ -321,59 +330,55 @@ fun ProductsPane(
                         onClick = { onOpenProduct(product) },
                         modifier = Modifier.fillMaxWidth().testTag("product-${product.id}"),
                     ) {
-                        // Name on its own line, controls beneath it. Sharing one line with the
-                        // stepper and the move button left the name only the width those
-                        // controls didn't want — a quarter of the card, and less still in
-                        // locales where "Move" is a longer word ("Verplaatsen"), which squashed
-                        // names down to two or three characters (#31).
-                        Column(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .background(
-                                        if (isMandatoryWarning) {
-                                            MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
-                                        } else {
-                                            Color.Transparent
-                                        },
-                                    ).padding(horizontal = 16.dp, vertical = 8.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                        // Move is a full-height button pinned to the card's right edge, not an
+                        // inline control — it needs to stay reachable/obvious without competing
+                        // with the name for width (see the name-squashing note this replaced,
+                        // #31, which is why name still gets its own line above the stepper).
+                        Row(
+                            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+                            verticalAlignment = Alignment.Top,
                         ) {
-                            Text(
-                                text = product.name,
-                                style = MaterialTheme.typography.bodyLarge,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.fillMaxWidth(),
-                            )
-                            if (!product.code.isNullOrBlank()) {
-                                Text(
-                                    text = product.code,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            }
-                            if (product.is_mandatory == true) {
-                                Text(
-                                    text = stringResource(R.string.products_pane_mandatory_label),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color =
-                                        if (isMandatoryWarning) {
-                                            MaterialTheme.colorScheme.error
-                                        } else {
-                                            MaterialTheme.colorScheme.primary
-                                        },
-                                )
-                            }
-                            // FlowRow, not Row: at large font scales the move button drops to
-                            // its own line instead of being clipped off the card's edge.
-                            FlowRow(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
+                            Column(
+                                modifier =
+                                    Modifier
+                                        .weight(1f)
+                                        .background(
+                                            if (isMandatoryWarning) {
+                                                MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+                                            } else {
+                                                Color.Transparent
+                                            },
+                                        ).padding(horizontal = 16.dp, vertical = 8.dp),
                                 verticalArrangement = Arrangement.spacedBy(4.dp),
                             ) {
+                                Text(
+                                    text = product.name,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                                if (!product.code.isNullOrBlank()) {
+                                    Text(
+                                        text = product.code,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
+                                if (product.is_mandatory == true) {
+                                    Text(
+                                        text = stringResource(R.string.products_pane_mandatory_label),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color =
+                                            if (isMandatoryWarning) {
+                                                MaterialTheme.colorScheme.error
+                                            } else {
+                                                MaterialTheme.colorScheme.primary
+                                            },
+                                    )
+                                }
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -427,16 +432,28 @@ fun ProductsPane(
                                         Text("+")
                                     }
                                 }
-                                TextButton(
-                                    onClick = { viewModel.startMove(product.id) },
-                                    enabled = !state.loading,
-                                    modifier =
-                                        Modifier.semantics {
-                                            contentDescription = moveDesc
-                                        },
-                                ) {
-                                    Text(stringResource(R.string.products_pane_move_button))
-                                }
+                            }
+                            Button(
+                                onClick = { viewModel.startMove(product.id) },
+                                enabled = !state.loading,
+                                shape = RoundedCornerShape(0.dp),
+                                colors =
+                                    ButtonDefaults.buttonColors(
+                                        containerColor = FrostMoveAccent,
+                                        contentColor = FrostOnMoveAccent,
+                                        disabledContainerColor = FrostMoveAccent.copy(alpha = 0.4f),
+                                        disabledContentColor = FrostOnMoveAccent.copy(alpha = 0.6f),
+                                    ),
+                                modifier =
+                                    Modifier
+                                        .fillMaxHeight()
+                                        .width(64.dp)
+                                        .semantics { contentDescription = moveDesc },
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.products_pane_move_button),
+                                    textAlign = TextAlign.Center,
+                                )
                             }
                         }
                     }
