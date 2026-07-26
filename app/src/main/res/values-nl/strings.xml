@@ -361,4 +361,10 @@
         <item quantity="one">%d item ontbreekt</item>
         <item quantity="other">%d items ontbreken</item>
     </plurals>
+    <string name="notification_channel_low_stock_name">Bijna-op-herinnering</string>
+    <string name="notification_channel_low_stock_description">Herinnert je eenmaal per dag als er items bijna op zijn</string>
+    <plurals name="notification_low_stock_title">
+        <item quantity="one">%d item is bijna op</item>
+        <item quantity="other">%d items zijn bijna op</item>
+    </plurals>
 </resources>

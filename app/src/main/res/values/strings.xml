@@ -375,4 +375,10 @@
         <item quantity="one">%d item is missing</item>
         <item quantity="other">%d items are missing</item>
     </plurals>
+    <string name="notification_channel_low_stock_name">Low stock reminder</string>
+    <string name="notification_channel_low_stock_description">Reminds you once a day if any items are running low</string>
+    <plurals name="notification_low_stock_title">
+        <item quantity="one">%d item is running low</item>
+        <item quantity="other">%d items are running low</item>
+    </plurals>
 </resources>
