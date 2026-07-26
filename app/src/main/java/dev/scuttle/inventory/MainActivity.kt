@@ -285,6 +285,10 @@ enum class ScannerMode(
 
     /** Opened from the bottom bar, with no shelf context: hand the code to Search. */
     LOOKUP("lookup"),
+
+    /** Opened from Households: deliver the scanned invite code back via savedStateHandle,
+     * same contract as ADD — see the HOUSEHOLDS composable below. */
+    JOIN("join"),
     ;
 
     companion object {
@@ -322,6 +326,7 @@ fun scanDeliveryActionFor(
 ): ScanDeliveryAction =
     when (mode) {
         ScannerMode.ADD -> ScanDeliveryAction.DeliverToCaller(code)
+        ScannerMode.JOIN -> ScanDeliveryAction.DeliverToCaller(code)
         ScannerMode.LOOKUP -> ScanDeliveryAction.NavigateToSearch(code)
     }
 
@@ -680,10 +685,19 @@ private fun InventoryNavHost(
                 )
             }
 
-            composable(Routes.HOUSEHOLDS) {
+            composable(Routes.HOUSEHOLDS) { entry ->
+                // Same savedStateHandle-on-the-just-pushed-entry contract as STORAGE's
+                // scanned_code (see its composable below): JOIN delivers here via
+                // ScanDeliveryAction.DeliverToCaller.
+                val pendingScannedCode by entry.savedStateHandle
+                    .getStateFlow<String?>("scanned_code", null)
+                    .collectAsState()
                 HouseholdsScreen(
                     onBack = { navController.popBackStack() },
                     onOpenSettings = onOpenSettings,
+                    onOpenScanner = { navController.navigate(Routes.scanner(ScannerMode.JOIN)) },
+                    pendingScannedCode = pendingScannedCode,
+                    onPendingScannedCodeConsumed = { entry.savedStateHandle["scanned_code"] = null },
                     onOpenInvite = { id, name -> navController.navigate(Routes.invite(id, name)) },
                     onEditHousehold = { id -> navController.navigate(Routes.householdEdit(id)) },
                 )
@@ -916,6 +930,7 @@ private fun InventoryNavHost(
                         when (mode) {
                             ScannerMode.LOOKUP -> dev.scuttle.inventory.ui.scanner.ScannerDisplayMode.LOOKUP
                             ScannerMode.ADD -> dev.scuttle.inventory.ui.scanner.ScannerDisplayMode.ADD
+                            ScannerMode.JOIN -> dev.scuttle.inventory.ui.scanner.ScannerDisplayMode.JOIN
                         },
                     onScanned = { code ->
                         when (val action = scanDeliveryActionFor(mode, code)) {

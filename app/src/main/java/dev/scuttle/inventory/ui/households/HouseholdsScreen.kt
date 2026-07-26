@@ -1,6 +1,5 @@
 package dev.scuttle.inventory.ui.households
 
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -40,6 +39,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -56,8 +56,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.journeyapps.barcodescanner.ScanContract
-import com.journeyapps.barcodescanner.ScanOptions
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.ui.common.ErrorRetry
 import dev.scuttle.inventory.ui.settings.JoinHouseholdViewModel
@@ -70,6 +68,13 @@ fun HouseholdsScreen(
     modifier: Modifier = Modifier,
     onBack: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
+    onOpenScanner: () -> Unit = {},
+    // A code delivered back from the shared ScannerScreen (JOIN mode) — same
+    // one-shot savedStateHandle contract as StorageOverviewScreen's own
+    // pendingBarcodeCode; consumed via [onPendingScannedCodeConsumed] so it
+    // doesn't re-fire on recomposition.
+    pendingScannedCode: String? = null,
+    onPendingScannedCodeConsumed: () -> Unit = {},
     onOpenInvite: (householdId: Long, householdName: String) -> Unit = { _, _ -> },
     onEditHousehold: (householdId: Long) -> Unit = {},
     viewModel: HouseholdsViewModel = hiltViewModel(),
@@ -83,14 +88,12 @@ fun HouseholdsScreen(
     val joinSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    val scanPrompt = stringResource(R.string.settings_scan_prompt)
-    val scanLauncher =
-        rememberLauncherForActivityResult(ScanContract()) { result ->
-            result.contents?.let {
-                joinViewModel.onCodeScanned(it)
-                showJoinSheet = true
-            }
-        }
+    LaunchedEffect(pendingScannedCode) {
+        val code = pendingScannedCode ?: return@LaunchedEffect
+        joinViewModel.onCodeScanned(code)
+        showJoinSheet = true
+        onPendingScannedCodeConsumed()
+    }
 
     val statusBarInsets = WindowInsets.statusBars
     Scaffold(
@@ -141,17 +144,7 @@ fun HouseholdsScreen(
                     horizontalAlignment = Alignment.End,
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    SmallFloatingActionButton(
-                        onClick = {
-                            scanLauncher.launch(
-                                ScanOptions().apply {
-                                    setPrompt(scanPrompt)
-                                    setBeepEnabled(false)
-                                    setOrientationLocked(false)
-                                },
-                            )
-                        },
-                    ) {
+                    SmallFloatingActionButton(onClick = onOpenScanner) {
                         Icon(
                             Icons.Default.QrCodeScanner,
                             contentDescription = stringResource(R.string.households_scan_fab_cd),

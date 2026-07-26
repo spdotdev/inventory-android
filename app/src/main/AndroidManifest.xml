@@ -44,16 +44,6 @@
                 <data android:scheme="dev.scuttle.inventory" android:host="oauth2redirect" />
             </intent-filter>
         </activity>
-        <!-- zxing-android-embedded's CaptureActivity (used for the "scan QR to
-             join a household" flow, SettingsScreen.kt) defaults its own manifest
-             entry to android:screenOrientation="sensorLandscape" - this app-level
-             override wins during manifest merging and locks it to portrait,
-             matching the rest of the app (no screen here is designed for
-             landscape). -->
-        <activity
-            android:name="com.journeyapps.barcodescanner.CaptureActivity"
-            android:screenOrientation="portrait"
-            tools:replace="android:screenOrientation" />
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

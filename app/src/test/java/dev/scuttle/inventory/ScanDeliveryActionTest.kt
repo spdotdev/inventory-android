@@ -29,6 +29,14 @@ class ScanDeliveryActionTest {
         assertEquals(ScanDeliveryAction.NavigateToSearch("0512345678900"), action)
     }
 
+    @Test
+    fun mode_join_delivers_to_caller_via_savedStateHandle() {
+        // JOIN (Households' scan FAB) shares ADD's contract: it's a different
+        // CALLER, not a different DELIVERY mechanism.
+        val action = scanDeliveryActionFor(ScannerMode.JOIN, "ABCD-1234")
+        assertEquals(ScanDeliveryAction.DeliverToCaller("ABCD-1234"), action)
+    }
+
     /**
      * The two branches must never collapse onto the same behavior — that is
      * exactly how Critical 2 shipped (a single hard-coded delivery for both
@@ -55,6 +63,11 @@ class ScanDeliveryActionTest {
     @Test
     fun from_parses_lookup() {
         assertEquals(ScannerMode.LOOKUP, ScannerMode.from("lookup"))
+    }
+
+    @Test
+    fun from_parses_join() {
+        assertEquals(ScannerMode.JOIN, ScannerMode.from("join"))
     }
 
     @Test
@@ -90,6 +103,11 @@ class ScanDeliveryActionTest {
         // The exact regression: ADD (opened from LocationDetailScreen's scan FAB)
         // must NOT be treated as the Scan tab's own destination.
         assertFalse(scannerRouteIsTheBottomBarTab(ScannerMode.ADD))
+    }
+
+    @Test
+    fun join_mode_is_not_the_bottom_bar_tab() {
+        assertFalse(scannerRouteIsTheBottomBarTab(ScannerMode.JOIN))
     }
 
     @Test

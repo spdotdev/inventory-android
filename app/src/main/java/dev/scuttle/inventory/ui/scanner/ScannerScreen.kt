@@ -121,11 +121,13 @@ fun ScannerScreen(
         when (mode) {
             ScannerDisplayMode.LOOKUP -> stringResource(R.string.scanner_title_lookup)
             ScannerDisplayMode.ADD -> stringResource(R.string.scanner_title_add)
+            ScannerDisplayMode.JOIN -> stringResource(R.string.scanner_title_join)
         }
     val subtitle =
         when (mode) {
             ScannerDisplayMode.LOOKUP -> stringResource(R.string.scanner_subtitle_lookup)
             ScannerDisplayMode.ADD -> stringResource(R.string.scanner_subtitle_add)
+            ScannerDisplayMode.JOIN -> stringResource(R.string.scanner_subtitle_join)
         }
     Scaffold(
         modifier = modifier,
@@ -295,23 +297,27 @@ private const val SCRIM_EDGE_ALPHA = 0.95f
 /**
  * Viewfinder overlay in the classic scan-frame style (four rounded corner
  * brackets, no full square — the standard "scanner overlay" vector look),
- * with a red laser line fixed across the middle of the frame, pulsing its
- * opacity like ZXing's ViewfinderView. Purely decorative — ML Kit analyzes
- * the full frame — but it tells the user where to point.
+ * with a bright laser line that sweeps up and down the frame — this is the
+ * "sparkly" ZXing-style scan line users know from the old households
+ * scanner (journeyapps/ZXing's default CaptureActivity), kept here on
+ * purpose when that screen was replaced by this shared one so every entry
+ * point (product ADD/LOOKUP, household JOIN) still gets it. Purely
+ * decorative — ML Kit analyzes the full frame — but it tells the user
+ * where to point and that scanning is actively happening.
  */
 @Composable
 private fun ScannerOverlay() {
     val transition = rememberInfiniteTransition(label = "laser")
-    // Kept translucent on purpose — the line guides without hiding the barcode.
-    val laserAlpha by transition.animateFloat(
-        initialValue = 0.25f,
-        targetValue = 0.55f,
+    // 0f..1f fraction of the frame's height, swept top-to-bottom-to-top.
+    val sweepFraction by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
         animationSpec =
             infiniteRepeatable(
-                animation = tween(durationMillis = 600, easing = LinearEasing),
+                animation = tween(durationMillis = 1600, easing = LinearEasing),
                 repeatMode = RepeatMode.Reverse,
             ),
-        label = "laser-alpha",
+        label = "laser-sweep",
     )
 
     Canvas(modifier = Modifier.fillMaxSize()) {
@@ -388,14 +394,26 @@ private fun ScannerOverlay() {
             }
         drawPath(brackets, color = LaserRed, style = stroke)
 
-        // Fixed center "laser" line with the traditional opacity pulse.
+        // Sweeping "sparkly" laser line: a bright core plus a soft glow band above
+        // and below it (three strokes, widest = most transparent), traveling the
+        // full frame height each half-cycle like ZXing's ViewfinderView.
         val inset = 14.dp.toPx()
-        val lineY = frame.top + frame.height / 2f
+        val lineX1 = frame.left + inset
+        val lineX2 = frame.right - inset
+        val lineY = frame.top + frame.height * sweepFraction
+        val glowWidth = 10.dp.toPx()
+        val coreWidth = 2.dp.toPx()
         drawLine(
-            color = LaserRed.copy(alpha = laserAlpha),
-            start = Offset(frame.left + inset, lineY),
-            end = Offset(frame.right - inset, lineY),
-            strokeWidth = 3.dp.toPx(),
+            color = LaserRed.copy(alpha = 0.18f),
+            start = Offset(lineX1, lineY),
+            end = Offset(lineX2, lineY),
+            strokeWidth = glowWidth,
+        )
+        drawLine(
+            color = LaserRed.copy(alpha = 0.9f),
+            start = Offset(lineX1, lineY),
+            end = Offset(lineX2, lineY),
+            strokeWidth = coreWidth,
         )
     }
 }

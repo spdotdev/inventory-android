@@ -79,6 +79,8 @@
     <string name="scanner_subtitle_lookup">Looks up this product across your storage.</string>
     <string name="scanner_title_add">Scan to add</string>
     <string name="scanner_subtitle_add">Adds or increases stock on this shelf.</string>
+    <string name="scanner_title_join">Scan to join</string>
+    <string name="scanner_subtitle_join">Scans a household\'s invite QR code.</string>
     <string name="scanner_permission_denied">Camera permission is needed to scan barcodes. You can still add and edit products manually.</string>
     <string name="scanner_open_settings">Open settings</string>
     <string name="scanner_torch_on">Turn off flashlight</string>
@@ -291,7 +293,6 @@
     <string name="settings_join_success_member_hint">You\'ve joined as a member — owners and admins manage storage.</string>
     <string name="settings_join_field">Join code</string>
     <string name="settings_join_button">Join</string>
-    <string name="settings_scan_prompt">Scan household QR code</string>
     <string name="settings_sign_out_button">Sign out</string>
     <string name="settings_version">Version %1$s (build %2$d)</string>
     <string name="settings_sign_out_dialog_title">Sign out?</string>

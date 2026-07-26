@@ -75,6 +75,8 @@
     <string name="scanner_subtitle_lookup">Zoekt dit product op in al je opslag.</string>
     <string name="scanner_title_add">Scannen om toe te voegen</string>
     <string name="scanner_subtitle_add">Voegt toe of verhoogt de voorraad op dit schap.</string>
+    <string name="scanner_title_join">Scannen om deel te nemen</string>
+    <string name="scanner_subtitle_join">Scant de QR-code van een huishoudensuitnodiging.</string>
     <string name="scanner_permission_denied">Cameratoegang is nodig om barcodes te scannen. Je kunt producten nog steeds handmatig toevoegen en bewerken.</string>
     <string name="scanner_open_settings">Instellingen openen</string>
     <string name="scanner_torch_on">Zaklamp uitzetten</string>
@@ -277,7 +279,6 @@
     <string name="settings_join_success_member_hint">Je bent lid geworden — eigenaren en beheerders beheren de opslag.</string>
     <string name="settings_join_field">Deelnamecode</string>
     <string name="settings_join_button">Deelnemen</string>
-    <string name="settings_scan_prompt">Huishouden QR-code scannen</string>
     <string name="settings_sign_out_button">Uitloggen</string>
     <string name="settings_version">Versie %1$s (build %2$d)</string>
     <string name="settings_sign_out_dialog_title">Uitloggen?</string>

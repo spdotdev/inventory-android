@@ -114,6 +114,17 @@ class NavigationWiringTest {
     // --- Critical 2: the two scanner callers must stay distinguishable ---
 
     @Test
+    fun `HouseholdsScreen opens the scanner in JOIN mode`() {
+        val mainActivity = read("MainActivity.kt")
+        val householdsBlock = composableBlock(mainActivity, "composable(Routes.HOUSEHOLDS)")
+        assertTrue(
+            "HouseholdsScreen's onOpenScanner no longer opens ScannerMode.JOIN — households would fall " +
+                "back to ADD's shelf-only savedStateHandle contract (or the removed ZXing scanner).",
+            householdsBlock.contains("Routes.scanner(ScannerMode.JOIN)"),
+        )
+    }
+
+    @Test
     fun `LocationDetailScreen opens the scanner in ADD mode, the bottom bar in LOOKUP mode`() {
         val mainActivity = read("MainActivity.kt")
 
