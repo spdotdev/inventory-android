@@ -70,6 +70,7 @@ import dev.scuttle.inventory.R
 import dev.scuttle.inventory.ui.theme.Spacing
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.math.pow
 
 /**
  * Full-screen barcode scanner (Phase 2). CameraX preview + ML Kit on-device
@@ -300,6 +301,44 @@ private const val TRIANGLE_MIDPOINT = 0.5f
 private const val TRIANGLE_SLOPE = 2f
 
 /**
+ * One twinkling dot near the scan line — [xFraction] positions it along the
+ * line's width (0f = left inset, 1f = right inset); [yJitterFraction] offsets
+ * it above/below the line (-1f..1f, scaled by [SPARKLE_JITTER_DP]); [phase] and
+ * [speedMultiplier] desync its flash cycle from every other dot; [maxRadiusDp]
+ * varies dot size a little.
+ */
+private data class Sparkle(
+    val xFraction: Float,
+    val yJitterFraction: Float,
+    val phase: Float,
+    val speedMultiplier: Float,
+    val maxRadiusDp: Float,
+)
+
+private const val SPARKLE_COUNT = 16
+private const val SPARKLE_JITTER_DP = 10f
+private const val SPARKLE_MIN_SPEED = 0.7f
+private const val SPARKLE_SPEED_RANGE = 2.3f
+private const val SPARKLE_MIN_RADIUS_DP = 1f
+private const val SPARKLE_RADIUS_RANGE_DP = 1.8f
+
+// Each dot's own cycle length is this divided by its speedMultiplier (roughly
+// 470ms-2000ms across the speed range) — fast enough to read as flashing.
+private const val SPARKLE_CYCLE_MS = 1400f
+
+// Fixed seed: the sparkle layout is stable across recompositions (each is
+// `remember`ed once) but doesn't need to vary between screen opens either.
+private const val SPARKLE_SEED = 20260726L
+private val SPARKLE_TWO_PI = (2 * Math.PI).toFloat()
+
+// Raising the raw (0f..1f) sine-based value to this power turns a smooth,
+// slow fade into a sharp brief flash — most of the cycle stays near zero,
+// with a quick spike near the peak, which is what reads as a "twinkle"
+// instead of a pulse.
+private const val SPARKLE_FLASH_SHARPNESS = 6
+private const val SPARKLE_MIN_VISIBLE_ALPHA = 0.05f
+
+/**
  * Viewfinder overlay in the classic scan-frame style (four rounded corner
  * brackets, no full square — the standard "scanner overlay" vector look),
  * with a thin red line fixed across the middle of the frame, pulsing its
@@ -308,32 +347,52 @@ private const val TRIANGLE_SLOPE = 2f
  * replaced by this shared screen. Purely decorative — ML Kit analyzes the
  * full frame — but it tells the user where to point.
  *
+ * Also drives the small twinkling dots near the line (see [Sparkle]) — the
+ * "sparkly" quality the old households ZXing scanner had via its default
+ * possible-result-point markers, which the line alone didn't reproduce.
+ *
  * Driven by a manual [withFrameNanos] loop rather than
  * [androidx.compose.animation.core.rememberInfiniteTransition] on purpose:
  * that API rides Android's ValueAnimator clock, which respects the
  * "Animator duration scale" developer setting — when that's off, EVERY
- * Compose animation snaps straight to its end value with no visible motion.
- * The old households scanner (ZXing's default CaptureActivity) never hit
- * this because it drove its laser via a hand-rolled
- * `postInvalidateDelayed` loop, not the animation framework — this mirrors
- * that approach so the line pulses regardless of that device setting.
+ * Compose animation snaps straight to its end value with no visible motion
+ * (confirmed on-device: `settings get global animator_duration_scale` was
+ * 0). The old households scanner never hit this because it drove its laser
+ * via a hand-rolled `postInvalidateDelayed` loop, not the animation
+ * framework — this mirrors that approach so both animate regardless of
+ * that device setting.
  */
 @Composable
 private fun ScannerOverlay() {
     var laserAlpha by remember { mutableFloatStateOf(LASER_ALPHA_MIN) }
+    var elapsedMs by remember { mutableFloatStateOf(0f) }
     LaunchedEffect(Unit) {
         var startNanos = -1L
         while (true) {
             withFrameNanos { nowNanos ->
                 if (startNanos < 0) startNanos = nowNanos
-                val elapsedMs = (nowNanos - startNanos) / NANOS_PER_MILLI
-                val t = (elapsedMs % LASER_PULSE_PERIOD_MS).toFloat() / LASER_PULSE_PERIOD_MS
+                val elapsed = (nowNanos - startNanos) / NANOS_PER_MILLI
+                elapsedMs = elapsed.toFloat()
+                val t = (elapsed % LASER_PULSE_PERIOD_MS).toFloat() / LASER_PULSE_PERIOD_MS
                 // Triangle wave: 0 -> 1 over the first half, 1 -> 0 over the second.
                 val triangle = if (t < TRIANGLE_MIDPOINT) t * TRIANGLE_SLOPE else (1f - t) * TRIANGLE_SLOPE
                 laserAlpha = LASER_ALPHA_MIN + triangle * LASER_ALPHA_RANGE
             }
         }
     }
+    val sparkles =
+        remember {
+            val random = kotlin.random.Random(SPARKLE_SEED)
+            List(SPARKLE_COUNT) {
+                Sparkle(
+                    xFraction = random.nextFloat(),
+                    yJitterFraction = random.nextFloat() * 2f - 1f,
+                    phase = random.nextFloat(),
+                    speedMultiplier = SPARKLE_MIN_SPEED + random.nextFloat() * SPARKLE_SPEED_RANGE,
+                    maxRadiusDp = SPARKLE_MIN_RADIUS_DP + random.nextFloat() * SPARKLE_RADIUS_RANGE_DP,
+                )
+            }
+        }
 
     Canvas(modifier = Modifier.fillMaxSize()) {
         val side = size.minDimension * FRAME_SIDE_FRACTION
@@ -421,5 +480,27 @@ private fun ScannerOverlay() {
             end = Offset(frame.right - inset, lineY),
             strokeWidth = 3.dp.toPx(),
         )
+
+        // Twinkling dots scattered along the line, each flashing on its own
+        // staggered cycle (phase + speedMultiplier) so they glitter rather
+        // than pulse in unison.
+        val jitterPx = SPARKLE_JITTER_DP.dp.toPx()
+        val lineLeft = frame.left + inset
+        val lineWidth = frame.right - inset - lineLeft
+        sparkles.forEach { sparkle ->
+            val cycle = (elapsedMs / SPARKLE_CYCLE_MS * sparkle.speedMultiplier + sparkle.phase) % 1f
+            val raw = kotlin.math.sin(cycle * SPARKLE_TWO_PI).coerceAtLeast(0f)
+            val sparkleAlpha = raw.pow(SPARKLE_FLASH_SHARPNESS)
+            if (sparkleAlpha < SPARKLE_MIN_VISIBLE_ALPHA) return@forEach
+            drawCircle(
+                color = Color.White.copy(alpha = sparkleAlpha),
+                radius = sparkle.maxRadiusDp.dp.toPx() * sparkleAlpha,
+                center =
+                    Offset(
+                        x = lineLeft + lineWidth * sparkle.xFraction,
+                        y = lineY + sparkle.yJitterFraction * jitterPx,
+                    ),
+            )
+        }
     }
 }
