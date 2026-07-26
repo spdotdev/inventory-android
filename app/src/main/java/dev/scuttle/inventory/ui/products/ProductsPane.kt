@@ -292,37 +292,62 @@ fun ProductsPane(
                 val swipeState =
                     rememberSwipeToDismissBoxState(
                         confirmValueChange = { value ->
-                            if (value == SwipeToDismissBoxValue.EndToStart) {
-                                pendingDeleteId = product.id
+                            when (value) {
+                                // Swipe LEFT: open the move shelf-picker (user decision
+                                // 2026-07-27). Non-destructive, so no extra confirm layer.
+                                SwipeToDismissBoxValue.EndToStart -> viewModel.startMove(product.id)
+                                // Swipe RIGHT: delete — still only OPENS the confirm
+                                // dialog (pendingDeleteId), never deletes directly; see
+                                // the Deletes section in CLAUDE.md.
+                                SwipeToDismissBoxValue.StartToEnd -> pendingDeleteId = product.id
+                                SwipeToDismissBoxValue.Settled -> Unit
                             }
                             false
                         },
                     )
                 SwipeToDismissBox(
                     state = swipeState,
-                    enableDismissFromStartToEnd = false,
                     backgroundContent = {
-                        // Only draw the delete affordance mid-swipe: the frosted (translucent)
-                        // cards otherwise let the red container + bin icon bleed through at
+                        // Only draw the affordances mid-swipe: the frosted (translucent)
+                        // cards otherwise let the colored container + icon bleed through at
                         // rest, overlapping the row's own trailing controls.
-                        if (swipeState.dismissDirection == SwipeToDismissBoxValue.EndToStart) {
-                            Box(
-                                modifier =
-                                    Modifier
-                                        .fillMaxSize()
-                                        .background(
-                                            color = MaterialTheme.colorScheme.errorContainer,
-                                            shape = MaterialTheme.shapes.medium,
-                                        ),
-                                contentAlignment = Alignment.CenterEnd,
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Delete,
-                                    contentDescription = stringResource(R.string.action_delete),
-                                    tint = MaterialTheme.colorScheme.onErrorContainer,
-                                    modifier = Modifier.padding(horizontal = 20.dp),
-                                )
-                            }
+                        when (swipeState.dismissDirection) {
+                            SwipeToDismissBoxValue.EndToStart ->
+                                Box(
+                                    modifier =
+                                        Modifier
+                                            .fillMaxSize()
+                                            .background(
+                                                color = FrostMoveAccent,
+                                                shape = MaterialTheme.shapes.medium,
+                                            ),
+                                    contentAlignment = Alignment.CenterEnd,
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.products_pane_move_button),
+                                        color = FrostOnMoveAccent,
+                                        modifier = Modifier.padding(horizontal = 20.dp),
+                                    )
+                                }
+                            SwipeToDismissBoxValue.StartToEnd ->
+                                Box(
+                                    modifier =
+                                        Modifier
+                                            .fillMaxSize()
+                                            .background(
+                                                color = MaterialTheme.colorScheme.errorContainer,
+                                                shape = MaterialTheme.shapes.medium,
+                                            ),
+                                    contentAlignment = Alignment.CenterStart,
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = stringResource(R.string.action_delete),
+                                        tint = MaterialTheme.colorScheme.onErrorContainer,
+                                        modifier = Modifier.padding(horizontal = 20.dp),
+                                    )
+                                }
+                            SwipeToDismissBoxValue.Settled -> Unit
                         }
                     },
                 ) {

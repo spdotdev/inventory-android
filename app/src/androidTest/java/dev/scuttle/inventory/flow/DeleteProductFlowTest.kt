@@ -12,7 +12,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
-import androidx.compose.ui.test.swipeLeft
+import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.test.waitUntilAtLeastOneExists
 import androidx.compose.ui.test.waitUntilDoesNotExist
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -47,9 +47,10 @@ class DeleteProductFlowTest : FlowTestBase() {
             Thread.sleep(2_000)
             waitForIdle()
 
-            // Swipe "Milk" left to reveal the delete action
+            // Swipe "Milk" RIGHT to trigger the delete confirm — swipe left is Move
+            // since 2026-07-27 (delete swapped to the opposite direction).
             waitUntilAtLeastOneExists(hasText("Milk"), timeoutMillis = 5_000)
-            onNodeWithText("Milk").performTouchInput { swipeLeft() }
+            onNodeWithText("Milk").performTouchInput { swipeRight() }
             waitForIdle()
 
             // Confirm delete in the dialog — the real endpoint returns 200 with a
