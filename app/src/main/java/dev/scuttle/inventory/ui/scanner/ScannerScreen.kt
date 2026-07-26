@@ -289,8 +289,8 @@ private val LaserRed = Color(0xFFE53935)
 private const val BRACKET_ARM_FRACTION = 0.18f
 
 // Soft-focus scrim: flat base dim plus a radial falloff toward the edges.
-private const val SCRIM_BASE_ALPHA = 0.65f
-private const val SCRIM_EDGE_ALPHA = 0.95f
+private const val SCRIM_BASE_ALPHA = 0.35f
+private const val SCRIM_EDGE_ALPHA = 0.55f
 
 // One full up-then-down pulse cycle for the laser line's opacity.
 private const val LASER_PULSE_PERIOD_MS = 1200L
