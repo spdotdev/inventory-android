@@ -73,6 +73,7 @@ import dev.scuttle.inventory.R
 import dev.scuttle.inventory.ui.theme.Spacing
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.math.pow
 
 /**
  * Full-screen barcode scanner (Phase 2). CameraX preview + ML Kit on-device
@@ -311,19 +312,28 @@ private data class Sparkle(
 
 private const val SPARKLE_COUNT = 16
 private const val SPARKLE_JITTER_DP = 10f
-private const val SPARKLE_MIN_SPEED = 0.6f
-private const val SPARKLE_SPEED_RANGE = 1.2f
+private const val SPARKLE_MIN_SPEED = 0.7f
+private const val SPARKLE_SPEED_RANGE = 2.3f
 private const val SPARKLE_MIN_RADIUS_DP = 1f
 private const val SPARKLE_RADIUS_RANGE_DP = 1.8f
-private const val SPARKLE_CYCLE_MS = 5000
+
+// Short shared loop — each dot's OWN cycle length is this divided by its
+// speedMultiplier, so with speeds spanning ~0.7x-3x this ranges roughly
+// 470ms-2000ms per dot: fast enough to read as flashing, not a slow fade.
+private const val SPARKLE_CYCLE_MS = 1400
 
 // Fixed seed: the sparkle layout is stable across recompositions (each is
 // `remember`ed once) but doesn't need to vary between screen opens either.
 private const val SPARKLE_SEED = 20260726L
 private val SPARKLE_TWO_PI = (2 * Math.PI).toFloat()
-private const val SPARKLE_ALPHA_SCALE = 0.5f
+
+// Raising the raw (0f..1f) sine-based value to this power turns a smooth,
+// slow fade into a sharp brief flash — most of the cycle stays near zero,
+// with a quick spike near the peak, which is what actually reads as a
+// "twinkle" instead of a pulse.
+private const val SPARKLE_FLASH_SHARPNESS = 6
 private const val SPARKLE_MIN_VISIBLE_ALPHA = 0.05f
-private const val SPARKLE_MAX_OPACITY = 0.85f
+private const val SPARKLE_MAX_OPACITY = 1f
 
 /**
  * Viewfinder overlay in the classic scan-frame style (four rounded corner
@@ -466,7 +476,8 @@ private fun ScannerOverlay() {
         val lineWidth = frame.right - inset - lineLeft
         sparkles.forEach { sparkle ->
             val cycle = (sparkleTime * sparkle.speedMultiplier + sparkle.phase) % 1f
-            val sparkleAlpha = kotlin.math.sin(cycle * SPARKLE_TWO_PI) * SPARKLE_ALPHA_SCALE + SPARKLE_ALPHA_SCALE
+            val raw = kotlin.math.sin(cycle * SPARKLE_TWO_PI).coerceAtLeast(0f)
+            val sparkleAlpha = raw.pow(SPARKLE_FLASH_SHARPNESS)
             if (sparkleAlpha < SPARKLE_MIN_VISIBLE_ALPHA) return@forEach
             drawCircle(
                 color = Color.White.copy(alpha = sparkleAlpha * SPARKLE_MAX_OPACITY),
