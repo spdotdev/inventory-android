@@ -492,14 +492,56 @@ class DrawerViewModel
             if (entry == null || index < 0 || target !in current.indices) return
 
             val reordered = current.toMutableList().apply { add(target, removeAt(index)) }
+            submitOrder(householdId, reordered.map { it.id })
+        }
 
+        /**
+         * Drag-to-reorder's settle callback (the ReorderableColumn counterpart of
+         * the arrows' [move]) — takes the COMPLETE ordered id list the drag
+         * produced within one household group and submits it through the same
+         * serialized [moveJob] pipeline, so a drag settling while an arrow-move
+         * (or another drag) is still in flight is skipped exactly like a second
+         * arrow tap would be.
+         *
+         * [orderedIds] must be exactly the household's current LIVE location id
+         * set (compared unordered) — anything else (a stale drag over a list that
+         * changed underneath it, or a bug in the reordering library) would send
+         * the server a partial list, which LocationController::reorder 422s. That
+         * case is silently ignored here rather than surfaced as an error: the
+         * drag never left this device, so there is nothing server-side to explain
+         * to the user, and [store]'s state already reflects the real order.
+         */
+        fun applyOrder(
+            householdId: Long,
+            orderedIds: List<Long>,
+        ) {
+            val entry =
+                store.state.value.entries
+                    .firstOrNull { it.id == householdId }
+            val liveIds = entry?.locations?.map { it.id }?.toSet()
+            val isExactLiveSet = liveIds != null && orderedIds.toSet() == liveIds && orderedIds.size == liveIds.size
+            if (moveJob?.isActive != true && isExactLiveSet) {
+                submitOrder(householdId, orderedIds)
+            }
+        }
+
+        /**
+         * Shared core for [move] and [applyOrder]: submit a complete ordered id
+         * list, serialized via [moveJob] so a drag and an arrow-tap (or two drags)
+         * can never interleave, then refresh from server truth regardless of
+         * outcome (see the doc comment this replaces on [move] for why).
+         */
+        private fun submitOrder(
+            householdId: Long,
+            orderedIds: List<Long>,
+        ) {
             moveJob =
                 viewModelScope.launch {
                     // The COMPLETE ordered id list — a partial list produces
                     // duplicate positions server-side (LocationController::reorder
                     // rejects any list that isn't exactly every live location in
                     // this household).
-                    val result = runCatching { locationRepository.reorder(householdId, reordered.map { it.id }) }
+                    val result = runCatching { locationRepository.reorder(householdId, orderedIds) }
                     result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
                     // Server truth wins either way — refresh rather than trust the
                     // optimistic local reorder, whether it landed or not.

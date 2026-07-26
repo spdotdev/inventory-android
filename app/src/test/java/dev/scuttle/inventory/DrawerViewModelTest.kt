@@ -83,12 +83,19 @@ class DrawerViewModelTest {
         val reorderCallsByHousehold = mutableListOf<Pair<Long, List<Long>>>()
         var failReorder = false
 
+        // Set to park reorder() mid-flight — the applyOrder/moveJob race test's
+        // way of proving a drag settling while an arrow-move (or another drag)
+        // is still in flight gets dropped, mirroring
+        // StorageOverviewViewModelMoveRaceTest's own reorderGate.
+        var reorderGate: kotlinx.coroutines.CompletableDeferred<Unit>? = null
+
         override fun getCached(householdId: Long) = cached[householdId]
 
         override suspend fun reorder(
             householdId: Long,
             orderedIds: List<Long>,
         ): List<LocationDto> {
+            reorderGate?.await()
             reorderCallsByHousehold += householdId to orderedIds
             if (failReorder) throw IOException("reorder failed")
             val byId = live[householdId].orEmpty().associateBy { it.id }
@@ -1351,6 +1358,141 @@ class DrawerViewModelTest {
             val vm = viewModel(store, repo)
 
             vm.moveUp(householdId = 1, locationId = 11)
+
+            assertNotNull(vm.actionErrorRes.value)
+        }
+
+    // --- Drag-to-reorder (applyOrder), alongside the arrows above ---
+
+    @Test
+    fun apply_order_sends_the_exact_dragged_list_to_the_repository() =
+        runTest {
+            val repo =
+                FakeLocationRepository(
+                    mapOf(
+                        1L to
+                            listOf(
+                                LocationDto(10, "Fridge", "fridge", position = 0),
+                                LocationDto(11, "Freezer", "freezer", position = 1),
+                                LocationDto(12, "Pantry", "pantry", position = 2),
+                            ),
+                    ),
+                )
+            val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
+            val vm = viewModel(store, repo)
+
+            vm.applyOrder(householdId = 1, orderedIds = listOf(12L, 10L, 11L))
+
+            assertEquals(1, repo.reorderCallsByHousehold.size)
+            val (calledHouseholdId, orderedIds) = repo.reorderCallsByHousehold.first()
+            assertEquals(1L, calledHouseholdId)
+            assertEquals(listOf(12L, 10L, 11L), orderedIds)
+        }
+
+    @Test
+    fun apply_order_with_a_list_that_is_not_the_households_live_id_set_is_ignored() =
+        runTest {
+            val repo =
+                FakeLocationRepository(
+                    mapOf(
+                        1L to
+                            listOf(
+                                LocationDto(10, "Fridge", "fridge", position = 0),
+                                LocationDto(11, "Freezer", "freezer", position = 1),
+                            ),
+                    ),
+                )
+            val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
+            val vm = viewModel(store, repo)
+
+            // Missing id 11 — a stale/partial list the server would 422 on.
+            vm.applyOrder(householdId = 1, orderedIds = listOf(10L))
+            // An id that doesn't belong to this household at all.
+            vm.applyOrder(householdId = 1, orderedIds = listOf(10L, 11L, 999L))
+
+            assertTrue(repo.reorderCallsByHousehold.isEmpty())
+        }
+
+    @Test
+    fun apply_order_is_dropped_while_an_arrow_move_is_still_in_flight() =
+        runTest {
+            val repo =
+                FakeLocationRepository(
+                    mapOf(
+                        1L to
+                            listOf(
+                                LocationDto(10, "Fridge", "fridge", position = 0),
+                                LocationDto(11, "Freezer", "freezer", position = 1),
+                                LocationDto(12, "Pantry", "pantry", position = 2),
+                            ),
+                    ),
+                )
+            val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
+            val vm = viewModel(store, repo)
+            repo.reorderGate = kotlinx.coroutines.CompletableDeferred()
+
+            vm.moveUp(householdId = 1, locationId = 11) // parks in flight
+            // A drag settling while the arrow-move above is still in flight —
+            // must be dropped, not queued or interleaved.
+            vm.applyOrder(householdId = 1, orderedIds = listOf(12L, 11L, 10L))
+
+            repo.reorderGate?.complete(Unit)
+
+            assertEquals(1, repo.reorderCallsByHousehold.size)
+            assertEquals(listOf(11L, 10L, 12L), repo.reorderCallsByHousehold.first().second)
+        }
+
+    @Test
+    fun apply_order_refreshes_the_hierarchy_store_on_success() =
+        runTest {
+            val repo =
+                FakeLocationRepository(
+                    mapOf(
+                        1L to
+                            listOf(
+                                LocationDto(10, "Fridge", "fridge", position = 0),
+                                LocationDto(11, "Freezer", "freezer", position = 1),
+                            ),
+                    ),
+                )
+            val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
+            val vm = viewModel(store, repo)
+
+            vm.applyOrder(householdId = 1, orderedIds = listOf(11L, 10L))
+
+            val refreshed =
+                store.state.first {
+                    it.entries
+                        .first()
+                        .locations
+                        .map { l -> l.id } == listOf(11L, 10L)
+                }
+            assertEquals(
+                listOf(11L, 10L),
+                refreshed.entries
+                    .first()
+                    .locations
+                    .map { it.id },
+            )
+        }
+
+    @Test
+    fun apply_order_refreshes_and_surfaces_an_action_error_on_failure() =
+        runTest {
+            val repo =
+                FakeLocationRepository(
+                    mapOf(
+                        1L to
+                            listOf(
+                                LocationDto(10, "Fridge", "fridge", position = 0),
+                                LocationDto(11, "Freezer", "freezer", position = 1),
+                            ),
+                    ),
+                ).apply { failReorder = true }
+            val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
+            val vm = viewModel(store, repo)
+
+            vm.applyOrder(householdId = 1, orderedIds = listOf(11L, 10L))
 
             assertNotNull(vm.actionErrorRes.value)
         }

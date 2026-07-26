@@ -1,5 +1,6 @@
 package dev.scuttle.inventory.ui.home
 
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -54,6 +55,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -62,6 +64,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import dev.scuttle.inventory.R
+import dev.scuttle.inventory.data.HouseholdWithLocations
+import dev.scuttle.inventory.data.dto.LocationDto
+import dev.scuttle.inventory.ui.app.DrawerUiState
 import dev.scuttle.inventory.ui.app.DrawerViewModel
 import dev.scuttle.inventory.ui.common.ErrorRetry
 import dev.scuttle.inventory.ui.common.HouseholdOption
@@ -73,6 +78,7 @@ import dev.scuttle.inventory.ui.hierarchy.DeleteStrategyDialog
 import dev.scuttle.inventory.ui.hierarchy.UndoOutcome
 import dev.scuttle.inventory.ui.hierarchy.locationStrategyOptions
 import dev.scuttle.inventory.ui.theme.FrostCard
+import sh.calvin.reorderable.ReorderableColumn
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -306,108 +312,63 @@ fun AllStoragesScreen(
                             } else {
                                 orderByPosition(entry.locations, { it.position }, { it.name })
                             }
-                        orderedLocations.forEachIndexed { locationIndex, location ->
-                            key(location.id) {
-                                val hasWarning = state.locationWarnings[location.id] == true
-
-                                val rowContent: @Composable () -> Unit = {
-                                    Row(
-                                        modifier =
-                                            Modifier
-                                                .padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp)
-                                                .fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically,
-                                    ) {
-                                        if (editMode && entry.canRestructure) {
-                                            // Selection checkbox leads the row (user decision
-                                            // 2026-07-26): pick first, then act — the reorder
-                                            // arrows stay on the trailing edge.
-                                            Checkbox(
-                                                checked = location.id in state.selected,
-                                                onCheckedChange = {
-                                                    viewModel.toggleSelection(entry.id, location.id)
-                                                },
-                                            )
+                        // Drag-to-reorder rides ALONGSIDE the arrows (both must keep working) —
+                        // only wraps in ReorderableColumn when there's something restructurable
+                        // to drag: edit mode + canRestructure, same gate the arrows already use.
+                        // A plain Column below keeps every other case (view mode, or a Member's
+                        // read-only group) byte-for-byte as before.
+                        if (editMode && entry.canRestructure) {
+                            ReorderableColumn(
+                                list = orderedLocations,
+                                onSettle = { fromIndex, toIndex ->
+                                    val reordered =
+                                        orderedLocations.toMutableList().apply {
+                                            add(toIndex, removeAt(fromIndex))
                                         }
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(
-                                                location.name,
-                                                style = MaterialTheme.typography.bodyLarge,
-                                                maxLines = 2,
-                                                overflow = TextOverflow.Ellipsis,
-                                            )
-                                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                                Text(
-                                                    storageTypeLabel(location.type),
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                )
-                                                if (hasWarning) {
-                                                    Text(
-                                                        stringResource(R.string.all_storage_stock_warning),
-                                                        style = MaterialTheme.typography.bodySmall,
-                                                        color = MaterialTheme.colorScheme.error,
-                                                    )
-                                                }
-                                            }
-                                        }
-                                        if (editMode && entry.canRestructure) {
-                                            IconButton(
-                                                onClick = { viewModel.moveUp(entry.id, location.id) },
-                                                enabled = locationIndex > 0,
-                                            ) {
-                                                Icon(
-                                                    Icons.Default.ArrowUpward,
-                                                    contentDescription = stringResource(R.string.storage_move_up_cd),
-                                                )
-                                            }
-                                            IconButton(
-                                                onClick = { viewModel.moveDown(entry.id, location.id) },
-                                                enabled = locationIndex < orderedLocations.size - 1,
-                                            ) {
-                                                Icon(
-                                                    Icons.Default.ArrowDownward,
-                                                    contentDescription = stringResource(R.string.storage_move_down_cd),
-                                                )
-                                            }
-                                        }
-                                        // editMode && !entry.canRestructure: nothing renders here — a
-                                        // Member's row in edit mode has nothing restructure-capable to
-                                        // offer.
-                                    }
+                                    viewModel.applyOrder(entry.id, reordered.map { it.id })
+                                },
+                            ) { locationIndex, location, isDragging ->
+                                key(location.id) {
+                                    // Modest lift while dragging (elevation, Frost-styled) —
+                                    // ELEVATION_DRAGGING_DP vs ELEVATION_IDLE_DP named per
+                                    // detekt MagicNumber.
+                                    val elevation by
+                                        animateDpAsState(
+                                            targetValue = if (isDragging) ELEVATION_DRAGGING_DP else ELEVATION_IDLE_DP,
+                                            label = "location-drag-elevation-${location.id}",
+                                        )
+                                    LocationRow(
+                                        entry = entry,
+                                        location = location,
+                                        locationIndex = locationIndex,
+                                        orderedLocationsCount = orderedLocations.size,
+                                        editMode = editMode,
+                                        state = state,
+                                        viewModel = viewModel,
+                                        onOpenLocation = onOpenLocation,
+                                        // Long-press anywhere on the row body starts the drag —
+                                        // the row's own onClick (toggle-selection in edit mode)
+                                        // keeps working since longPressDraggableHandle only
+                                        // consumes gestures that turn into an actual drag.
+                                        rowModifier = Modifier.longPressDraggableHandle().shadow(elevation),
+                                    )
                                 }
-                                // In edit mode, tapping the row body toggles selection (matching
-                                // StorageOverviewScreen's EditableRow), not navigation — same as
-                                // the checkbox itself; a Member's row (no canRestructure) has no
-                                // selection to toggle, so it keeps navigating even in edit mode.
-                                val rowOnClick =
-                                    if (editMode && entry.canRestructure) {
-                                        { viewModel.toggleSelection(entry.id, location.id) }
-                                    } else {
-                                        { onOpenLocation(entry.id, location.id) }
+                            }
+                        } else {
+                            Column {
+                                orderedLocations.forEachIndexed { locationIndex, location ->
+                                    key(location.id) {
+                                        LocationRow(
+                                            entry = entry,
+                                            location = location,
+                                            locationIndex = locationIndex,
+                                            orderedLocationsCount = orderedLocations.size,
+                                            editMode = editMode,
+                                            state = state,
+                                            viewModel = viewModel,
+                                            onOpenLocation = onOpenLocation,
+                                        )
                                     }
-                                if (hasWarning) {
-                                    Card(
-                                        onClick = rowOnClick,
-                                        modifier =
-                                            Modifier.fillMaxWidth().testTag("home-location-${location.name}"),
-                                        colors =
-                                            CardDefaults.cardColors(
-                                                containerColor =
-                                                    MaterialTheme.colorScheme.errorContainer.copy(
-                                                        alpha = 0.4f,
-                                                    ),
-                                            ),
-                                        content = { rowContent() },
-                                    )
-                                } else {
-                                    FrostCard(
-                                        onClick = rowOnClick,
-                                        modifier =
-                                            Modifier.fillMaxWidth().testTag("home-location-${location.name}"),
-                                        content = { rowContent() },
-                                    )
                                 }
                             }
                         }
@@ -491,6 +452,142 @@ fun AllStoragesScreen(
                 showHouseholdPicker = false
                 onOpenSearch(householdId)
             },
+        )
+    }
+}
+
+// Modest drag-lift elevation (spec: "modest, match Frost styling") — named per
+// detekt's MagicNumber rule rather than inlined into the animateDpAsState call.
+private val ELEVATION_IDLE_DP = 0.dp
+private val ELEVATION_DRAGGING_DP = 6.dp
+
+/**
+ * One location row in a household group's edit-mode (or view-mode) list —
+ * pulled out of the per-household loop in [AllStoragesScreen] so both the
+ * drag-reorderable path (wrapped in `ReorderableColumn`, only when
+ * `editMode && entry.canRestructure`) and the plain path (every other case:
+ * view mode, or a Member's read-only group) render byte-for-byte the same
+ * checkbox/name/type/arrows row.
+ *
+ * [rowModifier] is where the drag library's `Modifier.longPressDraggableHandle()`
+ * (plus the drag-lift shadow) gets applied when this row is inside a
+ * `ReorderableColumn` — empty in the plain path, since there's nothing to drag.
+ */
+@Composable
+private fun LocationRow(
+    entry: HouseholdWithLocations,
+    location: LocationDto,
+    locationIndex: Int,
+    orderedLocationsCount: Int,
+    editMode: Boolean,
+    state: DrawerUiState,
+    viewModel: DrawerViewModel,
+    onOpenLocation: (householdId: Long, locationId: Long) -> Unit,
+    rowModifier: Modifier = Modifier,
+) {
+    val hasWarning = state.locationWarnings[location.id] == true
+
+    val rowContent: @Composable () -> Unit = {
+        Row(
+            modifier =
+                Modifier
+                    .padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp)
+                    .fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (editMode && entry.canRestructure) {
+                // Selection checkbox leads the row (user decision
+                // 2026-07-26): pick first, then act — the reorder
+                // arrows stay on the trailing edge.
+                Checkbox(
+                    checked = location.id in state.selected,
+                    onCheckedChange = {
+                        viewModel.toggleSelection(entry.id, location.id)
+                    },
+                )
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    location.name,
+                    style = MaterialTheme.typography.bodyLarge,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        storageTypeLabel(location.type),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    if (hasWarning) {
+                        Text(
+                            stringResource(R.string.all_storage_stock_warning),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
+                }
+            }
+            if (editMode && entry.canRestructure) {
+                IconButton(
+                    onClick = { viewModel.moveUp(entry.id, location.id) },
+                    enabled = locationIndex > 0,
+                ) {
+                    Icon(
+                        Icons.Default.ArrowUpward,
+                        contentDescription = stringResource(R.string.storage_move_up_cd),
+                    )
+                }
+                IconButton(
+                    onClick = { viewModel.moveDown(entry.id, location.id) },
+                    enabled = locationIndex < orderedLocationsCount - 1,
+                ) {
+                    Icon(
+                        Icons.Default.ArrowDownward,
+                        contentDescription = stringResource(R.string.storage_move_down_cd),
+                    )
+                }
+            }
+            // editMode && !entry.canRestructure: nothing renders here — a
+            // Member's row in edit mode has nothing restructure-capable to
+            // offer.
+        }
+    }
+    // In edit mode, tapping the row body toggles selection (matching
+    // StorageOverviewScreen's EditableRow), not navigation — same as
+    // the checkbox itself; a Member's row (no canRestructure) has no
+    // selection to toggle, so it keeps navigating even in edit mode.
+    // Long-press (which starts a drag, via rowModifier's
+    // longPressDraggableHandle) is a distinct gesture the library only
+    // consumes when it turns into an actual drag, so this click still fires
+    // normally on a plain tap.
+    val rowOnClick =
+        if (editMode && entry.canRestructure) {
+            { viewModel.toggleSelection(entry.id, location.id) }
+        } else {
+            { onOpenLocation(entry.id, location.id) }
+        }
+    if (hasWarning) {
+        Card(
+            onClick = rowOnClick,
+            modifier =
+                rowModifier.fillMaxWidth().testTag("home-location-${location.name}"),
+            colors =
+                CardDefaults.cardColors(
+                    containerColor =
+                        MaterialTheme.colorScheme.errorContainer.copy(
+                            alpha = 0.4f,
+                        ),
+                ),
+            content = { rowContent() },
+        )
+    } else {
+        FrostCard(
+            onClick = rowOnClick,
+            modifier =
+                rowModifier.fillMaxWidth().testTag("home-location-${location.name}"),
+            content = { rowContent() },
         )
     }
 }
