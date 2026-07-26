@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -444,15 +445,22 @@ fun ProductsPane(
                                         disabledContainerColor = FrostMoveAccent.copy(alpha = 0.4f),
                                         disabledContentColor = FrostOnMoveAccent.copy(alpha = 0.6f),
                                     ),
+                                // Wide enough that the longest translation ("Verplaatsen") still
+                                // wraps on word boundaries instead of falling back to a one-
+                                // character-per-line break, which reads as vertical text.
+                                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp),
                                 modifier =
                                     Modifier
                                         .fillMaxHeight()
-                                        .width(64.dp)
+                                        .width(88.dp)
                                         .semantics { contentDescription = moveDesc },
                             ) {
                                 Text(
                                     text = stringResource(R.string.products_pane_move_button),
+                                    style = MaterialTheme.typography.labelMedium,
                                     textAlign = TextAlign.Center,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
                                 )
                             }
                         }
