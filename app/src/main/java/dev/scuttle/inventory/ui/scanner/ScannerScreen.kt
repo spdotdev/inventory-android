@@ -295,13 +295,45 @@ private const val SCRIM_BASE_ALPHA = 0.65f
 private const val SCRIM_EDGE_ALPHA = 0.95f
 
 /**
+ * One twinkling dot near the scan line — [xFraction] positions it along the
+ * line's width (0f = left inset, 1f = right inset); [yJitterFraction] offsets
+ * it above/below the line (-1f..1f, scaled by [SPARKLE_JITTER_DP]); [phase] and
+ * [speedMultiplier] desync its fade-in/fade-out cycle from every other dot so
+ * they don't all twinkle in lockstep; [maxRadiusDp] varies dot size a little.
+ */
+private data class Sparkle(
+    val xFraction: Float,
+    val yJitterFraction: Float,
+    val phase: Float,
+    val speedMultiplier: Float,
+    val maxRadiusDp: Float,
+)
+
+private const val SPARKLE_COUNT = 16
+private const val SPARKLE_JITTER_DP = 10f
+private const val SPARKLE_MIN_SPEED = 0.6f
+private const val SPARKLE_SPEED_RANGE = 1.2f
+private const val SPARKLE_MIN_RADIUS_DP = 1f
+private const val SPARKLE_RADIUS_RANGE_DP = 1.8f
+private const val SPARKLE_CYCLE_MS = 5000
+
+// Fixed seed: the sparkle layout is stable across recompositions (each is
+// `remember`ed once) but doesn't need to vary between screen opens either.
+private const val SPARKLE_SEED = 20260726L
+private val SPARKLE_TWO_PI = (2 * Math.PI).toFloat()
+private const val SPARKLE_ALPHA_SCALE = 0.5f
+private const val SPARKLE_MIN_VISIBLE_ALPHA = 0.05f
+private const val SPARKLE_MAX_OPACITY = 0.85f
+
+/**
  * Viewfinder overlay in the classic scan-frame style (four rounded corner
  * brackets, no full square — the standard "scanner overlay" vector look),
- * with a thin red line fixed across the middle of the frame, pulsing its
- * opacity — the "sparkly" line this screen already had, kept as-is (not
- * thickened into a laser-glow bar) when Households' old ZXing scanner was
- * replaced by this shared screen. Purely decorative — ML Kit analyzes the
- * full frame — but it tells the user where to point.
+ * with a thin red line fixed across the middle of the frame plus small white
+ * dots twinkling near it (fading in and out on staggered cycles) — this is
+ * what "sparkly" meant on the old households ZXing scanner (its default
+ * possible-result-point markers), which a flat pulsing line alone didn't
+ * reproduce. Purely decorative — ML Kit analyzes the full frame — but it
+ * tells the user where to point and that scanning is actively happening.
  */
 @Composable
 private fun ScannerOverlay() {
@@ -317,6 +349,27 @@ private fun ScannerOverlay() {
             ),
         label = "laser-alpha",
     )
+    // 0f..1f, looping — each sparkle reads its own fade cycle off this via its
+    // own phase/speed rather than needing SPARKLE_COUNT separate animations.
+    val sparkleTime by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(animation = tween(durationMillis = SPARKLE_CYCLE_MS, easing = LinearEasing)),
+        label = "sparkle-time",
+    )
+    val sparkles =
+        remember {
+            val random = kotlin.random.Random(SPARKLE_SEED)
+            List(SPARKLE_COUNT) {
+                Sparkle(
+                    xFraction = random.nextFloat(),
+                    yJitterFraction = random.nextFloat() * 2f - 1f,
+                    phase = random.nextFloat(),
+                    speedMultiplier = SPARKLE_MIN_SPEED + random.nextFloat() * SPARKLE_SPEED_RANGE,
+                    maxRadiusDp = SPARKLE_MIN_RADIUS_DP + random.nextFloat() * SPARKLE_RADIUS_RANGE_DP,
+                )
+            }
+        }
 
     Canvas(modifier = Modifier.fillMaxSize()) {
         val side = size.minDimension * FRAME_SIDE_FRACTION
@@ -404,5 +457,26 @@ private fun ScannerOverlay() {
             end = Offset(frame.right - inset, lineY),
             strokeWidth = 3.dp.toPx(),
         )
+
+        // Twinkling dots scattered along the line, each fading in/out on its own
+        // staggered sine cycle (phase + speedMultiplier) so they glitter rather
+        // than pulse in unison.
+        val jitterPx = SPARKLE_JITTER_DP.dp.toPx()
+        val lineLeft = frame.left + inset
+        val lineWidth = frame.right - inset - lineLeft
+        sparkles.forEach { sparkle ->
+            val cycle = (sparkleTime * sparkle.speedMultiplier + sparkle.phase) % 1f
+            val sparkleAlpha = kotlin.math.sin(cycle * SPARKLE_TWO_PI) * SPARKLE_ALPHA_SCALE + SPARKLE_ALPHA_SCALE
+            if (sparkleAlpha < SPARKLE_MIN_VISIBLE_ALPHA) return@forEach
+            drawCircle(
+                color = Color.White.copy(alpha = sparkleAlpha * SPARKLE_MAX_OPACITY),
+                radius = sparkle.maxRadiusDp.dp.toPx() * sparkleAlpha,
+                center =
+                    Offset(
+                        x = lineLeft + lineWidth * sparkle.xFraction,
+                        y = lineY + sparkle.yJitterFraction * jitterPx,
+                    ),
+            )
+        }
     }
 }
