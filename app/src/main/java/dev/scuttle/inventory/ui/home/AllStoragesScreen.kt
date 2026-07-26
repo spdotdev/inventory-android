@@ -26,8 +26,6 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
@@ -417,24 +415,20 @@ private fun LocationRow(
         }
     }
     val rowOnClick = { onOpenLocation(entry.id, location.id) }
-    if (hasWarning) {
-        Card(
-            onClick = rowOnClick,
-            modifier = Modifier.fillMaxWidth().testTag("home-location-${location.name}"),
-            colors =
-                CardDefaults.cardColors(
-                    containerColor =
-                        MaterialTheme.colorScheme.errorContainer.copy(
-                            alpha = 0.4f,
-                        ),
-                ),
-            content = { rowContent() },
-        )
-    } else {
-        FrostCard(
-            onClick = rowOnClick,
-            modifier = Modifier.fillMaxWidth().testTag("home-location-${location.name}"),
-            content = { rowContent() },
-        )
-    }
+    // Warning rows keep FrostCard's geometry (corner radius + border) and differ by
+    // tint only — a plain Material Card here rendered visibly smaller than its
+    // siblings (smaller corner radius, no hairline border).
+    FrostCard(
+        onClick = rowOnClick,
+        containerColor =
+            if (hasWarning) {
+                MaterialTheme.colorScheme.errorContainer.copy(alpha = WARNING_CONTAINER_ALPHA)
+            } else {
+                null
+            },
+        modifier = Modifier.fillMaxWidth().testTag("home-location-${location.name}"),
+        content = { rowContent() },
+    )
 }
+
+private const val WARNING_CONTAINER_ALPHA = 0.4f

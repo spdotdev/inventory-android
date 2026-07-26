@@ -27,17 +27,21 @@ private val FrostCardShape = RoundedCornerShape(22.dp)
 /**
  * Frost's signature translucent card: low-opacity tinted background + hairline border on
  * generously rounded corners (frost-app.html `.card`/`.rcard`/`.fcard`/`.codecard`). Use this
- * instead of the default Material `Card` for list/info cards; leave semantically-colored cards
- * (e.g. warning containers) on plain `Card` since they need to stand out from the Frost tint.
+ * instead of the default Material `Card` for list/info cards. Semantically-colored cards
+ * (e.g. warning containers) pass [containerColor] to keep the Frost geometry (corner radius +
+ * hairline border) while standing out by tint — a plain Material `Card` next to FrostCards
+ * reads as a differently-sized row (smaller radius, no border), which is exactly the bug that
+ * motivated this parameter (2026-07-26, storage list warning rows).
  */
 @Composable
 fun FrostCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
+    containerColor: Color? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = LocalFrostCardColors.current
-    val cardColors = CardDefaults.cardColors(containerColor = colors.container)
+    val cardColors = CardDefaults.cardColors(containerColor = containerColor ?: colors.container)
     val cardElevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     val cardBorder = BorderStroke(1.dp, colors.border)
     if (onClick != null) {
