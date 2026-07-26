@@ -156,6 +156,18 @@ its own `"missing_items_reminder"` notification channel (separate from
 `"app_updates"`), a device-local on/off + time preference in Settings, and a
 WorkManager job polling the new `GET /api/v1/missing-items/count` endpoint. Spec:
 `inventory-laravel/docs/superpowers/specs/2026-07-24-daily-missing-items-reminder-design.md`.
+**Notification feed unlocked 2026-07-26** (user decision, narrow carve-out from the
+"no app-facing activity/audit log" cut): the feed (`inventory_notifications`) is
+user-addressed and deliberately **coarse** — it is not an audit trail, and the
+MCP-only activity log (laravel-side, server-only) remains fully app-invisible;
+nothing from it is ever surfaced here. New channels: `low_stock_reminder`,
+`household_events` (member joined + role changes), `household_activity` (digest),
+`weekly_summary`, plus an on/off toggle added to the existing `app_updates` channel.
+LOCKED defaults: low-stock reminder on at 18:00, household events on, activity digest
+off, weekly summary off (Sunday 18:00 when enabled), app updates on. Feed and
+low-stock notifications do not deep-link (open the app at its default entry point);
+only the missing-items reminder deep-links. Spec:
+`inventory-laravel/docs/superpowers/specs/2026-07-26-notification-feed-design.md`.
 **Phase 2 unlocked 2026-07-10** (user decision) and since shipped: barcode scanning,
 the low-stock "running low" view, filter/sort, household color/icon theming, and the
 live-updates client — see `ROADMAP.md` / `BACKLOG.md`.
