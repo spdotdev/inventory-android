@@ -496,6 +496,8 @@ fun ProductsPane(
                 text = stringResource(R.string.products_pane_swipe_hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
             )
         }
 
