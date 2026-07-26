@@ -339,6 +339,24 @@ fun ProductsPane(
                             modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
                             verticalAlignment = Alignment.Top,
                         ) {
+                            // Mandatory is signalled by a thin edge strip instead of a text
+                            // label (user decision 2026-07-26, saving row height): green =
+                            // mandatory and in stock, error red = mandatory and at zero.
+                            if (product.is_mandatory == true) {
+                                Box(
+                                    modifier =
+                                        Modifier
+                                            .width(MANDATORY_STRIP_WIDTH)
+                                            .fillMaxHeight()
+                                            .background(
+                                                if (isMandatoryWarning) {
+                                                    MaterialTheme.colorScheme.error
+                                                } else {
+                                                    MandatoryInStockGreen
+                                                },
+                                            ),
+                                )
+                            }
                             Column(
                                 modifier =
                                     Modifier
@@ -359,27 +377,6 @@ fun ProductsPane(
                                     overflow = TextOverflow.Ellipsis,
                                     modifier = Modifier.fillMaxWidth(),
                                 )
-                                if (!product.code.isNullOrBlank()) {
-                                    Text(
-                                        text = product.code,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                }
-                                if (product.is_mandatory == true) {
-                                    Text(
-                                        text = stringResource(R.string.products_pane_mandatory_label),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color =
-                                            if (isMandatoryWarning) {
-                                                MaterialTheme.colorScheme.error
-                                            } else {
-                                                MaterialTheme.colorScheme.primary
-                                            },
-                                    )
-                                }
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -530,3 +527,8 @@ fun ProductsPane(
         )
     }
 }
+
+private val MANDATORY_STRIP_WIDTH = 4.dp
+
+/** No green exists in the Frost scheme; matches Material's standard success green. */
+private val MandatoryInStockGreen = Color(0xFF2E7D32)

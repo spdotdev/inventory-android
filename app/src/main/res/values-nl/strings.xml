@@ -220,7 +220,6 @@
 
     <!-- Products pane -->
     <string name="products_pane_empty">Nog geen producten op deze plank. Tik op + om er een toe te voegen.</string>
-    <string name="products_pane_mandatory_label">Verplicht</string>
     <string name="products_pane_decrease_cd">Hoeveelheid van %s verlagen</string>
     <string name="products_pane_increase_cd">Hoeveelheid van %s verhogen</string>
     <string name="products_pane_move_cd">%s verplaatsen</string>
