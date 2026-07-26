@@ -23,8 +23,9 @@ import org.junit.Test
 /**
  * The regression test for the bug that started Task 4: the shelves list used to
  * bulk-delete checked shelves with NO confirmation dialog at all. This now drives
- * the full edit-mode flow — enter edit mode, select, tap Delete, and the delete
- * only actually happens once the strategy/confirm dialog's own Delete button is
+ * the full flow on the dedicated ManageShelvesScreen (reached via the gear icon,
+ * always in "edit mode" — no toggle) — select, tap Delete, and the delete only
+ * actually happens once the strategy/confirm dialog's own Delete button is
  * tapped. If a future change makes the top bar's Delete button call confirmDelete()
  * directly instead of requestDelete(), this test breaks because the dialog step
  * below would never appear before the shelf disappears.
@@ -62,8 +63,9 @@ class DeleteShelfFlowTest : FlowTestBase() {
             // Both shelves visible as tabs (default view)
             waitUntilAtLeastOneExists(hasText("Top shelf"), timeoutMillis = 5_000)
 
-            // Tap the pencil ("Edit shelves") → edit mode, forced into the list view
-            onNodeWithContentDescription("Edit shelves").performClick()
+            // Gear → ManageShelvesScreen (always-on management, no edit-mode toggle).
+            mockServer.route("/households/1/locations/10/shelves", fixture("shelves_two.json"))
+            onNodeWithContentDescription("Manage shelves").performClick()
             waitForIdle()
 
             // Wait for the edit-mode LIST row specifically (shelf-row-100), not just

@@ -66,13 +66,15 @@ class DeleteShelfStrategyFlowTest : FlowTestBase() {
 
             waitUntilAtLeastOneExists(hasText("Top shelf"), timeoutMillis = 5_000)
 
-            // Edit mode, select "Top shelf" (the only shelf — no other shelf exists
-            // to move products to, so this also proves "move" is never offered when
-            // there is nowhere to move to — guard (a) in DeleteStrategyDialog).
-            onNodeWithContentDescription("Edit shelves").performClick()
+            // Gear → ManageShelvesScreen, select "Top shelf" (the only shelf — no
+            // other shelf exists to move products to, so this also proves "move" is
+            // never offered when there is nowhere to move to — guard (a) in
+            // DeleteStrategyDialog).
+            mockServer.route("/households/1/locations/10/shelves", fixture("shelves_one_with_products.json"))
+            onNodeWithContentDescription("Manage shelves").performClick()
             waitForIdle()
-            // Wait for the edit-mode LIST row specifically, not just the text (which
-            // also exists on the tab this view just replaced) — see DeleteShelfFlowTest
+            // Wait for the LIST row specifically, not just the text (which also
+            // exists on the tab this view just replaced) — see DeleteShelfFlowTest
             // for the full race this closes.
             waitUntilAtLeastOneExists(hasTestTag("shelf-row-100"), timeoutMillis = 5_000)
             // clickNameArea(), not performClick(): see FlowTestBase.clickNameArea's
@@ -153,11 +155,12 @@ class DeleteShelfStrategyFlowTest : FlowTestBase() {
 
             waitUntilAtLeastOneExists(hasText("Top shelf"), timeoutMillis = 5_000)
 
-            onNodeWithContentDescription("Edit shelves").performClick()
+            mockServer.route("/households/1/locations/10/shelves", fixture("shelves_with_unsorted.json"))
+            onNodeWithContentDescription("Manage shelves").performClick()
             waitForIdle()
-            // Wait for the edit-mode LIST rows specifically, not just their text
-            // (which also exists on the tabs this view just replaced) — see
-            // DeleteShelfFlowTest for the full race this closes.
+            // Wait for the LIST rows specifically, not just their text (which also
+            // exists on the tabs this view just replaced) — see DeleteShelfFlowTest
+            // for the full race this closes.
             waitUntilAtLeastOneExists(hasTestTag("shelf-row-900"), timeoutMillis = 5_000)
 
             // Tapping the system shelf must be a no-op selection-wise: the Delete
@@ -234,10 +237,11 @@ class DeleteShelfStrategyFlowTest : FlowTestBase() {
             // products" this test proves Undo returns to.
             waitUntilAtLeastOneExists(hasText("Milk"), timeoutMillis = 5_000)
 
-            onNodeWithContentDescription("Edit shelves").performClick()
+            mockServer.route("/households/1/locations/10/shelves", fixture("shelves_one_with_products.json"))
+            onNodeWithContentDescription("Manage shelves").performClick()
             waitForIdle()
-            // Wait for the edit-mode LIST row specifically, not just the text (which
-            // also exists on the tab this view just replaced) — see DeleteShelfFlowTest
+            // Wait for the LIST row specifically, not just the text (which also
+            // exists on the tab this view just replaced) — see DeleteShelfFlowTest
             // for the full race this closes.
             waitUntilAtLeastOneExists(hasTestTag("shelf-row-100"), timeoutMillis = 5_000)
             // clickNameArea() — see FlowTestBase's doc for why performClick()'s
@@ -310,11 +314,12 @@ class DeleteShelfStrategyFlowTest : FlowTestBase() {
 
             waitUntilAtLeastOneExists(hasText("Top shelf"), timeoutMillis = 5_000)
 
-            onNodeWithContentDescription("Edit shelves").performClick()
+            mockServer.route("/households/1/locations/10/shelves", fixture("shelves_two_with_products.json"))
+            onNodeWithContentDescription("Manage shelves").performClick()
             waitForIdle()
-            // Wait for the edit-mode LIST rows specifically, not just their text
-            // (which also exists on the tabs this view just replaced) — see
-            // DeleteShelfFlowTest for the full race this closes.
+            // Wait for the LIST rows specifically, not just their text (which also
+            // exists on the tabs this view just replaced) — see DeleteShelfFlowTest
+            // for the full race this closes.
             waitUntilAtLeastOneExists(hasTestTag("shelf-row-100"), timeoutMillis = 5_000)
             waitUntilAtLeastOneExists(hasTestTag("shelf-row-101"), timeoutMillis = 5_000)
 

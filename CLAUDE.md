@@ -133,10 +133,11 @@ bar's own visibility/selected state for the Scan tab is resolved from the *mode*
 argument, not the route alone — `scannerRouteIsTheBottomBarTab()`; matching the bare
 route would show the bar (with Scan selected) over ADD mode's camera too.
 
-**Editing the hierarchy** lives behind a pencil (edit mode) on the shelves list and on
-Storage overview's own locations list — never inside Settings/More itself. There, edit
-mode turns each row into a checkbox (multi-select → delete-strategy dialog) plus a
-rename pencil and up/down reorder buttons; the row body itself only toggles selection.
+**Editing the hierarchy** no longer lives behind an inline pencil anywhere — every level
+(locations, shelves) now routes to a dedicated manage screen instead. There, whichever
+form that screen takes (inline edit-mode toggle, or an always-on dedicated page — see
+below), each row is a checkbox (multi-select → delete-strategy dialog) plus a rename
+pencil and up/down reorder buttons; the row body itself only toggles selection.
 **Home/Storage tab (AllStoragesScreen) has no edit mode at all** (storage-tab rework,
 2026-07-26): it's a clean, browse-only list spanning every household — tapping a row
 always navigates straight to that location. A top-bar **gear** icon and a bottom-right
@@ -145,8 +146,23 @@ Storage overview screen rather than editing inline: the gear opens Storage overv
 directly (one household) or a household picker first (more than one) for
 rename/reorder/delete; the FAB opens the same add-storage sheet Storage overview has
 (name + type), routed to the right household the same way, then calls
-`DrawerViewModel.createLocation()` and refreshes. Households (no multi-select or
-reorder) dropped their pencil 2026-07-26: tapping a household row always opens the full
+`DrawerViewModel.createLocation()` and refreshes. Storage overview itself still has an
+inline edit-mode pencil (its own top-bar Edit icon toggles the checkbox/rename/reorder
+UI in place) — the storage-tab rework only moved the ENTRY POINT off Home, it didn't
+change Storage overview's own edit-mode shape.
+**Shelves moved the same way (2026-07-26), one step further**: LocationDetailScreen
+(the shelves screen) dropped its own edit-mode pencil and add-shelf affordance
+entirely — its top-bar **gear** icon (`shelves_manage_cd`) now routes to a brand new,
+dedicated `ManageShelvesScreen` (`Routes.SHELVES_MANAGE`, carrying `householdId` +
+`locationId`). Unlike Storage overview, this new screen has no toggle at all — it IS
+the edit mode, always on, for as long as it's on screen; there is nothing to switch
+back out of before leaving (navigating back is the only way out). It reuses
+`ShelvesViewModel` verbatim (its own Hilt-scoped instance) for rename/reorder/
+delete-through-`DeleteStrategyDialog`/undo and the existing add-shelf bottom sheet —
+none of that business logic moved or changed, only which screen renders it.
+LocationDetailScreen itself keeps its tabs/list view toggle and product FABs
+untouched; only shelf management left it. Households (no multi-select or reorder)
+dropped their pencil 2026-07-26: tapping a household row always opens the full
 household edit page directly (name, colour/icon theme, and a danger zone offering
 "Leave" plus, Owner-only, "Delete household") — the edit page is role-aware, so a Member
 sees only what they can do. Deleting a non-empty shelf or location always asks what to

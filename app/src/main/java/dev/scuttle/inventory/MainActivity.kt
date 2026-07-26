@@ -76,6 +76,7 @@ import dev.scuttle.inventory.ui.households.HouseholdsScreen
 import dev.scuttle.inventory.ui.households.HouseholdsViewModel
 import dev.scuttle.inventory.ui.invite.InviteScreen
 import dev.scuttle.inventory.ui.location.LocationDetailScreen
+import dev.scuttle.inventory.ui.location.ManageShelvesScreen
 import dev.scuttle.inventory.ui.members.MembersScreen
 import dev.scuttle.inventory.ui.missing.MissingItemsScreen
 import dev.scuttle.inventory.ui.products.ProductDetailScreen
@@ -363,6 +364,7 @@ private object Routes {
     const val SEARCH = "search/{householdId}?query={query}"
     const val INVITE = "invite/{householdId}/{householdName}"
     const val LOCATION = "location/{householdId}/{locationId}"
+    const val SHELVES_MANAGE = "storage/{householdId}/location/{locationId}/shelves/manage"
     const val PRODUCT_DETAIL = "product-detail/{householdId}/{shelfId}/{productId}"
 
     // GAP4-L8: `fromDrawer` distinguishes the bottom-tab root entry (tab click, no back
@@ -886,6 +888,29 @@ private fun InventoryNavHost(
                     onOpenScanner = { navController.navigate(Routes.scanner(ScannerMode.ADD)) },
                     scannedCode = scannedCode,
                     onScannedCodeConsumed = { entry.savedStateHandle["scanned_code"] = null },
+                    onOpenManageShelves = { hhId, locId ->
+                        // Built inline (no Routes helper) — a named helper here would
+                        // push Routes' function count over detekt's TooManyFunctions
+                        // threshold; same string shape as Routes.SHELVES_MANAGE.
+                        navController.navigate("storage/$hhId/location/$locId/shelves/manage")
+                    },
+                )
+            }
+
+            composable(
+                route = Routes.SHELVES_MANAGE,
+                arguments =
+                    listOf(
+                        navArgument("householdId") { type = NavType.LongType },
+                        navArgument("locationId") { type = NavType.LongType },
+                    ),
+            ) { entry ->
+                val householdId = entry.arguments?.getLong("householdId") ?: return@composable
+                val locationId = entry.arguments?.getLong("locationId") ?: return@composable
+                ManageShelvesScreen(
+                    householdId = householdId,
+                    locationId = locationId,
+                    onBack = { navController.popBackStack() },
                 )
             }
 

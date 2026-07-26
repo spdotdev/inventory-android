@@ -27,11 +27,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.QrCodeScanner
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
@@ -44,13 +42,10 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.SmallFloatingActionButton
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -72,28 +67,19 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import dev.scuttle.inventory.R
-import dev.scuttle.inventory.data.dto.ShelfDto
 import dev.scuttle.inventory.ui.app.DrawerViewModel
 import dev.scuttle.inventory.ui.common.ErrorRetry
 import dev.scuttle.inventory.ui.common.shelfDisplayName
-import dev.scuttle.inventory.ui.hierarchy.DeleteStrategyDialog
 import dev.scuttle.inventory.ui.hierarchy.EditableRow
-import dev.scuttle.inventory.ui.hierarchy.UndoOutcome
-import dev.scuttle.inventory.ui.hierarchy.shelfStrategyOptions
 import dev.scuttle.inventory.ui.products.ProductsPane
 import dev.scuttle.inventory.ui.products.ProductsViewModel
 import dev.scuttle.inventory.ui.shelves.ShelvesViewModel
 import kotlinx.coroutines.launch
 import androidx.compose.material.icons.filled.Tab as TabViewIcon
-
-/** Matches the server-side shelf name column limit (same cap as ShelvesViewModel.onNewNameChange). */
-private const val MAX_SHELF_NAME_LENGTH = 50
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -107,6 +93,7 @@ fun LocationDetailScreen(
     onOpenScanner: () -> Unit = {},
     scannedCode: String? = null,
     onScannedCodeConsumed: () -> Unit = {},
+    onOpenManageShelves: (householdId: Long, locationId: Long) -> Unit = { _, _ -> },
     shelvesViewModel: ShelvesViewModel = hiltViewModel(),
 ) {
     val state by shelvesViewModel.state.collectAsState()
@@ -114,7 +101,6 @@ fun LocationDetailScreen(
     val pagerState = rememberPagerState(pageCount = { state.shelves.size })
     val currentPage = pagerState.currentPage.coerceAtMost((state.shelves.size - 1).coerceAtLeast(0))
     val currentShelfId = state.shelves.getOrNull(currentPage)?.id
-    val nonSystemShelfCount = state.shelves.count { !it.is_system }
 
     // The location's own name for the top-bar title (ALSO FIX, final review): this
     // screen used to render the generic "Shelves" title always, even though the
@@ -130,11 +116,8 @@ fun LocationDetailScreen(
             ?.firstOrNull { it.id == locationId }
             ?.name
 
-    var showAddShelfSheet by rememberSaveable { mutableStateOf(false) }
     var showAddProductSheet by rememberSaveable { mutableStateOf(false) }
     var productsRefreshKey by remember { mutableIntStateOf(0) }
-    var renamingShelf by remember { mutableStateOf<ShelfDto?>(null) }
-    var renameText by remember { mutableStateOf("") }
     val keyboardController = LocalSoftwareKeyboardController.current
 
     // Track per-shelf warning state so we can roll up to location level
@@ -157,8 +140,9 @@ fun LocationDetailScreen(
         }
     }
 
-    // Hosts one-shot action errors from the ProductsPane(s) below, plus the
-    // delete-undo snackbar (LaunchedEffect further down).
+    // Hosts one-shot action errors from the ProductsPane(s) below. Shelf
+    // rename/reorder/delete (and their own undo snackbar) now live entirely on
+    // ManageShelvesScreen, reached via the top bar's gear icon.
     val snackbarHostState = remember { SnackbarHostState() }
 
     val statusBarInsets = WindowInsets.statusBars
@@ -170,75 +154,46 @@ fun LocationDetailScreen(
             TopAppBar(
                 windowInsets = statusBarInsets,
                 title = {
-                    if (state.editMode && state.selected.isNotEmpty()) {
-                        Text(stringResource(R.string.location_selected_count, state.selected.size))
-                    } else {
-                        Text(locationName ?: stringResource(R.string.location_shelves_title))
-                    }
+                    Text(locationName ?: stringResource(R.string.location_shelves_title))
                 },
                 navigationIcon = {
-                    if (state.editMode) {
-                        TextButton(
-                            onClick = shelvesViewModel::exitEditMode,
-                        ) { Text(stringResource(R.string.action_cancel)) }
-                    } else {
-                        IconButton(onClick = onBack) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = stringResource(R.string.action_back),
-                            )
-                        }
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.action_back),
+                        )
                     }
                 },
                 actions = {
-                    if (state.editMode) {
-                        Button(
-                            // requestDelete() only OPENS the strategy dialog — the actual
-                            // delete happens in confirmDelete(), wired to the dialog below.
-                            // This button must never call confirmDelete() directly: that
-                            // would be exactly the no-confirmation bug this task replaces.
-                            onClick = shelvesViewModel::requestDelete,
-                            enabled = state.selected.isNotEmpty() && !state.loading,
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                            modifier = Modifier.padding(end = 8.dp),
-                        ) {
-                            Text(
-                                if (state.selected.isEmpty()) {
-                                    stringResource(R.string.location_delete_button)
+                    IconButton(onClick = shelvesViewModel::toggleListView) {
+                        Icon(
+                            imageVector =
+                                if (state.listView) {
+                                    Icons.Default.TabViewIcon
                                 } else {
-                                    stringResource(R.string.location_delete_count_button, state.selected.size)
+                                    Icons.AutoMirrored.Filled.ViewList
                                 },
-                            )
-                        }
-                    } else {
-                        IconButton(onClick = shelvesViewModel::toggleListView) {
+                            contentDescription = stringResource(R.string.location_view_toggle_cd),
+                        )
+                    }
+                    // Shelf management (rename/reorder/delete/add) moved off this
+                    // screen entirely onto its own always-on ManageShelvesScreen —
+                    // see CLAUDE.md's "Editing the hierarchy" paragraph. Gated on
+                    // canRestructure the same way the old pencil was, so a Member
+                    // never sees an affordance the server would 403.
+                    if (state.canRestructure) {
+                        IconButton(onClick = { onOpenManageShelves(householdId, locationId) }) {
                             Icon(
-                                imageVector =
-                                    if (state.listView) {
-                                        Icons.Default.TabViewIcon
-                                    } else {
-                                        Icons.AutoMirrored.Filled.ViewList
-                                    },
-                                contentDescription = stringResource(R.string.location_view_toggle_cd),
+                                Icons.Default.Settings,
+                                contentDescription = stringResource(R.string.shelves_manage_cd),
                             )
-                        }
-                        if (state.shelves.isNotEmpty() && state.canRestructure) {
-                            IconButton(onClick = shelvesViewModel::enterEditMode) {
-                                Icon(
-                                    Icons.Default.Edit,
-                                    contentDescription = stringResource(R.string.location_edit_shelves_cd),
-                                )
-                            }
-                        }
-                        IconButton(onClick = { showAddShelfSheet = true }) {
-                            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.location_add_shelf_cd))
                         }
                     }
                 },
             )
         },
         floatingActionButton = {
-            if (!state.editMode && currentShelfId != null) {
+            if (currentShelfId != null) {
                 Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     SmallFloatingActionButton(onClick = onOpenScanner) {
                         Icon(
@@ -295,11 +250,12 @@ fun LocationDetailScreen(
                         )
                     }
                 } else if (state.listView) {
-                    // Edit mode always renders here (enterEditMode() forces listView),
-                    // since a ScrollableTabRow cannot host reorder buttons or an inline
-                    // rename target. Outside edit mode this is just an alternative,
-                    // full-name shelf selector — tapping a row drills back into the
-                    // tabs+pager view centered on that shelf.
+                    // This is now always the PLAIN (non-edit) alternative, full-name
+                    // shelf selector — tapping a row drills back into the tabs+pager
+                    // view centered on that shelf. Rename/reorder/delete/add live
+                    // entirely on ManageShelvesScreen now (see the gear icon above),
+                    // so EditableRow is used here with editMode permanently false —
+                    // it never renders the checkbox/pencil/reorder affordances.
                     LazyColumn(
                         modifier =
                             Modifier
@@ -311,34 +267,24 @@ fun LocationDetailScreen(
                         itemsIndexed(state.shelves, key = { _, shelf -> shelf.id }) { index, shelf ->
                             EditableRow(
                                 name = shelfDisplayName(shelf),
-                                editMode = state.editMode,
+                                editMode = false,
                                 isSystem = shelf.is_system,
-                                selected = shelf.id in state.selected,
-                                canMoveUp = !shelf.is_system && index > 0,
-                                canMoveDown = !shelf.is_system && index < nonSystemShelfCount - 1,
-                                // Selecting doesn't touch the network, but rename/reorder each
-                                // fire their own request immediately — held off while another
-                                // mutation is in flight so two don't race each other.
+                                selected = false,
+                                canMoveUp = false,
+                                canMoveDown = false,
                                 actionsEnabled = !state.loading,
-                                // A stable, edit-mode-only handle a driving test can wait on
-                                // instead of racing this row's name text against the plain
-                                // tab/pager rendering it replaces (same shape as StorageOverviewScreen's
-                                // location-row-<id>).
+                                // A stable handle a driving test can wait on instead of
+                                // racing this row's name text against the plain
+                                // tab/pager rendering it replaces (same shape as
+                                // StorageOverviewScreen's location-row-<id>).
                                 modifier = Modifier.testTag("shelf-row-${shelf.id}"),
                                 onClick = {
-                                    if (state.editMode) {
-                                        shelvesViewModel.toggleSelection(shelf.id)
-                                    } else {
-                                        scope.launch { pagerState.scrollToPage(index) }
-                                        shelvesViewModel.toggleListView()
-                                    }
+                                    scope.launch { pagerState.scrollToPage(index) }
+                                    shelvesViewModel.toggleListView()
                                 },
-                                onRename = {
-                                    renamingShelf = shelf
-                                    renameText = shelf.name
-                                },
-                                onMoveUp = { shelvesViewModel.moveUp(shelf.id) },
-                                onMoveDown = { shelvesViewModel.moveDown(shelf.id) },
+                                onRename = {},
+                                onMoveUp = {},
+                                onMoveDown = {},
                             )
                         }
                     }
@@ -419,131 +365,9 @@ fun LocationDetailScreen(
         } // end PullToRefreshBox
     }
 
-    // The delete-strategy dialog for the current selection. Non-null pendingDelete
-    // is the ONLY thing that shows this dialog, and confirmDelete() (the only path
-    // that actually deletes) is reachable exclusively from its confirm button — the
-    // top bar's Delete button above only ever calls requestDelete().
-    state.pendingDelete?.let { plan ->
-        DeleteStrategyDialog(
-            plan = plan,
-            options = shelfStrategyOptions(),
-            targets = state.moveTargets,
-            onDismiss = shelvesViewModel::cancelDelete,
-            onConfirm = { strategy, targetId -> shelvesViewModel.confirmDelete(strategy, targetId) },
-        )
-    }
-
-    // Undo snackbar. A snackbar with an action, rather than SnackbarErrorEffect
-    // (which is for one-shot errors and has no action slot).
-    val undoLabel = stringResource(R.string.delete_undo)
-    val deletedMessage = stringResource(R.string.shelves_deleted)
-    LaunchedEffect(state.lastBatchId) {
-        if (state.lastBatchId == null) return@LaunchedEffect
-        val result =
-            snackbarHostState.showSnackbar(
-                message = deletedMessage,
-                actionLabel = undoLabel,
-                duration = SnackbarDuration.Long,
-            )
-        if (result == SnackbarResult.ActionPerformed) {
-            shelvesViewModel.undoDelete()
-        } else {
-            shelvesViewModel.consumeLastBatch()
-        }
-    }
-
-    // The undo OUTCOME, as its own one-shot snackbar — distinct from the "deleted,
-    // [Undo]" snackbar above. A 409 here (already restored elsewhere, or past the
-    // undo window) used to fall through to a generic error; this shows the specific
-    // message instead (final review, ALSO FIX).
-    val undoneMessage = stringResource(R.string.delete_undone)
-    val undoFailedMessage = stringResource(R.string.delete_undo_failed)
-    LaunchedEffect(state.undoResult) {
-        val message =
-            when (state.undoResult) {
-                UndoOutcome.SUCCESS -> undoneMessage
-                UndoOutcome.FAILURE -> undoFailedMessage
-                null -> return@LaunchedEffect
-            }
-        snackbarHostState.showSnackbar(message)
-        shelvesViewModel.consumeUndoResult()
-    }
-
-    renamingShelf?.let { shelf ->
-        AlertDialog(
-            onDismissRequest = { renamingShelf = null },
-            title = { Text(stringResource(R.string.shelf_rename_title), modifier = Modifier.semantics { heading() }) },
-            text = {
-                OutlinedTextField(
-                    value = renameText,
-                    onValueChange = { renameText = it.take(MAX_SHELF_NAME_LENGTH) },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, imeAction = ImeAction.Done),
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        shelvesViewModel.rename(shelf.id, renameText)
-                        renamingShelf = null
-                    },
-                    enabled = renameText.isNotBlank(),
-                ) { Text(stringResource(R.string.action_save)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { renamingShelf = null }) { Text(stringResource(R.string.action_cancel)) }
-            },
-        )
-    }
-
-    if (showAddShelfSheet) {
-        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        ModalBottomSheet(
-            onDismissRequest = { showAddShelfSheet = false },
-            sheetState = sheetState,
-        ) {
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp)
-                        .padding(bottom = 32.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                Text(text = stringResource(R.string.add_shelf_sheet_title), style = MaterialTheme.typography.titleLarge)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    OutlinedTextField(
-                        value = state.newName,
-                        onValueChange = shelvesViewModel::onNewNameChange,
-                        label = { Text(stringResource(R.string.add_shelf_field_name)) },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, imeAction = ImeAction.Done),
-                        keyboardActions =
-                            KeyboardActions(onDone = {
-                                keyboardController?.hide()
-                                shelvesViewModel.create()
-                                showAddShelfSheet = false
-                            }),
-                        modifier = Modifier.weight(1f),
-                    )
-                    Button(
-                        onClick = {
-                            keyboardController?.hide()
-                            shelvesViewModel.create()
-                            showAddShelfSheet = false
-                        },
-                        enabled = !state.loading && state.newName.isNotBlank(),
-                    ) {
-                        Text(stringResource(R.string.action_add))
-                    }
-                }
-                Spacer(Modifier.height(0.dp))
-            }
-        }
-    }
+    // Shelf rename/reorder/delete (strategy dialog + undo snackbar) and add-shelf
+    // moved off this screen entirely onto ManageShelvesScreen — see the gear icon
+    // in the top bar above and CLAUDE.md's "Editing the hierarchy" paragraph.
 
     if (scannedCode != null && currentShelfId != null) {
         val activePaneViewModel: ProductsViewModel = hiltViewModel(key = "products-$currentShelfId")

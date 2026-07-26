@@ -46,6 +46,11 @@ class AddShelfFlowTest : FlowTestBase() {
             onNodeWithTag("home-location-Fridge").performClick()
             waitForIdle()
 
+            // Gear → ManageShelvesScreen (shelf management moved off LocationDetailScreen).
+            mockServer.route("/households/1/locations/10/shelves", fixture("shelves_one.json"))
+            onNodeWithContentDescription("Manage shelves").performClick()
+            waitForIdle()
+
             // Tap "Add shelf" FAB → fill name → submit
             mockServer.route("/households/1/locations/10/shelves", fixture("shelf_created.json"))
             mockServer.route("/households/1/locations/10/shelves", fixture("shelves_two.json"))
