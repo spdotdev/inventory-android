@@ -14,12 +14,6 @@ import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -42,10 +36,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
@@ -294,6 +291,14 @@ private const val BRACKET_ARM_FRACTION = 0.18f
 private const val SCRIM_BASE_ALPHA = 0.65f
 private const val SCRIM_EDGE_ALPHA = 0.95f
 
+// One full up-then-down pulse cycle for the laser line's opacity.
+private const val LASER_PULSE_PERIOD_MS = 1200L
+private const val LASER_ALPHA_MIN = 0.25f
+private const val LASER_ALPHA_RANGE = 0.30f
+private const val NANOS_PER_MILLI = 1_000_000L
+private const val TRIANGLE_MIDPOINT = 0.5f
+private const val TRIANGLE_SLOPE = 2f
+
 /**
  * Viewfinder overlay in the classic scan-frame style (four rounded corner
  * brackets, no full square — the standard "scanner overlay" vector look),
@@ -302,21 +307,33 @@ private const val SCRIM_EDGE_ALPHA = 0.95f
  * thickened into a laser-glow bar) when Households' old ZXing scanner was
  * replaced by this shared screen. Purely decorative — ML Kit analyzes the
  * full frame — but it tells the user where to point.
+ *
+ * Driven by a manual [withFrameNanos] loop rather than
+ * [androidx.compose.animation.core.rememberInfiniteTransition] on purpose:
+ * that API rides Android's ValueAnimator clock, which respects the
+ * "Animator duration scale" developer setting — when that's off, EVERY
+ * Compose animation snaps straight to its end value with no visible motion.
+ * The old households scanner (ZXing's default CaptureActivity) never hit
+ * this because it drove its laser via a hand-rolled
+ * `postInvalidateDelayed` loop, not the animation framework — this mirrors
+ * that approach so the line pulses regardless of that device setting.
  */
 @Composable
 private fun ScannerOverlay() {
-    val transition = rememberInfiniteTransition(label = "laser")
-    // Kept translucent on purpose — the line guides without hiding the barcode.
-    val laserAlpha by transition.animateFloat(
-        initialValue = 0.25f,
-        targetValue = 0.55f,
-        animationSpec =
-            infiniteRepeatable(
-                animation = tween(durationMillis = 600, easing = LinearEasing),
-                repeatMode = RepeatMode.Reverse,
-            ),
-        label = "laser-alpha",
-    )
+    var laserAlpha by remember { mutableFloatStateOf(LASER_ALPHA_MIN) }
+    LaunchedEffect(Unit) {
+        var startNanos = -1L
+        while (true) {
+            withFrameNanos { nowNanos ->
+                if (startNanos < 0) startNanos = nowNanos
+                val elapsedMs = (nowNanos - startNanos) / NANOS_PER_MILLI
+                val t = (elapsedMs % LASER_PULSE_PERIOD_MS).toFloat() / LASER_PULSE_PERIOD_MS
+                // Triangle wave: 0 -> 1 over the first half, 1 -> 0 over the second.
+                val triangle = if (t < TRIANGLE_MIDPOINT) t * TRIANGLE_SLOPE else (1f - t) * TRIANGLE_SLOPE
+                laserAlpha = LASER_ALPHA_MIN + triangle * LASER_ALPHA_RANGE
+            }
+        }
+    }
 
     Canvas(modifier = Modifier.fillMaxSize()) {
         val side = size.minDimension * FRAME_SIDE_FRACTION
