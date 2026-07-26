@@ -319,6 +319,17 @@ fun AllStoragesScreen(
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically,
                                     ) {
+                                        if (editMode && entry.canRestructure) {
+                                            // Selection checkbox leads the row (user decision
+                                            // 2026-07-26): pick first, then act — the reorder
+                                            // arrows stay on the trailing edge.
+                                            Checkbox(
+                                                checked = location.id in state.selected,
+                                                onCheckedChange = {
+                                                    viewModel.toggleSelection(entry.id, location.id)
+                                                },
+                                            )
+                                        }
                                         Column(modifier = Modifier.weight(1f)) {
                                             Text(
                                                 location.name,
@@ -342,8 +353,6 @@ fun AllStoragesScreen(
                                             }
                                         }
                                         if (editMode && entry.canRestructure) {
-                                            // Mirrors StorageOverviewScreen's edit-row order: reorder
-                                            // arrows before the selection checkbox.
                                             IconButton(
                                                 onClick = { viewModel.moveUp(entry.id, location.id) },
                                                 enabled = locationIndex > 0,
@@ -362,12 +371,6 @@ fun AllStoragesScreen(
                                                     contentDescription = stringResource(R.string.storage_move_down_cd),
                                                 )
                                             }
-                                            Checkbox(
-                                                checked = location.id in state.selected,
-                                                onCheckedChange = {
-                                                    viewModel.toggleSelection(entry.id, location.id)
-                                                },
-                                            )
                                         }
                                         // editMode && !entry.canRestructure: nothing renders here — a
                                         // Member's row in edit mode has nothing restructure-capable to
