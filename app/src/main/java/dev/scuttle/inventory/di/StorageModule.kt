@@ -9,15 +9,19 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import dev.scuttle.inventory.data.settings.DefaultHouseholdStore
 import dev.scuttle.inventory.data.settings.FavoritesStore
+import dev.scuttle.inventory.data.settings.FeedStateStore
 import dev.scuttle.inventory.data.settings.HintsStore
 import dev.scuttle.inventory.data.settings.HouseholdViewStore
 import dev.scuttle.inventory.data.settings.LanguageStore
+import dev.scuttle.inventory.data.settings.NotificationPrefsStore
 import dev.scuttle.inventory.data.settings.ReminderSettingsStore
 import dev.scuttle.inventory.data.settings.SharedPrefsDefaultHouseholdStore
 import dev.scuttle.inventory.data.settings.SharedPrefsFavoritesStore
+import dev.scuttle.inventory.data.settings.SharedPrefsFeedStateStore
 import dev.scuttle.inventory.data.settings.SharedPrefsHintsStore
 import dev.scuttle.inventory.data.settings.SharedPrefsHouseholdViewStore
 import dev.scuttle.inventory.data.settings.SharedPrefsLanguageStore
+import dev.scuttle.inventory.data.settings.SharedPrefsNotificationPrefsStore
 import dev.scuttle.inventory.data.settings.SharedPrefsReminderSettingsStore
 import dev.scuttle.inventory.data.settings.SharedPrefsShelfViewStore
 import dev.scuttle.inventory.data.settings.SharedPrefsThemeModeStore
@@ -27,6 +31,7 @@ import dev.scuttle.inventory.data.storage.EncryptedTokenStore
 import dev.scuttle.inventory.data.storage.TokenStore
 import javax.inject.Singleton
 
+@Suppress("TooManyFunctions")
 @Module
 @InstallIn(SingletonComponent::class)
 object StorageModule {
@@ -85,6 +90,18 @@ object StorageModule {
     fun provideReminderSettingsStore(
         @ApplicationContext context: Context,
     ): ReminderSettingsStore = SharedPrefsReminderSettingsStore(context)
+
+    @Provides
+    @Singleton
+    fun provideNotificationPrefsStore(
+        @ApplicationContext context: Context,
+    ): NotificationPrefsStore = SharedPrefsNotificationPrefsStore(context)
+
+    @Provides
+    @Singleton
+    fun provideFeedStateStore(
+        @ApplicationContext context: Context,
+    ): FeedStateStore = SharedPrefsFeedStateStore(context)
 
     @Provides
     @Singleton
