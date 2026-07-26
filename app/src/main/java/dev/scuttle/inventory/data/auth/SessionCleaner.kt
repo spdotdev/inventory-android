@@ -6,6 +6,7 @@ import dev.scuttle.inventory.data.location.LocationRepository
 import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.data.settings.DefaultHouseholdStore
 import dev.scuttle.inventory.data.settings.FavoritesStore
+import dev.scuttle.inventory.data.settings.FeedStateStore
 import dev.scuttle.inventory.data.settings.HouseholdViewStore
 import dev.scuttle.inventory.data.settings.ShelfViewStore
 import dev.scuttle.inventory.data.shelf.ShelfRepository
@@ -41,6 +42,7 @@ class SessionCleaner
         private val defaultHouseholdStore: DefaultHouseholdStore,
         private val shelfViewStore: ShelfViewStore,
         private val householdViewStore: HouseholdViewStore,
+        private val feedStateStore: FeedStateStore,
     ) {
         fun clear() {
             householdRepository.clear()
@@ -52,5 +54,6 @@ class SessionCleaner
             defaultHouseholdStore.clear()
             shelfViewStore.clear()
             householdViewStore.clear()
+            feedStateStore.clear()
         }
     }

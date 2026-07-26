@@ -13,6 +13,8 @@ import dev.scuttle.inventory.data.product.ProductEdit
 import dev.scuttle.inventory.data.product.ProductRepository
 import dev.scuttle.inventory.data.settings.DefaultHouseholdStore
 import dev.scuttle.inventory.data.settings.FavoritesStore
+import dev.scuttle.inventory.data.settings.FeedState
+import dev.scuttle.inventory.data.settings.FeedStateStore
 import dev.scuttle.inventory.data.settings.HouseholdViewStore
 import dev.scuttle.inventory.data.settings.ShelfViewStore
 import dev.scuttle.inventory.data.shelf.ShelfRepository
@@ -209,6 +211,18 @@ class SessionCleanerTest {
         }
     }
 
+    private class RecordingFeedStateStore : FeedStateStore {
+        var cleared = false
+
+        override fun get() = FeedState()
+
+        override fun set(state: FeedState) = Unit
+
+        override fun clear() {
+            cleared = true
+        }
+    }
+
     @Test
     fun clear_fans_out_to_every_cache_and_store() {
         // X1: session end must wipe ALL per-account singleton state — miss one and
@@ -221,6 +235,7 @@ class SessionCleanerTest {
         val defaultHousehold = RecordingDefaultHouseholdStore()
         val shelfView = RecordingShelfViewStore()
         val householdView = RecordingHouseholdViewStore()
+        val feedState = RecordingFeedStateStore()
         val store = HierarchyStore(household, location, shelf, product, UnconfinedTestDispatcher())
 
         SessionCleaner(
@@ -233,6 +248,7 @@ class SessionCleanerTest {
             defaultHousehold,
             shelfView,
             householdView,
+            feedState,
         ).clear()
 
         assertTrue(household.cleared)
@@ -243,5 +259,6 @@ class SessionCleanerTest {
         assertTrue(defaultHousehold.cleared)
         assertTrue(shelfView.cleared)
         assertTrue(householdView.cleared)
+        assertTrue(feedState.cleared)
     }
 }

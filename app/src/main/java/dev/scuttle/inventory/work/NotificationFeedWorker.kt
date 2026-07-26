@@ -28,6 +28,15 @@ internal fun nextFeedState(
     return state.copy(lastSeenId = fetched.meta.lastId)
 }
 
+/**
+ * A fresh or just-cleared cursor (lastSeenId=0, e.g. first install or post-logout)
+ * has no real "since" point — treating its first fetch as a normal poll would post
+ * up to a full page of pre-existing notifications as if they just happened. Such a
+ * run persists the cursor but posts nothing, and also skips the weekly-summary
+ * check for that run since a fresh state's lastWeeklySummaryAtMillis is 0 too.
+ */
+internal fun isBaselineRun(state: FeedState): Boolean = state.lastSeenId == 0L
+
 // One constructor parameter per collaborator this worker needs to fan out to
 // (feed page + prefs/cursor state + the two summary counters); a pure fan-out,
 // not a design smell to split up.
@@ -47,14 +56,19 @@ class NotificationFeedWorker
         override suspend fun doWork(): Result {
             val prefs = prefsStore.get()
             val state = feedStateStore.get()
+            val baseline = isBaselineRun(state)
             val page = feedRepository.fetch(after = state.lastSeenId)
             val advanced = nextFeedState(state, page) ?: return Result.retry()
 
             checkNotNull(page)
-            FeedDigester.digest(page.data, prefs).forEach { postPlanned(applicationContext, it) }
+            if (!baseline) {
+                FeedDigester.digest(page.data, prefs).forEach { postPlanned(applicationContext, it) }
+            }
             feedStateStore.set(advanced)
 
-            if (WeeklySummaryPlanner.isDue(prefs, advanced.lastWeeklySummaryAtMillis, Calendar.getInstance())) {
+            val weeklySummaryDue =
+                WeeklySummaryPlanner.isDue(prefs, advanced.lastWeeklySummaryAtMillis, Calendar.getInstance())
+            if (!baseline && weeklySummaryDue) {
                 val missing = missingItemsRepository.count()
                 val low = lowStockRepository.count()
                 if (missing != null && low != null) {

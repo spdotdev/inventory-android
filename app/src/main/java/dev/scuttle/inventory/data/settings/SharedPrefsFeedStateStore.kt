@@ -23,6 +23,14 @@ class SharedPrefsFeedStateStore(
             .apply()
     }
 
+    override fun clear() {
+        prefs
+            .edit()
+            .remove(KEY_LAST_SEEN_ID)
+            .remove(KEY_LAST_WEEKLY_SUMMARY_AT)
+            .apply()
+    }
+
     private companion object {
         const val KEY_LAST_SEEN_ID = "feed_state_last_seen_id"
         const val KEY_LAST_WEEKLY_SUMMARY_AT = "feed_state_last_weekly_summary_at"
