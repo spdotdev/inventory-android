@@ -18,10 +18,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.GroupAdd
 import androidx.compose.material.icons.filled.QrCodeScanner
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -34,7 +32,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -67,7 +64,6 @@ import dev.scuttle.inventory.ui.theme.HouseholdAvatar
 fun HouseholdsScreen(
     modifier: Modifier = Modifier,
     onBack: () -> Unit = {},
-    onOpenSettings: () -> Unit = {},
     onOpenScanner: () -> Unit = {},
     // A code delivered back from the shared ScannerScreen (JOIN mode) — same
     // one-shot savedStateHandle contract as StorageOverviewScreen's own
@@ -109,56 +105,35 @@ fun HouseholdsScreen(
                     )
                 },
                 navigationIcon = {
-                    if (state.editMode) {
-                        TextButton(onClick = viewModel::exitEditMode) { Text(stringResource(R.string.action_cancel)) }
-                    } else {
-                        IconButton(onClick = onBack) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = stringResource(R.string.action_back),
-                            )
-                        }
-                    }
-                },
-                actions = {
-                    if (!state.editMode) {
-                        IconButton(onClick = onOpenSettings) {
-                            Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.action_settings))
-                        }
-                        if (state.households.isNotEmpty()) {
-                            IconButton(onClick = viewModel::enterEditMode) {
-                                Icon(
-                                    Icons.Default.Edit,
-                                    contentDescription = stringResource(R.string.households_edit_cd),
-                                )
-                            }
-                        }
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.action_back),
+                        )
                     }
                 },
             )
         },
         floatingActionButton = {
-            if (!state.editMode) {
-                Column(
-                    modifier = Modifier.navigationBarsPadding(),
-                    horizontalAlignment = Alignment.End,
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    SmallFloatingActionButton(onClick = onOpenScanner) {
-                        Icon(
-                            Icons.Default.QrCodeScanner,
-                            contentDescription = stringResource(R.string.households_scan_fab_cd),
-                        )
-                    }
-                    SmallFloatingActionButton(onClick = { showJoinSheet = true }) {
-                        Icon(
-                            Icons.Default.GroupAdd,
-                            contentDescription = stringResource(R.string.households_join_fab_cd),
-                        )
-                    }
-                    FloatingActionButton(onClick = { showCreateSheet = true }) {
-                        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.households_create_fab_cd))
-                    }
+            Column(
+                modifier = Modifier.navigationBarsPadding(),
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                SmallFloatingActionButton(onClick = onOpenScanner) {
+                    Icon(
+                        Icons.Default.QrCodeScanner,
+                        contentDescription = stringResource(R.string.households_scan_fab_cd),
+                    )
+                }
+                SmallFloatingActionButton(onClick = { showJoinSheet = true }) {
+                    Icon(
+                        Icons.Default.GroupAdd,
+                        contentDescription = stringResource(R.string.households_join_fab_cd),
+                    )
+                }
+                FloatingActionButton(onClick = { showCreateSheet = true }) {
+                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.households_create_fab_cd))
                 }
             }
         },
@@ -194,16 +169,12 @@ fun HouseholdsScreen(
                 }
 
                 state.households.forEach { household ->
-                    // Only edit mode makes the row navigate — outside it, the row is
-                    // inert except for the share/invite icon below, same as before.
-                    val onRowClick: (() -> Unit)? =
-                        if (state.editMode) {
-                            { onEditHousehold(household.id) }
-                        } else {
-                            null
-                        }
+                    // Tapping a household opens its edit page directly (2026-07-26
+                    // user decision — replaced the old pencil/edit-mode gate). The
+                    // edit page itself is role-aware, so Members see only what they
+                    // can do (leave, view members).
                     FrostCard(
-                        onClick = onRowClick,
+                        onClick = { onEditHousehold(household.id) },
                         modifier =
                             Modifier
                                 .fillMaxWidth()

@@ -697,7 +697,6 @@ private fun InventoryNavHost(
                     .collectAsState()
                 HouseholdsScreen(
                     onBack = { navController.popBackStack() },
-                    onOpenSettings = onOpenSettings,
                     onOpenScanner = { navController.navigate(Routes.scanner(ScannerMode.JOIN)) },
                     pendingScannedCode = pendingScannedCode,
                     onPendingScannedCodeConsumed = { entry.savedStateHandle["scanned_code"] = null },

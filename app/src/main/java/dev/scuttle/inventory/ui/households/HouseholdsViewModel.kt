@@ -26,9 +26,6 @@ data class HouseholdsUiState(
     val newName: String = "",
     // H3: an R.string.* id, not a raw literal — resolved via stringResource() in the composable.
     val errorRes: Int? = null,
-    // Gates whether tapping a household row navigates to HouseholdEditScreen —
-    // mirrors StorageOverviewViewModel/ShelvesViewModel's editMode flag.
-    val editMode: Boolean = false,
     // Set to the household's id once leave() has actually completed server-side for
     // it. HouseholdEditScreen waits for this (LaunchedEffect) instead of navigating
     // back the instant Leave is tapped — same pattern as ProductDetailViewModel.deleted
@@ -203,10 +200,6 @@ class HouseholdsViewModel
 
         /** Clears a delete-dialog error on dismiss/retype — see [HouseholdsUiState.deleteErrorRes]. */
         fun clearDeleteError() = _state.update { it.copy(deleteErrorRes = null) }
-
-        fun enterEditMode() = _state.update { it.copy(editMode = true) }
-
-        fun exitEditMode() = _state.update { it.copy(editMode = false) }
 
         /**
          * Rename and/or re-theme a household. A thin pass-through to

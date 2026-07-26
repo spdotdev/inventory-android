@@ -255,20 +255,6 @@ class HouseholdsViewModelTest {
         }
 
     @Test
-    fun edit_mode_starts_off_and_toggles_on_enter_and_exit() =
-        runTest {
-            val repo = FakeHouseholdRepository()
-            val viewModel = HouseholdsViewModel(repo, TestHierarchy.store(repo))
-            assertFalse(viewModel.state.value.editMode)
-
-            viewModel.enterEditMode()
-            assertTrue(viewModel.state.value.editMode)
-
-            viewModel.exitEditMode()
-            assertFalse(viewModel.state.value.editMode)
-        }
-
-    @Test
     fun list_failure_surfaces_an_error() =
         runTest {
             val repo = FakeHouseholdRepository().apply { failList = true }

@@ -122,7 +122,6 @@
     <string name="households_create_fab_cd">Huishouden aanmaken</string>
     <string name="households_field_name">Naam huishouden</string>
     <string name="households_create_button">Aanmaken</string>
-    <string name="households_edit_cd">Huishoudens bewerken</string>
     <string name="household_theme_color_label">Kleur</string>
     <string name="household_theme_icon_label">Pictogram</string>
     <string name="household_theme_default">Standaard</string>

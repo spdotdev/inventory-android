@@ -125,7 +125,6 @@
     <string name="households_leave_dialog_text">You\'ll need a new invite to rejoin. If you\'re the last member, this deletes the household — and everything in it — permanently.</string>
     <string name="households_create_fab_cd">Create household</string>
     <string name="households_field_name">Household name</string>
-    <string name="households_edit_cd">Edit households</string>
     <string name="household_theme_color_label">Colour</string>
     <string name="household_theme_icon_label">Icon</string>
     <string name="household_theme_default">Default</string>

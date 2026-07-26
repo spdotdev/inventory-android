@@ -116,10 +116,10 @@ than one it opens a shared household picker (`ui/common/HouseholdPickerSheet.kt`
 same as the centre **Scan** tab's LOOKUP mode below. (Final review, 2026-07-14: every one
 of these hard-coded the *first* household instead, making a second household's search
 reachable only by drilling Home → that household's own "+" icon → Storage overview → its
-search icon — don't reintroduce a bare `entries.firstOrNull()`.) Households and Search
-each keep their own small gear-icon shortcut back to Settings, since neither sits on the
-bottom bar itself — that's the only place a gear icon survives, not "every screen" as
-before this branch. The centre **Scan** tab always opens the scanner in LOOKUP mode
+search icon — don't reintroduce a bare `entries.firstOrNull()`.) Search keeps a
+small gear-icon shortcut back to Settings, since it doesn't sit on the bottom bar —
+that's the only place a gear icon survives (Households lost its gear 2026-07-26; its
+back arrow returns to More, which is one tap from Settings anyway). The centre **Scan** tab always opens the scanner in LOOKUP mode
 (hands the scanned code to Search, pre-filled and already run, via the same
 household-count/picker rule above — it has genuinely no household context of its own);
 opening the scanner from a shelves screen is ADD mode instead — same route
@@ -130,13 +130,14 @@ bar's own visibility/selected state for the Scan tab is resolved from the *mode*
 argument, not the route alone — `scannerRouteIsTheBottomBarTab()`; matching the bare
 route would show the bar (with Scan selected) over ADD mode's camera too.
 
-**Editing the hierarchy** lives behind a pencil (edit mode) on the households, locations
-and shelves lists — never inside Settings/More itself. On locations and shelves, edit
-mode turns each row into a checkbox (multi-select → delete-strategy dialog) plus a
-rename pencil and up/down reorder buttons; the row body itself only toggles selection.
-Households have no multi-select or reorder: edit mode instead makes the row tappable,
-opening a full household edit page (name, colour/icon theme, and a danger zone offering
-"Leave" plus, Owner-only, "Delete household"). Deleting a non-empty shelf or location
+**Editing the hierarchy** lives behind a pencil (edit mode) on the locations and
+shelves lists — never inside Settings/More itself. There, edit mode turns each row into
+a checkbox (multi-select → delete-strategy dialog) plus a rename pencil and up/down
+reorder buttons; the row body itself only toggles selection. Households (no
+multi-select or reorder) dropped their pencil 2026-07-26: tapping a household row
+always opens the full household edit page directly (name, colour/icon theme, and a
+danger zone offering "Leave" plus, Owner-only, "Delete household") — the edit page is
+role-aware, so a Member sees only what they can do. Deleting a non-empty shelf or location
 always asks what to do with the contents — see "Deletes" above.
 
 ## Design — B · Frost (D-021)
