@@ -492,13 +492,21 @@ fun ProductsPane(
         }
 
         if (state.products.isNotEmpty()) {
-            Text(
-                text = stringResource(R.string.products_pane_swipe_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                textAlign = TextAlign.Center,
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-            )
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    text = stringResource(R.string.products_pane_swipe_hint_move),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                )
+                Text(
+                    text = stringResource(R.string.products_pane_swipe_hint_delete),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                )
+            }
         }
 
         // Tall enough that the stacked scan + add FABs never cover the last row.
