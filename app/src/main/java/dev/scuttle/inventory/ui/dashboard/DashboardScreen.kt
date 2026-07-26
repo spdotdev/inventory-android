@@ -1,11 +1,15 @@
 package dev.scuttle.inventory.ui.dashboard
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -13,7 +17,9 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
@@ -42,11 +48,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -58,6 +66,7 @@ import dev.scuttle.inventory.ui.common.HouseholdPickerSheet
 import dev.scuttle.inventory.ui.common.shelfDisplayName
 import dev.scuttle.inventory.ui.theme.FrostCard
 import dev.scuttle.inventory.ui.theme.HouseholdAvatar
+import dev.scuttle.inventory.ui.theme.LocalFrostCardColors
 import dev.scuttle.inventory.ui.theme.Spacing
 
 /**
@@ -185,41 +194,51 @@ fun DashboardScreen(
                 if (state.households.isNotEmpty() && state.locationStats.isEmpty() && !state.loading) {
                     EmptyLocationsCard(onAddLocation = onOpenAllStorage)
                 } else {
-                    // Stat cards. The caption belongs to the row, so they're grouped in
-                    // their own Column rather than taking the page's 16dp rhythm.
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
+                    // Stat cards, grouped in one bordered container so the numbers and
+                    // (if shown) the "across N households" caption below them read as a
+                    // single stats area.
+                    Column(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .clip(StatGroupShape)
+                                .border(1.dp, LocalFrostCardColors.current.border, StatGroupShape),
+                    ) {
+                        Row {
                             StatCard(
                                 label = stringResource(R.string.dashboard_stat_locations),
                                 value = state.totalLocations.toString(),
                                 modifier = Modifier.weight(1f),
-                                onClick = onOpenAllStorage,
                             )
+                            VerticalDivider()
                             StatCard(
                                 label = stringResource(R.string.dashboard_stat_shelves),
                                 value = state.totalShelves.toString(),
                                 modifier = Modifier.weight(1f),
-                                onClick = onOpenAllStorage,
                             )
+                            VerticalDivider()
                             StatCard(
                                 label = stringResource(R.string.dashboard_stat_products),
                                 value = state.totalProducts.toString(),
                                 modifier = Modifier.weight(1f),
-                                onClick = openSearch,
                             )
                         }
 
                         // These numbers sum every household; say so rather than let them
-                        // read as one household's (#33).
+                        // read as one household's (#33). Faded further than the stat
+                        // labels above — it's a footnote about the numbers, not a stat
+                        // itself.
                         if (state.showHouseholdAttribution) {
+                            HorizontalDivider()
                             Text(
                                 stringResource(R.string.dashboard_across_households, state.households.size),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.align(Alignment.CenterHorizontally),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                                textAlign = TextAlign.Center,
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 6.dp),
                             )
                         }
                     }
@@ -354,23 +373,66 @@ private fun NoProductsYetCard(onOpenAllStorage: () -> Unit) {
     }
 }
 
+/**
+ * A plain metric, not a card — no ripple, so it doesn't read as tappable the way
+ * the FrostCards elsewhere on this screen do (these three used to be clickable and
+ * led to confusing/duplicate destinations; see dashboard stats brainstorm
+ * 2026-07-25). The three sit inside one shared bordered group (see the
+ * [StatGroupShape] row above) rather than each having its own outline, so they
+ * read as one stats area.
+ */
 @Composable
 private fun StatCard(
     label: String,
     value: String,
     modifier: Modifier = Modifier,
-    onClick: (() -> Unit)? = null,
 ) {
-    FrostCard(modifier = modifier, onClick = onClick) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(value, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-            Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
+    Column(
+        modifier = modifier.padding(12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            value,
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Text(
+            label,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
+
+/** Hairline separator above the "across N households" footnote inside the stat group. */
+@Composable
+private fun HorizontalDivider() {
+    Box(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(LocalFrostCardColors.current.border),
+    )
+}
+
+/** Hairline separator between stat cards inside the shared group border. */
+@Composable
+private fun VerticalDivider() {
+    Box(
+        modifier =
+            Modifier
+                .fillMaxHeight()
+                .width(1.dp)
+                .background(LocalFrostCardColors.current.border),
+    )
+}
+
+private val StatGroupShape = RoundedCornerShape(22.dp)
 
 /**
  * The household badge for a row, sized for a list item. Carries the household name
