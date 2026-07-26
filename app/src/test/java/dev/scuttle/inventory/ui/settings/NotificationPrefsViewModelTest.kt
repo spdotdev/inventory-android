@@ -79,6 +79,24 @@ class NotificationPrefsViewModelTest {
     }
 
     @Test
+    fun update_doesNotClobber_fieldsWrittenBySiblingViewModelAfterConstruction() {
+        // Simulates LowStockReminderViewModel sharing the same store on the same
+        // screen: it writes lowStockEnabled=true to the store AFTER this
+        // NotificationPrefsViewModel was constructed (so the VM's cached
+        // _prefs.value snapshot predates that write). A setter here must not
+        // revert that sibling write when it read-modify-writes the store.
+        val store = FakeNotificationPrefsStore()
+        val viewModel = NotificationPrefsViewModel(store)
+
+        store.set(store.get().copy(lowStockEnabled = true))
+
+        viewModel.setHouseholdEvents(false)
+
+        assertTrue(store.stored.lowStockEnabled)
+        assertFalse(store.stored.householdEventsEnabled)
+    }
+
+    @Test
     fun setAppUpdates_persists_and_updates_flow() {
         val store = FakeNotificationPrefsStore()
         val viewModel = NotificationPrefsViewModel(store)

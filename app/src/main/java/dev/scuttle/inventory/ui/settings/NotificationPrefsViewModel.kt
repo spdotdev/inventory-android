@@ -37,7 +37,7 @@ class NotificationPrefsViewModel
         fun setAppUpdates(enabled: Boolean) = update { it.copy(appUpdatesEnabled = enabled) }
 
         private inline fun update(transform: (NotificationPrefs) -> NotificationPrefs) {
-            val updated = transform(_prefs.value)
+            val updated = transform(store.get())
             store.set(updated)
             _prefs.value = updated
         }
