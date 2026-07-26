@@ -386,7 +386,7 @@ private fun LocationRow(
         Row(
             modifier =
                 Modifier
-                    .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 4.dp)
+                    .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp)
                     .fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
