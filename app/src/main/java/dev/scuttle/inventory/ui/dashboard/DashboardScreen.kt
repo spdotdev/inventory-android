@@ -66,6 +66,7 @@ import dev.scuttle.inventory.ui.theme.FrostCard
 import dev.scuttle.inventory.ui.theme.HouseholdAvatar
 import dev.scuttle.inventory.ui.theme.LocalFrostCardColors
 import dev.scuttle.inventory.ui.theme.Spacing
+import dev.scuttle.inventory.ui.theme.WARNING_TINT_ALPHA
 
 /**
  * Distinct from the plain text "Dashboard", which also appears as the bottom-nav
@@ -470,7 +471,10 @@ private fun MissingItemsCard(
 ) {
     Card(
         onClick = onClick,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = WARNING_TINT_ALPHA),
+            ),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Row(

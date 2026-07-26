@@ -42,6 +42,7 @@ import dev.scuttle.inventory.ui.common.ErrorRetry
 import dev.scuttle.inventory.ui.common.HouseholdOption
 import dev.scuttle.inventory.ui.common.HouseholdPickerSheet
 import dev.scuttle.inventory.ui.theme.FrostCard
+import dev.scuttle.inventory.ui.theme.WARNING_TINT_ALPHA
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -176,8 +177,9 @@ fun MissingItemsScreen(
                                 modifier =
                                     Modifier
                                         .fillMaxWidth()
-                                        .background(MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f))
-                                        .padding(16.dp),
+                                        .background(
+                                            MaterialTheme.colorScheme.errorContainer.copy(alpha = WARNING_TINT_ALPHA),
+                                        ).padding(16.dp),
                             ) {
                                 Text(
                                     text = item.productName,

@@ -72,6 +72,7 @@ import dev.scuttle.inventory.ui.common.orderByPosition
 import dev.scuttle.inventory.ui.common.storageTypeLabel
 import dev.scuttle.inventory.ui.storage.STORAGE_TYPES
 import dev.scuttle.inventory.ui.theme.FrostCard
+import dev.scuttle.inventory.ui.theme.WARNING_TINT_ALPHA
 
 /** Matches the server-side location name column limit (same cap StorageOverviewScreen uses). */
 private const val MAX_LOCATION_NAME_LENGTH = 50
@@ -422,7 +423,7 @@ private fun LocationRow(
         onClick = rowOnClick,
         containerColor =
             if (hasWarning) {
-                MaterialTheme.colorScheme.errorContainer.copy(alpha = WARNING_CONTAINER_ALPHA)
+                MaterialTheme.colorScheme.errorContainer.copy(alpha = WARNING_TINT_ALPHA)
             } else {
                 null
             },
@@ -430,5 +431,3 @@ private fun LocationRow(
         content = { rowContent() },
     )
 }
-
-private const val WARNING_CONTAINER_ALPHA = 0.4f

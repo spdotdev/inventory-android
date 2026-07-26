@@ -77,6 +77,7 @@ import dev.scuttle.inventory.ui.hierarchy.UndoOutcome
 import dev.scuttle.inventory.ui.theme.FrostCard
 import dev.scuttle.inventory.ui.theme.FrostMoveAccent
 import dev.scuttle.inventory.ui.theme.FrostOnMoveAccent
+import dev.scuttle.inventory.ui.theme.WARNING_TINT_ALPHA
 
 /**
  * The mandatory / out-of-stock filter chips and the sort menu.
@@ -388,7 +389,9 @@ fun ProductsPane(
                                         .weight(1f)
                                         .background(
                                             if (isMandatoryWarning) {
-                                                MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+                                                MaterialTheme.colorScheme.errorContainer.copy(
+                                                    alpha = WARNING_TINT_ALPHA,
+                                                )
                                             } else {
                                                 Color.Transparent
                                             },

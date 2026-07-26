@@ -30,3 +30,11 @@ val FrostLightOnSurfaceVariant = Color(0xFF3D5A6E)
 // as its own affordance. Same amber works in both themes; dark on-color gives ~8:1 contrast.
 val FrostMoveAccent = Color(0xFFFBBF24)
 val FrostOnMoveAccent = Color(0xFF3D2B00)
+
+/**
+ * The one alpha for "this thing is missing/at-zero" container tints — the product
+ * row set the reference look; the dashboard missing card, storage-list warning
+ * rows and the missing-items list all reuse it so the same state reads as the
+ * same red everywhere (user decision 2026-07-27).
+ */
+const val WARNING_TINT_ALPHA = 0.3f
