@@ -231,7 +231,7 @@
 
     <!-- Products pane -->
     <string name="products_pane_empty">No products on this shelf yet. Tap + to add one.</string>
-    <string name="products_pane_swipe_hint">← Swipe left on a product to delete</string>
+    <string name="products_pane_swipe_hint">← Swipe left to move · swipe right to delete →</string>
     <string name="products_pane_decrease_cd">Decrease %s quantity</string>
     <string name="products_pane_increase_cd">Increase %s quantity</string>
     <string name="products_pane_move_cd">Move %s</string>
