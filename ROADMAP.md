@@ -120,6 +120,16 @@ Detailed build order: [`CLAUDE.md`](CLAUDE.md) and [`docs/android-plan.md`](docs
   dated carve-out from the "no reminders" scope guardrail — see CLAUDE.md. Spec:
   `inventory-laravel/docs/superpowers/specs/2026-07-24-daily-missing-items-reminder-design.md`.
 
+### PARKED — awaiting product-owner decision
+- 🟡 **Storage edit surface** (parked 2026-07-26) — a storage currently has no real
+  edit view: rename/reorder/delete hide behind the list pencil, and the type is
+  frozen after creation. Three wireframed options (edit page from inside the
+  storage · ⋮ overflow on the list row · richer edit-mode sheet), with option 1
+  recommended for consistency with the 2026-07-26 households change (row tap →
+  edit page, pencil/gear removed): wireframes at
+  https://claude.ai/code/artifact/eb5c6b14-cdf6-4ad4-b3fa-2fe9edb4d49c.
+  Decision pending discussion with the product owner — do not build until picked.
+
 ### SECURITY
 - [x] **CodeQL SAST + dependency review CI** — shipped 2026-07-13. `codeql.yml` runs
   static security analysis over the Kotlin/Java source on push/PR to `main` plus a
