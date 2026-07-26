@@ -299,6 +299,11 @@
     <string name="account_name_label">Name</string>
     <string name="account_email_label">Email</string>
     <string name="account_gender_label">Gender</string>
+    <string name="account_gender_option_unset">Not set</string>
+    <string name="account_gender_option_female">Female</string>
+    <string name="account_gender_option_male">Male</string>
+    <string name="account_gender_option_non_binary">Non-binary</string>
+    <string name="account_gender_option_prefer_not_to_say">Prefer not to say</string>
     <string name="account_save_button">Save</string>
     <string name="account_saved">Account updated</string>
     <string name="general_language_label">Language</string>

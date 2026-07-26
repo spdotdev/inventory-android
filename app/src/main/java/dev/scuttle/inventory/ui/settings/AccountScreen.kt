@@ -15,7 +15,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -55,6 +58,7 @@ fun AccountScreen(
 ) {
     val state by viewModel.state.collectAsState()
     var confirmSignOut by rememberSaveable { mutableStateOf(false) }
+    var genderMenuExpanded by rememberSaveable { mutableStateOf(false) }
 
     val snackbarHostState = remember { SnackbarHostState() }
     // H3: errorRes is an R.string.* id, not a raw literal — resolved here via stringResource().
@@ -131,14 +135,44 @@ fun AccountScreen(
                         ),
                     modifier = Modifier.fillMaxWidth(),
                 )
-                OutlinedTextField(
-                    value = state.gender,
-                    onValueChange = viewModel::onGenderChange,
-                    label = { Text(stringResource(R.string.account_gender_label)) },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, imeAction = ImeAction.Done),
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                val unsetLabel = stringResource(R.string.account_gender_option_unset)
+                val selectedGenderLabel =
+                    GenderOption.fromValue(state.gender)?.let { stringResource(it.labelRes) }
+                        ?: state.gender.ifEmpty { unsetLabel }
+                ExposedDropdownMenuBox(
+                    expanded = genderMenuExpanded,
+                    onExpandedChange = { genderMenuExpanded = it },
+                ) {
+                    OutlinedTextField(
+                        modifier = Modifier.fillMaxWidth().menuAnchor(),
+                        readOnly = true,
+                        value = selectedGenderLabel,
+                        onValueChange = {},
+                        label = { Text(stringResource(R.string.account_gender_label)) },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = genderMenuExpanded) },
+                    )
+                    ExposedDropdownMenu(
+                        expanded = genderMenuExpanded,
+                        onDismissRequest = { genderMenuExpanded = false },
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(unsetLabel) },
+                            onClick = {
+                                genderMenuExpanded = false
+                                viewModel.onGenderChange("")
+                            },
+                        )
+                        GenderOption.entries.forEach { option ->
+                            DropdownMenuItem(
+                                text = { Text(stringResource(option.labelRes)) },
+                                onClick = {
+                                    genderMenuExpanded = false
+                                    viewModel.onGenderChange(option.value)
+                                },
+                            )
+                        }
+                    }
+                }
                 Button(
                     onClick = viewModel::save,
                     enabled = !state.loading && state.dirty && state.name.isNotBlank() && state.email.isNotBlank(),

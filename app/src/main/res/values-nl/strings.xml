@@ -285,6 +285,11 @@
     <string name="account_name_label">Naam</string>
     <string name="account_email_label">E-mail</string>
     <string name="account_gender_label">Geslacht</string>
+    <string name="account_gender_option_unset">Niet ingesteld</string>
+    <string name="account_gender_option_female">Vrouw</string>
+    <string name="account_gender_option_male">Man</string>
+    <string name="account_gender_option_non_binary">Non-binair</string>
+    <string name="account_gender_option_prefer_not_to_say">Zeg ik liever niet</string>
     <string name="account_save_button">Opslaan</string>
     <string name="account_saved">Account bijgewerkt</string>
     <string name="general_language_label">Taal</string>
