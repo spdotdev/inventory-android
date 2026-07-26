@@ -297,19 +297,19 @@ private const val SCRIM_EDGE_ALPHA = 0.95f
 /**
  * Viewfinder overlay in the classic scan-frame style (four rounded corner
  * brackets, no full square — the standard "scanner overlay" vector look),
- * with a bright laser line fixed across the middle of the frame, pulsing
- * its opacity — the "sparkly" line users know from the old households
- * scanner, kept here on purpose when that screen was replaced by this
- * shared one so every entry point (product ADD/LOOKUP, household JOIN)
- * still gets it. Purely decorative — ML Kit analyzes the full frame — but
- * it tells the user where to point and that scanning is actively happening.
+ * with a thin red line fixed across the middle of the frame, pulsing its
+ * opacity — the "sparkly" line this screen already had, kept as-is (not
+ * thickened into a laser-glow bar) when Households' old ZXing scanner was
+ * replaced by this shared screen. Purely decorative — ML Kit analyzes the
+ * full frame — but it tells the user where to point.
  */
 @Composable
 private fun ScannerOverlay() {
     val transition = rememberInfiniteTransition(label = "laser")
+    // Kept translucent on purpose — the line guides without hiding the barcode.
     val laserAlpha by transition.animateFloat(
-        initialValue = 0.4f,
-        targetValue = 1f,
+        initialValue = 0.25f,
+        targetValue = 0.55f,
         animationSpec =
             infiniteRepeatable(
                 animation = tween(durationMillis = 600, easing = LinearEasing),
@@ -395,33 +395,14 @@ private fun ScannerOverlay() {
         // Sweeping "sparkly" laser line: a bright core plus a soft glow band above
         // and below it (three strokes, widest = most transparent), traveling the
         // full frame height each half-cycle like ZXing's ViewfinderView.
+        // Fixed center "laser" line with the traditional opacity pulse.
         val inset = 14.dp.toPx()
-        val lineX1 = frame.left + inset
-        val lineX2 = frame.right - inset
         val lineY = frame.top + frame.height / 2f
-        val glowWidth = 22.dp.toPx()
-        val midWidth = 10.dp.toPx()
-        val coreWidth = 3.dp.toPx()
-        // Three overlaid strokes (wide+faint -> narrow+opaque) so it reads as a
-        // glowing bar rather than a thin faint line — fixed in the middle of the
-        // frame, opacity pulsing, matching the old households scanner's look.
-        drawLine(
-            color = LaserRed.copy(alpha = 0.25f * laserAlpha),
-            start = Offset(lineX1, lineY),
-            end = Offset(lineX2, lineY),
-            strokeWidth = glowWidth,
-        )
-        drawLine(
-            color = LaserRed.copy(alpha = 0.55f * laserAlpha),
-            start = Offset(lineX1, lineY),
-            end = Offset(lineX2, lineY),
-            strokeWidth = midWidth,
-        )
         drawLine(
             color = LaserRed.copy(alpha = laserAlpha),
-            start = Offset(lineX1, lineY),
-            end = Offset(lineX2, lineY),
-            strokeWidth = coreWidth,
+            start = Offset(frame.left + inset, lineY),
+            end = Offset(frame.right - inset, lineY),
+            strokeWidth = 3.dp.toPx(),
         )
     }
 }
