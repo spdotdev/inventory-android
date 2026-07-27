@@ -352,6 +352,15 @@ fun ProductsPane(
                     val isMandatoryWarning = product.is_mandatory == true && product.quantity == 0
                     FrostCard(
                         onClick = { onOpenProduct(product) },
+                        // Whole-card tint (incl. the stepper column) when a mandatory
+                        // product is at zero — tinting only the content column left the
+                        // right edge unpainted once the steppers moved there.
+                        containerColor =
+                            if (isMandatoryWarning) {
+                                MaterialTheme.colorScheme.errorContainer.copy(alpha = WARNING_TINT_ALPHA)
+                            } else {
+                                null
+                            },
                         modifier = Modifier.fillMaxWidth().testTag("product-${product.id}"),
                     ) {
                         // Move is a full-height button pinned to the card's right edge, not an
@@ -389,15 +398,7 @@ fun ProductsPane(
                                 modifier =
                                     Modifier
                                         .weight(1f)
-                                        .background(
-                                            if (isMandatoryWarning) {
-                                                MaterialTheme.colorScheme.errorContainer.copy(
-                                                    alpha = WARNING_TINT_ALPHA,
-                                                )
-                                            } else {
-                                                Color.Transparent
-                                            },
-                                        ).padding(horizontal = 16.dp, vertical = 8.dp),
+                                        .padding(horizontal = 16.dp, vertical = 8.dp),
                                 verticalArrangement = Arrangement.spacedBy(4.dp),
                             ) {
                                 Text(
