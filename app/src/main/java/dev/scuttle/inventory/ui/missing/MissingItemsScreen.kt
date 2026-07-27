@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingBasket
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -105,6 +106,12 @@ fun MissingItemsScreen(
                     // with exactly one, no-ops with none.
                     IconButton(onClick = openSearch) {
                         Icon(Icons.Default.Search, contentDescription = stringResource(R.string.nav_search))
+                    }
+                    IconButton(onClick = viewModel::refresh) {
+                        Icon(
+                            Icons.Default.Refresh,
+                            contentDescription = stringResource(R.string.action_refresh),
+                        )
                     }
                     if (state.items.isNotEmpty()) {
                         Icon(
