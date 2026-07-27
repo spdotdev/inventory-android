@@ -269,7 +269,8 @@ fun ProductDetailScreen(
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState())
                         .navigationBarsPadding()
-                        .padding(horizontal = 24.dp),
+                        .padding(horizontal = 24.dp)
+                        .padding(top = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 if (state.loading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
