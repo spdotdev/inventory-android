@@ -38,6 +38,22 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
 
+      # The tag is the release's public identity, but the APK's identity comes
+      # from build.gradle.kts — and those silently drifted apart once (v0.1.22
+      # first shipped identifying as 0.1.20/code 21, which would have muted the
+      # in-app update prompt entirely). Fail the release loudly when the tag and
+      # versionName disagree instead of publishing a mislabeled APK.
+      - name: Verify tag matches versionName
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          GRADLE_VERSION=$(sed -n 's/^[[:space:]]*versionName = "\(.*\)"/\1/p' app/build.gradle.kts)
+          echo "tag=$TAG_VERSION gradle=$GRADLE_VERSION"
+          if [ "$TAG_VERSION" != "$GRADLE_VERSION" ]; then
+            echo "::error::Tag v$TAG_VERSION does not match versionName $GRADLE_VERSION in app/build.gradle.kts — bump the version (and versionCode) before tagging."
+            exit 1
+          fi
+
       # No signing secret → fail loudly with a clear message rather than a cryptic
       # keystore error. A release genuinely needs the keystore, so this is fatal
       # (unlike the CI APK step, which is optional and skipped on fork PRs).
