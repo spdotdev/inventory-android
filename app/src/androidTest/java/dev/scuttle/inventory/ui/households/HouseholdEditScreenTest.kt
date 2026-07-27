@@ -71,6 +71,8 @@ class HouseholdEditScreenTest {
             householdId: Long,
             name: String,
             type: String,
+            color: String?,
+            icon: String?,
         ) = throw NotImplementedError()
     }
 

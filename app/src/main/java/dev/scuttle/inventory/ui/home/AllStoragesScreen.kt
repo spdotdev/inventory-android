@@ -64,9 +64,11 @@ import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.HouseholdWithLocations
 import dev.scuttle.inventory.data.dto.LocationDto
 import dev.scuttle.inventory.ui.app.DrawerViewModel
+import dev.scuttle.inventory.ui.common.ColorSwatchPicker
 import dev.scuttle.inventory.ui.common.ErrorRetry
 import dev.scuttle.inventory.ui.common.HouseholdOption
 import dev.scuttle.inventory.ui.common.HouseholdPickerSheet
+import dev.scuttle.inventory.ui.common.IconSwatchPicker
 import dev.scuttle.inventory.ui.common.SnackbarErrorEffect
 import dev.scuttle.inventory.ui.common.orderByPosition
 import dev.scuttle.inventory.ui.common.storageTypeLabel
@@ -115,6 +117,8 @@ fun AllStoragesScreen(
     var showAddSheetForHousehold by rememberSaveable { mutableStateOf<Long?>(null) }
     var newName by rememberSaveable { mutableStateOf("") }
     var newType by rememberSaveable { mutableStateOf("freezer") }
+    var newColor by rememberSaveable { mutableStateOf<String?>(null) }
+    var newIcon by rememberSaveable { mutableStateOf<String?>(null) }
     val keyboardController = LocalSoftwareKeyboardController.current
 
     val openEdit: () -> Unit = {
@@ -305,13 +309,18 @@ fun AllStoragesScreen(
     val addHouseholdId = showAddSheetForHousehold
     if (addHouseholdId != null) {
         ModalBottomSheet(
-            onDismissRequest = { showAddSheetForHousehold = null },
+            onDismissRequest = {
+                showAddSheetForHousehold = null
+                newColor = null
+                newIcon = null
+            },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         ) {
             Column(
                 modifier =
                     Modifier
                         .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
                         .padding(horizontal = 24.dp)
                         .padding(bottom = 32.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -345,8 +354,10 @@ fun AllStoragesScreen(
                         keyboardActions =
                             KeyboardActions(onDone = {
                                 keyboardController?.hide()
-                                viewModel.createLocation(addHouseholdId, newName, newType)
+                                viewModel.createLocation(addHouseholdId, newName, newType, newColor, newIcon)
                                 newName = ""
+                                newColor = null
+                                newIcon = null
                                 showAddSheetForHousehold = null
                             }),
                         modifier = Modifier.weight(1f),
@@ -354,8 +365,10 @@ fun AllStoragesScreen(
                     Button(
                         onClick = {
                             keyboardController?.hide()
-                            viewModel.createLocation(addHouseholdId, newName, newType)
+                            viewModel.createLocation(addHouseholdId, newName, newType, newColor, newIcon)
                             newName = ""
+                            newColor = null
+                            newIcon = null
                             showAddSheetForHousehold = null
                         },
                         enabled = newName.isNotBlank(),
@@ -363,6 +376,26 @@ fun AllStoragesScreen(
                         Text(stringResource(R.string.action_add))
                     }
                 }
+
+                Text(
+                    text = stringResource(R.string.household_theme_color_label),
+                    style = MaterialTheme.typography.labelLarge,
+                )
+                ColorSwatchPicker(
+                    selectedColor = newColor,
+                    onSelect = { key -> newColor = key },
+                )
+
+                Text(
+                    text = stringResource(R.string.household_theme_icon_label),
+                    style = MaterialTheme.typography.labelLarge,
+                )
+                IconSwatchPicker(
+                    id = 0L,
+                    selectedColor = newColor,
+                    selectedIcon = newIcon,
+                    onSelect = { key -> newIcon = key },
+                )
             }
         }
     }

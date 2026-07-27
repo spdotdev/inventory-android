@@ -43,8 +43,10 @@ class StorageOverviewViewModelHierarchyRefreshTest {
             householdId: Long,
             name: String,
             type: String,
+            color: String?,
+            icon: String?,
         ): LocationDto {
-            val dto = LocationDto(id = (items.size + 1).toLong(), name = name, type = type)
+            val dto = LocationDto(id = (items.size + 1).toLong(), name = name, type = type, color = color, icon = icon)
             items.add(dto)
             return dto
         }

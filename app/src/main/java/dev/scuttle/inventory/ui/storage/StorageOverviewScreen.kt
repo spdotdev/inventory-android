@@ -67,9 +67,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import dev.scuttle.inventory.R
+import dev.scuttle.inventory.ui.common.ColorSwatchPicker
 import dev.scuttle.inventory.ui.common.EditModeHintBanner
 import dev.scuttle.inventory.ui.common.EditModeHintViewModel
 import dev.scuttle.inventory.ui.common.ErrorRetry
+import dev.scuttle.inventory.ui.common.IconSwatchPicker
 import dev.scuttle.inventory.ui.common.storageTypeLabel
 import dev.scuttle.inventory.ui.hierarchy.DeleteStrategyDialog
 import dev.scuttle.inventory.ui.hierarchy.EditableRow
@@ -414,6 +416,14 @@ fun StorageOverviewScreen(
     }
 
     if (showAddSheet) {
+        // Local to this composable (not StorageOverviewUiState): leaving the
+        // `if (showAddSheet)` block on dismiss disposes this state, so a
+        // reopened sheet always starts with no theme selected — the same
+        // reset-on-close behaviour name/type get via ViewModel state, without
+        // adding a create-only theme field to the ViewModel's persistent state.
+        var newColor by rememberSaveable { mutableStateOf<String?>(null) }
+        var newIcon by rememberSaveable { mutableStateOf<String?>(null) }
+
         ModalBottomSheet(
             onDismissRequest = { showAddSheet = false },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
@@ -422,6 +432,7 @@ fun StorageOverviewScreen(
                 modifier =
                     Modifier
                         .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
                         .padding(horizontal = 24.dp)
                         .padding(bottom = 32.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -455,7 +466,7 @@ fun StorageOverviewScreen(
                         keyboardActions =
                             KeyboardActions(onDone = {
                                 keyboardController?.hide()
-                                viewModel.create()
+                                viewModel.create(color = newColor, icon = newIcon)
                                 showAddSheet = false
                             }),
                         modifier = Modifier.weight(1f),
@@ -463,7 +474,7 @@ fun StorageOverviewScreen(
                     Button(
                         onClick = {
                             keyboardController?.hide()
-                            viewModel.create()
+                            viewModel.create(color = newColor, icon = newIcon)
                             showAddSheet = false
                         },
                         enabled = !state.loading && state.newName.isNotBlank(),
@@ -471,6 +482,26 @@ fun StorageOverviewScreen(
                         Text(stringResource(R.string.action_add))
                     }
                 }
+
+                Text(
+                    text = stringResource(R.string.household_theme_color_label),
+                    style = MaterialTheme.typography.labelLarge,
+                )
+                ColorSwatchPicker(
+                    selectedColor = newColor,
+                    onSelect = { key -> newColor = key },
+                )
+
+                Text(
+                    text = stringResource(R.string.household_theme_icon_label),
+                    style = MaterialTheme.typography.labelLarge,
+                )
+                IconSwatchPicker(
+                    id = 0L,
+                    selectedColor = newColor,
+                    selectedIcon = newIcon,
+                    onSelect = { key -> newIcon = key },
+                )
             }
         }
     }

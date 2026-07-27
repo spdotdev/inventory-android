@@ -51,6 +51,8 @@ class SessionCleanerTest {
             householdId: Long,
             name: String,
             type: String,
+            color: String?,
+            icon: String?,
         ) = throw NotImplementedError()
 
         override fun clear() {

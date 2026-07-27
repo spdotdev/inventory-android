@@ -45,6 +45,8 @@ class StorageOverviewViewModelMoveRaceTest {
             householdId: Long,
             name: String,
             type: String,
+            color: String?,
+            icon: String?,
         ): LocationDto = throw NotImplementedError()
 
         override suspend fun reorder(

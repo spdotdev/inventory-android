@@ -115,12 +115,14 @@ class DrawerViewModel
             householdId: Long,
             name: String,
             type: String,
+            color: String? = null,
+            icon: String? = null,
         ) {
             val trimmed = name.trim().take(MAX_LOCATION_NAME_LENGTH)
             if (trimmed.isEmpty() || createJob?.isActive == true) return
             createJob =
                 viewModelScope.launch {
-                    val result = runCatching { locationRepository.create(householdId, trimmed, type) }
+                    val result = runCatching { locationRepository.create(householdId, trimmed, type, color, icon) }
                     result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
                     result
                         .onSuccess { store.refresh() }

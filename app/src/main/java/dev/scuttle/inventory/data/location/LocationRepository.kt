@@ -12,6 +12,8 @@ interface LocationRepository {
         householdId: Long,
         name: String,
         type: String,
+        color: String? = null,
+        icon: String? = null,
     ): LocationDto
 
     /**

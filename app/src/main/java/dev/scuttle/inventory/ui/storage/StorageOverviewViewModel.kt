@@ -137,12 +137,15 @@ class StorageOverviewViewModel
             }
         }
 
-        fun create() {
+        fun create(
+            color: String? = null,
+            icon: String? = null,
+        ) {
             val id = householdId ?: return
             val name = _state.value.newName.trim()
             if (name.isEmpty()) return
             launchLoading {
-                val created = repository.create(id, name, _state.value.newType)
+                val created = repository.create(id, name, _state.value.newType, color, icon)
                 _state.update { it.copy(newName = "", locations = orderLocations(it.locations + created)) }
                 hierarchyStore.refresh()
             }

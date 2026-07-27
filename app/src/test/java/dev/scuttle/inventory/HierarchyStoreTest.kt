@@ -56,6 +56,8 @@ class HierarchyStoreTest {
             householdId: Long,
             name: String,
             type: String,
+            color: String?,
+            icon: String?,
         ) = LocationDto(99, name, type)
     }
 

@@ -54,12 +54,19 @@ class StorageOverviewViewModelTest {
             return items.toList()
         }
 
+        var lastCreateColor: String? = null
+        var lastCreateIcon: String? = null
+
         override suspend fun create(
             householdId: Long,
             name: String,
             type: String,
+            color: String?,
+            icon: String?,
         ): LocationDto {
-            val dto = LocationDto(id = (items.size + 1).toLong(), name = name, type = type)
+            lastCreateColor = color
+            lastCreateIcon = icon
+            val dto = LocationDto(id = (items.size + 1).toLong(), name = name, type = type, color = color, icon = icon)
             items.add(dto)
             return dto
         }
@@ -243,6 +250,34 @@ class StorageOverviewViewModelTest {
         }
 
     @Test
+    fun create_passes_the_selected_color_and_icon_to_the_repository() =
+        runTest {
+            val repo = FakeLocationRepository()
+            val vm = viewModel(repo)
+            vm.load(householdId = 1)
+            vm.onNewNameChange("Pantry")
+
+            vm.create(color = "teal", icon = "cottage")
+
+            assertEquals("teal", repo.lastCreateColor)
+            assertEquals("cottage", repo.lastCreateIcon)
+        }
+
+    @Test
+    fun create_without_a_theme_passes_null_color_and_icon() =
+        runTest {
+            val repo = FakeLocationRepository()
+            val vm = viewModel(repo)
+            vm.load(householdId = 1)
+            vm.onNewNameChange("Pantry")
+
+            vm.create()
+
+            assertNull(repo.lastCreateColor)
+            assertNull(repo.lastCreateIcon)
+        }
+
+    @Test
     fun list_failure_surfaces_an_error() =
         runTest {
             val repo = FakeLocationRepository().apply { failList = true }
@@ -306,6 +341,8 @@ class StorageOverviewViewModelTest {
             householdId: Long,
             name: String,
             type: String,
+            color: String?,
+            icon: String?,
         ): LocationDto {
             gate.await()
             return LocationDto(id = 1, name = name, type = type)

@@ -29,10 +29,15 @@ class LocationRepositoryImpl
             householdId: Long,
             name: String,
             type: String,
+            color: String?,
+            icon: String?,
         ): LocationDto =
-            api.create(householdId, CreateLocationRequest(name = name, type = type)).data.also { created ->
-                cache[householdId] = (cache[householdId] ?: emptyList()) + created
-            }
+            api
+                .create(householdId, CreateLocationRequest(name = name, type = type, color = color, icon = icon))
+                .data
+                .also { created ->
+                    cache[householdId] = (cache[householdId] ?: emptyList()) + created
+                }
 
         override suspend fun update(
             householdId: Long,

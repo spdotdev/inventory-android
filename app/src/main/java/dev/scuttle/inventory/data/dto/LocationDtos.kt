@@ -46,10 +46,21 @@ data class LocationResponse(
     val data: LocationDto,
 )
 
+// `color`/`icon` DEFAULT to null (unlike UpdateLocationRequest's matching
+// fields) because create has no "current theme to preserve" case to protect —
+// there is no existing location yet, so "the caller didn't pick a theme" and
+// "the caller explicitly wants no theme" are the same thing. The server's
+// create validation is `sometimes|nullable` for both, so an omitted key is
+// exactly as valid as an explicit null; giving them a default just lets
+// encodeDefaults=false drop the keys entirely when the add-storage sheet's
+// pickers are left unselected, instead of sending `"color":null,"icon":null`
+// on every create.
 @Serializable
 data class CreateLocationRequest(
     val name: String,
     val type: String,
+    val color: String? = null,
+    val icon: String? = null,
 )
 
 // Mirrors UpdateShelfRequest's deliberate asymmetry (see its own doc comment

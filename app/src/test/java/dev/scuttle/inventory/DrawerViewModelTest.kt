@@ -19,6 +19,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -50,6 +51,8 @@ class DrawerViewModelTest {
 
         // Recorded for the createLocation() tests below.
         val createCallsByHousehold = mutableListOf<Triple<Long, String, String>>()
+        var lastCreateColor: String? = null
+        var lastCreateIcon: String? = null
         var failCreate = false
 
         override fun getCached(householdId: Long) = cached[householdId]
@@ -60,10 +63,14 @@ class DrawerViewModelTest {
             householdId: Long,
             name: String,
             type: String,
+            color: String?,
+            icon: String?,
         ): LocationDto {
             createCallsByHousehold += Triple(householdId, name, type)
+            lastCreateColor = color
+            lastCreateIcon = icon
             if (failCreate) throw IOException("create failed")
-            val created = LocationDto(99, name, type)
+            val created = LocationDto(99, name, type, color = color, icon = icon)
             live[householdId] = (live[householdId].orEmpty() + created).toMutableList()
             return created
         }
@@ -355,6 +362,32 @@ class DrawerViewModelTest {
 
             val message = vm.actionErrorRes.first { it != null }
             assertNotNull(message)
+        }
+
+    @Test
+    fun create_location_passes_the_selected_color_and_icon_to_the_repository() =
+        runTest {
+            val repo = FakeLocationRepository(mapOf(1L to emptyList()))
+            val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
+            val vm = viewModel(store, repo)
+
+            vm.createLocation(householdId = 1, name = "Pantry", type = "pantry", color = "teal", icon = "cottage")
+
+            assertEquals("teal", repo.lastCreateColor)
+            assertEquals("cottage", repo.lastCreateIcon)
+        }
+
+    @Test
+    fun create_location_without_a_theme_passes_null_color_and_icon() =
+        runTest {
+            val repo = FakeLocationRepository(mapOf(1L to emptyList()))
+            val (store, _) = makeStore(households = listOf(homeHousehold), locationRepo = repo)
+            val vm = viewModel(store, repo)
+
+            vm.createLocation(householdId = 1, name = "Pantry", type = "pantry")
+
+            assertNull(repo.lastCreateColor)
+            assertNull(repo.lastCreateIcon)
         }
 
     @Test

@@ -1,5 +1,6 @@
 package dev.scuttle.inventory
 
+import dev.scuttle.inventory.data.dto.CreateLocationRequest
 import dev.scuttle.inventory.data.dto.DeleteHouseholdRequest
 import dev.scuttle.inventory.data.dto.DeleteLocationRequest
 import dev.scuttle.inventory.data.dto.DeleteShelfRequest
@@ -413,6 +414,34 @@ class DeleteRequestSerializationTest {
             )
 
         assertEquals("""{"name":"Top Shelf Pantry","type":"pantry","color":null,"icon":null}""", body)
+    }
+
+    /**
+     * CreateLocationRequest gained optional `color`/`icon` this branch (the
+     * add-storage sheets' new theme pickers). Unlike UpdateLocationRequest,
+     * BOTH default to null — there is no "preserve the current theme" case on
+     * create, so "unset" and "explicit null" collapse to the same wire shape
+     * (omit the key), which is exactly what the server's `sometimes|nullable`
+     * create validation already accepts. Asserted at the byte level per the
+     * "Assert the bytes, not the shape" lesson above: a descriptor-shape check
+     * alone would not catch a regression where these keys stopped being
+     * dropped for an unthemed create.
+     */
+    @Test
+    fun create_location_request_with_a_theme_encodes_color_and_icon() {
+        val body =
+            json.encodeToString(
+                CreateLocationRequest(name = "Walk-in Fridge", type = "fridge", color = "teal", icon = "cottage"),
+            )
+
+        assertEquals("""{"name":"Walk-in Fridge","type":"fridge","color":"teal","icon":"cottage"}""", body)
+    }
+
+    @Test
+    fun create_location_request_without_a_theme_omits_color_and_icon_entirely() {
+        val body = json.encodeToString(CreateLocationRequest(name = "Walk-in Fridge", type = "fridge"))
+
+        assertEquals("""{"name":"Walk-in Fridge","type":"fridge"}""", body)
     }
 
     private fun assertNoDefaultedProperties(descriptor: SerialDescriptor) {
