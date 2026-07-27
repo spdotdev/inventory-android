@@ -2,12 +2,14 @@ package dev.scuttle.inventory.ui.missing
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -114,12 +116,18 @@ fun MissingItemsScreen(
                         )
                     }
                     if (state.items.isNotEmpty()) {
-                        Icon(
-                            imageVector = Icons.Default.ShoppingBasket,
-                            contentDescription = stringResource(R.string.missing_items_warning_cd),
-                            tint = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.padding(end = 16.dp),
-                        )
+                        // Same 48dp cell the IconButtons occupy so all three actions
+                        // sit on one baseline — a bare padded Icon rode higher.
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.size(TOP_BAR_ICON_CELL),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ShoppingBasket,
+                                contentDescription = stringResource(R.string.missing_items_warning_cd),
+                                tint = MaterialTheme.colorScheme.error,
+                            )
+                        }
                     }
                 },
             )
@@ -290,3 +298,5 @@ private fun LowStockRow(
         }
     }
 }
+
+private val TOP_BAR_ICON_CELL = 48.dp
