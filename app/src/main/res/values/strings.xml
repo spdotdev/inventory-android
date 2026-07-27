@@ -235,7 +235,6 @@
     <string name="products_pane_swipe_hint_delete">Swipe right to delete →</string>
     <string name="products_pane_decrease_cd">Decrease %s quantity</string>
     <string name="products_pane_increase_cd">Increase %s quantity</string>
-    <string name="products_pane_move_cd">Move %s</string>
     <string name="products_pane_move_button">Move</string>
     <string name="products_pane_move_dialog_title">Move to…</string>
     <string name="products_pane_no_shelves_to_move">No other shelves available. Add more shelves to this location first.</string>

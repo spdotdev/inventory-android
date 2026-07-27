@@ -222,7 +222,6 @@
     <string name="products_pane_empty">Nog geen producten op deze plank. Tik op + om er een toe te voegen.</string>
     <string name="products_pane_decrease_cd">Hoeveelheid van %s verlagen</string>
     <string name="products_pane_increase_cd">Hoeveelheid van %s verhogen</string>
-    <string name="products_pane_move_cd">%s verplaatsen</string>
     <string name="products_pane_move_button">Verplaatsen</string>
     <string name="products_pane_move_dialog_title">Verplaatsen naar…</string>
     <string name="products_pane_no_shelves_to_move">Geen andere planken beschikbaar.</string>

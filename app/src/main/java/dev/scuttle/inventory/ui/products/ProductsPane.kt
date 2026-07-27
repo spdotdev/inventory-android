@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -19,13 +18,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -58,7 +54,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -272,7 +267,6 @@ fun ProductsPane(
                 // Hoist formatted strings so they can be used inside non-composable semantics blocks
                 val decreaseDesc = stringResource(R.string.products_pane_decrease_cd, product.name)
                 val increaseDesc = stringResource(R.string.products_pane_increase_cd, product.name)
-                val moveDesc = stringResource(R.string.products_pane_move_cd, product.name)
 
                 // GAP-5 M10: press-and-hold auto-repeat. onTick only moves this LOCAL
                 // delta (no network call per tick — see repeatingClickable's doc
@@ -458,35 +452,6 @@ fun ProductsPane(
                                         Text("+")
                                     }
                                 }
-                            }
-                            Button(
-                                onClick = { viewModel.startMove(product.id) },
-                                enabled = !state.loading,
-                                shape = RoundedCornerShape(0.dp),
-                                colors =
-                                    ButtonDefaults.buttonColors(
-                                        containerColor = FrostMoveAccent,
-                                        contentColor = FrostOnMoveAccent,
-                                        disabledContainerColor = FrostMoveAccent.copy(alpha = 0.4f),
-                                        disabledContentColor = FrostOnMoveAccent.copy(alpha = 0.6f),
-                                    ),
-                                // Wide enough that the longest translation ("Verplaatsen") still
-                                // wraps on word boundaries instead of falling back to a one-
-                                // character-per-line break, which reads as vertical text.
-                                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp),
-                                modifier =
-                                    Modifier
-                                        .fillMaxHeight()
-                                        .width(88.dp)
-                                        .semantics { contentDescription = moveDesc },
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.products_pane_move_button),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    textAlign = TextAlign.Center,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
                             }
                         }
                     }
