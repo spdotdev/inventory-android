@@ -182,6 +182,7 @@
     <string name="shelf_move_up_cd">Plank omhoog verplaatsen</string>
     <string name="shelf_move_down_cd">Plank omlaag verplaatsen</string>
     <string name="shelf_rename_title">Plank hernoemen</string>
+    <string name="shelf_edit_title">Plank bewerken</string>
     <string name="shelves_deleted">Planken verwijderd.</string>
 
     <!-- Add shelf sheet -->

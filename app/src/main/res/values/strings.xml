@@ -193,6 +193,7 @@
     <string name="shelf_move_up_cd">Move shelf up</string>
     <string name="shelf_move_down_cd">Move shelf down</string>
     <string name="shelf_rename_title">Rename shelf</string>
+    <string name="shelf_edit_title">Edit shelf</string>
     <string name="shelves_deleted">Shelves deleted.</string>
 
     <!-- Add shelf sheet -->

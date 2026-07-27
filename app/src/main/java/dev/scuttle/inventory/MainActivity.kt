@@ -77,6 +77,7 @@ import dev.scuttle.inventory.ui.households.HouseholdsViewModel
 import dev.scuttle.inventory.ui.invite.InviteScreen
 import dev.scuttle.inventory.ui.location.LocationDetailScreen
 import dev.scuttle.inventory.ui.location.ManageShelvesScreen
+import dev.scuttle.inventory.ui.location.ShelfEditScreen
 import dev.scuttle.inventory.ui.members.MembersScreen
 import dev.scuttle.inventory.ui.missing.MissingItemsScreen
 import dev.scuttle.inventory.ui.products.ProductDetailScreen
@@ -365,6 +366,7 @@ private object Routes {
     const val INVITE = "invite/{householdId}/{householdName}"
     const val LOCATION = "location/{householdId}/{locationId}"
     const val SHELVES_MANAGE = "storage/{householdId}/location/{locationId}/shelves/manage"
+    const val SHELF_EDIT = "storage/{householdId}/location/{locationId}/shelves/{shelfId}/edit"
     const val PRODUCT_DETAIL = "product-detail/{householdId}/{shelfId}/{productId}"
 
     // GAP4-L8: `fromDrawer` distinguishes the bottom-tab root entry (tab click, no back
@@ -413,6 +415,12 @@ private object Routes {
         shelfId: Long,
         productId: Long,
     ) = "product-detail/$householdId/$shelfId/$productId"
+
+    fun shelfEdit(
+        householdId: Long,
+        locationId: Long,
+        shelfId: Long,
+    ) = "storage/$householdId/location/$locationId/shelves/$shelfId/edit"
 }
 
 /**
@@ -910,6 +918,35 @@ private fun InventoryNavHost(
                 ManageShelvesScreen(
                     householdId = householdId,
                     locationId = locationId,
+                    onBack = { navController.popBackStack() },
+                    onEditShelf = { shelfId ->
+                        navController.navigate(Routes.shelfEdit(householdId, locationId, shelfId))
+                    },
+                )
+            }
+
+            composable(
+                route = Routes.SHELF_EDIT,
+                arguments =
+                    listOf(
+                        navArgument("householdId") { type = NavType.LongType },
+                        navArgument("locationId") { type = NavType.LongType },
+                        navArgument("shelfId") { type = NavType.LongType },
+                    ),
+            ) { entry ->
+                val shelfId = entry.arguments?.getLong("shelfId") ?: return@composable
+                // Scoped to the SHELVES_MANAGE entry's OWN ViewModelStore, same
+                // pattern (and same reason) as HOUSEHOLD_EDIT sharing
+                // HouseholdsViewModel with HOUSEHOLDS above: this resolves to the
+                // SAME ShelvesViewModel instance ManageShelvesScreen is using
+                // (already loaded for this household/location), rather than
+                // hiltViewModel()'s own default minting a second instance scoped
+                // to this destination's own back-stack entry — which would need
+                // its own load() call and briefly show an empty screen.
+                val manageEntry = remember(entry) { navController.getBackStackEntry(Routes.SHELVES_MANAGE) }
+                ShelfEditScreen(
+                    shelfId = shelfId,
+                    viewModel = hiltViewModel(manageEntry),
                     onBack = { navController.popBackStack() },
                 )
             }

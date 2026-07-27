@@ -2,8 +2,10 @@ package dev.scuttle.inventory.ui.hierarchy
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -34,6 +36,8 @@ import dev.scuttle.inventory.ui.theme.FrostCard
  * reordered (the shelves screen's "Unsorted" shelf; locations have no
  * equivalent and always pass `isSystem = false`).
  */
+private val LEADING_ICON_SPACING = 8.dp
+
 @Composable
 fun EditableRow(
     name: String,
@@ -51,6 +55,11 @@ fun EditableRow(
     // mutation is in flight — only rename/reorder, which each fire their own
     // request immediately, need to be held off to avoid racing a second one.
     actionsEnabled: Boolean = true,
+    // An optional themed avatar (e.g. ShelfAvatar) rendered before the name —
+    // null for callers with nothing to theme (locations have no theme yet).
+    // Kept generic (any Composable) rather than a colour/icon pair so this row
+    // doesn't need to know about the theming system at all.
+    leadingIcon: (@Composable () -> Unit)? = null,
     // Defaults preserve the shelves-screen wording; a caller editing a different
     // kind of row (e.g. locations) passes its own copy so a screen reader never
     // announces "Rename shelf" over a location row.
@@ -72,6 +81,10 @@ fun EditableRow(
         ) {
             if (editable) {
                 Checkbox(checked = selected, onCheckedChange = { onClick() })
+            }
+            leadingIcon?.let {
+                it()
+                Spacer(modifier = Modifier.width(LEADING_ICON_SPACING))
             }
             Text(
                 text = name,

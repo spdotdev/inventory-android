@@ -17,7 +17,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -34,7 +33,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -50,13 +48,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import dev.scuttle.inventory.R
-import dev.scuttle.inventory.data.dto.ShelfDto
 import dev.scuttle.inventory.ui.common.ErrorRetry
 import dev.scuttle.inventory.ui.common.shelfDisplayName
 import dev.scuttle.inventory.ui.hierarchy.DeleteStrategyDialog
@@ -64,9 +59,10 @@ import dev.scuttle.inventory.ui.hierarchy.EditableRow
 import dev.scuttle.inventory.ui.hierarchy.UndoOutcome
 import dev.scuttle.inventory.ui.hierarchy.shelfStrategyOptions
 import dev.scuttle.inventory.ui.shelves.ShelvesViewModel
+import dev.scuttle.inventory.ui.theme.ShelfAvatar
 
-/** Matches the server-side shelf name column limit (same cap as ShelvesViewModel.onNewNameChange). */
-private const val MAX_SHELF_NAME_LENGTH = 50
+/** Size of the themed avatar shown before each shelf row's name. */
+private val SHELF_AVATAR_SIZE = 28.dp
 
 /**
  * The dedicated shelf-management page reached from LocationDetailScreen's top-bar
@@ -86,12 +82,15 @@ fun ManageShelvesScreen(
     locationId: Long,
     modifier: Modifier = Modifier,
     onBack: () -> Unit = {},
+    // Rename moved off this screen onto the full-page ShelfEditScreen (mirrors
+    // the household edit page) — the pencil now navigates instead of opening an
+    // inline dialog. Never invoked for the is_system shelf: EditableRow's own
+    // `isSystem` gate hides the pencil entirely for that row.
+    onEditShelf: (shelfId: Long) -> Unit = {},
     shelvesViewModel: ShelvesViewModel = hiltViewModel(),
 ) {
     val state by shelvesViewModel.state.collectAsState()
     var showAddShelfSheet by rememberSaveable { mutableStateOf(false) }
-    var renamingShelf by remember { mutableStateOf<ShelfDto?>(null) }
-    var renameText by remember { mutableStateOf("") }
     val keyboardController = LocalSoftwareKeyboardController.current
     val snackbarHostState = remember { SnackbarHostState() }
     val nonSystemShelfCount = state.shelves.count { !it.is_system }
@@ -209,11 +208,16 @@ fun ManageShelvesScreen(
                             // Same shape as LocationDetailScreen's own shelf-row-<id> tag
                             // (this screen is that tag's new home).
                             modifier = Modifier.testTag("shelf-row-${shelf.id}"),
-                            onClick = { shelvesViewModel.toggleSelection(shelf.id) },
-                            onRename = {
-                                renamingShelf = shelf
-                                renameText = shelf.name
+                            leadingIcon = {
+                                ShelfAvatar(
+                                    shelfId = shelf.id,
+                                    size = SHELF_AVATAR_SIZE,
+                                    colorKey = shelf.color,
+                                    iconKey = shelf.icon,
+                                )
                             },
+                            onClick = { shelvesViewModel.toggleSelection(shelf.id) },
+                            onRename = { onEditShelf(shelf.id) },
                             onMoveUp = { shelvesViewModel.moveUp(shelf.id) },
                             onMoveDown = { shelvesViewModel.moveDown(shelf.id) },
                         )
@@ -270,33 +274,6 @@ fun ManageShelvesScreen(
             }
         snackbarHostState.showSnackbar(message)
         shelvesViewModel.consumeUndoResult()
-    }
-
-    renamingShelf?.let { shelf ->
-        AlertDialog(
-            onDismissRequest = { renamingShelf = null },
-            title = { Text(stringResource(R.string.shelf_rename_title), modifier = Modifier.semantics { heading() }) },
-            text = {
-                OutlinedTextField(
-                    value = renameText,
-                    onValueChange = { renameText = it.take(MAX_SHELF_NAME_LENGTH) },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, imeAction = ImeAction.Done),
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        shelvesViewModel.rename(shelf.id, renameText)
-                        renamingShelf = null
-                    },
-                    enabled = renameText.isNotBlank(),
-                ) { Text(stringResource(R.string.action_save)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { renamingShelf = null }) { Text(stringResource(R.string.action_cancel)) }
-            },
-        )
     }
 
     if (showAddShelfSheet) {

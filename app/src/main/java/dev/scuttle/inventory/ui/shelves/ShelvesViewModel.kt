@@ -201,28 +201,48 @@ class ShelvesViewModel
                 }
             }
 
-        fun rename(
+        /**
+         * Update a shelf's name and/or theme keys (null = clear back to the
+         * derived default) — same shape as HouseholdsViewModel.update/updateTheme,
+         * and the single entry point ShelfEditScreen drives for both the name
+         * Save button and the colour/icon swatches.
+         */
+        fun update(
             shelfId: Long,
-            name: String,
+            name: String?,
+            color: String?,
+            icon: String?,
         ) {
             val h = householdId
             val l = locationId
             if (h == null || l == null) return
             val shelf = _state.value.shelves.firstOrNull { it.id == shelfId }
             // Clamped here too (not just in the Compose text field), so this method
-            // is safe to call from anywhere, not only the one wired-up dialog.
-            val trimmed = name.trim().take(MAX_SHELF_NAME_LENGTH)
-            // The Unsorted shelf's name is server-owned; the client only localises
-            // its displayed label, so it can never be renamed from here.
-            if (shelf == null || shelf.is_system || trimmed.isEmpty()) return
+            // is safe to call from anywhere, not only the one wired-up screen. A
+            // theme-only call (name == null) skips this clamp entirely.
+            val trimmed = name?.trim()?.take(MAX_SHELF_NAME_LENGTH)
+            // A name-bearing call whose trimmed result is blank is a no-op, never a
+            // valid update.
+            val blankNameUpdate = name != null && trimmed.isNullOrEmpty()
+            // The Unsorted shelf's name/theme are server-owned — the client only
+            // localises its displayed label — so it can never be renamed or
+            // re-themed from here.
+            if (shelf == null || shelf.is_system || blankNameUpdate) return
             launchLoading {
-                val updated = repository.rename(h, l, shelfId, trimmed)
+                val updated = repository.update(h, l, shelfId, name = trimmed, color = color, icon = icon)
                 _state.update { s ->
                     s.copy(shelves = orderShelves(s.shelves.map { if (it.id == shelfId) updated else it }))
                 }
                 hierarchyStore.refresh()
             }
         }
+
+        /** Persist the chosen theme keys (null = back to the derived default); the name is never touched. */
+        fun updateTheme(
+            shelfId: Long,
+            color: String?,
+            icon: String?,
+        ) = update(shelfId, name = null, color = color, icon = icon)
 
         fun moveUp(shelfId: Long) = move(shelfId, -1)
 

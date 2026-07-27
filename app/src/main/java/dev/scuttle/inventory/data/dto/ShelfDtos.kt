@@ -11,6 +11,13 @@ data class ShelfDto(
     // Server-side flag for the "Unsorted" holding shelf. The client localises the
     // label off this — the server always stores the literal name "Unsorted".
     val is_system: Boolean = false,
+    // Phase-2 theme keys (same HouseholdColor/HouseholdIcon enums the household
+    // theme already uses server-side); null (or an older server omitting them) =
+    // the client derives a stable default from the shelf's own id (ThemedAvatar).
+    // The is_system Unsorted shelf can never carry a theme — the server 422s a
+    // PATCH attempting to set one — so these are always null for it in practice.
+    val color: String? = null,
+    val icon: String? = null,
     // The server requires a delete STRATEGY when a shelf has products. This is how
     // the client knows to ask, and it feeds the dialog's "17 products" summary.
     //
@@ -38,9 +45,23 @@ data class CreateShelfRequest(
     val name: String,
 )
 
+// Mirrors UpdateHouseholdRequest's deliberate asymmetry (see its own doc comment
+// and CLAUDE.md's "Deletes" section — the household precedent, not a shelf-only
+// invention): the app's Json has encodeDefaults=false and explicitNulls=true.
+//
+// - `name` DEFAULTS to null on purpose. The server's rule is `sometimes|required`:
+//   an ABSENT key passes ("don't touch the name"), but an EXPLICIT null FAILS
+//   validation. A theme-only update must omit `name` entirely, so it needs the
+//   default — encodeDefaults=false then drops it for us.
+// - `color` / `icon` must stay UN-defaulted. The server's rule there is
+//   `sometimes|nullable`: an explicit null is meaningful (clears the theme back
+//   to the derived default), so it must always be encoded, never silently
+//   dropped.
 @Serializable
 data class UpdateShelfRequest(
-    val name: String,
+    val name: String? = null,
+    val color: String?,
+    val icon: String?,
 )
 
 // `deletion_batch_id` has NO default: the app's Json has encodeDefaults=false, so a

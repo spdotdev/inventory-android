@@ -21,16 +21,20 @@ interface ShelfRepository {
     ): ShelfDto
 
     /**
-     * Defaults throw so test fakes only implement what a test actually exercises
-     * (same pattern as [clear] and HouseholdRepository.updateTheme). Without
-     * this, adding a method here breaks every fake in the unit-test suite.
+     * Update a shelf's name and/or theme keys (null = clear back to the derived
+     * default) — same shape as HouseholdRepository.update. Default throws so test
+     * fakes only implement it where a test actually exercises this (same pattern
+     * as [clear]'s no-op default). Without this, adding a method here breaks
+     * every fake in the unit-test suite.
      */
-    suspend fun rename(
+    suspend fun update(
         householdId: Long,
         locationId: Long,
         shelfId: Long,
-        name: String,
-    ): ShelfDto = throw UnsupportedOperationException("rename not supported")
+        name: String?,
+        color: String?,
+        icon: String?,
+    ): ShelfDto = throw UnsupportedOperationException("update not supported")
 
     suspend fun reorder(
         householdId: Long,

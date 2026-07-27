@@ -68,11 +68,17 @@ private val householdAccents = householdAccentsByKey.values.toList()
 private val householdIcons = householdIconsByKey.values.toList()
 
 /**
- * Theme for a household: user-chosen keys win; a null (or unknown, e.g. a key
- * added server-side after this build shipped) key falls back to the stable
- * id-derived default. Index math lives in HouseholdThemeIndex.kt.
+ * Theme for any themeable entity keyed by a stable Long id: user-chosen keys
+ * win; a null (or unknown, e.g. a key added server-side after this build
+ * shipped) key falls back to the stable id-derived default. Index math lives
+ * in HouseholdThemeIndex.kt.
+ *
+ * Genuinely generic despite the household-flavoured name of its historical
+ * caller: [householdTheme] is a thin alias kept for households, and shelves
+ * (ShelfEditScreen/ShelfAvatar) call this directly with their own id rather
+ * than duplicating the derivation.
  */
-fun householdTheme(
+fun themeFor(
     id: Long,
     colorKey: String? = null,
     iconKey: String? = null,
@@ -81,6 +87,13 @@ fun householdTheme(
         accent = householdAccentsByKey[colorKey] ?: householdAccents[householdAccentIndex(id)],
         icon = householdIconsByKey[iconKey] ?: householdIcons[householdIconIndex(id)],
     )
+
+/** Alias of [themeFor] kept for existing household call sites. */
+fun householdTheme(
+    id: Long,
+    colorKey: String? = null,
+    iconKey: String? = null,
+): HouseholdTheme = themeFor(id, colorKey, iconKey)
 
 /**
  * The household's accent as a **solid fill** (dashboard bars), picked for the
@@ -106,6 +119,37 @@ fun householdBarAccent(
  * thing saying which household a row belongs to — on the dashboard it carries
  * that meaning, so it must not be silent to TalkBack.
  */
+private const val AVATAR_BACKGROUND_ALPHA = 0.28f
+private const val AVATAR_ICON_SIZE_FRACTION = 0.55f
+
+@Composable
+fun ThemedAvatar(
+    id: Long,
+    modifier: Modifier = Modifier,
+    size: Dp = 36.dp,
+    colorKey: String? = null,
+    iconKey: String? = null,
+    contentDescription: String? = null,
+) {
+    val theme = themeFor(id, colorKey, iconKey)
+    Box(
+        modifier =
+            modifier
+                .size(size)
+                .clip(CircleShape)
+                .background(theme.accent.copy(alpha = AVATAR_BACKGROUND_ALPHA)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = theme.icon,
+            contentDescription = contentDescription,
+            tint = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.size(size * AVATAR_ICON_SIZE_FRACTION),
+        )
+    }
+}
+
+/** Alias of [ThemedAvatar] kept for existing household call sites. */
 @Composable
 fun HouseholdAvatar(
     householdId: Long,
@@ -114,21 +158,15 @@ fun HouseholdAvatar(
     colorKey: String? = null,
     iconKey: String? = null,
     contentDescription: String? = null,
-) {
-    val theme = householdTheme(householdId, colorKey, iconKey)
-    Box(
-        modifier =
-            modifier
-                .size(size)
-                .clip(CircleShape)
-                .background(theme.accent.copy(alpha = 0.28f)),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            imageVector = theme.icon,
-            contentDescription = contentDescription,
-            tint = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.size(size * 0.55f),
-        )
-    }
-}
+) = ThemedAvatar(householdId, modifier, size, colorKey, iconKey, contentDescription)
+
+/** Same avatar, generalized for a shelf's own id/color/icon keys. */
+@Composable
+fun ShelfAvatar(
+    shelfId: Long,
+    modifier: Modifier = Modifier,
+    size: Dp = 36.dp,
+    colorKey: String? = null,
+    iconKey: String? = null,
+    contentDescription: String? = null,
+) = ThemedAvatar(shelfId, modifier, size, colorKey, iconKey, contentDescription)

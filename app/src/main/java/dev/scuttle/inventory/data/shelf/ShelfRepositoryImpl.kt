@@ -40,22 +40,27 @@ class ShelfRepositoryImpl
                 cache[key] = (cache[key] ?: emptyList()) + created
             }
 
-        override suspend fun rename(
+        override suspend fun update(
             householdId: Long,
             locationId: Long,
             shelfId: Long,
-            name: String,
+            name: String?,
+            color: String?,
+            icon: String?,
         ): ShelfDto =
-            api.update(householdId, locationId, shelfId, UpdateShelfRequest(name = name)).data.also { updated ->
-                val key = householdId to locationId
-                // On a cache miss, leave the cache absent rather than fabricating a
-                // 1-element list — getCached() returning null means "go fetch", and a
-                // bogus single-shelf cache would lie about every other shelf in this
-                // location until the next full refresh.
-                cache[key]?.let { cached ->
-                    cache[key] = cached.map { if (it.id == shelfId) updated else it }
+            api
+                .update(householdId, locationId, shelfId, UpdateShelfRequest(name = name, color = color, icon = icon))
+                .data
+                .also { updated ->
+                    val key = householdId to locationId
+                    // On a cache miss, leave the cache absent rather than fabricating a
+                    // 1-element list — getCached() returning null means "go fetch", and a
+                    // bogus single-shelf cache would lie about every other shelf in this
+                    // location until the next full refresh.
+                    cache[key]?.let { cached ->
+                        cache[key] = cached.map { if (it.id == shelfId) updated else it }
+                    }
                 }
-            }
 
         override suspend fun reorder(
             householdId: Long,

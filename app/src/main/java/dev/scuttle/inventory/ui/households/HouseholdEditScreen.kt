@@ -3,14 +3,8 @@ package dev.scuttle.inventory.ui.households
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -50,7 +43,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
@@ -64,16 +56,11 @@ import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import dev.scuttle.inventory.R
 import dev.scuttle.inventory.data.household.HouseholdExportFile
+import dev.scuttle.inventory.ui.common.ColorSwatchPicker
 import dev.scuttle.inventory.ui.common.ErrorRetry
+import dev.scuttle.inventory.ui.common.IconSwatchPicker
 import dev.scuttle.inventory.ui.theme.FrostCard
-import dev.scuttle.inventory.ui.theme.householdAccentsByKey
-import dev.scuttle.inventory.ui.theme.householdIconsByKey
-import dev.scuttle.inventory.ui.theme.householdTheme
 import java.io.File
-
-private val SWATCH_SIZE = 40.dp
-private val SWATCH_ICON_SIZE = 22.dp
-private const val SWATCH_BACKGROUND_ALPHA = 0.28f
 
 /** Matches the server-side household name column limit (UpdateHouseholdRequest's `max:50`). */
 private const val MAX_HOUSEHOLD_NAME_LENGTH = 50
@@ -102,7 +89,7 @@ private const val MAX_HOUSEHOLD_NAME_LENGTH = 50
  * matching direct-manipulation pickers elsewhere; only the name has an explicit Save, because
  * unlike a swatch tap a name is free text that needs a confirming action.
  */
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HouseholdEditScreen(
     householdId: Long,
@@ -254,60 +241,27 @@ fun HouseholdEditScreen(
                             text = stringResource(R.string.household_theme_color_label),
                             style = MaterialTheme.typography.labelLarge,
                         )
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            verticalArrangement = Arrangement.spacedBy(10.dp),
-                        ) {
-                            householdAccentsByKey.forEach { (key, accent) ->
-                                Box(
-                                    modifier =
-                                        Modifier
-                                            .size(SWATCH_SIZE)
-                                            .clip(CircleShape)
-                                            .background(accent)
-                                            .selectionBorder(selected = selectedColor == key)
-                                            .clickable {
-                                                selectedColor = key
-                                                viewModel.updateTheme(householdId, color = key, icon = selectedIcon)
-                                            }.testTag("theme-color-$key"),
-                                )
-                            }
-                        }
+                        ColorSwatchPicker(
+                            selectedColor = selectedColor,
+                            onSelect = { key ->
+                                selectedColor = key
+                                viewModel.updateTheme(householdId, color = key, icon = selectedIcon)
+                            },
+                        )
 
                         Text(
                             text = stringResource(R.string.household_theme_icon_label),
                             style = MaterialTheme.typography.labelLarge,
                         )
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            verticalArrangement = Arrangement.spacedBy(10.dp),
-                        ) {
-                            val iconBackground =
-                                householdTheme(householdId, selectedColor)
-                                    .accent
-                                    .copy(alpha = SWATCH_BACKGROUND_ALPHA)
-                            householdIconsByKey.forEach { (key, image) ->
-                                Box(
-                                    contentAlignment = Alignment.Center,
-                                    modifier =
-                                        Modifier
-                                            .size(SWATCH_SIZE)
-                                            .clip(CircleShape)
-                                            .background(iconBackground)
-                                            .selectionBorder(selected = selectedIcon == key)
-                                            .clickable {
-                                                selectedIcon = key
-                                                viewModel.updateTheme(householdId, color = selectedColor, icon = key)
-                                            }.testTag("theme-icon-$key"),
-                                ) {
-                                    Icon(
-                                        imageVector = image,
-                                        contentDescription = key,
-                                        modifier = Modifier.size(SWATCH_ICON_SIZE),
-                                    )
-                                }
-                            }
-                        }
+                        IconSwatchPicker(
+                            id = householdId,
+                            selectedColor = selectedColor,
+                            selectedIcon = selectedIcon,
+                            onSelect = { key ->
+                                selectedIcon = key
+                                viewModel.updateTheme(householdId, color = selectedColor, icon = key)
+                            },
+                        )
 
                         TextButton(onClick = {
                             selectedColor = null
@@ -594,14 +548,6 @@ fun HouseholdEditScreen(
         )
     }
 }
-
-@Composable
-private fun Modifier.selectionBorder(selected: Boolean): Modifier =
-    if (selected) {
-        border(width = 3.dp, color = MaterialTheme.colorScheme.onSurface, shape = CircleShape)
-    } else {
-        this
-    }
 
 /**
  * Writes the downloaded export to the app's cache (the `exports/` sub-dir

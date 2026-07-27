@@ -78,8 +78,16 @@ import dev.scuttle.inventory.ui.hierarchy.EditableRow
 import dev.scuttle.inventory.ui.products.ProductsPane
 import dev.scuttle.inventory.ui.products.ProductsViewModel
 import dev.scuttle.inventory.ui.shelves.ShelvesViewModel
+import dev.scuttle.inventory.ui.theme.ShelfAvatar
+import dev.scuttle.inventory.ui.theme.themeFor
 import kotlinx.coroutines.launch
 import androidx.compose.material.icons.filled.Tab as TabViewIcon
+
+/** Size of the themed avatar shown before each shelf's LIST-mode row name. */
+private val SHELF_AVATAR_SIZE = 28.dp
+
+/** Compact colour/warning dot size in the shelf TABS strip — deliberately small and subtle. */
+private val SHELF_TAB_DOT_SIZE = 6.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -278,6 +286,14 @@ fun LocationDetailScreen(
                                 // tab/pager rendering it replaces (same shape as
                                 // StorageOverviewScreen's location-row-<id>).
                                 modifier = Modifier.testTag("shelf-row-${shelf.id}"),
+                                leadingIcon = {
+                                    ShelfAvatar(
+                                        shelfId = shelf.id,
+                                        size = SHELF_AVATAR_SIZE,
+                                        colorKey = shelf.color,
+                                        iconKey = shelf.icon,
+                                    )
+                                },
                                 onClick = {
                                     scope.launch { pagerState.scrollToPage(index) }
                                     shelvesViewModel.toggleListView()
@@ -317,6 +333,21 @@ fun LocationDetailScreen(
                                                 Modifier
                                             },
                                     ) {
+                                        // A compact colour dot only when a theme colour was
+                                        // actually chosen — kept deliberately subtle (no icon,
+                                        // no background wash) so the tab strip stays plain for
+                                        // the common untouched case, per CLAUDE.md's design bar.
+                                        if (shelf.color != null) {
+                                            Box(
+                                                modifier =
+                                                    Modifier
+                                                        .size(SHELF_TAB_DOT_SIZE)
+                                                        .background(
+                                                            themeFor(shelf.id, shelf.color).accent,
+                                                            CircleShape,
+                                                        ),
+                                            )
+                                        }
                                         Text(
                                             shelfDisplayName(shelf),
                                             color =
@@ -330,7 +361,7 @@ fun LocationDetailScreen(
                                             Box(
                                                 modifier =
                                                     Modifier
-                                                        .size(6.dp)
+                                                        .size(SHELF_TAB_DOT_SIZE)
                                                         .background(MaterialTheme.colorScheme.error, CircleShape),
                                             )
                                         }

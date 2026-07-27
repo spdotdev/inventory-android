@@ -38,7 +38,9 @@
     <ID>EmptyFunctionBlock:SessionCleanerTest.kt$SessionCleanerTest.RecordingHouseholdRepo${}</ID>
     <ID>EmptyFunctionBlock:ShelvesViewModelMoveRaceTest.kt$ShelvesViewModelMoveRaceTest.FakeShelfViewStore${}</ID>
     <ID>LargeClass:DrawerViewModelTest.kt$DrawerViewModelTest</ID>
+    <ID>LargeClass:ShelvesViewModelTest.kt$ShelvesViewModelTest</ID>
     <ID>LongParameterList:SessionCleaner.kt$SessionCleaner$( private val householdRepository: HouseholdRepository, private val locationRepository: LocationRepository, private val shelfRepository: ShelfRepository, private val productRepository: ProductRepository, private val hierarchyStore: HierarchyStore, private val defaultHouseholdStore: DefaultHouseholdStore, private val shelfViewStore: ShelfViewStore, private val householdViewStore: HouseholdViewStore, private val feedStateStore: FeedStateStore, )</ID>
+    <ID>LongParameterList:ShelfRepository.kt$ShelfRepository$( householdId: Long, locationId: Long, shelfId: Long, name: String?, color: String?, icon: String?, )</ID>
     <ID>MagicNumber:AuthInterceptor.kt$AuthInterceptor$401</ID>
     <ID>MagicNumber:ErrorMapping.kt$401</ID>
     <ID>MagicNumber:ErrorMapping.kt$403</ID>
@@ -91,6 +93,7 @@
     <ID>TooManyFunctions:AuthViewModel.kt$AuthViewModel : ViewModel</ID>
     <ID>TooManyFunctions:DrawerViewModel.kt$DrawerViewModel : ViewModel</ID>
     <ID>TooManyFunctions:HouseholdsViewModel.kt$HouseholdsViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:MainActivity.kt$Routes</ID>
     <ID>TooManyFunctions:NetworkModule.kt$NetworkModule</ID>
     <ID>TooManyFunctions:ProductDetailViewModel.kt$ProductDetailViewModel : ViewModel</ID>
     <ID>TooManyFunctions:ProductRepositoryImpl.kt$ProductRepositoryImpl : ProductRepository</ID>

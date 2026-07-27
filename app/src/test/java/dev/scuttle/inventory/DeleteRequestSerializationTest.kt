@@ -152,11 +152,6 @@ class DeleteRequestSerializationTest {
     // --- Other request DTOs: unaffected by the above, still no defaults ------
 
     @Test
-    fun update_shelf_request_has_no_defaulted_properties() {
-        assertNoDefaultedProperties(UpdateShelfRequest.serializer().descriptor)
-    }
-
-    @Test
     fun update_location_request_has_no_defaulted_properties() {
         assertNoDefaultedProperties(UpdateLocationRequest.serializer().descriptor)
     }
@@ -242,6 +237,97 @@ class DeleteRequestSerializationTest {
             )
 
         assertEquals("""{"color":null,"icon":null}""", body)
+    }
+
+    /**
+     * UpdateShelfRequest mirrors UpdateHouseholdRequest's exact asymmetry (see
+     * that class's own descriptor test above and CLAUDE.md's "Deletes" section):
+     * `name` defaults to null (an absent key = "don't touch the name" under the
+     * server's `sometimes|required` rule), `color`/`icon` do not (an explicit
+     * null clears the theme under `sometimes|nullable`). Pinned here at the
+     * descriptor level, then at the byte level below for every production call
+     * shape (name-only, color+icon-only, combined, and explicit-null clear) —
+     * a descriptor-shape-only test already let this exact bug ship once (the
+     * doc comment above `assertNoDefaultedProperties` explains why).
+     */
+    @Test
+    fun update_shelf_request_defaults_only_name() {
+        val descriptor = UpdateShelfRequest.serializer().descriptor
+
+        assertTrue(
+            "name must default to null so a theme-only update omits the key",
+            descriptor.isElementOptional(descriptor.getElementIndex("name")),
+        )
+        assertFalse(
+            "color must not be defaulted: an explicit null clears the theme",
+            descriptor.isElementOptional(descriptor.getElementIndex("color")),
+        )
+        assertFalse(
+            "icon must not be defaulted: an explicit null clears the theme",
+            descriptor.isElementOptional(descriptor.getElementIndex("icon")),
+        )
+    }
+
+    @Test
+    fun renaming_a_shelf_encodes_its_current_theme_instead_of_clearing_it() {
+        // Mirrors ShelfEditScreen's Save-name action / ShelvesViewModel.update:
+        // color/icon are passed through as the shelf's CURRENT keys (not null)
+        // because they have no default and are always encoded — an explicit
+        // null here would clear the theme server-side. This is what makes a
+        // rename side-effect-free on the theme.
+        val body =
+            json.encodeToString(
+                UpdateShelfRequest(name = "Freezer top", color = "teal", icon = "cottage"),
+            )
+
+        assertEquals("""{"name":"Freezer top","color":"teal","icon":"cottage"}""", body)
+    }
+
+    @Test
+    fun a_shelf_theme_only_update_omits_the_name_key_entirely() {
+        // Mirrors ShelvesViewModel.updateTheme()'s call to update(name = null,
+        // ...): name's default drops the key so the server (`sometimes|
+        // required`) never sees an explicit null and never touches the name.
+        val body =
+            json.encodeToString(
+                UpdateShelfRequest(name = null, color = "sky", icon = "box"),
+            )
+
+        assertEquals("""{"color":"sky","icon":"box"}""", body)
+    }
+
+    @Test
+    fun clearing_a_shelfs_theme_omits_the_name_key_and_encodes_explicit_nulls() {
+        // Mirrors the "Default" TextButton's updateTheme(color = null, icon =
+        // null) call: if `name` lost its default, this would encode
+        // `"name":null` and 422; if `color`/`icon` gained a default, this
+        // would encode `{}` and silently no-op instead of clearing the theme.
+        val body =
+            json.encodeToString(
+                UpdateShelfRequest(name = null, color = null, icon = null),
+            )
+
+        assertEquals("""{"color":null,"icon":null}""", body)
+    }
+
+    @Test
+    fun renaming_a_shelf_with_no_prior_theme_still_encodes_explicit_null_color_and_icon() {
+        // A shelf that never had a theme (color/icon both null in ShelfDto) and
+        // is renamed for the first time: selectedColor/selectedIcon in
+        // ShelfEditScreen stay null, and per the asymmetry above those ARE
+        // always encoded (no default) — distinct from a household/shelf that
+        // HAD a theme and is being renamed (the test above), where the encoded
+        // value is the non-null current key instead. Both shapes must round-trip
+        // correctly: a null here means "no theme", not "clear this shelf's
+        // theme" — server-side `sometimes|nullable` treats them identically
+        // (both are a no-op when the shelf already has no theme), so this is
+        // safe either way, but the wire bytes must still be exactly this.
+        val body =
+            json.encodeToString(
+                UpdateShelfRequest(name = "Top shelf", color = null, icon = null),
+            )
+
+        assertEquals("""{"name":"Top shelf","color":null,"icon":null}""", body)
     }
 
     private fun assertNoDefaultedProperties(descriptor: SerialDescriptor) {

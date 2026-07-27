@@ -38,6 +38,8 @@ class ShelvesViewModelTest {
         val targetIdsUsed = mutableListOf<Long?>()
         val deletedShelfIds = mutableListOf<Long>()
         var lastRenamedId: Long? = null
+        var lastUpdateColor: String? = null
+        var lastUpdateIcon: String? = null
         var lastReorderIds: List<Long>? = null
 
         // When set, deleteWithStrategy throws for this one id instead of deleting
@@ -68,15 +70,20 @@ class ShelvesViewModelTest {
             return dto
         }
 
-        override suspend fun rename(
+        override suspend fun update(
             householdId: Long,
             locationId: Long,
             shelfId: Long,
-            name: String,
+            name: String?,
+            color: String?,
+            icon: String?,
         ): ShelfDto {
             lastRenamedId = shelfId
+            lastUpdateColor = color
+            lastUpdateIcon = icon
             val index = items.indexOfFirst { it.id == shelfId }
-            val updated = items[index].copy(name = name)
+            val current = items[index]
+            val updated = current.copy(name = name ?: current.name, color = color, icon = icon)
             items[index] = updated
             return updated
         }
@@ -503,7 +510,7 @@ class ShelvesViewModelTest {
             val vm = viewModel(repo)
             vm.load(householdId = 1, locationId = 1)
 
-            vm.rename(1L, "Freezer top")
+            vm.update(1L, name = "Freezer top", color = null, icon = null)
 
             assertEquals(1L, repo.lastRenamedId)
             assertEquals(
@@ -521,7 +528,7 @@ class ShelvesViewModelTest {
             val vm = viewModel(repo)
             vm.load(householdId = 1, locationId = 1)
 
-            vm.rename(1L, "My custom name")
+            vm.update(1L, name = "My custom name", color = null, icon = null)
 
             assertEquals(
                 "Unsorted",
@@ -530,6 +537,70 @@ class ShelvesViewModelTest {
                     .name,
             )
             assertNull(repo.lastRenamedId)
+        }
+
+    @Test
+    fun update_theme_passes_null_name_leaving_the_shelfs_name_untouched() =
+        runTest {
+            // Mirrors ShelfEditScreen's colour/icon swatch taps (updateTheme):
+            // only color/icon travel, the name arg the repository receives is
+            // null — the FakeShelfRepository models the server's `sometimes|
+            // required` contract by falling back to the current name when
+            // `name` is null, so a real regression that accidentally clamped
+            // an empty string here would still show up as the name changing.
+            val repo = FakeShelfRepository().apply { items.add(ShelfDto(1, "Top", 0, 1L)) }
+            val vm = viewModel(repo)
+            vm.load(householdId = 1, locationId = 1)
+
+            vm.updateTheme(1L, color = "teal", icon = "cottage")
+
+            assertEquals(1L, repo.lastRenamedId)
+            assertEquals("teal", repo.lastUpdateColor)
+            assertEquals("cottage", repo.lastUpdateIcon)
+            val shelf =
+                vm.state.value.shelves
+                    .first()
+            assertEquals("Top", shelf.name)
+            assertEquals("teal", shelf.color)
+            assertEquals("cottage", shelf.icon)
+        }
+
+    @Test
+    fun update_theme_on_the_unsorted_shelf_is_a_no_op() =
+        runTest {
+            val repo = FakeShelfRepository().apply { items.add(ShelfDto(1, "Unsorted", 0, 1L, is_system = true)) }
+            val vm = viewModel(repo)
+            vm.load(householdId = 1, locationId = 1)
+
+            vm.updateTheme(1L, color = "teal", icon = "cottage")
+
+            assertNull(repo.lastUpdateColor)
+            assertNull(
+                vm.state.value.shelves
+                    .first()
+                    .color,
+            )
+        }
+
+    @Test
+    fun update_with_name_and_theme_sends_both_in_one_call() =
+        runTest {
+            // Mirrors ShelfEditScreen's Save-name action, which passes the
+            // CURRENTLY selected theme through alongside the new name so a
+            // rename never side-effects the theme (the DTO has no default on
+            // color/icon — see DeleteRequestSerializationTest).
+            val repo = FakeShelfRepository().apply { items.add(ShelfDto(1, "Top", 0, 1L)) }
+            val vm = viewModel(repo)
+            vm.load(householdId = 1, locationId = 1)
+
+            vm.update(1L, name = "Freezer top", color = "sky", icon = "box")
+
+            val shelf =
+                vm.state.value.shelves
+                    .first()
+            assertEquals("Freezer top", shelf.name)
+            assertEquals("sky", shelf.color)
+            assertEquals("box", shelf.icon)
         }
 
     @Test
