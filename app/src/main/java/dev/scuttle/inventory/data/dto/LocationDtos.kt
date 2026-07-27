@@ -27,6 +27,13 @@ data class LocationDto(
     // "2 locations · 17 products" summary. Same cache-staleness caveat as
     // shelf_count above — refresh before trusting this after a shelf mutation.
     val product_count: Int = 0,
+    // Phase-2 theme keys (same HouseholdColor/HouseholdIcon enums the household
+    // and shelf themes already use server-side); null (or an older server
+    // omitting them) = the client derives a stable default from the location's
+    // own id (ThemedAvatar). There is no "system location" concept, so unlike
+    // the shelf's Unsorted case, every location can carry a theme.
+    val color: String? = null,
+    val icon: String? = null,
 )
 
 @Serializable
@@ -45,10 +52,29 @@ data class CreateLocationRequest(
     val type: String,
 )
 
+// Mirrors UpdateShelfRequest's deliberate asymmetry (see its own doc comment
+// and CLAUDE.md's "Deletes" section — the household precedent, not a
+// shelf/location-only invention): the app's Json has encodeDefaults=false and
+// explicitNulls=true.
+//
+// - `name`/`type` DEFAULT to null on purpose. The server's rule for both is
+//   `sometimes|required`/`sometimes|<enum>`: an ABSENT key passes ("don't
+//   touch this field"), but an EXPLICIT null FAILS validation. A theme-only
+//   update must omit both entirely, so they need the default —
+//   encodeDefaults=false then drops them for us. `type` was already
+//   independently updatable through this same `sometimes` rule before theming
+//   existed; this just gives it the same "omit when unset" shape name always
+//   had here.
+// - `color` / `icon` must stay UN-defaulted. The server's rule there is
+//   `sometimes|nullable`: an explicit null is meaningful (clears the theme
+//   back to the derived default), so it must always be encoded, never
+//   silently dropped.
 @Serializable
 data class UpdateLocationRequest(
-    val name: String,
-    val type: String,
+    val name: String? = null,
+    val type: String? = null,
+    val color: String?,
+    val icon: String?,
 )
 
 // `deletion_batch_id` has NO default: the app's Json has encodeDefaults=false, so a

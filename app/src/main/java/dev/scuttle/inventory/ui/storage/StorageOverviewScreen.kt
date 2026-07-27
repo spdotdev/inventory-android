@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
@@ -54,6 +55,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
@@ -65,7 +67,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import dev.scuttle.inventory.R
-import dev.scuttle.inventory.data.dto.LocationDto
 import dev.scuttle.inventory.ui.common.EditModeHintBanner
 import dev.scuttle.inventory.ui.common.EditModeHintViewModel
 import dev.scuttle.inventory.ui.common.ErrorRetry
@@ -75,9 +76,10 @@ import dev.scuttle.inventory.ui.hierarchy.EditableRow
 import dev.scuttle.inventory.ui.hierarchy.UndoOutcome
 import dev.scuttle.inventory.ui.hierarchy.locationStrategyOptions
 import dev.scuttle.inventory.ui.theme.FrostCard
+import dev.scuttle.inventory.ui.theme.LocationAvatar
 
-/** Matches the server-side location name column limit (same cap as StorageOverviewViewModel.onNewNameChange). */
-private const val MAX_LOCATION_NAME_LENGTH = 50
+/** Size of the themed avatar shown before each location row's name in edit mode. */
+private val LOCATION_AVATAR_SIZE = 28.dp
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -87,6 +89,10 @@ fun StorageOverviewScreen(
     onBack: () -> Unit = {},
     onOpenLocation: (Long, String?) -> Unit = { _, _ -> },
     onOpenSearch: () -> Unit = {},
+    // Rename/theme moved off this screen onto the full-page StorageEditScreen
+    // (mirrors ShelfEditScreen) — the pencil now navigates instead of opening
+    // an inline bottom sheet.
+    onEditLocation: (locationId: Long) -> Unit = {},
     // Handoff from a scan-originated zero-result search (GAP-5 H6, MainActivity's
     // savedStateHandle delivery): non-null once, right after arriving here from
     // that CTA. Shown as a one-shot Snackbar hint, then held in [pendingCode] below
@@ -103,10 +109,6 @@ fun StorageOverviewScreen(
     val state by viewModel.state.collectAsState()
     val hintVisible by hintViewModel.visible.collectAsState()
     var showAddSheet by rememberSaveable { mutableStateOf(false) }
-    var renamingLocation by remember { mutableStateOf<LocationDto?>(null) }
-    var renameName by remember { mutableStateOf("") }
-    var renameType by remember { mutableStateOf("freezer") }
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val keyboardController = LocalSoftwareKeyboardController.current
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -273,12 +275,16 @@ fun StorageOverviewScreen(
                                 // instead of racing this row's name text against the plain
                                 // (non-edit-mode) list/tab rendering it replaces.
                                 modifier = Modifier.testTag("location-row-${location.id}"),
-                                onClick = { viewModel.toggleSelection(location.id) },
-                                onRename = {
-                                    renamingLocation = location
-                                    renameName = location.name
-                                    renameType = location.type
+                                leadingIcon = {
+                                    LocationAvatar(
+                                        locationId = location.id,
+                                        size = LOCATION_AVATAR_SIZE,
+                                        colorKey = location.color,
+                                        iconKey = location.icon,
+                                    )
                                 },
+                                onClick = { viewModel.toggleSelection(location.id) },
+                                onRename = { onEditLocation(location.id) },
                                 onMoveUp = { viewModel.moveUp(location.id) },
                                 onMoveDown = { viewModel.moveDown(location.id) },
                                 renameLabelRes = R.string.storage_edit_title,
@@ -313,17 +319,28 @@ fun StorageOverviewScreen(
                                         .fillMaxWidth()
                                         .semantics { contentDescription = openDesc },
                             ) {
-                                Column(modifier = Modifier.padding(16.dp)) {
-                                    Text(
-                                        text = location.name,
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis,
+                                Row(
+                                    modifier = Modifier.padding(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    LocationAvatar(
+                                        locationId = location.id,
+                                        colorKey = location.color,
+                                        iconKey = location.icon,
                                     )
-                                    Text(
-                                        text = storageTypeLabel(location.type),
-                                        style = MaterialTheme.typography.bodySmall,
-                                    )
+                                    Spacer(Modifier.width(12.dp))
+                                    Column {
+                                        Text(
+                                            text = location.name,
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                        Text(
+                                            text = storageTypeLabel(location.type),
+                                            style = MaterialTheme.typography.bodySmall,
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -394,59 +411,6 @@ fun StorageOverviewScreen(
             }
         snackbarHostState.showSnackbar(message)
         viewModel.consumeUndoResult()
-    }
-
-    renamingLocation?.let { location ->
-        ModalBottomSheet(
-            onDismissRequest = { renamingLocation = null },
-            sheetState = sheetState,
-        ) {
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp)
-                        .padding(bottom = 32.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                Text(text = stringResource(R.string.storage_edit_title), style = MaterialTheme.typography.titleLarge)
-
-                Text(text = stringResource(R.string.add_storage_type_label))
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    STORAGE_TYPES.forEach { type ->
-                        FilterChip(
-                            selected = renameType == type,
-                            onClick = { renameType = type },
-                            label = { Text(storageTypeLabel(type)) },
-                        )
-                    }
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    OutlinedTextField(
-                        value = renameName,
-                        onValueChange = { renameName = it.take(MAX_LOCATION_NAME_LENGTH) },
-                        label = { Text(stringResource(R.string.add_storage_name_field)) },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, imeAction = ImeAction.Done),
-                        modifier = Modifier.weight(1f),
-                    )
-                    Button(
-                        onClick = {
-                            keyboardController?.hide()
-                            viewModel.rename(location.id, renameName, renameType)
-                            renamingLocation = null
-                        },
-                        enabled = renameName.isNotBlank(),
-                    ) {
-                        Text(stringResource(R.string.action_save))
-                    }
-                }
-            }
-        }
     }
 
     if (showAddSheet) {

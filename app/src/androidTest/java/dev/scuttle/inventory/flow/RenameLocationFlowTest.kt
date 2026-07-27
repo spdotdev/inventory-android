@@ -5,7 +5,6 @@ package dev.scuttle.inventory.flow
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.filterToOne
 import androidx.compose.ui.test.hasClickAction
-import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
@@ -23,12 +22,16 @@ import org.junit.Test
 
 /**
  * Edit mode's rename affordance (Task 5) had zero flow-level coverage before
- * this: the per-row pencil on StorageOverviewScreen opens a bottom sheet
- * (title/content-description both "Edit storage location" —
- * R.string.storage_edit_title, passed as EditableRow's renameLabelRes) that
- * PATCHes the location. This isn't one of the delete-safety guarantees this
- * task's other tests pin — it's the companion regression net for the other
- * edit-mode action on the same screen, over the same real UI and wire.
+ * this: the per-row pencil on StorageOverviewScreen navigates to the
+ * standalone full-page StorageEditScreen (title/content-description both
+ * "Edit storage location" — R.string.storage_edit_title, passed both as the
+ * page's TopAppBar title and as EditableRow's renameLabelRes for the pencil
+ * itself) that PATCHes the location. Re-routed 2026-07-27 (storage theming)
+ * from the screen's old inline rename bottom sheet onto this page, mirroring
+ * RenameShelfFlowTest-equivalent coverage moving onto ShelfEditScreen earlier.
+ * This isn't one of the delete-safety guarantees this task's other tests
+ * pin — it's the companion regression net for the other edit-mode action on
+ * the same screen, over the same real UI and wire.
  */
 @HiltAndroidTest
 class RenameLocationFlowTest : FlowTestBase() {
@@ -66,28 +69,29 @@ class RenameLocationFlowTest : FlowTestBase() {
 
             // Edit mode → per-row rename pencil (content description "Edit storage
             // location" — distinct from the top bar's "Edit storage" that enters
-            // edit mode in the first place).
+            // edit mode in the first place). It now NAVIGATES to the standalone
+            // StorageEditScreen (2026-07-27, storage theming) rather than opening
+            // an inline bottom sheet.
             onNodeWithContentDescription("Edit storage").performClick()
             waitForIdle()
             onNodeWithContentDescription("Edit storage location").performClick()
             waitForIdle()
 
-            waitUntilAtLeastOneExists(hasText("Edit storage location"), timeoutMillis = 3_000)
+            waitUntilAtLeastOneExists(hasTestTag("location-name-field"), timeoutMillis = 5_000)
 
-            // "Fridge" is ambiguous on this sheet — it's both the prefilled name
-            // field's value AND the "Fridge" type FilterChip's label. The name
-            // field is the sheet's only set-text-actionable node, so select by
-            // that action rather than by text (which the clear below would
-            // invalidate on a second, matcher-re-evaluated lookup). Mirrors
-            // EditProductDetailFlowTest's own re-query-per-action idiom.
-            waitUntilAtLeastOneExists(hasSetTextAction(), timeoutMillis = 3_000)
-            onAllNodes(hasSetTextAction())[0].performTextClearance()
-            onAllNodes(hasSetTextAction())[0].performTextInput("Walk-in Fridge")
+            // "Fridge" is ambiguous on this page — it's both the prefilled name
+            // field's value AND the "Fridge" type FilterChip's label. Select the
+            // name field by its own stable test tag rather than by text.
+            onNodeWithTag("location-name-field").performTextClearance()
+            onNodeWithTag("location-name-field").performTextInput("Walk-in Fridge")
 
             mockServer.route("/households/1/locations/10", fixture("location_renamed.json"))
-            onNodeWithText("Save").performClick()
+            onNodeWithTag("location-save-name").performClick()
             waitForIdle()
             Thread.sleep(1_000)
+            waitForIdle()
+
+            onNodeWithContentDescription("Back").performClick()
             waitForIdle()
 
             waitUntilAtLeastOneExists(hasText("Walk-in Fridge"), timeoutMillis = 5_000)

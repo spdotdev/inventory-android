@@ -172,24 +172,43 @@ class StorageOverviewViewModel
                 }
             }
 
-        fun rename(
+        /**
+         * Update a location's name, type, and/or theme keys (null = clear back
+         * to the derived default) — same shape as ShelvesViewModel.update, and
+         * the single entry point StorageEditScreen drives for the Save button,
+         * the type chips, and the colour/icon swatches.
+         */
+        fun update(
             locationId: Long,
-            name: String,
-            type: String,
+            name: String?,
+            type: String?,
+            color: String?,
+            icon: String?,
         ) {
             val id = householdId ?: return
             // Clamped here too (not just in the Compose text field), so this method
-            // is safe to call from anywhere, not only the one wired-up sheet.
-            val trimmed = name.trim().take(MAX_LOCATION_NAME_LENGTH)
-            if (trimmed.isEmpty()) return
+            // is safe to call from anywhere, not only the one wired-up screen. A
+            // theme-only call (name == null) skips this clamp entirely.
+            val trimmed = name?.trim()?.take(MAX_LOCATION_NAME_LENGTH)
+            // A name-bearing call whose trimmed result is blank is a no-op, never a
+            // valid update.
+            val blankNameUpdate = name != null && trimmed.isNullOrEmpty()
+            if (blankNameUpdate) return
             launchLoading {
-                val updated = repository.rename(id, locationId, trimmed, type)
+                val updated = repository.update(id, locationId, name = trimmed, type = type, color = color, icon = icon)
                 _state.update { s ->
                     s.copy(locations = orderLocations(s.locations.map { if (it.id == locationId) updated else it }))
                 }
                 hierarchyStore.refresh()
             }
         }
+
+        /** Persist the chosen theme keys (null = back to the derived default); name/type are never touched. */
+        fun updateTheme(
+            locationId: Long,
+            color: String?,
+            icon: String?,
+        ) = update(locationId, name = null, type = null, color = color, icon = icon)
 
         fun moveUp(locationId: Long) = move(locationId, -1)
 

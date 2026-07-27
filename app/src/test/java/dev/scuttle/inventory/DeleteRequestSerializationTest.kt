@@ -152,11 +152,6 @@ class DeleteRequestSerializationTest {
     // --- Other request DTOs: unaffected by the above, still no defaults ------
 
     @Test
-    fun update_location_request_has_no_defaulted_properties() {
-        assertNoDefaultedProperties(UpdateLocationRequest.serializer().descriptor)
-    }
-
-    @Test
     fun reorder_request_has_no_defaulted_properties() {
         assertNoDefaultedProperties(ReorderRequest.serializer().descriptor)
     }
@@ -328,6 +323,96 @@ class DeleteRequestSerializationTest {
             )
 
         assertEquals("""{"name":"Top shelf","color":null,"icon":null}""", body)
+    }
+
+    /**
+     * UpdateLocationRequest mirrors UpdateShelfRequest's exact asymmetry (see
+     * that class's own descriptor test above and CLAUDE.md's "Deletes"
+     * section): `name`/`type` default to null (an absent key = "don't touch
+     * this field" under the server's `sometimes` rule), `color`/`icon` do not
+     * (an explicit null clears the theme under `sometimes|nullable`). Pinned
+     * here at the descriptor level, then at the byte level below for every
+     * production call shape (name+type-only, color+icon-only, combined, and
+     * explicit-null clear).
+     */
+    @Test
+    fun update_location_request_defaults_only_name_and_type() {
+        val descriptor = UpdateLocationRequest.serializer().descriptor
+
+        assertTrue(
+            "name must default to null so a theme-only update omits the key",
+            descriptor.isElementOptional(descriptor.getElementIndex("name")),
+        )
+        assertTrue(
+            "type must default to null so a theme-only update omits the key",
+            descriptor.isElementOptional(descriptor.getElementIndex("type")),
+        )
+        assertFalse(
+            "color must not be defaulted: an explicit null clears the theme",
+            descriptor.isElementOptional(descriptor.getElementIndex("color")),
+        )
+        assertFalse(
+            "icon must not be defaulted: an explicit null clears the theme",
+            descriptor.isElementOptional(descriptor.getElementIndex("icon")),
+        )
+    }
+
+    @Test
+    fun renaming_a_location_encodes_its_current_theme_instead_of_clearing_it() {
+        // Mirrors StorageEditScreen's Save-name action / StorageOverviewViewModel.update:
+        // color/icon are passed through as the location's CURRENT keys (not null)
+        // because they have no default and are always encoded — an explicit
+        // null here would clear the theme server-side. This is what makes a
+        // rename/type-change side-effect-free on the theme.
+        val body =
+            json.encodeToString(
+                UpdateLocationRequest(name = "Walk-in Fridge", type = "fridge", color = "teal", icon = "cottage"),
+            )
+
+        assertEquals("""{"name":"Walk-in Fridge","type":"fridge","color":"teal","icon":"cottage"}""", body)
+    }
+
+    @Test
+    fun a_location_theme_only_update_omits_the_name_and_type_keys_entirely() {
+        // Mirrors StorageOverviewViewModel.updateTheme()'s call to update(name =
+        // null, type = null, ...): both defaults drop their keys so the server
+        // (`sometimes`) never sees an explicit null and never touches either.
+        val body =
+            json.encodeToString(
+                UpdateLocationRequest(name = null, type = null, color = "sky", icon = "box"),
+            )
+
+        assertEquals("""{"color":"sky","icon":"box"}""", body)
+    }
+
+    @Test
+    fun clearing_a_locations_theme_omits_the_name_and_type_keys_and_encodes_explicit_nulls() {
+        // Mirrors the "Default" TextButton's updateTheme(color = null, icon =
+        // null) call: if `name`/`type` lost their default, this would encode
+        // explicit nulls for them and 422; if `color`/`icon` gained a default,
+        // this would encode `{}` and silently no-op instead of clearing the theme.
+        val body =
+            json.encodeToString(
+                UpdateLocationRequest(name = null, type = null, color = null, icon = null),
+            )
+
+        assertEquals("""{"color":null,"icon":null}""", body)
+    }
+
+    @Test
+    fun renaming_a_location_with_no_prior_theme_still_encodes_explicit_null_color_and_icon() {
+        // A location that never had a theme (color/icon both null in
+        // LocationDto) and is renamed for the first time: selectedColor/
+        // selectedIcon in StorageEditScreen stay null, and per the asymmetry
+        // above those ARE always encoded (no default) — distinct from a
+        // location that HAD a theme and is being renamed (the test above),
+        // where the encoded value is the non-null current key instead.
+        val body =
+            json.encodeToString(
+                UpdateLocationRequest(name = "Top Shelf Pantry", type = "pantry", color = null, icon = null),
+            )
+
+        assertEquals("""{"name":"Top Shelf Pantry","type":"pantry","color":null,"icon":null}""", body)
     }
 
     private fun assertNoDefaultedProperties(descriptor: SerialDescriptor) {

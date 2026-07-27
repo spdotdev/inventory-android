@@ -88,6 +88,7 @@ import dev.scuttle.inventory.ui.settings.GeneralScreen
 import dev.scuttle.inventory.ui.settings.MoreScreen
 import dev.scuttle.inventory.ui.settings.NotificationsScreen
 import dev.scuttle.inventory.ui.settings.ThemeViewModel
+import dev.scuttle.inventory.ui.storage.StorageEditScreen
 import dev.scuttle.inventory.ui.storage.StorageOverviewScreen
 import dev.scuttle.inventory.ui.theme.InventoryTheme
 import dev.scuttle.inventory.ui.theme.ThemeMode
@@ -367,6 +368,7 @@ private object Routes {
     const val LOCATION = "location/{householdId}/{locationId}"
     const val SHELVES_MANAGE = "storage/{householdId}/location/{locationId}/shelves/manage"
     const val SHELF_EDIT = "storage/{householdId}/location/{locationId}/shelves/{shelfId}/edit"
+    const val STORAGE_EDIT = "storage/{householdId}/location/{locationId}/edit"
     const val PRODUCT_DETAIL = "product-detail/{householdId}/{shelfId}/{productId}"
 
     // GAP4-L8: `fromDrawer` distinguishes the bottom-tab root entry (tab click, no back
@@ -421,6 +423,11 @@ private object Routes {
         locationId: Long,
         shelfId: Long,
     ) = "storage/$householdId/location/$locationId/shelves/$shelfId/edit"
+
+    fun storageEdit(
+        householdId: Long,
+        locationId: Long,
+    ) = "storage/$householdId/location/$locationId/edit"
 }
 
 /**
@@ -814,8 +821,37 @@ private fun InventoryNavHost(
                         }
                     },
                     onOpenSearch = { navController.navigate(Routes.search(householdId)) },
+                    onEditLocation = { locationId ->
+                        navController.navigate(Routes.storageEdit(householdId, locationId))
+                    },
                     pendingBarcodeCode = pendingBarcodeCode,
                     onPendingBarcodeConsumed = { entry.savedStateHandle["scanned_code"] = null },
+                )
+            }
+
+            composable(
+                route = Routes.STORAGE_EDIT,
+                arguments =
+                    listOf(
+                        navArgument("householdId") { type = NavType.LongType },
+                        navArgument("locationId") { type = NavType.LongType },
+                    ),
+            ) { entry ->
+                val locationId = entry.arguments?.getLong("locationId") ?: return@composable
+                // Scoped to the STORAGE entry's OWN ViewModelStore, same pattern
+                // (and same reason) as SHELF_EDIT sharing ShelvesViewModel with
+                // SHELVES_MANAGE above: this resolves to the SAME
+                // StorageOverviewViewModel instance StorageOverviewScreen is
+                // using (already loaded for this household), rather than
+                // hiltViewModel()'s own default minting a second instance
+                // scoped to this destination's own back-stack entry — which
+                // would need its own load() call and briefly show an empty
+                // screen.
+                val storageEntry = remember(entry) { navController.getBackStackEntry(Routes.STORAGE) }
+                StorageEditScreen(
+                    locationId = locationId,
+                    viewModel = hiltViewModel(storageEntry),
+                    onBack = { navController.popBackStack() },
                 )
             }
 

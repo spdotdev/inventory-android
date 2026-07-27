@@ -121,18 +121,23 @@ Detailed build order: [`CLAUDE.md`](CLAUDE.md) and [`docs/android-plan.md`](docs
   `inventory-laravel/docs/superpowers/specs/2026-07-24-daily-missing-items-reminder-design.md`.
 
 ### PARKED — awaiting product-owner decision
-- 🟡 **Storage edit surface** (parked 2026-07-26) — a storage currently has no real
-  edit view: rename/reorder/delete hide behind the list pencil, and the type is
-  frozen after creation. Three wireframed options (edit page from inside the
-  storage · ⋮ overflow on the list row · richer edit-mode sheet), with option 1
-  recommended for consistency with the 2026-07-26 households change (row tap →
-  edit page, pencil/gear removed): wireframes at
+- [x] **Storage edit surface** (RESOLVED/shipped 2026-07-27) — a standalone
+  full-page editor (`StorageEditScreen`, option 1 from the earlier wireframes),
+  reached from StorageOverviewScreen's edit-mode pencil exactly the way
+  `ShelfEditScreen` is reached from ManageShelvesScreen's. Editable there: name,
+  type (now editable after creation for the first time — a `STORAGE_TYPES` chip
+  row, the same chips the add-storage sheet already used), and a colour/icon
+  theme (same 8+8 key palette as households/shelves, via the shared
+  `ColorSwatchPicker`/`IconSwatchPicker`). No danger zone on this page — delete
+  stays on StorageOverviewScreen's multi-select + strategy dialog, unchanged.
+  Went with option 1 rather than the 2026-07-26 lean toward option 3 (richer
+  edit-mode sheet): the task that unblocked this explicitly asked for the
+  shelf-editor shape verbatim, for consistency with `ShelfEditScreen` and the
+  households edit page, rather than a third, sheet-shaped pattern. Backend
+  contract: `inventory-laravel` commits 53059a9 + c80dfd3 (nullable
+  `color`/`icon` on `LocationResource`, `PATCH .../locations/{location}`
+  accepting both plus the already-existing `type`). Wireframes kept for history:
   https://claude.ai/code/artifact/eb5c6b14-cdf6-4ad4-b3fa-2fe9edb4d49c.
-  Decision pending discussion with the product owner — do not build until picked.
-  2026-07-26 (later): user currently leans **option 3** (richer edit-mode sheet);
-  context that shifted since the wireframes: storage-list edit mode was reworked
-  the same day (stars removed, checkbox leads the row, ↑↓ + long-press drag
-  reorder), so re-read the current screen before building whichever option wins.
 
 ### SECURITY
 - [x] **CodeQL SAST + dependency review CI** — shipped 2026-07-13. `codeql.yml` runs

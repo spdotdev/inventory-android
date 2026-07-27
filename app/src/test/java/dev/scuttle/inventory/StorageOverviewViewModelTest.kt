@@ -37,6 +37,8 @@ class StorageOverviewViewModelTest {
         val targetIdsUsed = mutableListOf<Long?>()
         val deletedLocationIds = mutableListOf<Long>()
         var lastRenamedId: Long? = null
+        var lastUpdateColor: String? = null
+        var lastUpdateIcon: String? = null
         var lastReorderIds: List<Long>? = null
 
         // When set, deleteWithStrategy throws for this one id instead of deleting
@@ -62,15 +64,26 @@ class StorageOverviewViewModelTest {
             return dto
         }
 
-        override suspend fun rename(
+        override suspend fun update(
             householdId: Long,
             locationId: Long,
-            name: String,
-            type: String,
+            name: String?,
+            type: String?,
+            color: String?,
+            icon: String?,
         ): LocationDto {
             lastRenamedId = locationId
+            lastUpdateColor = color
+            lastUpdateIcon = icon
             val index = items.indexOfFirst { it.id == locationId }
-            val updated = items[index].copy(name = name, type = type)
+            val current = items[index]
+            val updated =
+                current.copy(
+                    name = name ?: current.name,
+                    type = type ?: current.type,
+                    color = color,
+                    icon = icon,
+                )
             items[index] = updated
             return updated
         }
@@ -668,7 +681,7 @@ class StorageOverviewViewModelTest {
             val vm = viewModel(repo)
             vm.load(householdId = 1)
 
-            vm.rename(1L, "Freezer", "freezer")
+            vm.update(1L, name = "Freezer", type = "freezer", color = null, icon = null)
 
             assertEquals(
                 "Freezer",
@@ -677,6 +690,54 @@ class StorageOverviewViewModelTest {
                     .name,
             )
             assertEquals(1L, repo.lastRenamedId)
+        }
+
+    @Test
+    fun update_theme_passes_null_name_and_type_leaving_them_untouched() =
+        runTest {
+            // Mirrors StorageEditScreen's colour/icon swatch taps (updateTheme):
+            // only color/icon travel, the name/type args the repository
+            // receives are null — the FakeLocationRepository models the
+            // server's `sometimes` contract by falling back to the current
+            // name/type when they're null.
+            val repo = FakeLocationRepository().apply { items.add(LocationDto(1, "Top", "freezer", 0)) }
+            val vm = viewModel(repo)
+            vm.load(householdId = 1)
+
+            vm.updateTheme(1L, color = "teal", icon = "cottage")
+
+            assertEquals(1L, repo.lastRenamedId)
+            assertEquals("teal", repo.lastUpdateColor)
+            assertEquals("cottage", repo.lastUpdateIcon)
+            val location =
+                vm.state.value.locations
+                    .first()
+            assertEquals("Top", location.name)
+            assertEquals("freezer", location.type)
+            assertEquals("teal", location.color)
+            assertEquals("cottage", location.icon)
+        }
+
+    @Test
+    fun update_with_name_type_and_theme_sends_all_in_one_call() =
+        runTest {
+            // Mirrors StorageEditScreen's Save-name action, which passes the
+            // CURRENTLY selected type and theme through alongside the new name
+            // so a rename never side-effects either (the DTO has no default
+            // on color/icon — see DeleteRequestSerializationTest).
+            val repo = FakeLocationRepository().apply { items.add(LocationDto(1, "Top", "freezer", 0)) }
+            val vm = viewModel(repo)
+            vm.load(householdId = 1)
+
+            vm.update(1L, name = "Walk-in Fridge", type = "fridge", color = "sky", icon = "box")
+
+            val location =
+                vm.state.value.locations
+                    .first()
+            assertEquals("Walk-in Fridge", location.name)
+            assertEquals("fridge", location.type)
+            assertEquals("sky", location.color)
+            assertEquals("box", location.icon)
         }
 
     @Test

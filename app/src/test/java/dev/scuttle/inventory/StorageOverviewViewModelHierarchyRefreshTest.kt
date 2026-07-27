@@ -49,14 +49,23 @@ class StorageOverviewViewModelHierarchyRefreshTest {
             return dto
         }
 
-        override suspend fun rename(
+        override suspend fun update(
             householdId: Long,
             locationId: Long,
-            name: String,
-            type: String,
+            name: String?,
+            type: String?,
+            color: String?,
+            icon: String?,
         ): LocationDto {
             val index = items.indexOfFirst { it.id == locationId }
-            val updated = items[index].copy(name = name, type = type)
+            val current = items[index]
+            val updated =
+                current.copy(
+                    name = name ?: current.name,
+                    type = type ?: current.type,
+                    color = color,
+                    icon = icon,
+                )
             items[index] = updated
             return updated
         }
@@ -150,7 +159,7 @@ class StorageOverviewViewModelHierarchyRefreshTest {
             val vm = viewModel(repo, hierarchyStore = store)
             vm.load(householdId = 1)
 
-            vm.rename(1L, "Freezer", "freezer")
+            vm.update(1L, name = "Freezer", type = "freezer", color = null, icon = null)
 
             val refreshed = store.state.first { it.entries.any { e -> e.name == "Home-1" } }
             assertTrue(refreshed.entries.any { it.name == "Home-1" })

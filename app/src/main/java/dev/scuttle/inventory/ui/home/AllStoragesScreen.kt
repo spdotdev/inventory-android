@@ -72,6 +72,7 @@ import dev.scuttle.inventory.ui.common.orderByPosition
 import dev.scuttle.inventory.ui.common.storageTypeLabel
 import dev.scuttle.inventory.ui.storage.STORAGE_TYPES
 import dev.scuttle.inventory.ui.theme.FrostCard
+import dev.scuttle.inventory.ui.theme.LocationAvatar
 import dev.scuttle.inventory.ui.theme.WARNING_TINT_ALPHA
 
 /** Matches the server-side location name column limit (same cap StorageOverviewScreen uses). */
@@ -391,6 +392,12 @@ private fun LocationRow(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            LocationAvatar(
+                locationId = location.id,
+                colorKey = location.color,
+                iconKey = location.icon,
+            )
+            Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     location.name,

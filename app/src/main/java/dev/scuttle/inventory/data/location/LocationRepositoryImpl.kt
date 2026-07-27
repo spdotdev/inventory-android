@@ -34,15 +34,20 @@ class LocationRepositoryImpl
                 cache[householdId] = (cache[householdId] ?: emptyList()) + created
             }
 
-        override suspend fun rename(
+        override suspend fun update(
             householdId: Long,
             locationId: Long,
-            name: String,
-            type: String,
+            name: String?,
+            type: String?,
+            color: String?,
+            icon: String?,
         ): LocationDto =
             api
-                .update(householdId, locationId, UpdateLocationRequest(name = name, type = type))
-                .data
+                .update(
+                    householdId,
+                    locationId,
+                    UpdateLocationRequest(name = name, type = type, color = color, icon = icon),
+                ).data
                 .also { updated ->
                     // On a cache miss, leave the cache absent rather than fabricating a
                     // 1-element list — getCached() returning null means "go fetch", and a

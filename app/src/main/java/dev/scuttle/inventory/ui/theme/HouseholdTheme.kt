@@ -170,3 +170,14 @@ fun ShelfAvatar(
     iconKey: String? = null,
     contentDescription: String? = null,
 ) = ThemedAvatar(shelfId, modifier, size, colorKey, iconKey, contentDescription)
+
+/** Same avatar, generalized for a location's own id/color/icon keys. */
+@Composable
+fun LocationAvatar(
+    locationId: Long,
+    modifier: Modifier = Modifier,
+    size: Dp = 36.dp,
+    colorKey: String? = null,
+    iconKey: String? = null,
+    contentDescription: String? = null,
+) = ThemedAvatar(locationId, modifier, size, colorKey, iconKey, contentDescription)
