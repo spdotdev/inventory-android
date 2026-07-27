@@ -27,6 +27,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.BrokenImage
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -100,6 +101,11 @@ private const val MAX_THRESHOLD_DIGITS = 7
 fun ProductDetailScreen(
     modifier: Modifier = Modifier,
     onBack: () -> Unit = {},
+    // A code delivered back from the shared ScannerScreen (ADD mode) — one-shot
+    // savedStateHandle contract, consumed so it doesn't re-fire on recomposition.
+    pendingScannedCode: String? = null,
+    onPendingScannedCodeConsumed: () -> Unit = {},
+    onOpenScanner: () -> Unit = {},
     viewModel: ProductDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -121,6 +127,12 @@ fun ProductDetailScreen(
     }
     var localImageUri by remember { mutableStateOf<Uri?>(null) }
     var showDeleteConfirm by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(pendingScannedCode) {
+        val scanned = pendingScannedCode ?: return@LaunchedEffect
+        code = scanned.uppercase()
+        onPendingScannedCodeConsumed()
+    }
 
     // Re-seed fields once the product loads
     LaunchedEffect(product?.id) {
@@ -507,6 +519,14 @@ fun ProductDetailScreen(
                     onValueChange = { code = it.uppercase() },
                     label = { Text(stringResource(R.string.product_detail_field_code)) },
                     singleLine = true,
+                    trailingIcon = {
+                        IconButton(onClick = onOpenScanner) {
+                            Icon(
+                                Icons.Default.QrCodeScanner,
+                                contentDescription = stringResource(R.string.product_detail_scan_code_cd),
+                            )
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth(),
                 )
 

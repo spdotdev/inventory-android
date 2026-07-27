@@ -1077,8 +1077,19 @@ private fun InventoryNavHost(
                         navArgument("shelfId") { type = NavType.LongType },
                         navArgument("productId") { type = NavType.LongType },
                     ),
-            ) {
-                ProductDetailScreen(onBack = { navController.popBackStack() })
+            ) { entry ->
+                // Same savedStateHandle-on-the-caller contract as STORAGE/HOUSEHOLDS:
+                // the scanner (ADD mode = deliver to caller) posts scanned_code back
+                // onto this entry, which pre-fills the code field.
+                val pendingScannedCode by entry.savedStateHandle
+                    .getStateFlow<String?>("scanned_code", null)
+                    .collectAsState()
+                ProductDetailScreen(
+                    onBack = { navController.popBackStack() },
+                    pendingScannedCode = pendingScannedCode,
+                    onPendingScannedCodeConsumed = { entry.savedStateHandle["scanned_code"] = null },
+                    onOpenScanner = { navController.navigate(Routes.scanner(ScannerMode.ADD)) },
+                )
             }
         }
     }
