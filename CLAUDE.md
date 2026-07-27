@@ -299,6 +299,27 @@ tests run at whatever the device is set to, so they will not catch it. To cover 
 the device isn't on, render the composable in isolation and override `LocalDensity`
 (see `ProductFilterSortRowTest`).
 
+## Releasing — use the `/release` skill, don't improvise
+A release is one run of `scripts/release.sh <version> <changelog-file>` (bump →
+commit → tag → wait for the Release workflow → publish the app-release feed entry →
+verify `GET /api/v1/app-version`). The `/release` skill
+(`.claude/skills/release/SKILL.md`) is the contract: changelog gets an explicit user
+review gate before anything runs; the feed publish goes **via ssh to d051** because
+`INVENTORY_ADMIN_TOKEN` lives only in `/opt/sd-admin/.env`, never on this machine.
+Sharp edges that already bit once each:
+- **Tag ≠ versionName fails the Release workflow** (guard added 2026-07-27 after
+  v0.1.22 first shipped identifying as 0.1.20 — which would have silently muted the
+  in-app update prompt). The script sets both; only manual tags can hit it.
+- **One canonical debug keystore** signs everything: `~/.android/inventory-debug.jks`
+  locally (backed up off-machine), the same file base64'd into the repo secret
+  `DEBUG_KEYSTORE_B64` for CI (`signingConfigs.stableDebug`). If these ever diverge,
+  in-app updates fail as signature mismatches and every tester must
+  uninstall/reinstall (that was the v0.1.24 transition).
+- **Stale feed drafts claim version codes** (422 "already been taken") — the script
+  PATCHes the existing entry instead of creating one.
+- Changelog: first line ≤ 100 chars (it is the push-notification text), no `&`
+  (server HTML-escapes it into the update dialog).
+
 ## Security
 Vulnerability reports go through [`SECURITY.md`](SECURITY.md) (GitHub Security
 Advisory or maintainer email — **not** a public issue). CI runs `gitleaks` (secret

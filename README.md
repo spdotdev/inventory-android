@@ -35,8 +35,37 @@ presence):
 
 - Pushing a `v*` tag builds a debug-signed `app-debug.apk` and attaches it to a GitHub
   **prerelease** — that is the distribution channel.
+- Installed apps learn about new versions through the backend's **app-release feed**
+  (`GET /api/v1/app-version`): an in-app update dialog on open plus a background
+  notification, with in-app download + install. Publishing a release means both
+  tagging *and* publishing a feed entry — see the release flow below.
 - A Play Store path (release signing config + AAB) is intentionally deferred; see
   [`ROADMAP.md`](ROADMAP.md).
+
+### Cutting a release
+
+One command does the whole flow (since 2026-07-27):
+
+```bash
+scripts/release.sh <version> <changelog-file>   # or "-" for stdin; --dry-run supported
+```
+
+It bumps `versionCode`/`versionName`, commits, tags `v<version>`, pushes, waits for
+the Release workflow to build the prerelease APK, then publishes the app-release feed
+entry against the production admin API (via ssh to the host — the admin token never
+lives on the dev machine) and verifies `GET /api/v1/app-version`. The Claude Code
+`/release` skill (`.claude/skills/release/SKILL.md`) wraps this with a changelog
+review gate and the known sharp edges.
+
+Guard rails:
+
+- The Release workflow **fails if the tag doesn't match `versionName`** in
+  `app/build.gradle.kts` — a mislabeled APK silently mutes the in-app update prompt.
+- All builds are signed with one **stable debug keystore**
+  (`~/.android/inventory-debug.jks` locally; restored from repo secrets in CI —
+  `signingConfigs.stableDebug` in `app/build.gradle.kts`). Local and CI signatures
+  must match, or Android refuses the in-app update as a signature mismatch and
+  testers have to uninstall/reinstall.
 
 Release builds point `BASE_URL` at the production API; Google sign-in requires the
 matching OAuth client ID on both the device config and the server

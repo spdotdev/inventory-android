@@ -100,8 +100,11 @@ Detailed build order: [`CLAUDE.md`](CLAUDE.md) and [`docs/android-plan.md`](docs
   cleanup (`./gradlew detektBaseline ktlintGenerateBaseline`), never to paper over findings.
 - [x] **Tag-driven release build** — confirmed 2026-07-10: pushing `v0.1.5` built and
   attached a debug-signed `app-debug.apk` to a GitHub prerelease (the workflow's
-  intended preview behavior; the DEBUG_KEYSTORE_* secrets are in place). Still ahead
-  of any Play Store upload: a real release signingConfig + AAB output.
+  intended preview behavior; the DEBUG_KEYSTORE_* secrets are in place). Automated
+  end-to-end 2026-07-27: `scripts/release.sh` + `/release` skill (bump → tag → CI →
+  app-release feed publish), tag≠versionName guard in the Release workflow, canonical
+  debug keystore local+CI — see BACKLOG `2026-07-27`. Still ahead of any Play Store
+  upload: a real release signingConfig + AAB output.
 
 ### NOTIFICATIONS
 - [x] **App update notifications** — shipped 2026-07-24. Periodic (24h) WorkManager

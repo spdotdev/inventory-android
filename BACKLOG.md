@@ -45,6 +45,18 @@ fast enough in real use, don't build it.
 ---
 
 ## Done
+- ✅ `2026-07-27` — **One-command release pipeline.** `scripts/release.sh <version>
+  <changelog>` does the whole flow: versionCode/versionName bump → commit → tag →
+  push → wait for the Release workflow (prerelease APK) → publish the app-release
+  feed entry via ssh d051 (admin token stays server-side) → verify
+  `GET /api/v1/app-version`. Paired with a `/release` Claude Code skill
+  (`.claude/skills/release/SKILL.md`) adding a mandatory changelog review gate.
+  Hardened same day: Release workflow now **fails when tag ≠ versionName**
+  (v0.1.22 had shipped identifying as 0.1.20, which would have muted the in-app
+  update prompt), and the debug keystore was made canonical
+  (`~/.android/inventory-debug.jks`, backed up off-machine, mirrored to CI secrets) after a
+  local/CI signature mismatch forced the v0.1.24 uninstall/reinstall transition.
+  Proven end-to-end on v0.1.23 and v0.1.24.
 - ✅ `2026-07-19` — **`EditModeHintViewModel` test coverage gap closed.** Last of ~20
   ViewModels with no dedicated unit test, flagged by a codebase audit.
   `EditModeHintViewModelTest.kt` covers: `visible` reflects `hasSeen()` at construction
