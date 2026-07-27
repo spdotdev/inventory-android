@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- "Ledger rows" mark (icon round 2, candidate 10, user-picked 2026-07-27):
+     three stock rows with level bars; the short red bar is the app's own
+     running-low semantics. Geometry stays inside the 66dp adaptive safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- row capsules: frost fill + icy hairline -->
+    <path
+        android:pathData="M31,27h46a7,7 0 0 1 0,14h-46a7,7 0 0 1 0,-14Z"
+        android:fillColor="#297DD3FC"
+        android:strokeColor="#8C7DD3FC"
+        android:strokeWidth="2.5" />
+    <path
+        android:pathData="M31,47h46a7,7 0 0 1 0,14h-46a7,7 0 0 1 0,-14Z"
+        android:fillColor="#297DD3FC"
+        android:strokeColor="#8C7DD3FC"
+        android:strokeWidth="2.5" />
+    <path
+        android:pathData="M31,67h46a7,7 0 0 1 0,14h-46a7,7 0 0 1 0,-14Z"
+        android:fillColor="#297DD3FC"
+        android:strokeColor="#8C7DD3FC"
+        android:strokeWidth="2.5" />
+    <!-- level bars: full, half, low(red) -->
+    <path
+        android:pathData="M31,31h34a3,3 0 0 1 0,6h-34a3,3 0 0 1 0,-6Z"
+        android:fillColor="#FF6ECFFB" />
+    <path
+        android:pathData="M31,51h18a3,3 0 0 1 0,6h-18a3,3 0 0 1 0,-6Z"
+        android:fillColor="#FF6ECFFB" />
+    <path
+        android:pathData="M31,71h4a3,3 0 0 1 0,6h-4a3,3 0 0 1 0,-6Z"
+        android:fillColor="#FFF28F7F" />
+</vector>
