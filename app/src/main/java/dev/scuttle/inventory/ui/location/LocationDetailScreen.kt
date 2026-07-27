@@ -28,6 +28,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -68,6 +69,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import dev.scuttle.inventory.R
@@ -79,7 +81,7 @@ import dev.scuttle.inventory.ui.products.ProductsPane
 import dev.scuttle.inventory.ui.products.ProductsViewModel
 import dev.scuttle.inventory.ui.shelves.ShelvesViewModel
 import dev.scuttle.inventory.ui.theme.ShelfAvatar
-import dev.scuttle.inventory.ui.theme.themeFor
+import dev.scuttle.inventory.ui.theme.ThemedAvatar
 import kotlinx.coroutines.launch
 import androidx.compose.material.icons.filled.Tab as TabViewIcon
 
@@ -88,6 +90,8 @@ private val SHELF_AVATAR_SIZE = 28.dp
 
 /** Compact colour/warning dot size in the shelf TABS strip — deliberately small and subtle. */
 private val SHELF_TAB_DOT_SIZE = 6.dp
+private val SHELF_TAB_AVATAR_SIZE = 18.dp
+private const val HINT_ALPHA = 0.6f
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -173,6 +177,15 @@ fun LocationDetailScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = {
+                        shelvesViewModel.refresh()
+                        productsRefreshKey++
+                    }) {
+                        Icon(
+                            Icons.Default.Refresh,
+                            contentDescription = stringResource(R.string.action_refresh),
+                        )
+                    }
                     IconButton(onClick = shelvesViewModel::toggleListView) {
                         Icon(
                             imageVector =
@@ -333,21 +346,16 @@ fun LocationDetailScreen(
                                                 Modifier
                                             },
                                     ) {
-                                        // A compact colour dot only when a theme colour was
-                                        // actually chosen — kept deliberately subtle (no icon,
-                                        // no background wash) so the tab strip stays plain for
-                                        // the common untouched case, per CLAUDE.md's design bar.
-                                        if (shelf.color != null) {
-                                            Box(
-                                                modifier =
-                                                    Modifier
-                                                        .size(SHELF_TAB_DOT_SIZE)
-                                                        .background(
-                                                            themeFor(shelf.id, shelf.color).accent,
-                                                            CircleShape,
-                                                        ),
-                                            )
-                                        }
+                                        // Every tab leads with the shelf's small themed avatar
+                                        // (derived default when unthemed) — replaces the old
+                                        // color-only dot so shelves are recognizable at a
+                                        // glance in the strip too (user decision 2026-07-27).
+                                        ThemedAvatar(
+                                            id = shelf.id,
+                                            size = SHELF_TAB_AVATAR_SIZE,
+                                            colorKey = shelf.color,
+                                            iconKey = shelf.icon,
+                                        )
                                         Text(
                                             shelfDisplayName(shelf),
                                             color =
@@ -371,6 +379,16 @@ fun LocationDetailScreen(
                         }
                     }
 
+                    if (state.shelves.size > 1) {
+                        Text(
+                            text = stringResource(R.string.location_swipe_shelves_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = HINT_ALPHA),
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                        )
+                    }
+
                     HorizontalPager(
                         state = pagerState,
                         modifier =
@@ -386,7 +404,17 @@ fun LocationDetailScreen(
                             onOpenProduct = { product -> onOpenProduct(householdId, product.shelf_id, product.id) },
                             onWarningChange = { hasWarning ->
                                 shelfWarnings = shelfWarnings + (shelf.id to hasWarning)
-                                drawerViewModel.reportLocationWarning(locationId, shelfWarnings.values.any { it })
+                                // The pager only composes VISITED panes, so this map is
+                                // partial. Any true → flag the location immediately; but
+                                // only clear the flag once every shelf has reported in —
+                                // clearing off partial info erased the red marker for
+                                // missing items sitting on never-visited shelves (bug,
+                                // 2026-07-27) until the next full refresh re-tallied it.
+                                if (shelfWarnings.values.any { it }) {
+                                    drawerViewModel.reportLocationWarning(locationId, true)
+                                } else if (shelfWarnings.size == state.shelves.size) {
+                                    drawerViewModel.reportLocationWarning(locationId, false)
+                                }
                             },
                             refreshKey = productsRefreshKey,
                         )

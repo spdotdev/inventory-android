@@ -232,6 +232,7 @@
 
     <!-- Products pane -->
     <string name="products_pane_empty">No products on this shelf yet. Tap + to add one.</string>
+    <string name="location_swipe_shelves_hint">← Swipe left or right to switch shelves →</string>
     <string name="products_pane_quantity">Quantity: %1$d</string>
     <string name="products_pane_swipe_hint_move">← Swipe left to move</string>
     <string name="products_pane_swipe_hint_delete">Swipe right to delete →</string>
