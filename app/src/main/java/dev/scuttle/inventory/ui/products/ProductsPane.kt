@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -509,7 +510,16 @@ fun ProductsPane(
             },
             title = { Text(stringResource(R.string.products_pane_move_dialog_title)) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                // Proper list rows instead of bare TextButtons: full-width, taller
+                // touch targets, and a capped height so a long shelf list scrolls
+                // inside the dialog instead of pushing Cancel off screen.
+                Column(
+                    modifier =
+                        Modifier
+                            .heightIn(max = MOVE_DIALOG_MAX_LIST_HEIGHT)
+                            .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
                     when {
                         state.loading && state.moveTargets.isEmpty() ->
                             CircularProgressIndicator(modifier = Modifier.size(24.dp))
@@ -517,10 +527,15 @@ fun ProductsPane(
                             Text(stringResource(R.string.products_pane_no_shelves_to_move))
                         else ->
                             state.moveTargets.forEach { target ->
-                                TextButton(onClick = { viewModel.confirmMove(target.shelfId) }) {
+                                FrostCard(onClick = { viewModel.confirmMove(target.shelfId) }) {
                                     Text(
                                         "${target.locationName} › " +
                                             shelfDisplayName(target.shelfName, target.isSystemShelf),
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        modifier =
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 16.dp, vertical = 12.dp),
                                     )
                                 }
                             }
@@ -532,6 +547,9 @@ fun ProductsPane(
 }
 
 private val MANDATORY_STRIP_WIDTH = 4.dp
+
+/** Cap so the Move dialog's shelf list scrolls instead of growing past the screen. */
+private val MOVE_DIALOG_MAX_LIST_HEIGHT = 320.dp
 
 /** No green exists in the Frost scheme; matches Material's standard success green. */
 private val MandatoryInStockGreen = Color(0xFF2E7D32)
