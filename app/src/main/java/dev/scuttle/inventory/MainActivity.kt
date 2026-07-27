@@ -668,7 +668,7 @@ private fun InventoryNavHost(
                     onOpenSearch = { hhId ->
                         navController.navigate(Routes.search(hhId)) { launchSingleTop = true }
                     },
-                    onOpenHouseholds = { navController.navigate(Routes.HOUSEHOLDS, tabNavOptions) },
+                    onOpenHouseholds = { navController.navigate(Routes.HOUSEHOLDS) { launchSingleTop = true } },
                     onOpenMissingItems = {
                         navController.navigate(Routes.missingItems(fromDrawer = true)) { launchSingleTop = true }
                     },
@@ -678,7 +678,7 @@ private fun InventoryNavHost(
             composable(Routes.SETTINGS) {
                 MoreScreen(
                     onOpenNotifications = { navController.navigate(Routes.SETTINGS_NOTIFICATIONS) },
-                    onOpenHouseholds = { navController.navigate(Routes.HOUSEHOLDS, tabNavOptions) },
+                    onOpenHouseholds = { navController.navigate(Routes.HOUSEHOLDS) { launchSingleTop = true } },
                     onOpenAccount = { navController.navigate(Routes.SETTINGS_ACCOUNT) },
                     onOpenGeneral = { navController.navigate(Routes.SETTINGS_GENERAL) },
                 )
