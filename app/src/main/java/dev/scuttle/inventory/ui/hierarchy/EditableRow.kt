@@ -56,7 +56,7 @@ fun EditableRow(
     // request immediately, need to be held off to avoid racing a second one.
     actionsEnabled: Boolean = true,
     // An optional themed avatar (e.g. ShelfAvatar) rendered before the name —
-    // null for callers with nothing to theme (locations have no theme yet).
+    // null for callers with nothing to theme.
     // Kept generic (any Composable) rather than a colour/icon pair so this row
     // doesn't need to know about the theming system at all.
     leadingIcon: (@Composable () -> Unit)? = null,
