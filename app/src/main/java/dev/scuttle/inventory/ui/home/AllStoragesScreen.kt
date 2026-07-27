@@ -144,6 +144,9 @@ fun AllStoragesScreen(
                 windowInsets = statusBarInsets,
                 title = { Text(stringResource(R.string.all_storage_title)) },
                 actions = {
+                    IconButton(onClick = { viewModel.refresh() }) {
+                        Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.action_refresh))
+                    }
                     // Unlike the old inline edit-mode pencil (only worth showing
                     // when there was something to select/reorder), the gear just
                     // NAVIGATES to a household's Storage overview — which has its
@@ -156,9 +159,6 @@ fun AllStoragesScreen(
                                 contentDescription = stringResource(R.string.all_storage_manage_cd),
                             )
                         }
-                    }
-                    IconButton(onClick = { viewModel.refresh() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.action_refresh))
                     }
                 },
             )
