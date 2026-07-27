@@ -38,10 +38,12 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import dev.scuttle.inventory.R
+import dev.scuttle.inventory.data.LowStockItem
 import dev.scuttle.inventory.ui.common.ErrorRetry
 import dev.scuttle.inventory.ui.common.HouseholdOption
 import dev.scuttle.inventory.ui.common.HouseholdPickerSheet
 import dev.scuttle.inventory.ui.theme.FrostCard
+import dev.scuttle.inventory.ui.theme.LowStockWarnOrange
 import dev.scuttle.inventory.ui.theme.WARNING_TINT_ALPHA
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -82,7 +84,7 @@ fun MissingItemsScreen(
                 windowInsets = statusBarInsets,
                 title = {
                     Text(
-                        stringResource(R.string.missing_items_title),
+                        stringResource(R.string.nav_restock),
                         modifier = Modifier.semantics { heading() },
                     )
                 },
@@ -147,7 +149,7 @@ fun MissingItemsScreen(
                 ) {
                     ErrorRetry(message = stringResource(errorRes), onRetry = viewModel::refresh)
                 }
-            } else if (state.items.isEmpty() && !state.loading) {
+            } else if (state.items.isEmpty() && state.lowStockItems.isEmpty() && !state.loading) {
                 Column(
                     modifier =
                         Modifier
@@ -168,37 +170,60 @@ fun MissingItemsScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     item { /* top spacing */ }
-                    items(state.items) { item ->
-                        FrostCard(
-                            onClick = { onOpenProduct(item.householdId, item.shelfId, item.productId) },
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Column(
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .background(
-                                            MaterialTheme.colorScheme.errorContainer.copy(alpha = WARNING_TINT_ALPHA),
-                                        ).padding(16.dp),
+                    if (state.items.isNotEmpty()) {
+                        item {
+                            Text(
+                                stringResource(R.string.missing_items_section_title),
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.semantics { heading() },
+                            )
+                        }
+                        items(state.items) { item ->
+                            FrostCard(
+                                onClick = { onOpenProduct(item.householdId, item.shelfId, item.productId) },
+                                modifier = Modifier.fillMaxWidth(),
                             ) {
-                                Text(
-                                    text = item.productName,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.error,
-                                )
-                                if (!item.productCode.isNullOrBlank()) {
+                                Column(
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .background(
+                                                MaterialTheme.colorScheme.errorContainer.copy(
+                                                    alpha = WARNING_TINT_ALPHA,
+                                                ),
+                                            ).padding(16.dp),
+                                ) {
                                     Text(
-                                        text = item.productCode,
-                                        style = MaterialTheme.typography.labelSmall,
+                                        text = item.productName,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.error,
+                                    )
+                                    if (!item.productCode.isNullOrBlank()) {
+                                        Text(
+                                            text = item.productCode,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
+                                    Text(
+                                        text = "${item.locationName} · ${item.shelfName}",
+                                        style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
                                 }
-                                Text(
-                                    text = "${item.locationName} · ${item.shelfName}",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
                             }
+                        }
+                    }
+                    if (state.lowStockItems.isNotEmpty()) {
+                        item {
+                            Text(
+                                stringResource(R.string.dashboard_running_low),
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.semantics { heading() },
+                            )
+                        }
+                        items(state.lowStockItems) { item ->
+                            LowStockRow(item = item, onOpenProduct = onOpenProduct)
                         }
                     }
                     item { /* bottom spacing */ }
@@ -216,5 +241,45 @@ fun MissingItemsScreen(
                 onOpenSearch(householdId)
             },
         )
+    }
+}
+
+/**
+ * "Running low" row — same shape as the missing-item rows above, tinted
+ * [LowStockWarnOrange] (at [WARNING_TINT_ALPHA], same as the missing rows'
+ * errorContainer tint, per user decision 2026-07-27) instead of the missing
+ * rows' red. Same [onOpenProduct] navigation both sections already use.
+ */
+@Composable
+private fun LowStockRow(
+    item: LowStockItem,
+    onOpenProduct: (householdId: Long, shelfId: Long, productId: Long) -> Unit,
+) {
+    FrostCard(
+        onClick = { onOpenProduct(item.householdId, item.shelfId, item.productId) },
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .background(LowStockWarnOrange.copy(alpha = WARNING_TINT_ALPHA))
+                    .padding(16.dp),
+        ) {
+            Text(
+                text = item.productName,
+                style = MaterialTheme.typography.bodyLarge,
+            )
+            Text(
+                text = "${item.locationName} · ${item.shelfName}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = stringResource(R.string.dashboard_low_stock_qty, item.quantity, item.threshold),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.tertiary,
+            )
+        }
     }
 }

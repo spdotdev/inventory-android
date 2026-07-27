@@ -21,8 +21,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.filled.ShoppingBasket
 import androidx.compose.material.icons.filled.SpaceDashboard
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -552,8 +552,8 @@ private fun InventoryNavHost(
             BottomTab(
                 "missing-items",
                 Routes.MISSING_ITEMS,
-                R.string.nav_missing_items,
-                Icons.Filled.Warning,
+                R.string.nav_restock,
+                Icons.Filled.ShoppingBasket,
                 navigateTo = Routes.missingItems(fromDrawer = false),
             ),
             // Not "Settings": it now holds households, join/invite and account.

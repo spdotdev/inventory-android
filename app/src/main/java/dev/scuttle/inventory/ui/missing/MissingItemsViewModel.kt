@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.scuttle.inventory.data.HierarchyStore
+import dev.scuttle.inventory.data.LowStockItem
 import dev.scuttle.inventory.data.MissingItem
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -15,6 +16,9 @@ data class MissingItemsUiState(
     val loading: Boolean = false,
     val refreshing: Boolean = false,
     val items: List<MissingItem> = emptyList(),
+    // Phase 2: running-low products folded into this screen as a second section —
+    // mirrors `items` (missing) alongside HierarchyStore's own lowStockItems.
+    val lowStockItems: List<LowStockItem> = emptyList(),
     // H3: an R.string.* id, not a raw literal — resolved via stringResource() by the screen.
     val errorRes: Int? = null,
 )
@@ -32,6 +36,7 @@ class MissingItemsViewModel
                         loading = s.loading,
                         refreshing = s.refreshing,
                         items = s.missingItems,
+                        lowStockItems = s.lowStockItems,
                         errorRes = s.errorRes,
                     )
                 }.stateIn(viewModelScope, SharingStarted.Eagerly, MissingItemsUiState())

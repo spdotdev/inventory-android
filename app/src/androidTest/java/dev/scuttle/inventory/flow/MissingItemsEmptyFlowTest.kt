@@ -42,8 +42,8 @@ class MissingItemsEmptyFlowTest : FlowTestBase() {
             waitForIdle()
 
             // loadFromCache() reads non-mandatory products from in-memory cache → no missing items
-            waitUntilAtLeastOneExists(hasText("No missing items"), timeoutMillis = 5_000)
-            onNodeWithText("No missing items").assertIsDisplayed()
+            waitUntilAtLeastOneExists(hasText("Nothing to restock"), timeoutMillis = 5_000)
+            onNodeWithText("Nothing to restock").assertIsDisplayed()
         }
     }
 }

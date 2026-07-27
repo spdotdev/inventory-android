@@ -104,16 +104,18 @@ is the cost of "simplifying" it back out.
    bottom bar, not a gear icon.
 
 Navigation: Household → Storage overview → Shelves (tabs *or* list) → Products. A 5-tab
-bottom bar (**Dashboard / Storage / Scan / Missing / More**) is the app's only
+bottom bar (**Dashboard / Storage / Scan / Restock / More**) is the app's only
 navigation surface — there is no drawer. **Households** left the bar: it's a
 tenant-management screen reached under **More**, which absorbed Settings *and*
 households. **Search** lost its tab; it's reached via a top-bar icon on Dashboard, Storage
-overview, and Missing items — **not** Home/Storage tab (AllStoragesScreen), which dropped
+overview, and the Restock screen (formerly "Missing items" — since 2026-07-27 it also
+folds in running-low products as a second section, see below) — **not** Home/Storage tab
+(AllStoragesScreen), which dropped
 its own search icon in the storage-tab rework (2026-07-26): Home is a browse-only list now
-and Search stays reachable through Dashboard/Missing or by drilling into a household's own
+and Search stays reachable through Dashboard/Restock or by drilling into a household's own
 Storage overview. Storage overview is already scoped to one household (its route
 carries `householdId`), so its icon just opens Search directly. Dashboard and
-Missing items are **not** household-scoped — their icon (and Dashboard's products stat
+the Restock screen are **not** household-scoped — their icon (and Dashboard's products stat
 card) opens Search directly only when the account has exactly one household; with more
 than one it opens a shared household picker (`ui/common/HouseholdPickerSheet.kt`) first,
 same as the centre **Scan** tab's LOOKUP mode below. (Final review, 2026-07-14: every one
@@ -195,8 +197,17 @@ nothing from it is ever surfaced here. New channels: `low_stock_reminder`,
 LOCKED defaults: low-stock reminder on at 18:00, household events on, activity digest
 off, weekly summary off (Sunday 18:00 when enabled), app updates on. Feed and
 low-stock notifications do not deep-link (open the app at its default entry point);
-only the missing-items reminder deep-links. Spec:
+only the missing-items reminder deep-links (to the **Restock** tab — see below). Spec:
 `inventory-laravel/docs/superpowers/specs/2026-07-26-notification-feed-design.md`.
+**Restock tab (formerly "Missing")**: renamed 2026-07-27 (NL "Aanvullen") and its icon
+changed from a warning triangle to a shopping basket — the badge stays red/missing-count
+only. The screen itself now has two sections: "Missing" (red, unchanged rows) and, when
+non-empty, "Running low" (orange, `LowStockWarnOrange` at `WARNING_TINT_ALPHA`, same row
+shape as the dashboard's Running-low card) — folding Phase 2's low-stock view into this
+tab instead of leaving it dashboard-only. The empty state now covers both lists ("Nothing
+to restock" / "Niets aan te vullen"). The missing-items reminder/notifier and
+`MissingItemsCheckWorker` keep their "missing items" naming and endpoint — that's still
+the accurate term for what they check — only the tab and screen presentation changed.
 **Phase 2 unlocked 2026-07-10** (user decision) and since shipped: barcode scanning,
 the low-stock "running low" view, filter/sort, household color/icon theming, and the
 live-updates client — see `ROADMAP.md` / `BACKLOG.md`.

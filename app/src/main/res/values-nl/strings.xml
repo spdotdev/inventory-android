@@ -67,7 +67,7 @@
     <string name="nav_dashboard">Dashboard</string>
     <string name="nav_storage">Opslag</string>
     <string name="nav_search">Zoeken</string>
-    <string name="nav_missing_items">Ontbrekend</string>
+    <string name="nav_restock">Aanvullen</string>
     <string name="nav_scan">Scannen</string>
     <string name="nav_more">Meer</string>
     <string name="scanner_title_lookup">Scannen om te zoeken</string>
@@ -193,10 +193,10 @@
     <string name="add_product_sheet_title">Product toevoegen</string>
     <string name="add_product_field_name">Productnaam</string>
 
-    <!-- Missing items -->
-    <string name="missing_items_title">Ontbrekende artikelen</string>
+    <!-- Missing items / Restock -->
     <string name="missing_items_warning_cd">Sommige verplichte artikelen ontbreken</string>
-    <string name="missing_items_empty">Geen ontbrekende artikelen</string>
+    <string name="missing_items_empty">Niets aan te vullen</string>
+    <string name="missing_items_section_title">Ontbrekend</string>
 
     <!-- Product detail -->
     <string name="product_detail_title_fallback">Product</string>

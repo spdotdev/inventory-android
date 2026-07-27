@@ -71,7 +71,7 @@
     <string name="nav_dashboard">Dashboard</string>
     <string name="nav_storage">Storage</string>
     <string name="nav_search">Search</string>
-    <string name="nav_missing_items">Missing</string>
+    <string name="nav_restock">Restock</string>
     <string name="nav_scan">Scan</string>
     <string name="nav_more">More</string>
     <string name="scanner_title_lookup">Scan to search</string>
@@ -204,10 +204,10 @@
     <string name="add_product_sheet_title">Add product</string>
     <string name="add_product_field_name">Product name</string>
 
-    <!-- Missing items -->
-    <string name="missing_items_title">Missing Items</string>
+    <!-- Missing items / Restock -->
     <string name="missing_items_warning_cd">Some mandatory items are missing</string>
-    <string name="missing_items_empty">No missing items</string>
+    <string name="missing_items_empty">Nothing to restock</string>
+    <string name="missing_items_section_title">Missing</string>
 
     <!-- Product detail -->
     <string name="product_detail_title_fallback">Product</string>

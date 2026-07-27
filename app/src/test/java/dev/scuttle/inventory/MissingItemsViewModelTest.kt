@@ -258,6 +258,35 @@ class MissingItemsViewModelTest {
         }
 
     @Test
+    fun low_stock_items_pass_through_from_the_store() =
+        runTest {
+            val vm =
+                viewModel(
+                    locationsByHousehold = mapOf(1L to listOf(LocationDto(10, "Fridge", "fridge"))),
+                    shelvesByLocation = mapOf(10L to listOf(ShelfDto(100, "Top", 0, 10))),
+                    productsByShelf =
+                        mapOf(
+                            100L to
+                                listOf(
+                                    ProductDto(1, "Milk", 1, 100, is_mandatory = false, low_stock_threshold = 2),
+                                ),
+                        ),
+                )
+
+            assertEquals(1, vm.state.value.lowStockItems.size)
+            assertEquals(
+                "Milk",
+                vm.state.value.lowStockItems
+                    .first()
+                    .productName,
+            )
+            assertTrue(
+                vm.state.value.items
+                    .isEmpty(),
+            )
+        }
+
+    @Test
     fun items_are_sorted_by_location_then_shelf_then_name() =
         runTest {
             val vm =
