@@ -51,6 +51,11 @@ google-services.json
 .DS_Store
 
 # Local agent/loop state
-/.claude/
 .superpowers/
 .worktrees/
+
+
+# .claude/ is local except project skills, which ship with the repo
+/.claude/*
+!/.claude/skills/
+!/.claude/skills/release/
