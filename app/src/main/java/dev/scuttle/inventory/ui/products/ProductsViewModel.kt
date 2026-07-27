@@ -37,6 +37,10 @@ data class MoveTarget(
     val locationName: String,
     val shelfName: String,
     val isSystemShelf: Boolean,
+    // Shelf theming keys (null = derived default) so the move dialog can render
+    // the same avatar the shelf shows everywhere else.
+    val shelfColor: String? = null,
+    val shelfIcon: String? = null,
 )
 
 sealed interface ScanResult {
@@ -359,7 +363,16 @@ class ProductsViewModel
                         for (location in locationRepository.list(h)) {
                             for (shelf in shelfRepository.list(h, location.id)) {
                                 if (shelf.id != s) {
-                                    targets.add(MoveTarget(shelf.id, location.name, shelf.name, shelf.is_system))
+                                    targets.add(
+                                        MoveTarget(
+                                            shelf.id,
+                                            location.name,
+                                            shelf.name,
+                                            shelf.is_system,
+                                            shelf.color,
+                                            shelf.icon,
+                                        ),
+                                    )
                                 }
                             }
                         }

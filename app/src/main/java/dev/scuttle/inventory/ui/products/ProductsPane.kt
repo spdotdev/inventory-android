@@ -75,6 +75,7 @@ import dev.scuttle.inventory.ui.theme.FrostCard
 import dev.scuttle.inventory.ui.theme.FrostMoveAccent
 import dev.scuttle.inventory.ui.theme.FrostOnMoveAccent
 import dev.scuttle.inventory.ui.theme.LocalFrostCardColors
+import dev.scuttle.inventory.ui.theme.ShelfAvatar
 import dev.scuttle.inventory.ui.theme.WARNING_TINT_ALPHA
 
 /**
@@ -578,15 +579,25 @@ fun ProductsPane(
                         else ->
                             state.moveTargets.forEach { target ->
                                 FrostCard(onClick = { viewModel.confirmMove(target.shelfId) }) {
-                                    Text(
-                                        "${target.locationName} › " +
-                                            shelfDisplayName(target.shelfName, target.isSystemShelf),
-                                        style = MaterialTheme.typography.bodyLarge,
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                                         modifier =
                                             Modifier
                                                 .fillMaxWidth()
-                                                .padding(horizontal = 16.dp, vertical = 18.dp),
-                                    )
+                                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                                    ) {
+                                        ShelfAvatar(
+                                            shelfId = target.shelfId,
+                                            colorKey = target.shelfColor,
+                                            iconKey = target.shelfIcon,
+                                        )
+                                        Text(
+                                            "${target.locationName} › " +
+                                                shelfDisplayName(target.shelfName, target.isSystemShelf),
+                                            style = MaterialTheme.typography.bodyLarge,
+                                        )
+                                    }
                                 }
                             }
                     }
