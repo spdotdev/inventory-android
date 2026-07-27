@@ -29,7 +29,6 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
@@ -400,58 +399,76 @@ fun ProductsPane(
                                     overflow = TextOverflow.Ellipsis,
                                     modifier = Modifier.fillMaxWidth(),
                                 )
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                Text(
+                                    text = stringResource(R.string.products_pane_quantity, displayedQuantity),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color =
+                                        if (isMandatoryWarning) {
+                                            MaterialTheme.colorScheme.error
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                        },
+                                )
+                            }
+                            // Stacked steppers pinned full-height to the card's right edge
+                            // (the slot the old Move button occupied): + on top, − below.
+                            // Same press-and-hold auto-repeat contract as the old inline
+                            // steppers (see repeatingClickable's doc comment).
+                            Column(modifier = Modifier.fillMaxHeight().width(STEPPER_COLUMN_WIDTH)) {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier =
+                                        Modifier
+                                            .weight(1f)
+                                            .fillMaxWidth()
+                                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                                            .semantics { contentDescription = increaseDesc }
+                                            .repeatingClickable(
+                                                interactionSource = increaseInteractionSource,
+                                                enabled = !state.loading,
+                                                onTick = { pendingDelta++ },
+                                                onRelease = { ticks ->
+                                                    if (ticks > 0) viewModel.increment(product.id, ticks)
+                                                },
+                                            ),
                                 ) {
-                                    OutlinedButton(
-                                        onClick = {},
-                                        interactionSource = decreaseInteractionSource,
-                                        enabled = !state.loading && displayedQuantity > 0,
-                                        modifier =
-                                            Modifier
-                                                .semantics { contentDescription = decreaseDesc }
-                                                .repeatingClickable(
-                                                    interactionSource = decreaseInteractionSource,
-                                                    enabled = !state.loading && displayedQuantity > 0,
-                                                    onTick = {
-                                                        pendingDelta =
-                                                            (pendingDelta - 1).coerceAtLeast(-product.quantity)
-                                                    },
-                                                    onRelease = { ticks ->
-                                                        if (ticks > 0) viewModel.decrement(product.id, ticks)
-                                                    },
+                                    Text("+", style = MaterialTheme.typography.titleMedium)
+                                }
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier =
+                                        Modifier
+                                            .weight(1f)
+                                            .fillMaxWidth()
+                                            .background(
+                                                MaterialTheme.colorScheme.surfaceVariant.copy(
+                                                    alpha = STEPPER_MINUS_BG_ALPHA,
                                                 ),
-                                    ) {
-                                        Text("−")
-                                    }
+                                            ).semantics { contentDescription = decreaseDesc }
+                                            .repeatingClickable(
+                                                interactionSource = decreaseInteractionSource,
+                                                enabled = !state.loading && displayedQuantity > 0,
+                                                onTick = {
+                                                    pendingDelta =
+                                                        (pendingDelta - 1).coerceAtLeast(-product.quantity)
+                                                },
+                                                onRelease = { ticks ->
+                                                    if (ticks > 0) viewModel.decrement(product.id, ticks)
+                                                },
+                                            ),
+                                ) {
                                     Text(
-                                        text = displayedQuantity.toString(),
+                                        "−",
+                                        style = MaterialTheme.typography.titleMedium,
                                         color =
-                                            if (isMandatoryWarning) {
-                                                MaterialTheme.colorScheme.error
-                                            } else {
+                                            if (displayedQuantity > 0) {
                                                 MaterialTheme.colorScheme.onSurface
+                                            } else {
+                                                MaterialTheme.colorScheme.onSurface.copy(
+                                                    alpha = STEPPER_DISABLED_ALPHA,
+                                                )
                                             },
                                     )
-                                    OutlinedButton(
-                                        onClick = {},
-                                        interactionSource = increaseInteractionSource,
-                                        enabled = !state.loading,
-                                        modifier =
-                                            Modifier
-                                                .semantics { contentDescription = increaseDesc }
-                                                .repeatingClickable(
-                                                    interactionSource = increaseInteractionSource,
-                                                    enabled = !state.loading,
-                                                    onTick = { pendingDelta++ },
-                                                    onRelease = { ticks ->
-                                                        if (ticks > 0) viewModel.increment(product.id, ticks)
-                                                    },
-                                                ),
-                                    ) {
-                                        Text("+")
-                                    }
                                 }
                             }
                         }
@@ -547,6 +564,11 @@ fun ProductsPane(
 }
 
 private val MANDATORY_STRIP_WIDTH = 4.dp
+
+/** Right-edge stacked +/− steppers — the slot the removed Move button used to occupy. */
+private val STEPPER_COLUMN_WIDTH = 56.dp
+private const val STEPPER_MINUS_BG_ALPHA = 0.5f
+private const val STEPPER_DISABLED_ALPHA = 0.35f
 
 /** Cap so the Move dialog's shelf list scrolls instead of growing past the screen. */
 private val MOVE_DIALOG_MAX_LIST_HEIGHT = 320.dp

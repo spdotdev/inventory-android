@@ -232,6 +232,7 @@
     <string name="products_pane_filter_mandatory">Verplicht</string>
     <string name="products_pane_filter_out_of_stock">Niet op voorraad</string>
     <string name="products_pane_no_match">Geen producten komen overeen met je filter.</string>
+    <string name="products_pane_quantity">Aantal: %1$d</string>
     <string name="products_pane_swipe_hint_move">← Veeg links om te verplaatsen</string>
     <string name="products_pane_swipe_hint_delete">Veeg rechts om te verwijderen →</string>
 
