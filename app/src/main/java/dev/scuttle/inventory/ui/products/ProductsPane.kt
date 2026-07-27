@@ -1,6 +1,8 @@
 package dev.scuttle.inventory.ui.products
 
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -72,6 +74,7 @@ import dev.scuttle.inventory.ui.hierarchy.UndoOutcome
 import dev.scuttle.inventory.ui.theme.FrostCard
 import dev.scuttle.inventory.ui.theme.FrostMoveAccent
 import dev.scuttle.inventory.ui.theme.FrostOnMoveAccent
+import dev.scuttle.inventory.ui.theme.LocalFrostCardColors
 import dev.scuttle.inventory.ui.theme.WARNING_TINT_ALPHA
 
 /**
@@ -356,7 +359,12 @@ fun ProductsPane(
                         // with the name for width (see the name-squashing note this replaced,
                         // #31, which is why name still gets its own line above the stepper).
                         Row(
-                            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .height(
+                                        IntrinsicSize.Min,
+                                    ).heightIn(min = PRODUCT_ROW_MIN_HEIGHT),
                             verticalAlignment = Alignment.Top,
                         ) {
                             // Mandatory is signalled by a thin edge strip instead of a text
@@ -411,9 +419,21 @@ fun ProductsPane(
                                 )
                             }
                             // Stacked steppers pinned full-height to the card's right edge
-                            // (the slot the old Move button occupied): + on top, − below.
-                            // Same press-and-hold auto-repeat contract as the old inline
-                            // steppers (see repeatingClickable's doc comment).
+                            // (the slot the old Move button occupied): + on top, − below,
+                            // separated from the content and from each other by hairlines in
+                            // the Frost border color. Each half carries its OWN clickable
+                            // (empty onClick) — that is what CONSUMES the tap so it never
+                            // reaches the card's onClick and navigates to the product page;
+                            // repeatingClickable alone observes without consuming. The hold
+                            // auto-repeat contract is unchanged.
+                            val stepperDivider = LocalFrostCardColors.current.border
+                            Box(
+                                modifier =
+                                    Modifier
+                                        .width(STEPPER_DIVIDER_WIDTH)
+                                        .fillMaxHeight()
+                                        .background(stepperDivider),
+                            )
                             Column(modifier = Modifier.fillMaxHeight().width(STEPPER_COLUMN_WIDTH)) {
                                 Box(
                                     contentAlignment = Alignment.Center,
@@ -421,8 +441,12 @@ fun ProductsPane(
                                         Modifier
                                             .weight(1f)
                                             .fillMaxWidth()
-                                            .background(MaterialTheme.colorScheme.surfaceVariant)
-                                            .semantics { contentDescription = increaseDesc }
+                                            .clickable(
+                                                interactionSource = increaseInteractionSource,
+                                                indication = LocalIndication.current,
+                                                enabled = !state.loading,
+                                                onClick = {},
+                                            ).semantics { contentDescription = increaseDesc }
                                             .repeatingClickable(
                                                 interactionSource = increaseInteractionSource,
                                                 enabled = !state.loading,
@@ -432,18 +456,26 @@ fun ProductsPane(
                                                 },
                                             ),
                                 ) {
-                                    Text("+", style = MaterialTheme.typography.titleMedium)
+                                    Text("+", style = MaterialTheme.typography.titleLarge)
                                 }
+                                Box(
+                                    modifier =
+                                        Modifier
+                                            .height(STEPPER_DIVIDER_WIDTH)
+                                            .fillMaxWidth()
+                                            .background(stepperDivider),
+                                )
                                 Box(
                                     contentAlignment = Alignment.Center,
                                     modifier =
                                         Modifier
                                             .weight(1f)
                                             .fillMaxWidth()
-                                            .background(
-                                                MaterialTheme.colorScheme.surfaceVariant.copy(
-                                                    alpha = STEPPER_MINUS_BG_ALPHA,
-                                                ),
+                                            .clickable(
+                                                interactionSource = decreaseInteractionSource,
+                                                indication = LocalIndication.current,
+                                                enabled = !state.loading && displayedQuantity > 0,
+                                                onClick = {},
                                             ).semantics { contentDescription = decreaseDesc }
                                             .repeatingClickable(
                                                 interactionSource = decreaseInteractionSource,
@@ -459,7 +491,7 @@ fun ProductsPane(
                                 ) {
                                     Text(
                                         "−",
-                                        style = MaterialTheme.typography.titleMedium,
+                                        style = MaterialTheme.typography.titleLarge,
                                         color =
                                             if (displayedQuantity > 0) {
                                                 MaterialTheme.colorScheme.onSurface
@@ -566,8 +598,9 @@ fun ProductsPane(
 private val MANDATORY_STRIP_WIDTH = 4.dp
 
 /** Right-edge stacked +/− steppers — the slot the removed Move button used to occupy. */
-private val STEPPER_COLUMN_WIDTH = 56.dp
-private const val STEPPER_MINUS_BG_ALPHA = 0.5f
+private val STEPPER_COLUMN_WIDTH = 64.dp
+private val STEPPER_DIVIDER_WIDTH = 1.dp
+private val PRODUCT_ROW_MIN_HEIGHT = 96.dp
 private const val STEPPER_DISABLED_ALPHA = 0.35f
 
 /** Cap so the Move dialog's shelf list scrolls instead of growing past the screen. */
