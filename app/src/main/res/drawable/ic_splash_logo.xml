@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Splash-only variant of the ledger-rows mark, scaled to ~60% about the
+     center so it sits comfortably inside the Android 12+ splash CIRCLE mask
+     (which is tighter than the launcher squircle — the launcher foreground
+     used directly gets its row ends clipped by the circle). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:pathData="M40.2,37.8h27.6a4.2,4.2 0 0 1 0,8.4h-27.6a4.2,4.2 0 0 1 0,-8.4Z"
+        android:fillColor="#297DD3FC"
+        android:strokeColor="#8C7DD3FC"
+        android:strokeWidth="1.5" />
+    <path
+        android:pathData="M40.2,49.8h27.6a4.2,4.2 0 0 1 0,8.4h-27.6a4.2,4.2 0 0 1 0,-8.4Z"
+        android:fillColor="#297DD3FC"
+        android:strokeColor="#8C7DD3FC"
+        android:strokeWidth="1.5" />
+    <path
+        android:pathData="M40.2,61.8h27.6a4.2,4.2 0 0 1 0,8.4h-27.6a4.2,4.2 0 0 1 0,-8.4Z"
+        android:fillColor="#297DD3FC"
+        android:strokeColor="#8C7DD3FC"
+        android:strokeWidth="1.5" />
+    <path
+        android:pathData="M40.2,40.2h20.4a1.8,1.8 0 0 1 0,3.6h-20.4a1.8,1.8 0 0 1 0,-3.6Z"
+        android:fillColor="#FF6ECFFB" />
+    <path
+        android:pathData="M40.2,52.2h10.8a1.8,1.8 0 0 1 0,3.6h-10.8a1.8,1.8 0 0 1 0,-3.6Z"
+        android:fillColor="#FF6ECFFB" />
+    <path
+        android:pathData="M40.2,64.2h2.4a1.8,1.8 0 0 1 0,3.6h-2.4a1.8,1.8 0 0 1 0,-3.6Z"
+        android:fillColor="#FFF28F7F" />
+</vector>

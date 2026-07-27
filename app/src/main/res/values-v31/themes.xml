@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 12+ system splash: own navy ground + a splash-sized variant of
+         the ledger-rows mark. Without these the system crops the launcher
+         foreground into its circle mask, clipping the row ends. -->
+    <style name="Theme.Inventory" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowSplashScreenBackground">#0F1B2D</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">#16283F</item>
+    </style>
+</resources>
