@@ -11,9 +11,12 @@ import dev.scuttle.inventory.data.api.ErrorApi
 import dev.scuttle.inventory.data.api.HouseholdApi
 import dev.scuttle.inventory.data.api.InviteApi
 import dev.scuttle.inventory.data.api.LocationApi
+import dev.scuttle.inventory.data.api.LowStockApi
 import dev.scuttle.inventory.data.api.MemberApi
 import dev.scuttle.inventory.data.api.MissingItemsApi
+import dev.scuttle.inventory.data.api.NotificationsApi
 import dev.scuttle.inventory.data.api.ProductApi
+import dev.scuttle.inventory.data.api.ProfileApi
 import dev.scuttle.inventory.data.api.RestoreApi
 import dev.scuttle.inventory.data.api.SearchApi
 import dev.scuttle.inventory.data.api.ShelfApi
@@ -109,4 +112,13 @@ object TestNetworkModule {
 
     @Provides @Singleton
     fun provideMissingItemsApi(r: Retrofit): MissingItemsApi = r.create(MissingItemsApi::class.java)
+
+    @Provides @Singleton
+    fun provideProfileApi(r: Retrofit): ProfileApi = r.create(ProfileApi::class.java)
+
+    @Provides @Singleton
+    fun provideNotificationsApi(r: Retrofit): NotificationsApi = r.create(NotificationsApi::class.java)
+
+    @Provides @Singleton
+    fun provideLowStockApi(r: Retrofit): LowStockApi = r.create(LowStockApi::class.java)
 }
