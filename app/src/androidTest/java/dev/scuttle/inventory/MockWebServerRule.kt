@@ -37,13 +37,26 @@ class MockWebServerRule : ExternalResource() {
                         .maxByOrNull { it.length }
                 val responses = key?.let { routes[it] }
 
-                // Single return point (route match / FIFO queue / fallback), each branch
-                // logging first — the log line is the evidence trail when a flow test
-                // times out because some earlier request consumed the route this one needed.
+                // Single return point (route match / background default / FIFO queue /
+                // fallback), each branch logging first — the log line is the evidence
+                // trail when a flow test times out because some earlier request consumed
+                // the route this one needed.
                 return when {
                     responses != null && responses.isNotEmpty() -> {
                         Log.i(TAG, "${request.method} $path -> route '$key' (${responses.size - 1} left)")
                         responses.removeFirst()
+                    }
+                    // Background pollers (NotificationFeedWorker / LowStockCheckWorker,
+                    // enqueued unconditionally in InventoryApp.onCreate) fire unsolicited
+                    // requests on every test launch. Without this branch they drain the
+                    // FIFO queue / routes meant for the flow under test, breaking response
+                    // ordering for nearly every test. Serve a benign empty default instead.
+                    backgroundDefault(path) != null -> {
+                        Log.i(TAG, "${request.method} $path -> background-poll default")
+                        MockResponse()
+                            .setResponseCode(200)
+                            .addHeader("Content-Type", "application/json")
+                            .setBody(backgroundDefault(path)!!)
                     }
                     queue.isNotEmpty() -> {
                         Log.i(TAG, "${request.method} $path -> queue (${queue.size - 1} left)")
@@ -59,6 +72,14 @@ class MockWebServerRule : ExternalResource() {
 
     private companion object {
         const val TAG = "MockWebServerRule"
+
+        /** Empty-but-valid bodies for endpoints polled by background workers. */
+        fun backgroundDefault(path: String): String? =
+            when {
+                path.startsWith("/notifications") -> """{"data":[],"meta":{"last_id":0}}"""
+                path.startsWith("/low-stock/count") -> """{"data":{"count":0}}"""
+                else -> null
+            }
     }
 
     override fun before() {
