@@ -1,1 +1,1 @@
-{"data":[{"id":1,"name":"Home","join_code":"AAAA-1111"}]}
+{"data":[{"id":1,"name":"Home","join_code":"AAAA-1111","role":"owner","can_restructure":true,"can_manage_members":true}]}

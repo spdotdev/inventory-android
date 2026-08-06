@@ -64,8 +64,8 @@ class AuthFlowTest : FlowTestBase() {
             onAllNodesWithText("Sign in").filterToOne(hasClickAction()).performClick()
 
             Thread.sleep(3_000)
-            waitUntilAtLeastOneExists(hasText("Server error. Please try again later."), timeoutMillis = 5_000)
-            onNodeWithText("Server error. Please try again later.").assertIsDisplayed()
+            waitUntilAtLeastOneExists(hasText("Server error. Please try again in a moment."), timeoutMillis = 5_000)
+            onNodeWithText("Server error. Please try again in a moment.").assertIsDisplayed()
         }
     }
 
@@ -76,7 +76,9 @@ class AuthFlowTest : FlowTestBase() {
             onNodeWithText("New here? Create an account").performClick()
             waitUntilAtLeastOneExists(hasText("Name"), timeoutMillis = 3_000)
 
-            mockServer.enqueue("""{"message":"Email already taken."}""", code = 409)
+            // The backend reports duplicate email as a 422 via its unique: rule
+            // (the 409 branch was dropped in GAP-8's localized error mapping).
+            mockServer.enqueue("""{"message":"Email already taken."}""", code = 422)
 
             onNodeWithText("Name").performTextInput("Test User")
             onNodeWithText("Email").performTextInput("existing@example.com")
@@ -84,8 +86,8 @@ class AuthFlowTest : FlowTestBase() {
             onAllNodesWithText("Create account").filterToOne(hasClickAction()).performClick()
 
             Thread.sleep(3_000)
-            waitUntilAtLeastOneExists(hasText("An account with this email already exists."), timeoutMillis = 5_000)
-            onNodeWithText("An account with this email already exists.").assertIsDisplayed()
+            waitUntilAtLeastOneExists(hasText("Please check your details and try again."), timeoutMillis = 5_000)
+            onNodeWithText("Please check your details and try again.").assertIsDisplayed()
         }
     }
 }

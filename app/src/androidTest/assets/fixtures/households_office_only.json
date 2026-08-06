@@ -1,1 +1,1 @@
-{"data":[{"id":2,"name":"Office","join_code":"BBBB-2222"}]}
+{"data":[{"id":2,"name":"Office","join_code":"BBBB-2222","role":"owner","can_restructure":true,"can_manage_members":true}]}
