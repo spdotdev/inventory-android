@@ -23,6 +23,11 @@ class MockWebServerRule : ExternalResource() {
     // path prefix → ordered list of responses to serve
     private val routes = mutableMapOf<String, ArrayDeque<MockResponse>>()
 
+    // paths whose LAST registered response keeps being served instead of running
+    // dry — for endpoints the app refetches an implementation-defined number of
+    // times (e.g. the hierarchy endpoints during product-detail/move flows).
+    private val repeatingRoutes = mutableSetOf<String>()
+
     // fallback FIFO queue (used when no route matches or when using queue mode)
     private val queue = ArrayDeque<MockResponse>()
 
@@ -43,8 +48,13 @@ class MockWebServerRule : ExternalResource() {
                 // the route this one needed.
                 return when {
                     responses != null && responses.isNotEmpty() -> {
-                        Log.i(TAG, "${request.method} $path -> route '$key' (${responses.size - 1} left)")
-                        responses.removeFirst()
+                        if (responses.size == 1 && key in repeatingRoutes) {
+                            Log.i(TAG, "${request.method} $path -> route '$key' (repeating)")
+                            responses.first()
+                        } else {
+                            Log.i(TAG, "${request.method} $path -> route '$key' (${responses.size - 1} left)")
+                            responses.removeFirst()
+                        }
                     }
                     // Background pollers (NotificationFeedWorker / LowStockCheckWorker,
                     // enqueued unconditionally in InventoryApp.onCreate) fire unsolicited
@@ -90,8 +100,23 @@ class MockWebServerRule : ExternalResource() {
 
     override fun after() {
         routes.clear()
+        repeatingRoutes.clear()
         queue.clear()
         server.shutdown()
+    }
+
+    /**
+     * Like [route], but the last response registered for [path] keeps being served
+     * once the per-path queue is otherwise exhausted. Use for endpoints the app
+     * refetches an implementation-defined number of times.
+     */
+    fun routeRepeating(
+        path: String,
+        body: String,
+        code: Int = 200,
+    ) {
+        route(path, body, code)
+        repeatingRoutes.add(path)
     }
 
     /** Register a URL-path prefix → response mapping. Responses are served in order per path. */

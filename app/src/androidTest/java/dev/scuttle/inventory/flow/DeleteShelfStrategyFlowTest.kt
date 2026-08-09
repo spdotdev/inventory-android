@@ -211,8 +211,11 @@ class DeleteShelfStrategyFlowTest : FlowTestBase() {
     @Test
     fun undo_restores_a_shelf_deleted_with_the_keep_products_strategy_along_with_its_products() {
         mockServer.enqueue(fixture("auth_login.json"))
-        mockServer.route("/households", fixture("households_one.json"))
-        mockServer.route("/households/1/locations", fixture("locations_one.json"))
+        // Repeating: the post-restore HierarchyStore.refresh() re-GETs /households
+        // and /households/1/locations — with consume-once routes those refetches
+        // hit the fallback 500 and the restored shelf/product never reaches the UI.
+        mockServer.routeRepeating("/households", fixture("households_one.json"))
+        mockServer.routeRepeating("/households/1/locations", fixture("locations_one.json"))
         mockServer.route("/households/1/locations/10/shelves", fixture("shelves_one_with_products.json"))
         mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
 
@@ -274,14 +277,21 @@ class DeleteShelfStrategyFlowTest : FlowTestBase() {
             // /households/1/restore/{batch} — the route is registered by PREFIX so
             // it matches regardless of the client-minted batch id's actual value.
             mockServer.route("/households/1/restore/", fixture("restore_ok.json"))
-            mockServer.route("/households/1/locations/10/shelves", fixture("shelves_one_with_products.json"))
-            mockServer.route("/households/1/shelves/100/products", fixture("products_one.json"))
+            // Repeating: both the location-detail reload and the store-wide refresh
+            // re-fetch these after the restore.
+            mockServer.routeRepeating("/households/1/locations/10/shelves", fixture("shelves_one_with_products.json"))
+            mockServer.routeRepeating("/households/1/shelves/100/products", fixture("products_one.json"))
             onNodeWithText("Undo").performClick()
             Thread.sleep(2_000)
             waitForIdle()
 
             // The shelf is back, and — the actual guarantee — so is its product.
+            // Re-select the restored tab explicitly: the pane's shelf selection was
+            // cleared when the list emptied on delete, so the restored shelf's
+            // products aren't shown until its tab is tapped (as a user would).
             waitUntilAtLeastOneExists(hasText("Top shelf"), timeoutMillis = 5_000)
+            onAllNodesWithText("Top shelf")[0].performClick()
+            waitForIdle()
             waitUntilAtLeastOneExists(hasText("Milk"), timeoutMillis = 5_000)
         }
     }

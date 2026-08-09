@@ -7,11 +7,12 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.waitUntilAtLeastOneExists
 import androidx.compose.ui.test.waitUntilDoesNotExist
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -47,13 +48,17 @@ class MoveProductFlowTest : FlowTestBase() {
             onNodeWithTag("home-location-Fridge").performClick()
             waitForIdle()
 
-            // Tap "Move Milk" → startMove builds target list
+            // Swipe "Milk" LEFT → startMove builds target list (the inline Move
+            // icon button was replaced by swipe-left on the row, user decision
+            // 2026-07-27 — swipe right is delete, see DeleteProductFlowTest)
             // GET /households/1/locations, GET /households/1/locations/10/shelves →
             // 2 shelves; current shelf 100 excluded → shows shelf 101
-            mockServer.route("/households/1/locations", fixture("locations_one.json"))
-            mockServer.route("/households/1/locations/10/shelves", fixture("shelves_two.json"))
+            // startMove fans out into several concurrent hierarchy fetches — serve
+            // these endpoints repeatedly instead of guessing the exact count.
+            mockServer.routeRepeating("/households/1/locations", fixture("locations_one.json"))
+            mockServer.routeRepeating("/households/1/locations/10/shelves", fixture("shelves_two.json"))
             waitUntilAtLeastOneExists(hasText("Milk"), timeoutMillis = 5_000)
-            onNodeWithContentDescription("Move Milk").performClick()
+            onNodeWithText("Milk").performTouchInput { swipeLeft() }
             waitForIdle()
 
             // Dialog "Move to…" shows target shelves

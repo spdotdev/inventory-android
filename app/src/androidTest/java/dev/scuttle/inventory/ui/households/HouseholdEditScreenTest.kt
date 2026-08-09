@@ -9,6 +9,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import dev.scuttle.inventory.data.HierarchyStore
 import dev.scuttle.inventory.data.dto.HouseholdDto
@@ -211,7 +212,9 @@ class HouseholdEditScreenTest {
     fun an_owner_tapping_leave_sees_the_transfer_ownership_dialog_not_the_leave_confirm() {
         render(canRestructure = true, role = "owner")
 
-        composeRule.onNodeWithText("Leave").performClick()
+        // The danger zone sits at the bottom of the scrollable edit column —
+        // below the fold on the small CI-emulator screen.
+        composeRule.onNodeWithText("Leave").performScrollTo().performClick()
 
         composeRule.onNodeWithText("You're the owner").assertIsDisplayed()
         composeRule.onNodeWithText("Open members").assertIsDisplayed()
@@ -231,7 +234,7 @@ class HouseholdEditScreenTest {
     fun an_owner_sees_the_delete_household_button() {
         render(canRestructure = true, role = "owner")
 
-        composeRule.onNodeWithTag("household-delete-button").assertIsDisplayed()
+        composeRule.onNodeWithTag("household-delete-button").performScrollTo().assertIsDisplayed()
     }
 
     @Test
@@ -244,7 +247,7 @@ class HouseholdEditScreenTest {
     @Test
     fun the_delete_dialogs_confirm_button_stays_disabled_until_the_exact_name_is_typed() {
         render(canRestructure = true, role = "owner")
-        composeRule.onNodeWithTag("household-delete-button").performClick()
+        composeRule.onNodeWithTag("household-delete-button").performScrollTo().performClick()
 
         composeRule.onNodeWithTag("household-delete-confirm-button").assertIsNotEnabled()
 

@@ -50,8 +50,9 @@ class SettingsVersionFlowTest : FlowTestBase() {
             onNodeWithTag("bottom-nav-more").performClick()
             waitUntilAtLeastOneExists(hasTestTag(SETTINGS_VERSION_TEST_TAG), timeoutMillis = 5_000)
 
-            // The line sits below Sign out — off-screen on shorter devices.
-            onNodeWithTag(SETTINGS_VERSION_TEST_TAG).performScrollTo().assertIsDisplayed()
+            // The More hub is a fixed (non-scrolling) grid — the version line is
+            // always on screen, and performScrollTo would fail without a scroll parent.
+            onNodeWithTag(SETTINGS_VERSION_TEST_TAG).assertIsDisplayed()
             onNodeWithTag(SETTINGS_VERSION_TEST_TAG)
                 .assertTextEquals(
                     "Version ${BuildConfig.VERSION_NAME} (build ${BuildConfig.VERSION_CODE})",

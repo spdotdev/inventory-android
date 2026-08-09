@@ -81,7 +81,9 @@ class MissingItemsFlowTest : FlowTestBase() {
 
             // Product detail screen shows the product name and the mandatory toggle label
             waitUntilAtLeastOneExists(hasText("Mandatory on this shelf"), timeoutMillis = 15_000)
-            onAllNodesWithText("Milk")[0].assertIsDisplayed()
+            // The name can also be composed in the previous back-stack destination
+            // during the navigation transition — the title's testTag is unambiguous.
+            onNodeWithTag("product_detail_title").assertIsDisplayed()
             // Below the fold on small CI-emulator screens — bring it into view.
             onNodeWithText("Mandatory on this shelf").performScrollTo().assertIsDisplayed()
         }

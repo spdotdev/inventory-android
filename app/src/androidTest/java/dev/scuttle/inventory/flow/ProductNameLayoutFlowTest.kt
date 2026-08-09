@@ -14,6 +14,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.waitUntilAtLeastOneExists
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.width
 import dagger.hilt.android.testing.HiltAndroidTest
 import dev.scuttle.inventory.FlowTestBase
@@ -72,9 +73,16 @@ class ProductNameLayoutFlowTest : FlowTestBase() {
                 .getUnclippedBoundsInRoot()
                 .width
 
-        assert(nameWidth >= cardWidth * 0.8f) {
-            "Product name got $nameWidth of a $cardWidth card — it is still competing with the " +
-                "action controls for horizontal space (#31)"
+        // The card deliberately reserves a FIXED right-edge strip for the stacked
+        // +/− stepper (64dp column + 1dp divider) and 16dp horizontal padding on
+        // each side of the content column — 97dp of fixed chrome in total. The #31
+        // invariant is that the name fills everything else: fixed chrome is fine,
+        // being squeezed by variable-length trailing content is not.
+        val fixedChrome = 100.dp
+        assert(nameWidth >= cardWidth - fixedChrome) {
+            "Product name got $nameWidth of a $cardWidth card (fixed chrome allowance " +
+                "$fixedChrome) — it is competing with the action controls for " +
+                "horizontal space (#31)"
         }
     }
 

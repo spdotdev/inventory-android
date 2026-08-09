@@ -40,14 +40,14 @@ class SearchNoResultsFlowTest : FlowTestBase() {
 
             // Search leaves the bottom bar (Task 7 — Households out, Scan takes the
             // centre slot). It's reached from a household-scoped screen's top bar now:
-            // Storage tab → "Add storage location" (the + next to "Home") opens
+            // Storage tab → the "Manage storage" gear opens
             // StorageOverviewScreen for household 1, whose top bar has the search icon.
             onNodeWithTag("bottom-nav-home").performClick()
             waitForIdle()
             // StorageOverviewViewModel.load() calls GET /households/1/locations again.
             mockServer.route("/households/1/locations", fixture("locations_one.json"))
             waitUntilAtLeastOneExists(hasText("Home"), timeoutMillis = 5_000)
-            onNodeWithContentDescription("Add storage location").performClick()
+            onNodeWithContentDescription("Manage storage").performClick()
             waitUntilAtLeastOneExists(hasContentDescription("Search products"), timeoutMillis = 5_000)
             onNodeWithContentDescription("Search products").performClick()
             waitForIdle()

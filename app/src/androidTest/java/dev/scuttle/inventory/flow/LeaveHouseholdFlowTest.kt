@@ -48,26 +48,20 @@ class LeaveHouseholdFlowTest : FlowTestBase() {
             waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 5_000)
 
             // Households leaves the bottom bar in favour of Settings ("More") →
-            // "My households".
+            // the "Households" hub button.
             mockServer.route("/households", fixture("households_two.json"))
             onNodeWithTag("bottom-nav-more").performClick()
             waitForIdle()
-            onNodeWithText("My households").performClick()
+            onNodeWithText("Households").performClick()
             waitForIdle()
 
             waitUntilAtLeastOneExists(hasText("Office"), timeoutMillis = 5_000)
 
-            // Leave now lives in the household's own edit screen, reached via edit
-            // mode: tap the pencil, then the "Home" row. clickNameArea(), not
-            // performClick(): this row is the same EditableRow-shaped card (leading
-            // avatar/name, trailing "Share"/invite icon button) whose node-CENTER
-            // tap was confirmed (via a printToLog dump of the semantics tree on real
-            // CI hardware, chasing this same-shaped failure on the shelf/location
-            // rows — see FlowTestBase.clickNameArea's doc) to land on trailing
-            // icon-button territory instead of the card's own onClick on some screen
-            // sizes.
-            onNodeWithContentDescription("Edit households").performClick()
-            waitForIdle()
+            // Leave lives in the household's own edit screen. Tapping the row opens
+            // it directly (2026-07-26 user decision — the old pencil/edit-mode gate
+            // is gone). clickNameArea(), not performClick(): the row carries a
+            // trailing "Share"/invite icon button that a node-CENTER tap can land
+            // on at some screen sizes — see FlowTestBase.clickNameArea's doc.
             onNodeWithContentDescription("Home").clickNameArea()
             // Every other cross-screen navigation in this suite pairs its click with a
             // real settle delay (not just waitForIdle()) before asserting on the

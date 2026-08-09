@@ -50,13 +50,13 @@ class QuantityFlowTest : FlowTestBase() {
         loginAndNavigateToShelf()
 
         composeRule.apply {
-            onNodeWithText("0").assertIsDisplayed()
+            onNodeWithText("Quantity: 0").assertIsDisplayed()
 
             mockServer.route("/households/1/shelves/100/products/1000/add", fixture("product_incremented.json"))
             onNodeWithContentDescription("Increase Milk quantity").performClick()
             waitForIdle()
 
-            onNodeWithText("1").assertIsDisplayed()
+            onNodeWithText("Quantity: 1").assertIsDisplayed()
         }
     }
 
@@ -70,7 +70,7 @@ class QuantityFlowTest : FlowTestBase() {
             onNodeWithContentDescription("Decrease Milk quantity").performClick()
             waitForIdle()
 
-            onNodeWithText("0").assertIsDisplayed()
+            onNodeWithText("Quantity: 0").assertIsDisplayed()
             assert(mockServer.server.requestCount == requestsBefore) {
                 "Expected no network request for decrement at 0"
             }
