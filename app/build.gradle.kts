@@ -116,7 +116,7 @@ kotlin {
 }
 
 dependencies {
-    val composeBom = platform("androidx.compose:compose-bom:2026.06.01")
+    val composeBom = platform("androidx.compose:compose-bom:2026.08.00")
     implementation(composeBom)
 
     implementation("androidx.core:core-ktx:1.19.0")
@@ -139,8 +139,8 @@ dependencies {
 
     // Networking
     implementation("com.squareup.retrofit2:retrofit:3.0.0")
-    implementation("com.squareup.okhttp3:okhttp:5.4.0")
-    implementation("com.squareup.okhttp3:logging-interceptor:5.4.0")
+    implementation("com.squareup.okhttp3:okhttp:5.5.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:5.5.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
     implementation("com.squareup.retrofit2:converter-kotlinx-serialization:3.0.0")
 
@@ -188,8 +188,8 @@ dependencies {
     androidTestImplementation("androidx.test:rules:1.7.0")
     androidTestImplementation("com.google.dagger:hilt-android-testing:2.60.1")
     kspAndroidTest("com.google.dagger:hilt-android-compiler:2.60.1")
-    androidTestImplementation("com.squareup.okhttp3:mockwebserver:5.4.0")
-    testImplementation("com.squareup.okhttp3:mockwebserver:5.4.0")
+    androidTestImplementation("com.squareup.okhttp3:mockwebserver:5.5.0")
+    testImplementation("com.squareup.okhttp3:mockwebserver:5.5.0")
 }
 
 tasks.withType<Test>().configureEach {
