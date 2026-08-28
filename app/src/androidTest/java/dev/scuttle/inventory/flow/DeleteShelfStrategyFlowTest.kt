@@ -285,13 +285,15 @@ class DeleteShelfStrategyFlowTest : FlowTestBase() {
             Thread.sleep(2_000)
             waitForIdle()
 
-            // The shelf is back, and — the actual guarantee — so is its product.
-            // Re-select the restored tab explicitly: the pane's shelf selection was
-            // cleared when the list emptied on delete, so the restored shelf's
-            // products aren't shown until its tab is tapped (as a user would).
+            // The shelf is back in the manage list. Products are never rendered on
+            // ManageShelvesScreen (editing moved here in the Storage rework; the
+            // tabbed products pager stayed on LocationDetailScreen), so navigate
+            // back — as a user would — and verify the restored shelf's tab shows
+            // its product again there.
             waitUntilAtLeastOneExists(hasText("Top shelf"), timeoutMillis = 5_000)
-            onAllNodesWithText("Top shelf")[0].performClick()
+            onNodeWithContentDescription("Back").performClick()
             waitForIdle()
+            waitUntilAtLeastOneExists(hasText("Top shelf"), timeoutMillis = 5_000)
             waitUntilAtLeastOneExists(hasText("Milk"), timeoutMillis = 5_000)
         }
     }
