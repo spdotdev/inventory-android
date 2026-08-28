@@ -107,3 +107,41 @@ jobs:
             app/build/reports/androidTests/connected/**
             app/build/outputs/androidTest-results/connected/**
           retention-days: 7
+
+  # A scheduled workflow that fails sends no notification anywhere by default —
+  # that's how the nightly stayed red for a month unnoticed (2026-07-24 →
+  # 2026-08-28, one rotted flow test). Make red loud: a failure opens (or bumps)
+  # a labeled tracking issue, and the next green run closes it. The issue is the
+  # alarm; closing it keeps a re-break from drowning in an old thread.
+  report:
+    runs-on: ubuntu-latest
+    needs: instrumented
+    if: ${{ always() && github.repository == 'spdotdev/inventory-android' }}
+    permissions:
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      TESTS_RESULT: ${{ needs.instrumented.result }}
+    steps:
+      - name: Open, bump, or close the nightly-failure issue
+        run: |
+          set -euo pipefail
+          existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --label nightly-failure --state open --json number --jq '.[0].number // empty')
+          if [ "$TESTS_RESULT" = "failure" ]; then
+            if [ -z "$existing" ]; then
+              gh label create nightly-failure --repo "$GITHUB_REPOSITORY" --color B60205 --description "Nightly instrumented run is red" --force
+              printf '%s\n\n%s\n' \
+                "The scheduled instrumented-test run failed: $RUN_URL" \
+                "Scheduled workflows fail silently, so this issue is the alarm. It will be closed automatically by the next green run. Check the run's \`instrumented-test-report\` artifact for the failing test." \
+                > /tmp/issue-body.md
+              gh issue create --repo "$GITHUB_REPOSITORY" \
+                --title "Nightly instrumented tests are failing" \
+                --label nightly-failure \
+                --body-file /tmp/issue-body.md
+            else
+              gh issue comment "$existing" --repo "$GITHUB_REPOSITORY" --body "Still failing: $RUN_URL"
+            fi
+          elif [ "$TESTS_RESULT" = "success" ] && [ -n "$existing" ]; then
+            gh issue close "$existing" --repo "$GITHUB_REPOSITORY" --comment "Green again: $RUN_URL"
+          fi
