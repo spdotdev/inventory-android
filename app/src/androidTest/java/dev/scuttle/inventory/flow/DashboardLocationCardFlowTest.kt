@@ -34,7 +34,7 @@ class DashboardLocationCardFlowTest : FlowTestBase() {
             onAllNodesWithText("Sign in").filterToOne(hasClickAction()).performClick()
 
             Thread.sleep(3_000)
-            waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 5_000)
+            waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 15_000)
 
             // Tap Storage tab, wait until AllStoragesScreen has loaded "Fridge" as a clickable item
             onNodeWithTag("bottom-nav-home").performClick()

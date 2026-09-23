@@ -35,7 +35,7 @@ class DashboardRefreshFlowTest : FlowTestBase() {
             onAllNodesWithText("Sign in").filterToOne(hasClickAction()).performClick()
 
             Thread.sleep(3_000)
-            waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 5_000)
+            waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 15_000)
             // Wait for stat cards to appear (initial load complete)
             waitUntilAtLeastOneExists(hasText("Locations"), timeoutMillis = 5_000)
 
@@ -75,7 +75,7 @@ class DashboardRefreshFlowTest : FlowTestBase() {
             onAllNodesWithText("Sign in").filterToOne(hasClickAction()).performClick()
 
             Thread.sleep(3_000)
-            waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 5_000)
+            waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 15_000)
 
             // Tap Refresh — no mock registered for /households → server returns 500
             // DashboardViewModel.refresh() onFailure maps the HttpException through

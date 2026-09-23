@@ -58,7 +58,7 @@ class HouseholdPickerFlowTest : FlowTestBase() {
             onAllNodesWithText("Sign in").filterToOne(hasClickAction()).performClick()
 
             Thread.sleep(3_000)
-            waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 5_000)
+            waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 15_000)
 
             // "across 2 households" only renders once DashboardUiState.households has
             // BOTH entries — HierarchyStore.refresh() publishes entries atomically

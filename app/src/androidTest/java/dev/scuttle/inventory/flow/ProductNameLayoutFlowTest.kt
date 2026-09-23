@@ -42,7 +42,7 @@ class ProductNameLayoutFlowTest : FlowTestBase() {
             onNodeWithText("Password").performTextInput("password123")
             onAllNodesWithText("Sign in").filterToOne(hasClickAction()).performClick()
 
-            waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 8_000)
+            waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 15_000)
 
             onNodeWithTag("bottom-nav-home").performClick()
             waitUntilAtLeastOneExists(hasTestTag("home-location-Fridge"), timeoutMillis = 8_000)

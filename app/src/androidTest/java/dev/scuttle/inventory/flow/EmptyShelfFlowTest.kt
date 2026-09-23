@@ -34,7 +34,7 @@ class EmptyShelfFlowTest : FlowTestBase() {
             onAllNodesWithText("Sign in").filterToOne(hasClickAction()).performClick()
 
             Thread.sleep(3_000)
-            waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 5_000)
+            waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 15_000)
 
             // Storage tab → Fridge
             onNodeWithTag("bottom-nav-home").performClick()

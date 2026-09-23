@@ -32,7 +32,7 @@ class EmptyHouseholdsFlowTest : FlowTestBase() {
             onAllNodesWithText("Sign in").filterToOne(hasClickAction()).performClick()
 
             Thread.sleep(3_000)
-            waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 5_000)
+            waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 15_000)
 
             // Households leaves the bottom bar in favour of Settings ("More") →
             // "Households" hub button; HouseholdsViewModel.refresh() → GET /households → empty

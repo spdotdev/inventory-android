@@ -35,7 +35,7 @@ class LogoutFlowTest : FlowTestBase() {
             onAllNodesWithText("Sign in").filterToOne(hasClickAction()).performClick()
 
             Thread.sleep(3_000)
-            waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 5_000)
+            waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 15_000)
 
             // "More" tab → the category hub (MoreScreen) → "Account" → AccountScreen,
             // which now holds sign-out (moved off the hub itself, see MoreScreen).

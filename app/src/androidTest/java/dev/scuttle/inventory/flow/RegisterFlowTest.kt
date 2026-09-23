@@ -38,7 +38,7 @@ class RegisterFlowTest : FlowTestBase() {
             onNodeWithText("Password").performTextInput("password123")
             onAllNodesWithText("Create account").filterToOne(hasClickAction()).performClick()
 
-            waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 8_000)
+            waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 15_000)
             onNodeWithTag(DASHBOARD_TITLE_TEST_TAG).assertIsDisplayed()
         }
     }

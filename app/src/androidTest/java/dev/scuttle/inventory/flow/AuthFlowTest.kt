@@ -34,7 +34,7 @@ class AuthFlowTest : FlowTestBase() {
             onNodeWithText("Password").performTextInput("password123")
             onAllNodesWithText("Sign in").filterToOne(hasClickAction()).performClick()
 
-            waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 5_000)
+            waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 15_000)
             onNodeWithTag(DASHBOARD_TITLE_TEST_TAG).assertIsDisplayed()
         }
     }

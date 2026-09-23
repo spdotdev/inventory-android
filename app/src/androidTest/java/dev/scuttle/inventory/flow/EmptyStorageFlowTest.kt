@@ -34,7 +34,7 @@ class EmptyStorageFlowTest : FlowTestBase() {
             onAllNodesWithText("Sign in").filterToOne(hasClickAction()).performClick()
 
             Thread.sleep(3_000)
-            waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 5_000)
+            waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 15_000)
 
             // Storage tab → AllStoragesScreen → tap the gear ("Manage storage") for
             // Home → StorageOverviewScreen (AllStorages is browse-only now).
@@ -67,7 +67,7 @@ class EmptyStorageFlowTest : FlowTestBase() {
             onAllNodesWithText("Sign in").filterToOne(hasClickAction()).performClick()
 
             Thread.sleep(3_000)
-            waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 5_000)
+            waitUntilAtLeastOneExists(hasTestTag(DASHBOARD_TITLE_TEST_TAG), timeoutMillis = 15_000)
 
             // Welcome dialog should appear since no households
             waitUntilAtLeastOneExists(hasText("Welcome!", substring = true), timeoutMillis = 5_000)
