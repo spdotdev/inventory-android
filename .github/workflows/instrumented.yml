@@ -10,13 +10,13 @@ concurrency:
 # End-to-end instrumented flow tests (app/src/androidTest) on an emulator. They
 # drive real navigation + Compose UI against a MockWebServer backend, catching
 # regressions the JVM unit tests can't. Emulator boot is slow (several minutes),
-# so this runs nightly + on demand rather than on every PR — the fast per-PR CI
+# so this runs weekly (Monday, was nightly until 2026-10-31, Actions cost plan) + on demand rather than on every PR — the fast per-PR CI
 # stays in ci.yml.
 
 on:
   schedule:
-    # 03:30 UTC nightly.
-    - cron: '30 3 * * *'
+    # 03:30 UTC every Monday.
+    - cron: '30 3 * * 1'
   workflow_dispatch:
 
 permissions:
